@@ -1,5 +1,5 @@
 /* ============================================
-   THE LAST BET — Script
+   WINNING BET — Script
    Particles, Animations, Interactivity
    ============================================ */
 
@@ -297,14 +297,14 @@
     const ageNo = document.getElementById('ageNo');
 
     // Check if user has already confirmed age
-    if (localStorage.getItem('tlb_age_confirmed') === 'true') {
+    if (localStorage.getItem('wb_age_confirmed') === 'true') {
         ageGate.classList.add('hidden');
     } else {
         document.body.style.overflow = 'hidden';
     }
 
     ageYes.addEventListener('click', () => {
-        localStorage.setItem('tlb_age_confirmed', 'true');
+        localStorage.setItem('wb_age_confirmed', 'true');
         ageGate.classList.add('hidden');
         document.body.style.overflow = '';
     });
