@@ -1573,6 +1573,70 @@ img { max-width: 100%; display: block; }
 }
 
 /* ============================================
+   LOADING & EMPTY STATES
+   ============================================ */
+.matches-loading,
+.results-loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 16px 0;
+}
+
+.loading-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.matches-empty,
+.results-empty {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 20px 0;
+    text-align: center;
+    width: 100%;
+}
+
+/* Result date (for dynamic results) */
+.result-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    flex-shrink: 0;
+    min-width: 40px;
+}
+
+/* Result score (for dynamic results) */
+.result-score {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--gold);
+    flex-shrink: 0;
+}
+
+/* Over/Under badges (for dynamic results) */
+.result-badge--over {
+    background: rgba(46, 204, 113, 0.1);
+    color: var(--green);
+}
+
+.result-badge--under {
+    background: rgba(212, 168, 83, 0.1);
+    color: var(--gold);
+}
+
+/* ============================================
    ANIMATIONS & SCROLL REVEALS
    ============================================ */
 .reveal {

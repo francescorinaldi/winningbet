@@ -343,4 +343,112 @@
         });
     });
 
+    // ==========================================
+    // LIVE DATA — API FETCHING
+    // ==========================================
+    async function fetchAPI(endpoint) {
+        const res = await fetch(`/api/${endpoint}`);
+        if (!res.ok) throw new Error(`API ${endpoint}: ${res.status}`);
+        return res.json();
+    }
+
+    function formatMatchDate(isoDate) {
+        const d = new Date(isoDate);
+        const days = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+        const day = days[d.getDay()];
+        const hours = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
+        return day + ' ' + hours + ':' + mins;
+    }
+
+    function formatResultDate(isoDate) {
+        const d = new Date(isoDate);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        return day + '/' + month;
+    }
+
+    function createEl(tag, className, textContent) {
+        const el = document.createElement(tag);
+        if (className) el.className = className;
+        if (textContent) el.textContent = textContent;
+        return el;
+    }
+
+    function buildMatchCard(m) {
+        var card = createEl('div', 'match-card');
+        card.appendChild(createEl('div', 'match-time', formatMatchDate(m.date)));
+
+        var teams = createEl('div', 'match-teams');
+        var homeTeam = createEl('div', 'team');
+        homeTeam.appendChild(createEl('span', 'team-name', m.home));
+        teams.appendChild(homeTeam);
+        teams.appendChild(createEl('span', 'match-vs', 'vs'));
+        var awayTeam = createEl('div', 'team');
+        awayTeam.appendChild(createEl('span', 'team-name', m.away));
+        teams.appendChild(awayTeam);
+        card.appendChild(teams);
+
+        return card;
+    }
+
+    function buildResultItem(r) {
+        var item = createEl('div', 'result-item');
+        item.appendChild(createEl('span', 'result-date', formatResultDate(r.date)));
+        item.appendChild(createEl('span', 'result-match', r.home + ' vs ' + r.away));
+        item.appendChild(createEl('span', 'result-score', r.goalsHome + ' - ' + r.goalsAway));
+
+        var totalGoals = (r.goalsHome || 0) + (r.goalsAway || 0);
+        var badgeClass = totalGoals > 2 ? 'result-badge result-badge--over' : 'result-badge result-badge--under';
+        var badgeText = totalGoals > 2 ? 'O 2.5' : 'U 2.5';
+        item.appendChild(createEl('span', badgeClass, badgeText));
+
+        return item;
+    }
+
+    function setEmptyState(container, className, message) {
+        container.textContent = '';
+        container.appendChild(createEl('div', className, message));
+    }
+
+    async function loadMatches() {
+        var container = document.getElementById('matchesScroll');
+        try {
+            var matches = await fetchAPI('matches');
+            if (!matches || matches.length === 0) {
+                setEmptyState(container, 'matches-empty', 'Nessuna partita in programma');
+                return;
+            }
+            container.textContent = '';
+            matches.forEach(function (m) {
+                container.appendChild(buildMatchCard(m));
+            });
+        } catch (err) {
+            console.error('loadMatches failed:', err);
+            setEmptyState(container, 'matches-empty', 'Impossibile caricare le partite');
+        }
+    }
+
+    async function loadResults() {
+        var container = document.getElementById('resultsList');
+        try {
+            var results = await fetchAPI('results');
+            if (!results || results.length === 0) {
+                setEmptyState(container, 'results-empty', 'Nessun risultato disponibile');
+                return;
+            }
+            container.textContent = '';
+            results.forEach(function (r) {
+                container.appendChild(buildResultItem(r));
+            });
+        } catch (err) {
+            console.error('loadResults failed:', err);
+            setEmptyState(container, 'results-empty', 'Impossibile caricare i risultati');
+        }
+    }
+
+    // Load data on page ready
+    loadMatches();
+    loadResults();
+
 })();

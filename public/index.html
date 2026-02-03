@@ -89,58 +89,10 @@
                 <span class="live-dot"></span>
                 <span>PROSSIME PARTITE — SERIE A</span>
             </div>
-            <div class="matches-scroll">
-                <div class="match-card">
-                    <div class="match-time">Sab 20:45</div>
-                    <div class="match-teams">
-                        <div class="team">
-                            <span class="team-name">Juventus</span>
-                        </div>
-                        <span class="match-vs">vs</span>
-                        <div class="team">
-                            <span class="team-name">Inter</span>
-                        </div>
-                    </div>
-                    <div class="match-tip">TIP PRO</div>
-                </div>
-                <div class="match-card">
-                    <div class="match-time">Dom 15:00</div>
-                    <div class="match-teams">
-                        <div class="team">
-                            <span class="team-name">Milan</span>
-                        </div>
-                        <span class="match-vs">vs</span>
-                        <div class="team">
-                            <span class="team-name">Napoli</span>
-                        </div>
-                    </div>
-                    <div class="match-tip">TIP FREE</div>
-                </div>
-                <div class="match-card">
-                    <div class="match-time">Dom 18:00</div>
-                    <div class="match-teams">
-                        <div class="team">
-                            <span class="team-name">Roma</span>
-                        </div>
-                        <span class="match-vs">vs</span>
-                        <div class="team">
-                            <span class="team-name">Lazio</span>
-                        </div>
-                    </div>
-                    <div class="match-tip">TIP VIP</div>
-                </div>
-                <div class="match-card">
-                    <div class="match-time">Dom 20:45</div>
-                    <div class="match-teams">
-                        <div class="team">
-                            <span class="team-name">Atalanta</span>
-                        </div>
-                        <span class="match-vs">vs</span>
-                        <div class="team">
-                            <span class="team-name">Fiorentina</span>
-                        </div>
-                    </div>
-                    <div class="match-tip">TIP PRO</div>
+            <div class="matches-scroll" id="matchesScroll">
+                <div class="matches-loading">
+                    <span class="loading-spinner"></span>
+                    <span>Caricamento partite...</span>
                 </div>
             </div>
         </div>
@@ -388,41 +340,10 @@
             <!-- Recent Results -->
             <div class="recent-results">
                 <h3 class="results-title">Ultimi Risultati</h3>
-                <div class="results-list">
-                    <div class="result-item result-item--win">
-                        <span class="result-status">&#10003;</span>
-                        <span class="result-match">Juventus vs Milan</span>
-                        <span class="result-pick">Under 2.5</span>
-                        <span class="result-odds">@1.85</span>
-                        <span class="result-badge result-badge--win">VINTO</span>
-                    </div>
-                    <div class="result-item result-item--win">
-                        <span class="result-status">&#10003;</span>
-                        <span class="result-match">Napoli vs Atalanta</span>
-                        <span class="result-pick">1 + Over 1.5</span>
-                        <span class="result-odds">@2.10</span>
-                        <span class="result-badge result-badge--win">VINTO</span>
-                    </div>
-                    <div class="result-item result-item--loss">
-                        <span class="result-status">&#10007;</span>
-                        <span class="result-match">Roma vs Fiorentina</span>
-                        <span class="result-pick">Goal</span>
-                        <span class="result-odds">@1.65</span>
-                        <span class="result-badge result-badge--loss">PERSO</span>
-                    </div>
-                    <div class="result-item result-item--win">
-                        <span class="result-status">&#10003;</span>
-                        <span class="result-match">Inter vs Lazio</span>
-                        <span class="result-pick">1</span>
-                        <span class="result-odds">@1.75</span>
-                        <span class="result-badge result-badge--win">VINTO</span>
-                    </div>
-                    <div class="result-item result-item--win">
-                        <span class="result-status">&#10003;</span>
-                        <span class="result-match">Torino vs Bologna</span>
-                        <span class="result-pick">Under 2.5</span>
-                        <span class="result-odds">@1.90</span>
-                        <span class="result-badge result-badge--win">VINTO</span>
+                <div class="results-list" id="resultsList">
+                    <div class="results-loading">
+                        <span class="loading-spinner"></span>
+                        <span>Caricamento risultati...</span>
                     </div>
                 </div>
             </div>
