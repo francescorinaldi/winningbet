@@ -1535,6 +1535,25 @@ img { max-width: 100%; display: block; }
     to { transform: rotate(360deg); }
 }
 
+.tips-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    padding: 40px 0;
+    grid-column: 1 / -1;
+}
+
+.tips-empty {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    padding: 40px 0;
+    text-align: center;
+    grid-column: 1 / -1;
+}
+
 .matches-empty,
 .results-empty {
     color: var(--text-muted);

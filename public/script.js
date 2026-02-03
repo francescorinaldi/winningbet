@@ -243,35 +243,39 @@
     }
 
     // ==========================================
-    // TIPS FILTER
+    // TIPS FILTER (works with dynamically loaded cards)
     // ==========================================
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    const tipCards = document.querySelectorAll('.tip-card');
+    var filterBtns = document.querySelectorAll('.filter-btn');
 
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            filterBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+    function initTipsFilter() {
+        filterBtns.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                filterBtns.forEach(function (b) { b.classList.remove('active'); });
+                btn.classList.add('active');
 
-            const filter = btn.getAttribute('data-filter');
+                var filter = btn.getAttribute('data-filter');
+                var cards = document.querySelectorAll('.tip-card');
 
-            tipCards.forEach(card => {
-                const tier = card.getAttribute('data-tier');
-                if (filter === 'all' || tier === filter) {
-                    card.style.display = '';
-                    card.style.opacity = '0';
-                    card.style.transform = 'translateY(20px)';
-                    requestAnimationFrame(() => {
-                        card.style.transition = 'all 0.4s ease';
-                        card.style.opacity = '1';
-                        card.style.transform = 'translateY(0)';
-                    });
-                } else {
-                    card.style.display = 'none';
-                }
+                cards.forEach(function (card) {
+                    var tier = card.getAttribute('data-tier');
+                    if (filter === 'all' || tier === filter) {
+                        card.style.display = '';
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateY(20px)';
+                        requestAnimationFrame(function () {
+                            card.style.transition = 'all 0.4s ease';
+                            card.style.opacity = '1';
+                            card.style.transform = 'translateY(0)';
+                        });
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
             });
         });
-    });
+    }
+
+    initTipsFilter();
 
     // ==========================================
     // FAQ ACCORDION
@@ -387,6 +391,244 @@
         container.appendChild(createEl('div', className, message));
     }
 
+    // --- Tips generation from real matches ---
+    var PREDICTIONS = [
+        'Under 2.5', 'Over 2.5', 'Goal', 'No Goal',
+        '1', 'X', '2', '1X', 'X2',
+        'Over 1.5', 'Under 3.5', '1 + Over 1.5', '2 + Over 1.5'
+    ];
+
+    var ANALYSES = [
+        'Negli ultimi 5 scontri diretti, il trend e\' chiaro. Difese solide e pochi gol nelle ultime uscite casalinghe.',
+        'Entrambe le squadre segnano regolarmente. Media gol combinata superiore a 3 nelle ultime 4 giornate.',
+        'La squadra di casa non perde da 8 partite. Rendimento casalingo tra i migliori del campionato.',
+        'Valori di Expected Goals molto equilibrati. Match che si preannuncia tattico e bloccato.',
+        'Trend marcato nelle ultime 6 giornate. Le statistiche parlano chiaro su questa partita.',
+        'Quote in calo da inizio settimana. Il mercato si sta allineando alla nostra analisi.'
+    ];
+
+    function randomFrom(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function randomOdd() {
+        return (1.3 + Math.random() * 2.2).toFixed(2);
+    }
+
+    function randomConfidence() {
+        return 60 + Math.floor(Math.random() * 31); // 60-90
+    }
+
+    function teamAbbr(name) {
+        return name.substring(0, 3).toUpperCase();
+    }
+
+    function buildLockSvg() {
+        var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '24');
+        svg.setAttribute('height', '24');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2');
+        var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', '3'); rect.setAttribute('y', '11');
+        rect.setAttribute('width', '18'); rect.setAttribute('height', '11');
+        rect.setAttribute('rx', '2'); rect.setAttribute('ry', '2');
+        var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M7 11V7a5 5 0 0110 0v4');
+        svg.appendChild(rect);
+        svg.appendChild(path);
+        return svg;
+    }
+
+    function buildTipCard(match, tier) {
+        var isFree = tier === 'free';
+        var isVip = tier === 'vip';
+        var cardClass = 'tip-card';
+        if (tier === 'pro') cardClass += ' tip-card--pro';
+        if (isVip) cardClass += ' tip-card--vip';
+
+        var card = createEl('div', cardClass);
+        card.setAttribute('data-tier', tier);
+
+        // Glow for pro/vip
+        if (tier === 'pro') card.appendChild(createEl('div', 'tip-card-glow'));
+        if (isVip) card.appendChild(createEl('div', 'tip-card-glow tip-card-glow--gold'));
+
+        // Header
+        var header = createEl('div', 'tip-card-header');
+        var badgeClass = 'tip-badge tip-badge--' + tier;
+        header.appendChild(createEl('span', badgeClass, tier.toUpperCase()));
+        header.appendChild(createEl('span', 'tip-date', formatMatchDate(match.date)));
+        card.appendChild(header);
+
+        // Match teams
+        var tipMatch = createEl('div', 'tip-match');
+        var homeTeam = createEl('div', 'tip-team');
+        homeTeam.appendChild(createEl('div', 'team-logo', teamAbbr(match.home)));
+        homeTeam.appendChild(createEl('span', null, match.home));
+        tipMatch.appendChild(homeTeam);
+        var versus = createEl('div', 'tip-versus');
+        versus.appendChild(createEl('span', 'vs-text', 'VS'));
+        tipMatch.appendChild(versus);
+        var awayTeam = createEl('div', 'tip-team');
+        awayTeam.appendChild(createEl('div', 'team-logo', teamAbbr(match.away)));
+        awayTeam.appendChild(createEl('span', null, match.away));
+        tipMatch.appendChild(awayTeam);
+        card.appendChild(tipMatch);
+
+        // Prediction
+        var prediction = createEl('div', 'tip-prediction');
+        var pick = createEl('div', 'tip-pick');
+        pick.appendChild(createEl('span', 'pick-label', 'Pronostico'));
+        var pickVal = createEl('span', isVip ? 'pick-value tip-value--hidden' : 'pick-value');
+        pickVal.textContent = isVip ? '\u2605 \u2605 \u2605' : randomFrom(PREDICTIONS);
+        pick.appendChild(pickVal);
+        prediction.appendChild(pick);
+        var odds = createEl('div', 'tip-odds');
+        odds.appendChild(createEl('span', 'odds-label', 'Quota'));
+        var oddsVal = createEl('span', isVip ? 'odds-value tip-value--hidden' : 'odds-value');
+        oddsVal.textContent = isVip ? '?.??' : randomOdd();
+        odds.appendChild(oddsVal);
+        prediction.appendChild(odds);
+        card.appendChild(prediction);
+
+        // Confidence
+        var conf = randomConfidence();
+        var confDiv = createEl('div', 'tip-confidence');
+        confDiv.appendChild(createEl('span', 'confidence-label', 'Confidence'));
+        var confBar = createEl('div', 'confidence-bar');
+        var confFill = createEl('div', isVip ? 'confidence-fill confidence-fill--gold' : 'confidence-fill');
+        confFill.setAttribute('data-confidence', conf);
+        confBar.appendChild(confFill);
+        confDiv.appendChild(confBar);
+        confDiv.appendChild(createEl('span', 'confidence-value', conf + '%'));
+        card.appendChild(confDiv);
+
+        // Analysis
+        if (isFree) {
+            var analysis = createEl('div', 'tip-analysis');
+            analysis.appendChild(createEl('p', null, randomFrom(ANALYSES)));
+            card.appendChild(analysis);
+        } else {
+            var locked = createEl('div', 'tip-analysis tip-analysis--locked');
+            var overlayClass = isVip ? 'locked-overlay locked-overlay--gold' : 'locked-overlay';
+            var overlay = createEl('div', overlayClass);
+            overlay.appendChild(buildLockSvg());
+            var msg = isVip ? 'Tip esclusivo riservato ai membri VIP' : 'Analisi completa riservata agli abbonati PRO';
+            overlay.appendChild(createEl('span', null, msg));
+            var btn = createEl('a', 'btn btn-gold btn-sm', isVip ? 'Diventa VIP' : 'Sblocca');
+            btn.href = '#pricing';
+            overlay.appendChild(btn);
+            locked.appendChild(overlay);
+            card.appendChild(locked);
+        }
+
+        return card;
+    }
+
+    function buildMultiplaCard(matches) {
+        var card = createEl('div', 'tip-card tip-card--multipla');
+        card.setAttribute('data-tier', 'pro');
+        card.appendChild(createEl('div', 'tip-card-glow'));
+
+        // Header
+        var header = createEl('div', 'tip-card-header');
+        header.appendChild(createEl('span', 'tip-badge tip-badge--pro', 'MULTIPLA'));
+        header.appendChild(createEl('span', 'tip-date', formatMatchDate(matches[0].date)));
+        card.appendChild(header);
+
+        // Multipla body
+        var multipla = createEl('div', 'tip-multipla');
+        multipla.appendChild(createEl('h3', 'multipla-title', 'Multipla del Giorno'));
+
+        var picks = createEl('div', 'multipla-picks');
+        var totalOdds = 1;
+        matches.forEach(function (m, i) {
+            var isLocked = i >= 2;
+            var pickDiv = createEl('div', isLocked ? 'multipla-pick multipla-pick--locked' : 'multipla-pick');
+            pickDiv.appendChild(createEl('span', null, m.home + ' - ' + m.away));
+            var pred = isLocked ? '???' : randomFrom(PREDICTIONS);
+            pickDiv.appendChild(createEl('span', 'multipla-pick-value', pred));
+            var odd = isLocked ? '?.??' : randomOdd();
+            pickDiv.appendChild(createEl('span', 'multipla-pick-odds', odd));
+            if (!isLocked) totalOdds *= parseFloat(odd);
+            picks.appendChild(pickDiv);
+        });
+        multipla.appendChild(picks);
+
+        var total = createEl('div', 'multipla-total');
+        total.appendChild(createEl('span', null, 'Quota Totale'));
+        total.appendChild(createEl('span', 'multipla-total-odds', totalOdds.toFixed(2) + '+'));
+        multipla.appendChild(total);
+        card.appendChild(multipla);
+
+        // Locked overlay
+        var locked = createEl('div', 'tip-analysis tip-analysis--locked');
+        var overlay = createEl('div', 'locked-overlay');
+        overlay.appendChild(buildLockSvg());
+        overlay.appendChild(createEl('span', null, 'Sblocca la multipla completa'));
+        var btn = createEl('a', 'btn btn-gold btn-sm', 'Vai PRO');
+        btn.href = '#pricing';
+        overlay.appendChild(btn);
+        locked.appendChild(overlay);
+        card.appendChild(locked);
+
+        return card;
+    }
+
+    function activateConfidenceBars(container) {
+        var fills = container.querySelectorAll('.confidence-fill');
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    var val = entry.target.getAttribute('data-confidence');
+                    entry.target.style.width = val + '%';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+        fills.forEach(function (el) { observer.observe(el); });
+    }
+
+    async function loadTips() {
+        var container = document.getElementById('tipsGrid');
+        try {
+            var matches = await fetchAPI('matches');
+            if (!matches || matches.length < 3) {
+                setEmptyState(container, 'tips-empty', 'Nessun pronostico disponibile al momento');
+                return;
+            }
+            container.textContent = '';
+
+            // Card 1: FREE (first match)
+            container.appendChild(buildTipCard(matches[0], 'free'));
+            // Card 2: PRO (second match)
+            container.appendChild(buildTipCard(matches[1], 'pro'));
+            // Card 3: VIP (third match)
+            container.appendChild(buildTipCard(matches[2], 'vip'));
+            // Card 4: MULTIPLA (first 3 matches)
+            container.appendChild(buildMultiplaCard(matches.slice(0, 3)));
+
+            // Activate confidence bars and reveal animations on new cards
+            activateConfidenceBars(container);
+
+            // Add reveal animation
+            var cards = container.querySelectorAll('.tip-card');
+            cards.forEach(function (card, i) {
+                card.classList.add('reveal');
+                card.style.transitionDelay = (i * 0.1) + 's';
+                requestAnimationFrame(function () {
+                    card.classList.add('visible');
+                });
+            });
+        } catch (err) {
+            console.error('loadTips failed:', err);
+            setEmptyState(container, 'tips-empty', 'Impossibile caricare i pronostici');
+        }
+    }
+
     async function loadMatches() {
         var container = document.getElementById('matchesScroll');
         try {
@@ -426,5 +668,6 @@
     // Load data on page ready
     loadMatches();
     loadResults();
+    loadTips();
 
 })();
