@@ -290,30 +290,6 @@
     });
 
     // ==========================================
-    // AGE GATE
-    // ==========================================
-    const ageGate = document.getElementById('ageGate');
-    const ageYes = document.getElementById('ageYes');
-    const ageNo = document.getElementById('ageNo');
-
-    // Check if user has already confirmed age
-    if (localStorage.getItem('wb_age_confirmed') === 'true') {
-        ageGate.classList.add('hidden');
-    } else {
-        document.body.style.overflow = 'hidden';
-    }
-
-    ageYes.addEventListener('click', () => {
-        localStorage.setItem('wb_age_confirmed', 'true');
-        ageGate.classList.add('hidden');
-        document.body.style.overflow = '';
-    });
-
-    ageNo.addEventListener('click', () => {
-        window.location.href = 'https://www.google.com';
-    });
-
-    // ==========================================
     // SMOOTH SCROLL FOR ANCHOR LINKS
     // ==========================================
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {

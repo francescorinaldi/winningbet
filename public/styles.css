@@ -934,6 +934,12 @@ img { max-width: 100%; display: block; }
     display: inline;
 }
 
+.stat-value-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+}
+
 .stat-suffix {
     font-family: var(--font-display);
     font-size: 2rem;
@@ -1501,75 +1507,6 @@ img { max-width: 100%; display: block; }
     font-family: var(--font-display);
     font-size: 0.75rem;
     font-weight: 700;
-}
-
-/* ============================================
-   AGE GATE MODAL
-   ============================================ */
-.age-gate {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 10000;
-    background: rgba(0, 0, 0, 0.92);
-    backdrop-filter: blur(20px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    opacity: 1;
-    transition: opacity 0.4s;
-}
-
-.age-gate.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.age-gate-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-gold);
-    border-radius: var(--radius-xl);
-    padding: 48px 40px;
-    text-align: center;
-    max-width: 440px;
-    width: 100%;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-}
-
-.age-gate-icon {
-    font-size: 3rem;
-    color: var(--gold);
-    margin-bottom: 20px;
-    filter: drop-shadow(0 0 20px var(--gold-glow));
-}
-
-.age-gate-card h2 {
-    font-family: var(--font-display);
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 12px;
-}
-
-.age-gate-card p {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    margin-bottom: 28px;
-    line-height: 1.6;
-}
-
-.age-gate-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 20px;
-}
-
-.age-gate-disclaimer {
-    font-size: 0.75rem;
-    color: var(--text-muted);
 }
 
 /* ============================================
