@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Last Bet — Pronostici Serie A</title>
+    <meta name="description" content="Pronostici Serie A premium. Tips giornalieri, statistiche avanzate e track record verificato. Unisciti ai vincenti.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Particle Canvas -->
+    <canvas id="particles"></canvas>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-content">
+            <a href="#" class="logo">
+                <span class="logo-icon">&#9824;</span>
+                <span class="logo-text">THE LAST BET</span>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <a href="#tips">Tips</a>
+                <a href="#stats">Track Record</a>
+                <a href="#pricing">Piani</a>
+                <a href="#faq">FAQ</a>
+                <a href="#pricing" class="btn btn-gold btn-sm">Abbonati Ora</a>
+            </div>
+            <button class="hamburger" id="hamburger" aria-label="Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-glow"></div>
+        <div class="hero-glow hero-glow--red"></div>
+        <div class="container hero-content">
+            <div class="hero-badge">
+                <span class="badge-dot"></span>
+                SERIE A 2025/26
+            </div>
+            <h1 class="hero-title">
+                Non scommettere.<br>
+                <span class="text-gradient">Investi.</span>
+            </h1>
+            <p class="hero-subtitle">
+                Pronostici Serie A basati su dati, algoritmi e analisi tattiche.<br>
+                Track record verificato. ROI positivo dal giorno uno.
+            </p>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="hero-stat-value" data-count="73">0</span><span class="hero-stat-suffix">%</span>
+                    <span class="hero-stat-label">Win Rate</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value" data-count="12">0</span><span class="hero-stat-suffix">.4%</span>
+                    <span class="hero-stat-label">ROI Medio</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value" data-count="2847">0</span>
+                    <span class="hero-stat-label">Tips Inviati</span>
+                </div>
+            </div>
+            <div class="hero-cta">
+                <a href="#pricing" class="btn btn-gold btn-lg">
+                    <span>Inizia a Vincere</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+                <a href="#tips" class="btn btn-outline btn-lg">Vedi i Tips Gratis</a>
+            </div>
+        </div>
+        <div class="hero-scroll-indicator">
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+
+    <!-- Live Matches Bar -->
+    <section class="live-bar">
+        <div class="container">
+            <div class="live-bar-header">
+                <span class="live-dot"></span>
+                <span>PROSSIME PARTITE — SERIE A</span>
+            </div>
+            <div class="matches-scroll">
+                <div class="match-card">
+                    <div class="match-time">Sab 20:45</div>
+                    <div class="match-teams">
+                        <div class="team">
+                            <span class="team-name">Juventus</span>
+                        </div>
+                        <span class="match-vs">vs</span>
+                        <div class="team">
+                            <span class="team-name">Inter</span>
+                        </div>
+                    </div>
+                    <div class="match-tip">TIP PRO</div>
+                </div>
+                <div class="match-card">
+                    <div class="match-time">Dom 15:00</div>
+                    <div class="match-teams">
+                        <div class="team">
+                            <span class="team-name">Milan</span>
+                        </div>
+                        <span class="match-vs">vs</span>
+                        <div class="team">
+                            <span class="team-name">Napoli</span>
+                        </div>
+                    </div>
+                    <div class="match-tip">TIP FREE</div>
+                </div>
+                <div class="match-card">
+                    <div class="match-time">Dom 18:00</div>
+                    <div class="match-teams">
+                        <div class="team">
+                            <span class="team-name">Roma</span>
+                        </div>
+                        <span class="match-vs">vs</span>
+                        <div class="team">
+                            <span class="team-name">Lazio</span>
+                        </div>
+                    </div>
+                    <div class="match-tip">TIP VIP</div>
+                </div>
+                <div class="match-card">
+                    <div class="match-time">Dom 20:45</div>
+                    <div class="match-teams">
+                        <div class="team">
+                            <span class="team-name">Atalanta</span>
+                        </div>
+                        <span class="match-vs">vs</span>
+                        <div class="team">
+                            <span class="team-name">Fiorentina</span>
+                        </div>
+                    </div>
+                    <div class="match-tip">TIP PRO</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tips Section -->
+    <section class="tips-section" id="tips">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">TIPS DEL GIORNO</span>
+                <h2 class="section-title">I Nostri <span class="text-gradient">Pronostici</span></h2>
+                <p class="section-desc">Analisi dettagliate basate su statistiche avanzate, forma delle squadre e valore delle quote.</p>
+            </div>
+
+            <div class="tips-filters">
+                <button class="filter-btn active" data-filter="all">Tutti</button>
+                <button class="filter-btn" data-filter="free">Free</button>
+                <button class="filter-btn" data-filter="pro">Pro</button>
+                <button class="filter-btn" data-filter="vip">VIP</button>
+            </div>
+
+            <div class="tips-grid">
+                <!-- Tip Card 1 - FREE -->
+                <div class="tip-card" data-tier="free">
+                    <div class="tip-card-header">
+                        <span class="tip-badge tip-badge--free">FREE</span>
+                        <span class="tip-date">Oggi, 20:45</span>
+                    </div>
+                    <div class="tip-match">
+                        <div class="tip-team">
+                            <div class="team-logo">JUV</div>
+                            <span>Juventus</span>
+                        </div>
+                        <div class="tip-versus">
+                            <span class="vs-text">VS</span>
+                        </div>
+                        <div class="tip-team">
+                            <div class="team-logo">INT</div>
+                            <span>Inter</span>
+                        </div>
+                    </div>
+                    <div class="tip-prediction">
+                        <div class="tip-pick">
+                            <span class="pick-label">Pronostico</span>
+                            <span class="pick-value">Under 2.5</span>
+                        </div>
+                        <div class="tip-odds">
+                            <span class="odds-label">Quota</span>
+                            <span class="odds-value">1.85</span>
+                        </div>
+                    </div>
+                    <div class="tip-confidence">
+                        <span class="confidence-label">Confidence</span>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" data-confidence="80"></div>
+                        </div>
+                        <span class="confidence-value">80%</span>
+                    </div>
+                    <div class="tip-analysis">
+                        <p>Negli ultimi 5 scontri diretti, 4 sono finiti Under 2.5. Entrambe le squadre in fase difensiva solida con Juve che ha subito solo 3 gol nelle ultime 6 partite casalinghe.</p>
+                    </div>
+                </div>
+
+                <!-- Tip Card 2 - PRO -->
+                <div class="tip-card tip-card--pro" data-tier="pro">
+                    <div class="tip-card-glow"></div>
+                    <div class="tip-card-header">
+                        <span class="tip-badge tip-badge--pro">PRO</span>
+                        <span class="tip-date">Dom, 15:00</span>
+                    </div>
+                    <div class="tip-match">
+                        <div class="tip-team">
+                            <div class="team-logo">MIL</div>
+                            <span>Milan</span>
+                        </div>
+                        <div class="tip-versus">
+                            <span class="vs-text">VS</span>
+                        </div>
+                        <div class="tip-team">
+                            <div class="team-logo">NAP</div>
+                            <span>Napoli</span>
+                        </div>
+                    </div>
+                    <div class="tip-prediction">
+                        <div class="tip-pick">
+                            <span class="pick-label">Pronostico</span>
+                            <span class="pick-value">Goal + Over 2.5</span>
+                        </div>
+                        <div class="tip-odds">
+                            <span class="odds-label">Quota</span>
+                            <span class="odds-value">2.10</span>
+                        </div>
+                    </div>
+                    <div class="tip-confidence">
+                        <span class="confidence-label">Confidence</span>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" data-confidence="75"></div>
+                        </div>
+                        <span class="confidence-value">75%</span>
+                    </div>
+                    <div class="tip-analysis tip-analysis--locked">
+                        <div class="locked-overlay">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                            <span>Analisi completa riservata agli abbonati PRO</span>
+                            <a href="#pricing" class="btn btn-gold btn-sm">Sblocca</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tip Card 3 - VIP -->
+                <div class="tip-card tip-card--vip" data-tier="vip">
+                    <div class="tip-card-glow tip-card-glow--gold"></div>
+                    <div class="tip-card-header">
+                        <span class="tip-badge tip-badge--vip">VIP</span>
+                        <span class="tip-date">Dom, 18:00</span>
+                    </div>
+                    <div class="tip-match">
+                        <div class="tip-team">
+                            <div class="team-logo">ROM</div>
+                            <span>Roma</span>
+                        </div>
+                        <div class="tip-versus">
+                            <span class="vs-text">VS</span>
+                        </div>
+                        <div class="tip-team">
+                            <div class="team-logo">LAZ</div>
+                            <span>Lazio</span>
+                        </div>
+                    </div>
+                    <div class="tip-prediction">
+                        <div class="tip-pick">
+                            <span class="pick-label">Pronostico</span>
+                            <span class="pick-value tip-value--hidden">&#9733; &#9733; &#9733;</span>
+                        </div>
+                        <div class="tip-odds">
+                            <span class="odds-label">Quota</span>
+                            <span class="odds-value tip-value--hidden">?.??</span>
+                        </div>
+                    </div>
+                    <div class="tip-confidence">
+                        <span class="confidence-label">Confidence</span>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill confidence-fill--gold" data-confidence="90"></div>
+                        </div>
+                        <span class="confidence-value">90%</span>
+                    </div>
+                    <div class="tip-analysis tip-analysis--locked">
+                        <div class="locked-overlay locked-overlay--gold">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                            <span>Tip esclusivo riservato ai membri VIP</span>
+                            <a href="#pricing" class="btn btn-gold btn-sm">Diventa VIP</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tip Card 4 - Multipla del Giorno -->
+                <div class="tip-card tip-card--multipla" data-tier="pro">
+                    <div class="tip-card-glow"></div>
+                    <div class="tip-card-header">
+                        <span class="tip-badge tip-badge--pro">MULTIPLA</span>
+                        <span class="tip-date">Domenica</span>
+                    </div>
+                    <div class="tip-multipla">
+                        <h3 class="multipla-title">Multipla del Giorno</h3>
+                        <div class="multipla-picks">
+                            <div class="multipla-pick">
+                                <span>Juventus - Inter</span>
+                                <span class="multipla-pick-value">Under 2.5</span>
+                                <span class="multipla-pick-odds">1.85</span>
+                            </div>
+                            <div class="multipla-pick">
+                                <span>Milan - Napoli</span>
+                                <span class="multipla-pick-value">Goal</span>
+                                <span class="multipla-pick-odds">1.55</span>
+                            </div>
+                            <div class="multipla-pick multipla-pick--locked">
+                                <span>Roma - Lazio</span>
+                                <span class="multipla-pick-value">???</span>
+                                <span class="multipla-pick-odds">?.??</span>
+                            </div>
+                        </div>
+                        <div class="multipla-total">
+                            <span>Quota Totale</span>
+                            <span class="multipla-total-odds">5.30+</span>
+                        </div>
+                    </div>
+                    <div class="tip-analysis tip-analysis--locked">
+                        <div class="locked-overlay">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                            <span>Sblocca la multipla completa</span>
+                            <a href="#pricing" class="btn btn-gold btn-sm">Vai PRO</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Track Record / Stats Section -->
+    <section class="stats-section" id="stats">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">TRACK RECORD</span>
+                <h2 class="section-title">Risultati <span class="text-gradient">Verificati</span></h2>
+                <p class="section-desc">Trasparenza totale. Ogni tip viene tracciato e i risultati sono pubblici.</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">&#9889;</div>
+                    <div class="stat-value" data-count="1842">0</div>
+                    <div class="stat-label">Tips Vincenti</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">&#127942;</div>
+                    <div class="stat-value" data-count="73">0</div>
+                    <div class="stat-suffix">%</div>
+                    <div class="stat-label">Win Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">&#128200;</div>
+                    <div class="stat-value">+12.4%</div>
+                    <div class="stat-label">ROI Mensile</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">&#128176;</div>
+                    <div class="stat-value">1.87</div>
+                    <div class="stat-label">Quota Media</div>
+                </div>
+            </div>
+
+            <!-- Monthly Performance Chart -->
+            <div class="chart-container">
+                <h3 class="chart-title">Profitto Mensile (unità)</h3>
+                <div class="chart">
+                    <div class="chart-bar" data-value="85" data-label="Set"><div class="chart-fill"></div><span class="chart-amount">+8.5u</span></div>
+                    <div class="chart-bar" data-value="120" data-label="Ott"><div class="chart-fill"></div><span class="chart-amount">+12.0u</span></div>
+                    <div class="chart-bar" data-value="65" data-label="Nov"><div class="chart-fill"></div><span class="chart-amount">+6.5u</span></div>
+                    <div class="chart-bar" data-value="140" data-label="Dic"><div class="chart-fill"></div><span class="chart-amount">+14.0u</span></div>
+                    <div class="chart-bar" data-value="95" data-label="Gen"><div class="chart-fill"></div><span class="chart-amount">+9.5u</span></div>
+                    <div class="chart-bar" data-value="110" data-label="Feb"><div class="chart-fill"></div><span class="chart-amount">+11.0u</span></div>
+                </div>
+            </div>
+
+            <!-- Recent Results -->
+            <div class="recent-results">
+                <h3 class="results-title">Ultimi Risultati</h3>
+                <div class="results-list">
+                    <div class="result-item result-item--win">
+                        <span class="result-status">&#10003;</span>
+                        <span class="result-match">Juventus vs Milan</span>
+                        <span class="result-pick">Under 2.5</span>
+                        <span class="result-odds">@1.85</span>
+                        <span class="result-badge result-badge--win">VINTO</span>
+                    </div>
+                    <div class="result-item result-item--win">
+                        <span class="result-status">&#10003;</span>
+                        <span class="result-match">Napoli vs Atalanta</span>
+                        <span class="result-pick">1 + Over 1.5</span>
+                        <span class="result-odds">@2.10</span>
+                        <span class="result-badge result-badge--win">VINTO</span>
+                    </div>
+                    <div class="result-item result-item--loss">
+                        <span class="result-status">&#10007;</span>
+                        <span class="result-match">Roma vs Fiorentina</span>
+                        <span class="result-pick">Goal</span>
+                        <span class="result-odds">@1.65</span>
+                        <span class="result-badge result-badge--loss">PERSO</span>
+                    </div>
+                    <div class="result-item result-item--win">
+                        <span class="result-status">&#10003;</span>
+                        <span class="result-match">Inter vs Lazio</span>
+                        <span class="result-pick">1</span>
+                        <span class="result-odds">@1.75</span>
+                        <span class="result-badge result-badge--win">VINTO</span>
+                    </div>
+                    <div class="result-item result-item--win">
+                        <span class="result-status">&#10003;</span>
+                        <span class="result-match">Torino vs Bologna</span>
+                        <span class="result-pick">Under 2.5</span>
+                        <span class="result-odds">@1.90</span>
+                        <span class="result-badge result-badge--win">VINTO</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing-section" id="pricing">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">PIANI</span>
+                <h2 class="section-title">Scegli il Tuo <span class="text-gradient">Piano</span></h2>
+                <p class="section-desc">Investi nel tuo vantaggio. Ogni piano include accesso immediato ai nostri pronostici.</p>
+            </div>
+
+            <div class="pricing-grid">
+                <!-- Free Plan -->
+                <div class="pricing-card">
+                    <div class="pricing-tier">FREE</div>
+                    <div class="pricing-price">
+                        <span class="price-currency">&euro;</span>
+                        <span class="price-amount">0</span>
+                        <span class="price-period">/mese</span>
+                    </div>
+                    <div class="pricing-desc">Per iniziare a scoprire il nostro metodo</div>
+                    <ul class="pricing-features">
+                        <li class="feature-included">
+                            <span class="feature-check">&#10003;</span>
+                            1-2 tips base a settimana
+                        </li>
+                        <li class="feature-included">
+                            <span class="feature-check">&#10003;</span>
+                            Statistiche generali Serie A
+                        </li>
+                        <li class="feature-included">
+                            <span class="feature-check">&#10003;</span>
+                            Classifica e calendario
+                        </li>
+                        <li class="feature-excluded">
+                            <span class="feature-x">&#10007;</span>
+                            Tips giornalieri completi
+                        </li>
+                        <li class="feature-excluded">
+                            <span class="feature-x">&#10007;</span>
+                            Analisi pre-partita
+                        </li>
+                        <li class="feature-excluded">
+                            <span class="feature-x">&#10007;</span>
+                            Canale Telegram VIP
+                        </li>
+                    </ul>
+                    <a href="#" class="btn btn-outline btn-block">Inizia Gratis</a>
+                </div>
+
+                <!-- Pro Plan -->
+                <div class="pricing-card pricing-card--pro">
+                    <div class="pricing-popular">PIU' POPOLARE</div>
+                    <div class="pricing-tier">PRO</div>
+                    <div class="pricing-price">
+                        <span class="price-currency">&euro;</span>
+                        <span class="price-amount">9</span>
+                        <span class="price-decimal">.99</span>
+                        <span class="price-period">/mese</span>
+                    </div>
+                    <div class="pricing-desc">Per chi vuole fare sul serio</div>
+                    <ul class="pricing-features">
+                        <li class="feature-included">
+                            <span class="feature-check">&#10003;</span>
+                            Tutti i tips giornalieri
+                        </li>
+                        <li class="feature-included">
+                            <span class="feature-check">&#10003;</span>
+                            Analisi pre-partita dettagliate
+                        </li>
+                        <li class="feature-included">
+                            <span class="feature-check">&#10003;</span>
+                            Statistiche avanzate
+                        </li>
+                        <li class="feature-included">
+                            <span class="feature-check">&#10003;</span>
+                            Multipla del giorno
+                        </li>
+                        <li class="feature-included">
+                            <span class="feature-check">&#10003;</span>
+                            Storico completo risultati
+                        </li>
+                        <li class="feature-excluded">
+                            <span class="feature-x">&#10007;</span>
+                            Tips VALUE ad alta quota
+                        </li>
+                    </ul>
+                    <a href="#" class="btn btn-gold btn-block">Scegli PRO</a>
+                </div>
+
+                <!-- VIP Plan -->
+                <div class="pricing-card pricing-card--vip">
+                    <div class="pricing-tier">VIP</div>
+                    <div class="pricing-price">
+                        <span class="price-currency">&euro;</span>
+                        <span class="price-amount">29</span>
+                        <span class="price-decimal">.99</span>
+                        <span class="price-period">/mese</span>
+                    </div>
+                    <div class="pricing-desc">Per chi vuole il massimo vantaggio</div>
+                    <ul class="pricing-features">
+                        <li class="feature-included">
+                            <span class="feature-check">&#10003;</span>
+                            Tutto del piano PRO
+                        </li>
+                        <li class="feature-included">
+                            <span class="feature-check">&#10003;</span>
+                            Tips VALUE esclusivi
+                        </li>
+                        <li class="feature-included">
+                            <span class="feature-check">&#10003;</span>
+                            Canale Telegram VIP privato
+                        </li>
+                        <li class="feature-included">
+                            <span class="feature-check">&#10003;</span>
+                            Alert in tempo reale
+                        </li>
+                        <li class="feature-included">
+                            <span class="feature-check">&#10003;</span>
+                            Bankroll management personalizzato
+                        </li>
+                        <li class="feature-included">
+                            <span class="feature-check">&#10003;</span>
+                            Supporto diretto 1-to-1
+                        </li>
+                    </ul>
+                    <a href="#" class="btn btn-gold btn-block">Diventa VIP</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Telegram CTA Section -->
+    <section class="telegram-section">
+        <div class="container">
+            <div class="telegram-card">
+                <div class="telegram-glow"></div>
+                <div class="telegram-content">
+                    <div class="telegram-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                    </div>
+                    <h2 class="telegram-title">Unisciti al Canale Telegram</h2>
+                    <p class="telegram-desc">Ricevi i tips direttamente sul telefono. Notifiche istantanee prima di ogni partita.</p>
+                    <a href="#" class="btn btn-telegram btn-lg">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                        Entra nel Canale
+                    </a>
+                    <span class="telegram-members">4,200+ membri attivi</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section" id="faq">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">FAQ</span>
+                <h2 class="section-title">Domande <span class="text-gradient">Frequenti</span></h2>
+            </div>
+
+            <div class="faq-list">
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Come funzionano i vostri pronostici?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>I nostri pronostici sono basati su un mix di analisi statistica avanzata, studio della forma delle squadre, analisi tattiche e monitoraggio delle quote di mercato. Ogni tip viene validato da un modello proprietario che valuta il valore atteso della scommessa rispetto alla quota offerta dai bookmaker.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Posso davvero guadagnare con le scommesse?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Le scommesse sportive comportano sempre un rischio. Noi forniamo analisi e pronostici basati su dati, ma nessun risultato e' garantito. Il nostro track record mostra un ROI positivo nel lungo periodo, ma e' fondamentale scommettere responsabilmente e solo con denaro che ci si puo' permettere di perdere.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Come funziona l'abbonamento?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>L'abbonamento e' mensile e si rinnova automaticamente. Puoi cancellare in qualsiasi momento dalla tua area personale. Con il piano PRO hai accesso a tutti i tips giornalieri e le analisi. Con il piano VIP, oltre a tutto cio', ricevi tips esclusivi ad alta quota e accesso al canale Telegram privato.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Che bookmaker consigliate?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Consigliamo esclusivamente bookmaker con licenza ADM (ex AAMS) per operare in totale legalita' in Italia. Tra i principali: bet365, Snai, Sisal, Goldbet e Betflag. Registrandoti tramite i nostri link potrai ottenere bonus di benvenuto esclusivi.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Quanto dovrei puntare su ogni tip?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Raccomandiamo di non superare mai il 2-5% del proprio bankroll per singola scommessa. I membri VIP ricevono consigli personalizzati sul bankroll management basati sul proprio budget e profilo di rischio.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="logo">
+                        <span class="logo-icon">&#9824;</span>
+                        <span class="logo-text">THE LAST BET</span>
+                    </a>
+                    <p class="footer-desc">Pronostici Serie A premium basati su dati e analisi avanzate.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Navigazione</h4>
+                    <a href="#tips">Tips del Giorno</a>
+                    <a href="#stats">Track Record</a>
+                    <a href="#pricing">Piani</a>
+                    <a href="#faq">FAQ</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Legale</h4>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Termini di Servizio</a>
+                    <a href="#">Cookie Policy</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Seguici</h4>
+                    <a href="#">Telegram</a>
+                    <a href="#">Instagram</a>
+                    <a href="#">TikTok</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-disclaimer">
+                    <p><strong>Disclaimer:</strong> Il gioco d'azzardo puo' causare dipendenza. Gioca responsabilmente. Questo sito fornisce solo pronostici e analisi a scopo informativo. Non raccogliamo ne' gestiamo scommesse. Vietato ai minori di 18 anni. Se hai problemi di gioco, chiama il numero verde 800-558822.</p>
+                    <p>I link ai bookmaker presenti su questo sito sono link di affiliazione verso operatori con regolare licenza ADM.</p>
+                </div>
+                <div class="footer-copy">
+                    <span>&copy; 2026 The Last Bet. Tutti i diritti riservati.</span>
+                    <div class="footer-age">
+                        <span class="age-badge">18+</span>
+                        <span>ADM</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Age Gate Modal -->
+    <div class="age-gate" id="ageGate">
+        <div class="age-gate-card">
+            <div class="age-gate-icon">&#9824;</div>
+            <h2>Hai almeno 18 anni?</h2>
+            <p>Questo sito contiene pronostici per scommesse sportive. L'accesso e' consentito solo ai maggiorenni.</p>
+            <div class="age-gate-buttons">
+                <button class="btn btn-gold btn-lg" id="ageYes">Si, ho 18+ anni</button>
+                <button class="btn btn-outline btn-lg" id="ageNo">No, sono minorenne</button>
+            </div>
+            <span class="age-gate-disclaimer">Il gioco d'azzardo puo' causare dipendenza. Gioca responsabilmente.</span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
