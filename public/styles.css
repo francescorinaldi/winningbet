@@ -922,8 +922,16 @@ img { max-width: 100%; display: block; }
 }
 
 .stat-icon {
-    font-size: 2rem;
-    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(212, 168, 83, 0.08);
+    border: 1px solid var(--border-gold);
+    color: var(--gold);
+    margin: 0 auto 16px;
 }
 
 .stat-value {
