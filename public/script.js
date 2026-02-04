@@ -1,6 +1,16 @@
 /* ============================================
    WINNING BET — Script
-   Particles, Animations, Interactivity
+   ============================================
+   Frontend IIFE che gestisce tutte le interazioni del sito:
+   - Sistema di particelle animato (Canvas 2D)
+   - Effetti di scroll (navbar, reveal, counter)
+   - Caricamento dati live via API (/api/matches, /api/results)
+   - Rendering dinamico delle tip card e dei risultati
+   - Filtri, FAQ accordion, smooth scroll
+
+   Il codice e' organizzato in sezioni logiche. Nessuna
+   dipendenza esterna: usa esclusivamente API del browser
+   (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
 (function () {
@@ -9,21 +19,37 @@
     // ==========================================
     // PARTICLE SYSTEM
     // ==========================================
+    // Sfondo animato con particelle fluttuanti e linee
+    // di connessione tra particelle vicine. Renderizzato
+    // su un <canvas> fixed (id="particles") che copre
+    // l'intera viewport. Il numero di particelle si adatta
+    // alla larghezza dello schermo (max 80).
+
     const canvas = document.getElementById('particles');
     const ctx = canvas.getContext('2d');
     let particles = [];
     let animationId;
 
+    /**
+     * Ridimensiona il canvas alla dimensione della viewport.
+     * Chiamata all'init e su window resize.
+     */
     function resizeCanvas() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     }
 
+    /**
+     * Singola particella del sistema.
+     * Ogni particella ha posizione, velocita', dimensione e opacita'
+     * casuali. Il 30% delle particelle e' color gold, il resto bianco.
+     */
     class Particle {
         constructor() {
             this.reset();
         }
 
+        /** Inizializza/resetta le proprieta' con valori casuali. */
         reset() {
             this.x = Math.random() * canvas.width;
             this.y = Math.random() * canvas.height;
@@ -34,6 +60,7 @@
             this.gold = Math.random() > 0.7;
         }
 
+        /** Aggiorna la posizione. Inverte la direzione ai bordi del canvas. */
         update() {
             this.x += this.speedX;
             this.y += this.speedY;
@@ -42,6 +69,7 @@
             if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
         }
 
+        /** Disegna la particella come cerchio sul canvas context. */
         draw() {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
@@ -54,6 +82,10 @@
         }
     }
 
+    /**
+     * Crea l'array di particelle iniziale.
+     * Il conteggio scala con la larghezza della finestra (1 ogni 15px, max 80).
+     */
     function initParticles() {
         resizeCanvas();
         const count = Math.min(80, Math.floor(window.innerWidth / 15));
@@ -63,6 +95,11 @@
         }
     }
 
+    /**
+     * Disegna linee semi-trasparenti tra coppie di particelle
+     * distanti meno di 120px. L'opacita' della linea decresce
+     * con la distanza (effetto rete/constellation).
+     */
     function drawConnections() {
         for (let i = 0; i < particles.length; i++) {
             for (let j = i + 1; j < particles.length; j++) {
@@ -83,6 +120,11 @@
         }
     }
 
+    /**
+     * Loop principale di animazione. Pulisce il canvas,
+     * aggiorna e disegna ogni particella, poi disegna le connessioni.
+     * Usa requestAnimationFrame per ~60fps.
+     */
     function animateParticles() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         particles.forEach(p => {
@@ -103,8 +145,16 @@
     // ==========================================
     // NAVBAR SCROLL EFFECT
     // ==========================================
+    // Aggiunge la classe .scrolled alla navbar dopo 60px di scroll.
+    // Lo stato .scrolled attiva backdrop-filter blur e bordo inferiore
+    // definiti in styles.css.
+
     const navbar = document.getElementById('navbar');
 
+    /**
+     * Handler per l'evento scroll. Aggiunge/rimuove la classe
+     * .scrolled sulla navbar in base alla posizione di scroll.
+     */
     function handleNavScroll() {
         if (window.scrollY > 60) {
             navbar.classList.add('scrolled');
@@ -118,6 +168,10 @@
     // ==========================================
     // MOBILE MENU
     // ==========================================
+    // Toggle del menu hamburger su mobile. Quando aperto,
+    // blocca lo scroll del body (overflow: hidden) e mostra
+    // un overlay fullscreen con i link di navigazione.
+
     const hamburger = document.getElementById('hamburger');
     const navLinks = document.getElementById('navLinks');
 
@@ -127,6 +181,7 @@
         document.body.style.overflow = navLinks.classList.contains('open') ? 'hidden' : '';
     });
 
+    // Chiude il menu quando si clicca un link
     navLinks.querySelectorAll('a').forEach(link => {
         link.addEventListener('click', () => {
             hamburger.classList.remove('active');
@@ -138,6 +193,16 @@
     // ==========================================
     // COUNTER ANIMATION
     // ==========================================
+    // Animazione numerica che conta da 0 al valore target
+    // definito nell'attributo data-count dell'elemento.
+    // Usa easing cubico (ease-out) per un effetto di decelerazione.
+
+    /**
+     * Anima un contatore numerico da 0 al valore data-count dell'elemento.
+     * Durata fissa di 2 secondi con easing cubico (1 - (1-t)^3).
+     * Il numero viene formattato con separatore italiano (punto per le migliaia).
+     * @param {HTMLElement} el - Elemento con attributo data-count
+     */
     function animateCounter(el) {
         const target = parseInt(el.getAttribute('data-count'), 10);
         if (!target) return;
@@ -166,13 +231,22 @@
     // ==========================================
     // SCROLL REVEAL & TRIGGERS
     // ==========================================
+    // Sistema di animazioni on-scroll basato su IntersectionObserver.
+    // Gli elementi con classe .reveal partono con opacity:0 e translateY(40px),
+    // e diventano visibili (classe .visible) quando entrano nel viewport.
+    // Ogni observer gestisce un tipo diverso di animazione:
+    // - revealObserver: fade-in/slide-up generico
+    // - counterObserver: trigger per animazioni counter
+    // - confidenceObserver: riempimento barre di confidence
+    // - chartObserver: animazione barre del grafico con stagger
+
     const observerOptions = {
         root: null,
         rootMargin: '0px 0px -60px 0px',
         threshold: 0.1
     };
 
-    // Reveal elements
+    // Reveal elements — aggiunge .reveal a card, stat, pricing, ecc.
     const revealElements = document.querySelectorAll('.tip-card, .stat-card, .pricing-card, .faq-item, .telegram-card, .chart-container, .recent-results');
     revealElements.forEach(el => el.classList.add('reveal'));
 
@@ -187,7 +261,7 @@
 
     revealElements.forEach(el => revealObserver.observe(el));
 
-    // Counter triggers
+    // Counter triggers — attiva animateCounter al primo scroll su [data-count]
     const counterElements = document.querySelectorAll('[data-count]');
     const counterTriggered = new Set();
 
@@ -203,7 +277,7 @@
 
     counterElements.forEach(el => counterObserver.observe(el));
 
-    // Confidence bars
+    // Confidence bars — riempie la barra al valore data-confidence (%)
     const confidenceFills = document.querySelectorAll('.confidence-fill');
 
     const confidenceObserver = new IntersectionObserver((entries) => {
@@ -218,7 +292,7 @@
 
     confidenceFills.forEach(el => confidenceObserver.observe(el));
 
-    // Chart bars animation
+    // Chart bars — anima le barre del grafico mensile con delay staggerato
     const chartBars = document.querySelectorAll('.chart-bar');
 
     const chartObserver = new IntersectionObserver((entries) => {
@@ -243,10 +317,16 @@
     }
 
     // ==========================================
-    // TIPS FILTER (works with dynamically loaded cards)
+    // TIPS FILTER
     // ==========================================
+    // Filtra le tip card per tier (all/free/pro/vip).
+    // Funziona anche con card caricate dinamicamente via API.
+    // Le card filtrate vengono nascoste con display:none,
+    // quelle visibili hanno un'animazione fade-in.
+
     var filterBtns = document.querySelectorAll('.filter-btn');
 
+    /** Inizializza i listener sui bottoni filtro della sezione tips. */
     function initTipsFilter() {
         filterBtns.forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -280,6 +360,10 @@
     // ==========================================
     // FAQ ACCORDION
     // ==========================================
+    // Accordion con mutua esclusione: un solo item aperto alla volta.
+    // Cliccando su un item gia' aperto lo chiude (toggle).
+    // L'animazione e' gestita via CSS (max-height transition).
+
     const faqItems = document.querySelectorAll('.faq-item');
 
     faqItems.forEach(item => {
@@ -296,6 +380,10 @@
     // ==========================================
     // SMOOTH SCROLL FOR ANCHOR LINKS
     // ==========================================
+    // Intercetta i click su link ancora (href="#...") e scrolla
+    // in modo fluido alla sezione corrispondente, tenendo conto
+    // dell'altezza della navbar fixed + 20px di padding.
+
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             const targetId = this.getAttribute('href');
@@ -314,6 +402,10 @@
     // ==========================================
     // STAGGER REVEAL FOR GRID ITEMS
     // ==========================================
+    // Applica un transition-delay incrementale (0.1s * indice)
+    // ai figli delle griglie tips, pricing e stats per creare
+    // un effetto di apparizione sequenziale.
+
     const staggerContainers = document.querySelectorAll('.tips-grid, .pricing-grid, .stats-grid');
 
     staggerContainers.forEach(container => {
@@ -326,12 +418,30 @@
     // ==========================================
     // LIVE DATA — API FETCHING
     // ==========================================
+    // Carica dati dalle serverless functions Vercel (/api/*)
+    // e renderizza dinamicamente nel DOM le sezioni:
+    // - Live Matches Bar (prossime partite)
+    // - Tips del Giorno (pronostici generati dalle partite reali)
+    // - Ultimi Risultati (risultati recenti con badge Over/Under)
+
+    /**
+     * Wrapper generico per le chiamate alle API interne.
+     * @param {string} endpoint - Nome dell'endpoint (es. "matches", "results")
+     * @returns {Promise<*>} Dati JSON dalla risposta
+     * @throws {Error} Se la risposta non e' ok (status != 2xx)
+     */
     async function fetchAPI(endpoint) {
         const res = await fetch(`/api/${endpoint}`);
         if (!res.ok) throw new Error(`API ${endpoint}: ${res.status}`);
         return res.json();
     }
 
+    /**
+     * Formatta una data ISO in formato breve italiano per le partite.
+     * Esempio: "2025-09-15T18:45:00Z" -> "Lun 18:45"
+     * @param {string} isoDate - Data in formato ISO 8601
+     * @returns {string} Data formattata (giorno abbreviato + ora)
+     */
     function formatMatchDate(isoDate) {
         const d = new Date(isoDate);
         const days = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
@@ -341,6 +451,12 @@
         return day + ' ' + hours + ':' + mins;
     }
 
+    /**
+     * Formatta una data ISO in formato DD/MM per i risultati.
+     * Esempio: "2025-09-15T18:45:00Z" -> "15/09"
+     * @param {string} isoDate - Data in formato ISO 8601
+     * @returns {string} Data formattata (giorno/mese)
+     */
     function formatResultDate(isoDate) {
         const d = new Date(isoDate);
         const day = String(d.getDate()).padStart(2, '0');
@@ -348,6 +464,13 @@
         return day + '/' + month;
     }
 
+    /**
+     * Utility per creare un elemento DOM con classe e contenuto opzionali.
+     * @param {string} tag - Tag HTML (es. "div", "span")
+     * @param {string|null} className - Classe CSS (null per nessuna)
+     * @param {string|null} textContent - Contenuto testuale (null per vuoto)
+     * @returns {HTMLElement} Elemento creato
+     */
     function createEl(tag, className, textContent) {
         const el = document.createElement(tag);
         if (className) el.className = className;
@@ -355,6 +478,15 @@
         return el;
     }
 
+    /**
+     * Costruisce una card partita per la Live Matches Bar.
+     * Mostra giorno/ora e nomi delle due squadre.
+     * @param {Object} m - Dati partita da /api/matches
+     * @param {string} m.date - Data ISO della partita
+     * @param {string} m.home - Nome squadra di casa
+     * @param {string} m.away - Nome squadra ospite
+     * @returns {HTMLElement} Elemento .match-card
+     */
     function buildMatchCard(m) {
         var card = createEl('div', 'match-card');
         card.appendChild(createEl('div', 'match-time', formatMatchDate(m.date)));
@@ -372,6 +504,17 @@
         return card;
     }
 
+    /**
+     * Costruisce una riga risultato per la sezione Ultimi Risultati.
+     * Mostra data, squadre, punteggio e badge Over/Under 2.5.
+     * @param {Object} r - Dati risultato da /api/results
+     * @param {string} r.date - Data ISO della partita
+     * @param {string} r.home - Nome squadra di casa
+     * @param {string} r.away - Nome squadra ospite
+     * @param {number} r.goalsHome - Gol squadra di casa
+     * @param {number} r.goalsAway - Gol squadra ospite
+     * @returns {HTMLElement} Elemento .result-item
+     */
     function buildResultItem(r) {
         var item = createEl('div', 'result-item');
         item.appendChild(createEl('span', 'result-date', formatResultDate(r.date)));
@@ -386,18 +529,34 @@
         return item;
     }
 
+    /**
+     * Mostra uno stato vuoto/errore in un container, sostituendo il contenuto.
+     * @param {HTMLElement} container - Elemento contenitore
+     * @param {string} className - Classe CSS per il messaggio
+     * @param {string} message - Testo del messaggio
+     */
     function setEmptyState(container, className, message) {
         container.textContent = '';
         container.appendChild(createEl('div', className, message));
     }
 
     // --- Tips generation from real matches ---
+    // I pronostici mostrati sono generati lato client combinando dati
+    // reali delle partite (da /api/matches) con previsioni e analisi
+    // selezionate casualmente. Le card sono divise per tier:
+    // - FREE: pronostico e analisi visibili
+    // - PRO: pronostico visibile, analisi bloccata
+    // - VIP: pronostico, quote e analisi bloccati
+    // - MULTIPLA: combinata di 3 partite, parzialmente bloccata
+
+    /** Pool di previsioni possibili per le tip card */
     var PREDICTIONS = [
         'Under 2.5', 'Over 2.5', 'Goal', 'No Goal',
         '1', 'X', '2', '1X', 'X2',
         'Over 1.5', 'Under 3.5', '1 + Over 1.5', '2 + Over 1.5'
     ];
 
+    /** Pool di analisi testuali per le tip card FREE */
     var ANALYSES = [
         'Negli ultimi 5 scontri diretti, il trend e\' chiaro. Difese solide e pochi gol nelle ultime uscite casalinghe.',
         'Entrambe le squadre segnano regolarmente. Media gol combinata superiore a 3 nelle ultime 4 giornate.',
@@ -407,22 +566,45 @@
         'Quote in calo da inizio settimana. Il mercato si sta allineando alla nostra analisi.'
     ];
 
+    /**
+     * Seleziona un elemento casuale da un array.
+     * @param {Array} arr - Array sorgente
+     * @returns {*} Elemento casuale
+     */
     function randomFrom(arr) {
         return arr[Math.floor(Math.random() * arr.length)];
     }
 
+    /**
+     * Genera una quota casuale tra 1.30 e 3.50.
+     * @returns {string} Quota con 2 decimali (es. "2.15")
+     */
     function randomOdd() {
         return (1.3 + Math.random() * 2.2).toFixed(2);
     }
 
+    /**
+     * Genera un valore di confidence casuale tra 60% e 90%.
+     * @returns {number} Valore intero tra 60 e 90
+     */
     function randomConfidence() {
         return 60 + Math.floor(Math.random() * 31); // 60-90
     }
 
+    /**
+     * Abbrevia il nome di una squadra alle prime 3 lettere maiuscole.
+     * Usato come placeholder nei cerchi team-logo.
+     * @param {string} name - Nome completo della squadra
+     * @returns {string} Abbreviazione di 3 caratteri (es. "JUV")
+     */
     function teamAbbr(name) {
         return name.substring(0, 3).toUpperCase();
     }
 
+    /**
+     * Crea un'icona lucchetto SVG per le sezioni bloccate (PRO/VIP).
+     * @returns {SVGElement} Elemento SVG del lucchetto
+     */
     function buildLockSvg() {
         var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttribute('width', '24');
@@ -442,6 +624,21 @@
         return svg;
     }
 
+    /**
+     * Costruisce una tip card per un singolo pronostico.
+     *
+     * La card varia in base al tier:
+     * - "free": tutto visibile (pronostico, quota, analisi)
+     * - "pro": pronostico e quota visibili, analisi bloccata con overlay
+     * - "vip": pronostico e quota offuscati, analisi bloccata con overlay gold
+     *
+     * @param {Object} match - Dati partita da /api/matches
+     * @param {string} match.date - Data ISO della partita
+     * @param {string} match.home - Nome squadra di casa
+     * @param {string} match.away - Nome squadra ospite
+     * @param {string} tier - Tier della card: "free", "pro", o "vip"
+     * @returns {HTMLElement} Elemento .tip-card completo
+     */
     function buildTipCard(match, tier) {
         var isFree = tier === 'free';
         var isVip = tier === 'vip';
@@ -452,18 +649,18 @@
         var card = createEl('div', cardClass);
         card.setAttribute('data-tier', tier);
 
-        // Glow for pro/vip
+        // Glow decorativo per card pro/vip
         if (tier === 'pro') card.appendChild(createEl('div', 'tip-card-glow'));
         if (isVip) card.appendChild(createEl('div', 'tip-card-glow tip-card-glow--gold'));
 
-        // Header
+        // Header: badge tier + data partita
         var header = createEl('div', 'tip-card-header');
         var badgeClass = 'tip-badge tip-badge--' + tier;
         header.appendChild(createEl('span', badgeClass, tier.toUpperCase()));
         header.appendChild(createEl('span', 'tip-date', formatMatchDate(match.date)));
         card.appendChild(header);
 
-        // Match teams
+        // Squadre con abbreviazione come logo placeholder
         var tipMatch = createEl('div', 'tip-match');
         var homeTeam = createEl('div', 'tip-team');
         homeTeam.appendChild(createEl('div', 'team-logo', teamAbbr(match.home)));
@@ -478,7 +675,7 @@
         tipMatch.appendChild(awayTeam);
         card.appendChild(tipMatch);
 
-        // Prediction
+        // Pronostico e quota (offuscati per VIP)
         var prediction = createEl('div', 'tip-prediction');
         var pick = createEl('div', 'tip-pick');
         pick.appendChild(createEl('span', 'pick-label', 'Pronostico'));
@@ -494,7 +691,7 @@
         prediction.appendChild(odds);
         card.appendChild(prediction);
 
-        // Confidence
+        // Barra di confidence con animazione
         var conf = randomConfidence();
         var confDiv = createEl('div', 'tip-confidence');
         confDiv.appendChild(createEl('span', 'confidence-label', 'Confidence'));
@@ -506,7 +703,7 @@
         confDiv.appendChild(createEl('span', 'confidence-value', conf + '%'));
         card.appendChild(confDiv);
 
-        // Analysis
+        // Analisi: visibile per FREE, bloccata con overlay per PRO/VIP
         if (isFree) {
             var analysis = createEl('div', 'tip-analysis');
             analysis.appendChild(createEl('p', null, randomFrom(ANALYSES)));
@@ -528,6 +725,17 @@
         return card;
     }
 
+    /**
+     * Costruisce la card "Multipla del Giorno" con piu' partite.
+     * Le prime 2 selezioni sono visibili, dalla terza in poi sono bloccate
+     * (blur + testo offuscato). Include quota totale cumulativa.
+     *
+     * @param {Array<Object>} matches - Array di partite da /api/matches (min 3)
+     * @param {string} matches[].date - Data ISO della partita
+     * @param {string} matches[].home - Nome squadra di casa
+     * @param {string} matches[].away - Nome squadra ospite
+     * @returns {HTMLElement} Elemento .tip-card.tip-card--multipla
+     */
     function buildMultiplaCard(matches) {
         var card = createEl('div', 'tip-card tip-card--multipla');
         card.setAttribute('data-tier', 'pro');
@@ -539,7 +747,7 @@
         header.appendChild(createEl('span', 'tip-date', formatMatchDate(matches[0].date)));
         card.appendChild(header);
 
-        // Multipla body
+        // Corpo multipla: lista selezioni + quota totale
         var multipla = createEl('div', 'tip-multipla');
         multipla.appendChild(createEl('h3', 'multipla-title', 'Multipla del Giorno'));
 
@@ -564,7 +772,7 @@
         multipla.appendChild(total);
         card.appendChild(multipla);
 
-        // Locked overlay
+        // Overlay bloccato con CTA per upgrade
         var locked = createEl('div', 'tip-analysis tip-analysis--locked');
         var overlay = createEl('div', 'locked-overlay');
         overlay.appendChild(buildLockSvg());
@@ -578,6 +786,12 @@
         return card;
     }
 
+    /**
+     * Attiva l'IntersectionObserver per le barre di confidence
+     * all'interno di un container specifico (usato dopo il rendering
+     * dinamico delle tip card).
+     * @param {HTMLElement} container - Contenitore con elementi .confidence-fill
+     */
     function activateConfidenceBars(container) {
         var fills = container.querySelectorAll('.confidence-fill');
         var observer = new IntersectionObserver(function (entries) {
@@ -592,6 +806,12 @@
         fills.forEach(function (el) { observer.observe(el); });
     }
 
+    /**
+     * Carica le prossime partite da /api/matches e genera le tip card.
+     * Crea 4 card: 1 FREE + 1 PRO + 1 VIP + 1 MULTIPLA.
+     * Servono almeno 3 partite, altrimenti mostra stato vuoto.
+     * Dopo il rendering attiva le animazioni (confidence bars, reveal).
+     */
     async function loadTips() {
         var container = document.getElementById('tipsGrid');
         try {
@@ -602,19 +822,19 @@
             }
             container.textContent = '';
 
-            // Card 1: FREE (first match)
+            // Card 1: FREE (prima partita)
             container.appendChild(buildTipCard(matches[0], 'free'));
-            // Card 2: PRO (second match)
+            // Card 2: PRO (seconda partita)
             container.appendChild(buildTipCard(matches[1], 'pro'));
-            // Card 3: VIP (third match)
+            // Card 3: VIP (terza partita)
             container.appendChild(buildTipCard(matches[2], 'vip'));
-            // Card 4: MULTIPLA (first 3 matches)
+            // Card 4: MULTIPLA (prime 3 partite combinate)
             container.appendChild(buildMultiplaCard(matches.slice(0, 3)));
 
-            // Activate confidence bars and reveal animations on new cards
+            // Attiva barre di confidence sui nuovi elementi
             activateConfidenceBars(container);
 
-            // Add reveal animation
+            // Animazione reveal con stagger sulle nuove card
             var cards = container.querySelectorAll('.tip-card');
             cards.forEach(function (card, i) {
                 card.classList.add('reveal');
@@ -629,6 +849,10 @@
         }
     }
 
+    /**
+     * Carica le prossime partite da /api/matches e le renderizza
+     * nella Live Matches Bar (scroll orizzontale).
+     */
     async function loadMatches() {
         var container = document.getElementById('matchesScroll');
         try {
@@ -647,6 +871,10 @@
         }
     }
 
+    /**
+     * Carica gli ultimi risultati da /api/results e li renderizza
+     * nella sezione Ultimi Risultati con badge Over/Under 2.5.
+     */
     async function loadResults() {
         var container = document.getElementById('resultsList');
         try {
@@ -665,7 +893,7 @@
         }
     }
 
-    // Load data on page ready
+    // Avvia il caricamento dati al ready della pagina
     loadMatches();
     loadResults();
     loadTips();

@@ -5,16 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Winning Bet — Pronostici Serie A</title>
     <meta name="description" content="Pronostici Serie A premium. Tips giornalieri, statistiche avanzate e track record verificato. Unisciti ai vincenti.">
+
+    <!-- Google Fonts: Space Grotesk (display/headings) + Inter (body text) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Particle Canvas -->
+
+    <!--
+        STRUTTURA DELLA PAGINA
+        ======================
+        1. Particle Canvas   - Sfondo animato (gestito da script.js)
+        2. Navbar             - Navigazione sticky, hamburger su mobile
+        3. Hero               - Headline, stats animate, CTA
+        4. Live Matches Bar   - Prossime partite (dati da /api/matches)
+        5. Tips Section       - Pronostici con filtri tier (dati da /api/matches)
+        6. Track Record       - Statistiche, grafico, risultati (/api/results)
+        7. Pricing            - 3 piani: Free, Pro, VIP
+        8. Telegram CTA       - Call-to-action canale Telegram
+        9. FAQ                - Accordion domande frequenti
+       10. Footer             - Link, disclaimer, compliance 18+/ADM
+
+        I dati dinamici vengono caricati da script.js tramite le API:
+        - /api/matches  -> Live Matches Bar + Tips Section
+        - /api/results  -> Track Record / Ultimi Risultati
+    -->
+
+    <!-- 1. PARTICLE CANVAS
+         Canvas fullscreen fixed (z-index:0, pointer-events:none).
+         Le particelle sono animate da script.js (sezione PARTICLE SYSTEM). -->
     <canvas id="particles"></canvas>
 
-    <!-- Navigation -->
+    <!-- 2. NAVIGATION
+         Navbar fixed. Aggiunge classe .scrolled dopo 60px di scroll
+         (backdrop-filter blur). Su mobile (<768px): overlay fullscreen
+         togglato dal bottone hamburger (aria-label="Menu"). -->
     <nav class="navbar" id="navbar">
         <div class="container nav-content">
             <a href="#" class="logo">
@@ -36,7 +64,12 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- 3. HERO SECTION
+         Sezione fullscreen con:
+         - .hero-glow / .hero-glow--red: cerchi sfumati decorativi (CSS animation)
+         - .hero-stats [data-count]: valori animati da script.js (counter animation)
+         - .hero-cta: due bottoni (gold=pricing, outline=tips gratis)
+         - .hero-scroll-indicator: linea animata che invita allo scroll -->
     <section class="hero" id="hero">
         <div class="hero-glow"></div>
         <div class="hero-glow hero-glow--red"></div>
@@ -82,7 +115,11 @@
         </div>
     </section>
 
-    <!-- Live Matches Bar -->
+    <!-- 4. LIVE MATCHES BAR
+         Barra orizzontale con scroll delle prossime partite Serie A.
+         Il contenuto di #matchesScroll e' popolato dinamicamente da
+         script.js (funzione loadMatches -> /api/matches).
+         Mostra un loading spinner fino al caricamento dei dati. -->
     <section class="live-bar">
         <div class="container">
             <div class="live-bar-header">
@@ -98,7 +135,14 @@
         </div>
     </section>
 
-    <!-- Tips Section -->
+    <!-- 5. TIPS SECTION
+         Pronostici del giorno. I bottoni .filter-btn filtrano per tier
+         (data-filter: all/free/pro/vip). La griglia #tipsGrid e' popolata
+         da script.js (funzione loadTips) con 4 card:
+         - 1x FREE (analisi visibile)
+         - 1x PRO (analisi bloccata)
+         - 1x VIP (pronostico + quote bloccati)
+         - 1x MULTIPLA (combinata parzialmente bloccata) -->
     <section class="tips-section" id="tips">
         <div class="container">
             <div class="section-header">
@@ -123,7 +167,11 @@
         </div>
     </section>
 
-    <!-- Track Record / Stats Section -->
+    <!-- 6. TRACK RECORD / STATS SECTION
+         Tre sotto-sezioni:
+         a) Stats Grid: 4 card con statistiche chiave (data-count per animazione)
+         b) Chart: grafico a barre del profitto mensile (data-value per altezza, data-label per mese)
+         c) Recent Results: lista #resultsList popolata da loadResults -> /api/results -->
     <section class="stats-section" id="stats">
         <div class="container">
             <div class="section-header">
@@ -165,7 +213,11 @@
                 </div>
             </div>
 
-            <!-- Monthly Performance Chart -->
+            <!-- 6b. MONTHLY PERFORMANCE CHART
+             Grafico a barre animato. Ogni .chart-bar ha:
+             - data-value: valore numerico (altezza proporzionale, max ~140)
+             - data-label: etichetta mese (mostrata sotto la barra via CSS ::after)
+             L'animazione e' triggerata da chartObserver in script.js -->
             <div class="chart-container">
                 <h3 class="chart-title">Profitto Mensile (unità)</h3>
                 <div class="chart">
@@ -178,7 +230,10 @@
                 </div>
             </div>
 
-            <!-- Recent Results -->
+            <!-- 6c. RECENT RESULTS
+             Lista dinamica degli ultimi risultati Serie A.
+             Popolata da script.js (loadResults -> /api/results).
+             Ogni riga mostra: data, squadre, punteggio, badge Over/Under 2.5 -->
             <div class="recent-results">
                 <h3 class="results-title">Ultimi Risultati</h3>
                 <div class="results-list" id="resultsList">
@@ -191,7 +246,10 @@
         </div>
     </section>
 
-    <!-- Pricing Section -->
+    <!-- 7. PRICING SECTION
+         3 piani di abbonamento in griglia responsive (3 colonne -> 1 su mobile).
+         Il piano PRO ha classe .pricing-card--pro (evidenziato con scale e glow).
+         I link "Abbonati" puntano a # (placeholder per integrazione pagamenti). -->
     <section class="pricing-section" id="pricing">
         <div class="container">
             <div class="section-header">
@@ -201,7 +259,7 @@
             </div>
 
             <div class="pricing-grid">
-                <!-- Free Plan -->
+                <!-- Free Plan: 0 EUR/mese, 1-2 tips/settimana -->
                 <div class="pricing-card">
                     <div class="pricing-tier">FREE</div>
                     <div class="pricing-price">
@@ -239,7 +297,7 @@
                     <a href="#" class="btn btn-outline btn-block">Inizia Gratis</a>
                 </div>
 
-                <!-- Pro Plan -->
+                <!-- Pro Plan: 9.99 EUR/mese, tutti i tips + analisi -->
                 <div class="pricing-card pricing-card--pro">
                     <div class="pricing-popular">PIU' POPOLARE</div>
                     <div class="pricing-tier">PRO</div>
@@ -279,7 +337,7 @@
                     <a href="#" class="btn btn-gold btn-block">Scegli PRO</a>
                 </div>
 
-                <!-- VIP Plan -->
+                <!-- VIP Plan: 29.99 EUR/mese, tutto PRO + esclusivi + Telegram -->
                 <div class="pricing-card pricing-card--vip">
                     <div class="pricing-tier">VIP</div>
                     <div class="pricing-price">
@@ -321,7 +379,9 @@
         </div>
     </section>
 
-    <!-- Telegram CTA Section -->
+    <!-- 8. TELEGRAM CTA SECTION
+         Card con glow effect che invita a entrare nel canale Telegram.
+         Il link punta a # (placeholder per il link reale del canale). -->
     <section class="telegram-section">
         <div class="container">
             <div class="telegram-card">
@@ -342,7 +402,11 @@
         </div>
     </section>
 
-    <!-- FAQ Section -->
+    <!-- 9. FAQ SECTION
+         Accordion con mutua esclusione (un solo item aperto alla volta).
+         L'interazione e' gestita da script.js (sezione FAQ ACCORDION).
+         La classe .active viene togglata sul .faq-item, l'animazione
+         di apertura usa max-height transition in CSS. -->
     <section class="faq-section" id="faq">
         <div class="container">
             <div class="section-header">
@@ -400,7 +464,10 @@
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- 10. FOOTER
+         Contiene: brand, link navigazione, link legali, social.
+         .footer-disclaimer: disclaimer gambling responsabile con numero verde.
+         .footer-age: badge 18+ e riferimento ADM per compliance italiana. -->
     <footer class="footer">
         <div class="container">
             <div class="footer-grid">

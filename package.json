@@ -1,10 +1,25 @@
 {
-  "name": "thelastbet",
+  "name": "winningbet",
   "version": "1.0.0",
+  "description": "Piattaforma di pronostici premium per la Serie A italiana. Dati live, tips giornalieri e track record verificato.",
   "private": true,
+  "author": "Winning Bet",
+  "license": "UNLICENSED",
+  "keywords": [
+    "serie-a",
+    "betting-tips",
+    "pronostici",
+    "football",
+    "calcio",
+    "vercel",
+    "serverless"
+  ],
   "scripts": {
     "dev": "vercel dev",
     "build": "echo 'Static site — no build step'",
     "start": "vercel dev"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
