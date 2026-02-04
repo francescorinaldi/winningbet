@@ -1,43 +1,91 @@
 /* ============================================
-   WINNING BET — Serie A Betting Tips
-   Premium Dark Theme with Gold Accents
+   WINNING BET — Styles
+   ============================================
+   Design system premium con tema scuro e accenti gold.
+
+   Organizzazione del file:
+   1. CSS Variables    — Palette, tipografia, spacing, ombre
+   2. Reset & Base     — Normalizzazione e stili base
+   3. Typography       — Gradienti testo, header sezioni
+   4. Buttons          — Varianti: gold, outline, telegram, size
+   5. Particle Canvas  — Posizionamento canvas sfondo
+   6. Navbar           — Fixed, glassmorphism on scroll
+   7. Hero             — Fullscreen, glow effects, animazioni
+   8. Live Matches Bar — Scroll orizzontale partite
+   9. Tips Section     — Filtri, tip card, confidence bars
+  10. Stats Section    — Stat card, grafico barre, risultati
+  11. Pricing          — Card piani con highlight PRO
+  12. Telegram CTA     — Card con glow Telegram
+  13. FAQ              — Accordion con animazione max-height
+  14. Footer           — Griglia link, disclaimer, badge 18+
+  15. Loading States   — Spinner e stati vuoti
+  16. Animations       — Reveal on scroll, keyframes
+  17. Responsive       — Breakpoint: 1024px, 768px, 480px
    ============================================ */
 
-/* --- CSS Variables --- */
+/* --- CSS Variables ---
+   Tutte le variabili del design system.
+   Modificando questi valori si cambia l'intero aspetto del sito.
+
+   Palette colori:
+   - bg-*: sfondi dal piu' scuro (primary) al piu' chiaro (elevated)
+   - gold-*: accento primario (CTA, quote, highlight) con varianti gradiente
+   - red: alert, sconfitte, indicatore live
+   - green: vittorie, confidence bar, badge attivo
+   - text-*: testo con 3 livelli di enfasi
+   - telegram: colore brand Telegram (#229ED9)
+
+   Tipografia:
+   - font-display: Space Grotesk — titoli, numeri, badge, nav
+   - font-body: Inter — corpo testo, paragrafi, descrizioni
+
+   Spacing:
+   - radius-sm/md/lg/xl: border-radius progressivi per button -> card
+   - shadow/shadow-gold: ombre per elevazione e highlight gold
+*/
 :root {
+    /* Sfondi (dal piu' scuro al piu' chiaro) */
     --bg-primary: #0a0a0f;
     --bg-secondary: #12121a;
     --bg-card: #16161f;
     --bg-card-hover: #1c1c28;
     --bg-elevated: #1e1e2a;
 
+    /* Accento primario: gold */
     --gold: #d4a853;
     --gold-light: #f0d078;
     --gold-dark: #a67c2e;
     --gold-glow: rgba(212, 168, 83, 0.3);
 
+    /* Colori funzionali */
     --red: #e74c3c;
     --red-glow: rgba(231, 76, 60, 0.25);
     --green: #2ecc71;
     --green-glow: rgba(46, 204, 113, 0.2);
 
-    --text-primary: #f0f0f5;
-    --text-secondary: #8a8a9a;
-    --text-muted: #55556a;
+    /* Testo: 3 livelli di enfasi */
+    --text-primary: #f0f0f5;      /* Testo principale */
+    --text-secondary: #8a8a9a;    /* Testo secondario */
+    --text-muted: #55556a;        /* Label, hint, terziario */
 
+    /* Bordi */
     --border: rgba(255, 255, 255, 0.06);
     --border-gold: rgba(212, 168, 83, 0.3);
 
+    /* Brand Telegram */
     --telegram: #229ED9;
 
+    /* Tipografia */
     --font-display: 'Space Grotesk', sans-serif;
     --font-body: 'Inter', sans-serif;
 
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 20px;
-    --radius-xl: 28px;
+    /* Border radius progressivi */
+    --radius-sm: 8px;     /* Button, input, badge */
+    --radius-md: 12px;    /* Card piccole, FAQ item */
+    --radius-lg: 20px;    /* Tip card, stat card */
+    --radius-xl: 28px;    /* Pricing card, telegram card */
 
+    /* Ombre */
     --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
     --shadow-gold: 0 4px 30px rgba(212, 168, 83, 0.15);
 }
@@ -1616,6 +1664,25 @@ img { max-width: 100%; display: block; }
 
 /* ============================================
    RESPONSIVE
+   ============================================
+   3 breakpoint principali:
+
+   <= 1024px (Tablet)
+   - Pricing grid: da 3 colonne a 1 colonna centrata
+   - Stats grid: da 4 colonne a 2x2
+   - PRO card perde il transform:scale(1.05)
+
+   <= 768px (Mobile)
+   - Navbar: hamburger menu con overlay fullscreen
+   - Hero: titolo ridotto, stats con gap minore
+   - CTA hero: da riga a colonna
+   - Tips/footer grid: single column
+   - Result item: wrap con match name su riga intera
+
+   <= 480px (Small mobile)
+   - Hero stats: da orizzontale a verticale
+   - Filter buttons: wrap su piu' righe
+   - Footer: single column, copyright centrato
    ============================================ */
 @media (max-width: 1024px) {
     .pricing-grid {
