@@ -927,9 +927,256 @@
         });
     }
 
+    // ==========================================
+    // TRACK RECORD — Dynamic Stats from API
+    // ==========================================
+    // Carica le statistiche reali da /api/track-record
+    // e aggiorna i valori visualizzati nel DOM.
+
+    /**
+     * Carica le statistiche dal track record API e aggiorna il DOM.
+     * Aggiorna: tips vincenti, win rate, ROI mensile, quota media,
+     * e il grafico mensile se ci sono dati.
+     */
+    async function loadTrackRecord() {
+        try {
+            const data = await fetchAPI('track-record');
+            if (!data || data.total_tips === 0) return;
+
+            // Aggiorna le stat card della hero section
+            const heroStats = document.querySelectorAll('.hero-stat-value[data-count]');
+            heroStats.forEach(function (el) {
+                const label = el.closest('.hero-stat');
+                if (!label) return;
+                const labelText = label.querySelector('.hero-stat-label');
+                if (!labelText) return;
+
+                if (labelText.textContent === 'Win Rate') {
+                    el.setAttribute('data-count', Math.round(data.win_rate));
+                } else if (labelText.textContent === 'Tips Inviati') {
+                    el.setAttribute('data-count', data.total_tips);
+                }
+            });
+
+            // Aggiorna le stat card della sezione track record
+            const statCards = document.querySelectorAll('.stat-card');
+            statCards.forEach(function (card) {
+                const label = card.querySelector('.stat-label');
+                const value = card.querySelector('.stat-value');
+                if (!label || !value) return;
+
+                if (label.textContent === 'Tips Vincenti' && value.hasAttribute('data-count')) {
+                    value.setAttribute('data-count', data.won);
+                } else if (label.textContent === 'Win Rate' && value.hasAttribute('data-count')) {
+                    value.setAttribute('data-count', Math.round(data.win_rate));
+                } else if (label.textContent === 'ROI Mensile') {
+                    value.textContent = (data.roi >= 0 ? '+' : '') + data.roi + '%';
+                } else if (label.textContent === 'Quota Media') {
+                    value.textContent = data.avg_odds.toFixed(2);
+                }
+            });
+
+            // Aggiorna il grafico mensile se ci sono dati
+            if (data.monthly && data.monthly.length > 0) {
+                updateChart(data.monthly);
+            }
+        } catch (_err) {
+            // Silenzioso: se l'API non e' disponibile, i valori hardcoded rimangono
+        }
+    }
+
+    /**
+     * Aggiorna le barre del grafico mensile con dati reali.
+     * @param {Array<Object>} monthly - Dati mensili dal track record
+     */
+    function updateChart(monthly) {
+        const chartContainer = document.querySelector('.chart');
+        if (!chartContainer) return;
+
+        // Pulisce le barre esistenti
+        chartContainer.textContent = '';
+
+        monthly.forEach(function (m) {
+            const bar = document.createElement('div');
+            bar.className = 'chart-bar';
+            // Normalizza il profitto per l'altezza della barra (max 140)
+            const maxProfit = Math.max.apply(null, monthly.map(function (x) { return Math.abs(x.profit); }));
+            const normalizedValue = maxProfit > 0 ? Math.round((Math.abs(m.profit) / maxProfit) * 140) : 0;
+            bar.setAttribute('data-value', normalizedValue);
+            bar.setAttribute('data-label', m.label);
+
+            const fill = document.createElement('div');
+            fill.className = 'chart-fill';
+            bar.appendChild(fill);
+
+            const amount = document.createElement('span');
+            amount.className = 'chart-amount';
+            amount.textContent = (m.profit >= 0 ? '+' : '') + m.profit + 'u';
+            bar.appendChild(amount);
+
+            chartContainer.appendChild(bar);
+        });
+
+        // Re-attiva l'animazione delle barre
+        const bars = chartContainer.querySelectorAll('.chart-bar');
+        if (bars.length > 0) {
+            const chartObs = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        const allBars = entry.target.closest('.chart').querySelectorAll('.chart-bar');
+                        allBars.forEach(function (b, index) {
+                            setTimeout(function () {
+                                const val = b.getAttribute('data-value');
+                                const f = b.querySelector('.chart-fill');
+                                f.style.height = (val / 140 * 100) + '%';
+                                b.classList.add('animated');
+                            }, index * 150);
+                        });
+                        chartObs.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.3 });
+            chartObs.observe(bars[0]);
+        }
+    }
+
+    /**
+     * Tenta di caricare i tips dal database (API).
+     * Se il database non ha tips, usa il fallback client-side.
+     */
+    async function loadTipsFromAPI() {
+        try {
+            const tips = await fetchAPI('tips');
+            if (!tips || tips.length === 0) {
+                // Fallback: genera tips client-side dalle partite
+                loadTips();
+                return;
+            }
+
+            const container = document.getElementById('tipsGrid');
+            container.textContent = '';
+
+            tips.forEach(function (tip) {
+                const match = {
+                    date: tip.match_date,
+                    home: tip.home_team,
+                    away: tip.away_team,
+                };
+                const card = buildTipCardFromAPI(match, tip);
+                container.appendChild(card);
+            });
+
+            activateConfidenceBars(container);
+
+            const cards = container.querySelectorAll('.tip-card');
+            cards.forEach(function (card, i) {
+                card.classList.add('reveal');
+                card.style.transitionDelay = (i * 0.1) + 's';
+                requestAnimationFrame(function () {
+                    card.classList.add('visible');
+                });
+            });
+        } catch (_err) {
+            // Fallback: genera tips client-side
+            loadTips();
+        }
+    }
+
+    /**
+     * Costruisce una tip card da dati API (pronostico reale dal database).
+     * @param {Object} match - Dati partita
+     * @param {Object} tip - Dati pronostico dal database
+     * @returns {HTMLElement} Elemento .tip-card
+     */
+    function buildTipCardFromAPI(match, tip) {
+        const isFree = tip.tier === 'free';
+        const isVip = tip.tier === 'vip';
+        let cardClass = 'tip-card';
+        if (tip.tier === 'pro') cardClass += ' tip-card--pro';
+        if (isVip) cardClass += ' tip-card--vip';
+
+        const card = createEl('div', cardClass);
+        card.setAttribute('data-tier', tip.tier);
+
+        if (tip.tier === 'pro') card.appendChild(createEl('div', 'tip-card-glow'));
+        if (isVip) card.appendChild(createEl('div', 'tip-card-glow tip-card-glow--gold'));
+
+        // Header
+        const header = createEl('div', 'tip-card-header');
+        header.appendChild(createEl('span', 'tip-badge tip-badge--' + tip.tier, tip.tier.toUpperCase()));
+        header.appendChild(createEl('span', 'tip-date', formatMatchDate(match.date)));
+        card.appendChild(header);
+
+        // Squadre
+        const tipMatch = createEl('div', 'tip-match');
+        const homeTeam = createEl('div', 'tip-team');
+        homeTeam.appendChild(createEl('div', 'team-logo', teamAbbr(match.home)));
+        homeTeam.appendChild(createEl('span', null, match.home));
+        tipMatch.appendChild(homeTeam);
+        const versus = createEl('div', 'tip-versus');
+        versus.appendChild(createEl('span', 'vs-text', 'VS'));
+        tipMatch.appendChild(versus);
+        const awayTeam = createEl('div', 'tip-team');
+        awayTeam.appendChild(createEl('div', 'team-logo', teamAbbr(match.away)));
+        awayTeam.appendChild(createEl('span', null, match.away));
+        tipMatch.appendChild(awayTeam);
+        card.appendChild(tipMatch);
+
+        // Pronostico e quota
+        const prediction = createEl('div', 'tip-prediction');
+        const pick = createEl('div', 'tip-pick');
+        pick.appendChild(createEl('span', 'pick-label', 'Pronostico'));
+        const pickClass = isVip && !tip.prediction ? 'pick-value tip-value--hidden' : 'pick-value';
+        const pickText = tip.prediction || '\u2605 \u2605 \u2605';
+        pick.appendChild(createEl('span', pickClass, pickText));
+        prediction.appendChild(pick);
+
+        const odds = createEl('div', 'tip-odds');
+        odds.appendChild(createEl('span', 'odds-label', 'Quota'));
+        const oddsClass = isVip && !tip.odds ? 'odds-value tip-value--hidden' : 'odds-value';
+        const oddsText = tip.odds ? parseFloat(tip.odds).toFixed(2) : '?.??';
+        odds.appendChild(createEl('span', oddsClass, oddsText));
+        prediction.appendChild(odds);
+        card.appendChild(prediction);
+
+        // Confidence
+        const conf = tip.confidence || 70;
+        const confDiv = createEl('div', 'tip-confidence');
+        confDiv.appendChild(createEl('span', 'confidence-label', 'Confidence'));
+        const confBar = createEl('div', 'confidence-bar');
+        const confFill = createEl('div', isVip ? 'confidence-fill confidence-fill--gold' : 'confidence-fill');
+        confFill.setAttribute('data-confidence', conf);
+        confBar.appendChild(confFill);
+        confDiv.appendChild(confBar);
+        confDiv.appendChild(createEl('span', 'confidence-value', conf + '%'));
+        card.appendChild(confDiv);
+
+        // Analisi
+        if (isFree && tip.analysis) {
+            const analysis = createEl('div', 'tip-analysis');
+            analysis.appendChild(createEl('p', null, tip.analysis));
+            card.appendChild(analysis);
+        } else if (!isFree) {
+            const locked = createEl('div', 'tip-analysis tip-analysis--locked');
+            const overlayClass = isVip ? 'locked-overlay locked-overlay--gold' : 'locked-overlay';
+            const overlay = createEl('div', overlayClass);
+            overlay.appendChild(buildLockSvg());
+            const msg = isVip ? 'Tip esclusivo riservato ai membri VIP' : 'Analisi completa riservata agli abbonati PRO';
+            overlay.appendChild(createEl('span', null, msg));
+            const btn = createEl('a', 'btn btn-gold btn-sm', isVip ? 'Diventa VIP' : 'Sblocca');
+            btn.href = '#pricing';
+            overlay.appendChild(btn);
+            locked.appendChild(overlay);
+            card.appendChild(locked);
+        }
+
+        return card;
+    }
+
     // Avvia il caricamento dati al ready della pagina
     loadMatches();
     loadResults();
-    loadTips();
+    loadTipsFromAPI();
+    loadTrackRecord();
 
 })();
