@@ -21,16 +21,16 @@ Piattaforma premium di pronostici per la Serie A italiana. Offre tips giornalier
 
 ## Tech Stack
 
-| Layer | Tecnologia |
-|-------|------------|
-| **Frontend** | HTML5, CSS3 (custom properties), Vanilla JavaScript (ES6+) |
-| **Backend** | Node.js, Vercel Serverless Functions |
-| **API primaria** | [api-football.com](https://www.api-football.com/) v3 |
-| **API fallback** | [football-data.org](https://www.football-data.org/) v4 |
-| **Font** | Space Grotesk (display), Inter (body) — via Google Fonts |
-| **Deploy** | Vercel |
-| **Linting** | ESLint 9 (flat config) |
-| **Formatting** | Prettier |
+| Layer            | Tecnologia                                                 |
+| ---------------- | ---------------------------------------------------------- |
+| **Frontend**     | HTML5, CSS3 (custom properties), Vanilla JavaScript (ES6+) |
+| **Backend**      | Node.js, Vercel Serverless Functions                       |
+| **API primaria** | [api-football.com](https://www.api-football.com/) v3       |
+| **API fallback** | [football-data.org](https://www.football-data.org/) v4     |
+| **Font**         | Space Grotesk (display), Inter (body) — via Google Fonts   |
+| **Deploy**       | Vercel                                                     |
+| **Linting**      | ESLint 9 (flat config)                                     |
+| **Formatting**   | Prettier                                                   |
 
 Nessuna dipendenza npm in produzione. Il progetto utilizza esclusivamente API del browser (Fetch, Canvas, Intersection Observer, DOM) e serverless functions Node.js native. Gli strumenti di sviluppo (ESLint, Prettier) sono installati come `devDependencies`.
 
@@ -130,10 +130,10 @@ Ogni endpoint utilizza **api-football.com come provider primario**. Se la chiama
 
 ## Variabili d'Ambiente
 
-| Variabile | Descrizione | Obbligatoria |
-|-----------|-------------|:------------:|
-| `API_FOOTBALL_KEY` | API key per api-sports.io (api-football.com v3). Usata come header `x-apisports-key`. | Si |
-| `FOOTBALL_DATA_KEY` | API token per football-data.org v4. Usata come header `X-Auth-Token`. | Si |
+| Variabile           | Descrizione                                                                           | Obbligatoria |
+| ------------------- | ------------------------------------------------------------------------------------- | :----------: |
+| `API_FOOTBALL_KEY`  | API key per api-sports.io (api-football.com v3). Usata come header `x-apisports-key`. |      Si      |
+| `FOOTBALL_DATA_KEY` | API token per football-data.org v4. Usata come header `X-Auth-Token`.                 |      Si      |
 
 Per la configurazione, copia `.env.example` in `.env` e inserisci i valori.
 
@@ -143,15 +143,15 @@ Su Vercel, configura le variabili nella dashboard del progetto sotto **Settings 
 
 ## Comandi Disponibili
 
-| Comando | Descrizione |
-|---------|-------------|
-| `npm run dev` | Avvia il server di sviluppo Vercel (`vercel dev`) |
-| `npm run start` | Alias di `npm run dev` |
-| `npm run build` | Nessun build step (sito statico) |
-| `npm run lint` | Esegue ESLint su tutto il progetto |
-| `npm run lint:fix` | Esegue ESLint con auto-fix |
-| `npm run format` | Formatta tutti i file con Prettier |
-| `npm run format:check` | Verifica la formattazione senza modificare |
+| Comando                | Descrizione                                       |
+| ---------------------- | ------------------------------------------------- |
+| `npm run dev`          | Avvia il server di sviluppo Vercel (`vercel dev`) |
+| `npm run start`        | Alias di `npm run dev`                            |
+| `npm run build`        | Nessun build step (sito statico)                  |
+| `npm run lint`         | Esegue ESLint su tutto il progetto                |
+| `npm run lint:fix`     | Esegue ESLint con auto-fix                        |
+| `npm run format`       | Formatta tutti i file con Prettier                |
+| `npm run format:check` | Verifica la formattazione senza modificare        |
 
 ---
 
@@ -183,17 +183,17 @@ Restituisce le prossime 10 partite di Serie A.
 ]
 ```
 
-| Campo | Tipo | Descrizione |
-|-------|------|-------------|
-| `id` | `number` | ID univoco della partita |
-| `date` | `string` | Data/ora in formato ISO 8601 |
-| `status` | `string` | Stato breve (`NS` = not started, `FT` = full time, ecc.) |
-| `home` | `string` | Nome squadra di casa |
-| `homeLogo` | `string` | URL logo squadra di casa |
-| `away` | `string` | Nome squadra ospite |
-| `awayLogo` | `string` | URL logo squadra ospite |
-| `goalsHome` | `number\|null` | Gol squadra di casa (`null` se non iniziata) |
-| `goalsAway` | `number\|null` | Gol squadra ospite (`null` se non iniziata) |
+| Campo       | Tipo           | Descrizione                                              |
+| ----------- | -------------- | -------------------------------------------------------- |
+| `id`        | `number`       | ID univoco della partita                                 |
+| `date`      | `string`       | Data/ora in formato ISO 8601                             |
+| `status`    | `string`       | Stato breve (`NS` = not started, `FT` = full time, ecc.) |
+| `home`      | `string`       | Nome squadra di casa                                     |
+| `homeLogo`  | `string`       | URL logo squadra di casa                                 |
+| `away`      | `string`       | Nome squadra ospite                                      |
+| `awayLogo`  | `string`       | URL logo squadra ospite                                  |
+| `goalsHome` | `number\|null` | Gol squadra di casa (`null` se non iniziata)             |
+| `goalsAway` | `number\|null` | Gol squadra ospite (`null` se non iniziata)              |
 
 **Fallback:** Se api-football.com non risponde, usa football-data.org.
 
@@ -217,9 +217,9 @@ Restituisce le quote Match Winner (1X2) per una partita specifica.
 
 **Parametri query:**
 
-| Parametro | Tipo | Descrizione | Obbligatorio |
-|-----------|------|-------------|:------------:|
-| `fixture` | `number` | ID della partita (da `/api/matches`) | Si |
+| Parametro | Tipo     | Descrizione                          | Obbligatorio |
+| --------- | -------- | ------------------------------------ | :----------: |
+| `fixture` | `number` | ID della partita (da `/api/matches`) |      Si      |
 
 **Cache:** 30 minuti (TTL in-memory) + header `s-maxage=1800, stale-while-revalidate=900`
 
@@ -237,13 +237,13 @@ Restituisce le quote Match Winner (1X2) per una partita specifica.
 }
 ```
 
-| Campo | Tipo | Descrizione |
-|-------|------|-------------|
-| `fixtureId` | `string` | ID della partita |
-| `bookmaker` | `string` | Nome del bookmaker (Bet365) |
-| `values` | `array` | Array di outcome con relative quote |
+| Campo              | Tipo     | Descrizione                         |
+| ------------------ | -------- | ----------------------------------- |
+| `fixtureId`        | `string` | ID della partita                    |
+| `bookmaker`        | `string` | Nome del bookmaker (Bet365)         |
+| `values`           | `array`  | Array di outcome con relative quote |
 | `values[].outcome` | `string` | Esito: `"Home"`, `"Draw"`, `"Away"` |
-| `values[].odd` | `string` | Quota decimale |
+| `values[].odd`     | `string` | Quota decimale                      |
 
 Restituisce `null` se non ci sono quote disponibili per la partita.
 
@@ -278,20 +278,20 @@ Restituisce la classifica completa della Serie A.
 ]
 ```
 
-| Campo | Tipo | Descrizione |
-|-------|------|-------------|
-| `rank` | `number` | Posizione in classifica |
-| `name` | `string` | Nome squadra |
-| `logo` | `string` | URL logo squadra |
-| `points` | `number` | Punti totali |
-| `played` | `number` | Partite giocate |
-| `win` | `number` | Vittorie |
-| `draw` | `number` | Pareggi |
-| `lose` | `number` | Sconfitte |
-| `goalsFor` | `number` | Gol fatti |
-| `goalsAgainst` | `number` | Gol subiti |
-| `goalDiff` | `number` | Differenza reti |
-| `form` | `string` | Forma recente (ultimi 5: `W`=win, `D`=draw, `L`=loss) |
+| Campo          | Tipo     | Descrizione                                           |
+| -------------- | -------- | ----------------------------------------------------- |
+| `rank`         | `number` | Posizione in classifica                               |
+| `name`         | `string` | Nome squadra                                          |
+| `logo`         | `string` | URL logo squadra                                      |
+| `points`       | `number` | Punti totali                                          |
+| `played`       | `number` | Partite giocate                                       |
+| `win`          | `number` | Vittorie                                              |
+| `draw`         | `number` | Pareggi                                               |
+| `lose`         | `number` | Sconfitte                                             |
+| `goalsFor`     | `number` | Gol fatti                                             |
+| `goalsAgainst` | `number` | Gol subiti                                            |
+| `goalDiff`     | `number` | Differenza reti                                       |
+| `form`         | `string` | Forma recente (ultimi 5: `W`=win, `D`=draw, `L`=loss) |
 
 **Fallback:** Se api-football.com non risponde, usa football-data.org.
 
@@ -301,11 +301,11 @@ Restituisce la classifica completa della Serie A.
 
 Tutti gli endpoint restituiscono errori in formato JSON:
 
-| Codice | Descrizione |
-|--------|-------------|
-| `400` | Parametri mancanti o non validi |
-| `405` | Metodo HTTP non consentito (solo `GET` accettato) |
-| `502` | Impossibile raggiungere i provider dati |
+| Codice | Descrizione                                       |
+| ------ | ------------------------------------------------- |
+| `400`  | Parametri mancanti o non validi                   |
+| `405`  | Metodo HTTP non consentito (solo `GET` accettato) |
+| `502`  | Impossibile raggiungere i provider dati           |
 
 ```json
 { "error": "Descrizione dell'errore" }
@@ -336,28 +336,28 @@ Markup semantico HTML5 con le seguenti sezioni, in ordine:
 
 IIFE (Immediately Invoked Function Expression) con `'use strict'`. Moduli logici:
 
-| Modulo | Responsabilita |
-|--------|----------------|
-| **Particle System** | Canvas 2D con particelle animate e linee di connessione tra particelle vicine |
-| **Navbar Scroll** | Aggiunge classe `.scrolled` alla navbar dopo 60px di scroll |
-| **Mobile Menu** | Toggle hamburger menu con blocco scroll del body |
+| Modulo                | Responsabilita                                                                          |
+| --------------------- | --------------------------------------------------------------------------------------- |
+| **Particle System**   | Canvas 2D con particelle animate e linee di connessione tra particelle vicine           |
+| **Navbar Scroll**     | Aggiunge classe `.scrolled` alla navbar dopo 60px di scroll                             |
+| **Mobile Menu**       | Toggle hamburger menu con blocco scroll del body                                        |
 | **Counter Animation** | Animazione numerica (0 → target) con easing cubico, triggerata da Intersection Observer |
-| **Scroll Reveal** | Animazioni fade-in/slide-up al primo scroll nelle viewport (Intersection Observer) |
-| **Tips Filter** | Filtraggio carte pronostici per tier (All/Free/Pro/VIP) |
-| **FAQ Accordion** | Expand/collapse con mutua esclusione |
-| **Smooth Scroll** | Navigazione fluida per link ancora con offset navbar |
-| **Stagger Reveal** | Delay incrementale per animazioni grid |
-| **API Fetching** | Fetch dati da `/api/matches`, `/api/results`, rendering dinamico nel DOM |
+| **Scroll Reveal**     | Animazioni fade-in/slide-up al primo scroll nelle viewport (Intersection Observer)      |
+| **Tips Filter**       | Filtraggio carte pronostici per tier (All/Free/Pro/VIP)                                 |
+| **FAQ Accordion**     | Expand/collapse con mutua esclusione                                                    |
+| **Smooth Scroll**     | Navigazione fluida per link ancora con offset navbar                                    |
+| **Stagger Reveal**    | Delay incrementale per animazioni grid                                                  |
+| **API Fetching**      | Fetch dati da `/api/matches`, `/api/results`, rendering dinamico nel DOM                |
 
 ### `styles.css`
 
 Fogli di stile con CSS custom properties (variabili). Approccio mobile-first con 3 breakpoint:
 
-| Breakpoint | Target |
-|------------|--------|
-| `<= 1024px` | Tablet — pricing e stats in colonna |
-| `<= 768px` | Mobile — menu hamburger, layout single-column |
-| `<= 480px` | Small mobile — stats verticali, footer compresso |
+| Breakpoint  | Target                                           |
+| ----------- | ------------------------------------------------ |
+| `<= 1024px` | Tablet — pricing e stats in colonna              |
+| `<= 768px`  | Mobile — menu hamburger, layout single-column    |
+| `<= 480px`  | Small mobile — stats verticali, footer compresso |
 
 ---
 
@@ -369,12 +369,12 @@ Il progetto implementa caching a due livelli:
 
 File: `api/_lib/cache.js` — cache basata su `Map` con TTL per ogni chiave.
 
-| Endpoint | TTL |
-|----------|-----|
-| `/api/matches` | 2 ore (7200s) |
-| `/api/results` | 1 ora (3600s) |
-| `/api/odds` | 30 minuti (1800s) |
-| `/api/standings` | 6 ore (21600s) |
+| Endpoint         | TTL               |
+| ---------------- | ----------------- |
+| `/api/matches`   | 2 ore (7200s)     |
+| `/api/results`   | 1 ora (3600s)     |
+| `/api/odds`      | 30 minuti (1800s) |
+| `/api/standings` | 6 ore (21600s)    |
 
 La cache sopravvive tra invocazioni "warm" della stessa istanza Vercel. Viene persa al cold start.
 
@@ -388,35 +388,35 @@ Header `Cache-Control` con `s-maxage` e `stale-while-revalidate` configurati sia
 
 ### Palette Colori
 
-| Variabile CSS | Valore | Uso |
-|---------------|--------|-----|
-| `--bg-primary` | `#0a0a0f` | Sfondo principale |
-| `--bg-secondary` | `#12121a` | Sfondo sezioni alternate |
-| `--bg-card` | `#16161f` | Sfondo card |
-| `--gold` | `#d4a853` | Accento primario, CTA, quote |
-| `--gold-light` | `#f0d078` | Gradienti gold |
-| `--gold-dark` | `#a67c2e` | Gradienti gold |
-| `--red` | `#e74c3c` | Alert, sconfitte, live dot |
-| `--green` | `#2ecc71` | Vittorie, confidence bar, badge live |
-| `--text-primary` | `#f0f0f5` | Testo principale |
-| `--text-secondary` | `#8a8a9a` | Testo secondario |
-| `--text-muted` | `#55556a` | Testo terziario, label |
-| `--telegram` | `#229ED9` | Colore brand Telegram |
+| Variabile CSS      | Valore    | Uso                                  |
+| ------------------ | --------- | ------------------------------------ |
+| `--bg-primary`     | `#0a0a0f` | Sfondo principale                    |
+| `--bg-secondary`   | `#12121a` | Sfondo sezioni alternate             |
+| `--bg-card`        | `#16161f` | Sfondo card                          |
+| `--gold`           | `#d4a853` | Accento primario, CTA, quote         |
+| `--gold-light`     | `#f0d078` | Gradienti gold                       |
+| `--gold-dark`      | `#a67c2e` | Gradienti gold                       |
+| `--red`            | `#e74c3c` | Alert, sconfitte, live dot           |
+| `--green`          | `#2ecc71` | Vittorie, confidence bar, badge live |
+| `--text-primary`   | `#f0f0f5` | Testo principale                     |
+| `--text-secondary` | `#8a8a9a` | Testo secondario                     |
+| `--text-muted`     | `#55556a` | Testo terziario, label               |
+| `--telegram`       | `#229ED9` | Colore brand Telegram                |
 
 ### Tipografia
 
-| Font | Variabile | Uso |
-|------|-----------|-----|
+| Font          | Variabile        | Uso                        |
+| ------------- | ---------------- | -------------------------- |
 | Space Grotesk | `--font-display` | Titoli, badge, numeri, nav |
-| Inter | `--font-body` | Corpo testo, paragrafi |
+| Inter         | `--font-body`    | Corpo testo, paragrafi     |
 
 ### Spacing & Radius
 
-| Variabile | Valore | Uso |
-|-----------|--------|-----|
-| `--radius-sm` | `8px` | Button, input, badge |
-| `--radius-md` | `12px` | Card piccole, FAQ item |
-| `--radius-lg` | `20px` | Tip card, stat card |
+| Variabile     | Valore | Uso                         |
+| ------------- | ------ | --------------------------- |
+| `--radius-sm` | `8px`  | Button, input, badge        |
+| `--radius-md` | `12px` | Card piccole, FAQ item      |
+| `--radius-lg` | `20px` | Tip card, stat card         |
 | `--radius-xl` | `28px` | Pricing card, telegram card |
 
 ---
@@ -432,10 +432,10 @@ Header `Cache-Control` con `s-maxage` e `stale-while-revalidate` configurati sia
 
 ### Header di Sicurezza (via `vercel.json`)
 
-| Header | Valore | Scopo |
-|--------|--------|-------|
-| `X-Content-Type-Options` | `nosniff` | Previene MIME type sniffing |
-| `X-Frame-Options` | `DENY` | Previene clickjacking via iframe |
+| Header                   | Valore    | Scopo                            |
+| ------------------------ | --------- | -------------------------------- |
+| `X-Content-Type-Options` | `nosniff` | Previene MIME type sniffing      |
+| `X-Frame-Options`        | `DENY`    | Previene clickjacking via iframe |
 
 ---
 

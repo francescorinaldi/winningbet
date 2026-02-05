@@ -6,17 +6,15 @@
  * Base URL: https://v3.football.api-sports.io
  * Autenticazione: header x-apisports-key
  *
- * Configurazione:
- *   - Liga: Serie A (ID 135)
- *   - Stagione: 2025
- *   - Bookmaker per le quote: Bet365 (ID 8)
+ * Configurazione leghe: centralizzata in leagues.js
+ * Bookmaker per le quote: Bet365 (ID 8)
  *
  * Variabile d'ambiente richiesta: API_FOOTBALL_KEY
  */
 
+const { getLeague } = require('./leagues');
+
 const BASE = 'https://v3.football.api-sports.io';
-const LEAGUE_ID = 135;  // Serie A
-const SEASON = 2025;
 
 /**
  * Genera gli header di autenticazione per le richieste API.
@@ -54,25 +52,18 @@ async function request(path, params = {}) {
 }
 
 /**
- * Recupera le prossime partite di Serie A.
+ * Recupera le prossime partite di una lega.
  * Usa il parametro "next" dell'API per ottenere i prossimi N match schedulati.
  *
+ * @param {string} leagueSlug - Slug della lega (es. "serie-a", "premier-league")
  * @param {number} count - Numero massimo di partite da restituire (default: 10)
  * @returns {Promise<Array<Object>>} Array di oggetti partita normalizzati
- * @returns {number} return[].id - ID fixture univoco
- * @returns {string} return[].date - Data ISO 8601
- * @returns {string} return[].status - Stato breve (NS=non iniziata, FT=terminata, ecc.)
- * @returns {string} return[].home - Nome squadra di casa
- * @returns {string} return[].homeLogo - URL logo squadra di casa
- * @returns {string} return[].away - Nome squadra ospite
- * @returns {string} return[].awayLogo - URL logo squadra ospite
- * @returns {number|null} return[].goalsHome - Gol casa (null se non iniziata)
- * @returns {number|null} return[].goalsAway - Gol ospite (null se non iniziata)
  */
-async function getUpcomingMatches(count = 10) {
+async function getUpcomingMatches(leagueSlug, count = 10) {
+  const league = getLeague(leagueSlug);
   const data = await request('/fixtures', {
-    league: LEAGUE_ID,
-    season: SEASON,
+    league: league.apiFootballId,
+    season: league.season,
     next: count,
   });
   return data.map((item) => ({
@@ -89,16 +80,18 @@ async function getUpcomingMatches(count = 10) {
 }
 
 /**
- * Recupera gli ultimi risultati di Serie A (partite concluse).
+ * Recupera gli ultimi risultati di una lega (partite concluse).
  * Usa il parametro "last" dell'API per ottenere gli ultimi N match terminati.
  *
+ * @param {string} leagueSlug - Slug della lega
  * @param {number} count - Numero massimo di risultati (default: 10)
- * @returns {Promise<Array<Object>>} Array di oggetti risultato (stesso formato di getUpcomingMatches)
+ * @returns {Promise<Array<Object>>} Array di oggetti risultato
  */
-async function getRecentResults(count = 10) {
+async function getRecentResults(leagueSlug, count = 10) {
+  const league = getLeague(leagueSlug);
   const data = await request('/fixtures', {
-    league: LEAGUE_ID,
-    season: SEASON,
+    league: league.apiFootballId,
+    season: league.season,
     last: count,
   });
   return data.map((item) => ({
@@ -121,11 +114,6 @@ async function getRecentResults(count = 10) {
  *
  * @param {number|string} fixtureId - ID della partita
  * @returns {Promise<Object|null>} Oggetto quote o null se non disponibili
- * @returns {string} return.fixtureId - ID della partita
- * @returns {string} return.bookmaker - Nome del bookmaker (Bet365)
- * @returns {Array<Object>} return.values - Esiti con quote
- * @returns {string} return.values[].outcome - "Home", "Draw", o "Away"
- * @returns {string} return.values[].odd - Quota decimale come stringa
  */
 async function getOdds(fixtureId) {
   const data = await request('/odds', {
@@ -149,28 +137,18 @@ async function getOdds(fixtureId) {
 }
 
 /**
- * Recupera la classifica completa della Serie A.
+ * Recupera la classifica completa di una lega.
  * Restituisce un array ordinato per posizione con statistiche complete
  * per ogni squadra, inclusa la forma recente (ultimi 5 risultati).
  *
+ * @param {string} leagueSlug - Slug della lega
  * @returns {Promise<Array<Object>>} Array ordinato per rank
- * @returns {number} return[].rank - Posizione in classifica
- * @returns {string} return[].name - Nome squadra
- * @returns {string} return[].logo - URL logo squadra
- * @returns {number} return[].points - Punti totali
- * @returns {number} return[].played - Partite giocate
- * @returns {number} return[].win - Vittorie
- * @returns {number} return[].draw - Pareggi
- * @returns {number} return[].lose - Sconfitte
- * @returns {number} return[].goalsFor - Gol fatti
- * @returns {number} return[].goalsAgainst - Gol subiti
- * @returns {number} return[].goalDiff - Differenza reti
- * @returns {string} return[].form - Ultimi 5 risultati (es. "WWDLW")
  */
-async function getStandings() {
+async function getStandings(leagueSlug) {
+  const league = getLeague(leagueSlug);
   const data = await request('/standings', {
-    league: LEAGUE_ID,
-    season: SEASON,
+    league: league.apiFootballId,
+    season: league.season,
   });
   if (!data || data.length === 0) return [];
   const standings = data[0].league.standings[0];

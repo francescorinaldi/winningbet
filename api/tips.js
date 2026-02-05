@@ -1,7 +1,8 @@
 /**
- * GET /api/tips
+ * GET /api/tips?league={slug}
  *
  * Restituisce i pronostici attivi (prossime partite).
+ * Default: serie-a se il parametro league e' omesso.
  *
  * Comportamento:
  *   - Senza auth: restituisce solo tips FREE (pronostici base)
@@ -11,6 +12,7 @@
  *     - vip: tutti i tips (free + pro + vip)
  *
  * Query parameters:
+ *   league (optional) — Slug della lega (default: 'serie-a')
  *   status (optional) — Filtra per stato: 'pending', 'won', 'lost', 'void' (default: 'pending')
  *   limit (optional) — Numero massimo di tips (default: 10, max: 50)
  *
@@ -27,6 +29,7 @@
 const cache = require('./_lib/cache');
 const { supabase } = require('./_lib/supabase');
 const { authenticate, hasAccess } = require('./_lib/auth-middleware');
+const { resolveLeagueSlug } = require('./_lib/leagues');
 
 const CACHE_TTL = 900; // 15 minuti
 
@@ -35,6 +38,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const leagueSlug = resolveLeagueSlug(req.query.league);
   const status = req.query.status || 'pending';
   const limit = Math.min(parseInt(req.query.limit, 10) || 10, 50);
 
@@ -45,8 +49,8 @@ module.exports = async function handler(req, res) {
     userTier = profile.tier;
   }
 
-  // Cache key include il tier per evitare di servire dati sbagliati
-  const cacheKey = `tips_${userTier}_${status}_${limit}`;
+  // Cache key include tier e lega per evitare di servire dati sbagliati
+  const cacheKey = `tips_${leagueSlug}_${userTier}_${status}_${limit}`;
   const cached = cache.get(cacheKey);
   if (cached) {
     res.setHeader('Cache-Control', 'private, s-maxage=900, stale-while-revalidate=300');
@@ -63,6 +67,7 @@ module.exports = async function handler(req, res) {
     const { data: tips, error } = await supabase
       .from('tips')
       .select('*')
+      .eq('league', leagueSlug)
       .in('tier', accessibleTiers)
       .eq('status', status)
       .gte('match_date', new Date().toISOString())

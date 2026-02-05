@@ -6,7 +6,7 @@
     <title>WinningBet</title>
     <meta
       name="description"
-      content="Pronostici Serie A premium. Tips giornalieri, statistiche avanzate e track record verificato. Unisciti ai vincenti."
+      content="Pronostici calcio premium. Tips giornalieri su Serie A, Serie B, Champions League, La Liga e Premier League. Track record verificato."
     />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 
@@ -88,16 +88,16 @@
       <div class="hero-glow"></div>
       <div class="hero-glow hero-glow--red"></div>
       <div class="container hero-content">
-        <div class="hero-badge">
+        <div class="hero-badge" id="heroBadge">
           <span class="badge-dot"></span>
-          SERIE A 2025/26
+          <span id="heroBadgeText">SERIE A 2025/26</span>
         </div>
         <h1 class="hero-title">
           Non scommettere.<br />
           <span class="text-gradient">Investi.</span>
         </h1>
         <p class="hero-subtitle">
-          Pronostici Serie A basati su dati, algoritmi e analisi tattiche.<br />
+          Pronostici calcio basati su dati, algoritmi e analisi tattiche.<br />
           Track record verificato. ROI positivo dal giorno uno.
         </p>
         <div class="hero-stats">
@@ -140,16 +140,31 @@
       </div>
     </section>
 
+    <!-- 3b. LEAGUE SELECTOR
+         Tab bar per selezionare la lega. Default: Serie A.
+         Gestito da script.js (initLeagueSelector). -->
+    <section class="league-selector-section">
+      <div class="container">
+        <div class="league-selector" id="leagueSelector">
+          <button class="league-btn active" data-league="serie-a">Serie A</button>
+          <button class="league-btn" data-league="serie-b">Serie B</button>
+          <button class="league-btn" data-league="champions-league">UCL</button>
+          <button class="league-btn" data-league="la-liga">La Liga</button>
+          <button class="league-btn" data-league="premier-league">PL</button>
+        </div>
+      </div>
+    </section>
+
     <!-- 4. LIVE MATCHES BAR
-         Barra orizzontale con scroll delle prossime partite Serie A.
+         Barra orizzontale con scroll delle prossime partite.
          Il contenuto di #matchesScroll e' popolato dinamicamente da
-         script.js (funzione loadMatches -> /api/matches).
+         script.js (funzione loadMatches -> /api/matches?league=...).
          Mostra un loading spinner fino al caricamento dei dati. -->
     <section class="live-bar">
       <div class="container">
         <div class="live-bar-header">
           <span class="live-dot"></span>
-          <span>PROSSIME PARTITE — SERIE A</span>
+          <span id="liveBarLabel">PROSSIME PARTITE — SERIE A</span>
         </div>
         <div class="matches-scroll" id="matchesScroll">
           <div class="matches-loading">
@@ -605,7 +620,7 @@
               <span class="logo-icon">♠</span>
               <span class="logo-text">WinningBet</span>
             </a>
-            <p class="footer-desc">Pronostici Serie A premium basati su dati e analisi avanzate.</p>
+            <p class="footer-desc">Pronostici calcio premium basati su dati e analisi avanzate.</p>
           </div>
           <div class="footer-links">
             <h4>Navigazione</h4>

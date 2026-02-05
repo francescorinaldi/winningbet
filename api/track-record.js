@@ -48,7 +48,9 @@ module.exports = async function handler(req, res) {
     // Recupera tutti i tips chiusi (non pending)
     const { data: tips, error } = await supabase
       .from('tips')
-      .select('id, prediction, odds, confidence, status, tier, match_date, home_team, away_team, created_at')
+      .select(
+        'id, prediction, odds, confidence, status, tier, match_date, home_team, away_team, created_at',
+      )
       .in('status', ['won', 'lost', 'void'])
       .order('match_date', { ascending: false });
 
@@ -64,26 +66,41 @@ module.exports = async function handler(req, res) {
       .eq('status', 'pending');
 
     const allTips = tips || [];
-    const won = allTips.filter(function (t) { return t.status === 'won'; }).length;
-    const lost = allTips.filter(function (t) { return t.status === 'lost'; }).length;
-    const voidCount = allTips.filter(function (t) { return t.status === 'void'; }).length;
+    const won = allTips.filter(function (t) {
+      return t.status === 'won';
+    }).length;
+    const lost = allTips.filter(function (t) {
+      return t.status === 'lost';
+    }).length;
+    const voidCount = allTips.filter(function (t) {
+      return t.status === 'void';
+    }).length;
     const settled = won + lost; // void non conta per win rate
 
     // Win rate (basato solo su won/lost, esclude void)
     const winRate = settled > 0 ? parseFloat(((won / settled) * 100).toFixed(1)) : 0;
 
     // Quota media dei tips vincenti
-    const wonTips = allTips.filter(function (t) { return t.status === 'won' && t.odds; });
+    const wonTips = allTips.filter(function (t) {
+      return t.status === 'won' && t.odds;
+    });
     const avgOdds =
       wonTips.length > 0
         ? parseFloat(
-            (wonTips.reduce(function (sum, t) { return sum + parseFloat(t.odds); }, 0) / wonTips.length).toFixed(2),
+            (
+              wonTips.reduce(function (sum, t) {
+                return sum + parseFloat(t.odds);
+              }, 0) / wonTips.length
+            ).toFixed(2),
           )
         : 0;
 
     // ROI: ((profitto totale) / (puntata totale)) * 100
     // Assumendo puntata unitaria (1u) per ogni tip
-    const profit = wonTips.reduce(function (sum, t) { return sum + (parseFloat(t.odds) - 1); }, 0) - lost;
+    const profit =
+      wonTips.reduce(function (sum, t) {
+        return sum + (parseFloat(t.odds) - 1);
+      }, 0) - lost;
     const roi = settled > 0 ? parseFloat(((profit / settled) * 100).toFixed(1)) : 0;
 
     // Ultimi 10 risultati
@@ -130,7 +147,20 @@ module.exports = async function handler(req, res) {
  */
 function buildMonthlyBreakdown(tips) {
   const months = {};
-  const monthNames = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+  const monthNames = [
+    'Gen',
+    'Feb',
+    'Mar',
+    'Apr',
+    'Mag',
+    'Giu',
+    'Lug',
+    'Ago',
+    'Set',
+    'Ott',
+    'Nov',
+    'Dic',
+  ];
 
   tips.forEach(function (tip) {
     const d = new Date(tip.match_date);

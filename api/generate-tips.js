@@ -1,16 +1,19 @@
 /**
  * POST /api/generate-tips
  *
- * Genera pronostici AI per le prossime partite di Serie A.
+ * Genera pronostici AI per le prossime partite di una lega.
  * Questo endpoint e' progettato per essere chiamato:
  *   - Manualmente (con header Authorization: Bearer <CRON_SECRET>)
  *   - Da un cron job (Vercel Cron o servizio esterno)
  *
+ * Body (JSON):
+ *   league (optional) — Slug della lega (default: 'serie-a')
+ *
  * Flusso:
- *   1. Recupera le prossime partite (api-football → fallback)
+ *   1. Recupera le prossime partite (api-football -> fallback)
  *   2. Recupera la classifica per i dati di forma
  *   3. Per ogni partita, chiama il prediction engine (Claude API)
- *   4. Salva i pronostici nella tabella tips di Supabase
+ *   4. Salva i pronostici nella tabella tips di Supabase con la lega
  *
  * Sicurezza: richiede CRON_SECRET nell'header Authorization.
  *
@@ -26,6 +29,7 @@ const { supabase } = require('./_lib/supabase');
 const apiFootball = require('./_lib/api-football');
 const footballData = require('./_lib/football-data');
 const { generateBatchPredictions } = require('./_lib/prediction-engine');
+const { resolveLeagueSlug, getLeague } = require('./_lib/leagues');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -38,13 +42,16 @@ module.exports = async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  const leagueSlug = resolveLeagueSlug(req.body && req.body.league);
+  const league = getLeague(leagueSlug);
+
   try {
     // 1. Recupera le prossime partite
     let matches;
     try {
-      matches = await apiFootball.getUpcomingMatches(10);
+      matches = await apiFootball.getUpcomingMatches(leagueSlug, 10);
     } catch (_primaryErr) {
-      matches = await footballData.getUpcomingMatches(10);
+      matches = await footballData.getUpcomingMatches(leagueSlug, 10);
     }
 
     if (!matches || matches.length === 0) {
@@ -54,9 +61,9 @@ module.exports = async function handler(req, res) {
     // 2. Recupera la classifica
     let standings;
     try {
-      standings = await apiFootball.getStandings();
+      standings = await apiFootball.getStandings(leagueSlug);
     } catch (_primaryErr) {
-      standings = await footballData.getStandings();
+      standings = await footballData.getStandings(leagueSlug);
     }
 
     // 3. Controlla se ci sono gia' tips per queste partite (evita duplicati)
@@ -64,6 +71,7 @@ module.exports = async function handler(req, res) {
     const { data: existingTips } = await supabase
       .from('tips')
       .select('match_id')
+      .eq('league', leagueSlug)
       .in('match_id', matchIds);
 
     const existingMatchIds = new Set((existingTips || []).map((t) => t.match_id));
@@ -72,7 +80,7 @@ module.exports = async function handler(req, res) {
     if (newMatches.length === 0) {
       return res.status(200).json({
         generated: 0,
-        message: 'Tutti i pronostici per queste partite sono gia\' stati generati',
+        message: "Tutti i pronostici per queste partite sono gia' stati generati",
       });
     }
 
@@ -90,11 +98,13 @@ module.exports = async function handler(req, res) {
       matches: newMatches,
       standings,
       getOdds: getOddsForMatch,
+      leagueName: league.name,
     });
 
-    // 6. Salva in Supabase
+    // 6. Salva in Supabase (aggiunge il campo league)
     if (predictions.length > 0) {
-      const { error: insertError } = await supabase.from('tips').insert(predictions);
+      const tipsWithLeague = predictions.map((p) => ({ ...p, league: leagueSlug }));
+      const { error: insertError } = await supabase.from('tips').insert(tipsWithLeague);
       if (insertError) {
         console.error('Failed to insert tips:', insertError.message);
         return res.status(500).json({ error: 'Errore nel salvataggio dei pronostici' });
@@ -103,6 +113,7 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({
       generated: predictions.length,
+      league: leagueSlug,
       tips: predictions.map((t) => ({
         match: `${t.home_team} vs ${t.away_team}`,
         prediction: t.prediction,

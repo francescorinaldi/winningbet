@@ -429,6 +429,59 @@
   });
 
   // ==========================================
+  // LEAGUE SWITCHING
+  // ==========================================
+  // Gestisce la selezione della lega e il reload dei dati.
+
+  let currentLeague = 'serie-a';
+
+  const LEAGUE_NAMES = {
+    'serie-a': { label: 'Serie A', season: '2025/26' },
+    'serie-b': { label: 'Serie B', season: '2025/26' },
+    'champions-league': { label: 'Champions League', season: '2025/26' },
+    'la-liga': { label: 'La Liga', season: '2025/26' },
+    'premier-league': { label: 'Premier League', season: '2025/26' },
+  };
+
+  function initLeagueSelector() {
+    const selector = document.getElementById('leagueSelector');
+    if (!selector) return;
+
+    const buttons = selector.querySelectorAll('.league-btn');
+    buttons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const league = btn.getAttribute('data-league');
+        if (league === currentLeague) return;
+
+        buttons.forEach(function (b) {
+          b.classList.remove('active');
+        });
+        btn.classList.add('active');
+
+        currentLeague = league;
+        updateLeagueLabels();
+        loadMatches();
+        loadResults();
+        loadTipsFromAPI();
+      });
+    });
+  }
+
+  function updateLeagueLabels() {
+    const info = LEAGUE_NAMES[currentLeague] || LEAGUE_NAMES['serie-a'];
+
+    const badgeText = document.getElementById('heroBadgeText');
+    if (badgeText) {
+      badgeText.textContent = info.label.toUpperCase() + ' ' + info.season;
+    }
+
+    const liveBarLabel = document.getElementById('liveBarLabel');
+    if (liveBarLabel) {
+      liveBarLabel.textContent = 'PROSSIME PARTITE \u2014 ' + info.label.toUpperCase();
+    }
+  }
+
+  // ==========================================
   // LIVE DATA — API FETCHING
   // ==========================================
   // Carica dati dalle serverless functions Vercel (/api/*)
@@ -440,11 +493,21 @@
   /**
    * Wrapper generico per le chiamate alle API interne.
    * @param {string} endpoint - Nome dell'endpoint (es. "matches", "results")
+   * @param {Object} params - Query parameters opzionali
    * @returns {Promise<*>} Dati JSON dalla risposta
    * @throws {Error} Se la risposta non e' ok (status != 2xx)
    */
-  async function fetchAPI(endpoint) {
-    const res = await fetch(`/api/${endpoint}`);
+  async function fetchAPI(endpoint, params) {
+    let url = '/api/' + endpoint;
+    if (params) {
+      const qs = Object.entries(params)
+        .map(function (pair) {
+          return encodeURIComponent(pair[0]) + '=' + encodeURIComponent(pair[1]);
+        })
+        .join('&');
+      if (qs) url += '?' + qs;
+    }
+    const res = await fetch(url);
     if (!res.ok) throw new Error(`API ${endpoint}: ${res.status}`);
     return res.json();
   }
@@ -791,7 +854,7 @@
   async function loadTips() {
     const container = document.getElementById('tipsGrid');
     try {
-      const matches = await fetchAPI('matches');
+      const matches = await fetchAPI('matches', { league: currentLeague });
       if (!matches || matches.length < 3) {
         setEmptyState(container, 'tips-empty', 'Nessun pronostico disponibile al momento');
         return;
@@ -830,7 +893,7 @@
   async function loadMatches() {
     const container = document.getElementById('matchesScroll');
     try {
-      const matches = await fetchAPI('matches');
+      const matches = await fetchAPI('matches', { league: currentLeague });
       if (!matches || matches.length === 0) {
         setEmptyState(container, 'matches-empty', 'Nessuna partita in programma');
         return;
@@ -866,7 +929,7 @@
   async function loadResults() {
     const container = document.getElementById('resultsList');
     try {
-      const results = await fetchAPI('results');
+      const results = await fetchAPI('results', { league: currentLeague });
       if (!results || results.length === 0) {
         setEmptyState(container, 'results-empty', 'Nessun risultato disponibile');
         return;
@@ -1043,7 +1106,7 @@
    */
   async function loadTipsFromAPI() {
     try {
-      const tips = await fetchAPI('tips');
+      const tips = await fetchAPI('tips', { league: currentLeague });
       if (!tips || tips.length === 0) {
         // Fallback: genera tips client-side dalle partite
         loadTips();
@@ -1210,6 +1273,7 @@
   }
 
   // Avvia il caricamento dati al ready della pagina
+  initLeagueSelector();
   loadMatches();
   loadResults();
   loadTipsFromAPI();

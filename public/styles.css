@@ -536,6 +536,57 @@ img {
 }
 
 /* ============================================
+   LEAGUE SELECTOR
+   ============================================ */
+.league-selector-section {
+  position: relative;
+  z-index: 2;
+  padding: 16px 0 0;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+}
+
+.league-selector {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.league-selector::-webkit-scrollbar {
+  display: none;
+}
+
+.league-btn {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 8px 20px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.league-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.league-btn.active {
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  color: var(--bg-primary);
+  border-color: var(--gold);
+}
+
+/* ============================================
    LIVE MATCHES BAR
    ============================================ */
 .live-bar {

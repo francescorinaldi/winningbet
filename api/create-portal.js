@@ -41,6 +41,6 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ url: session.url });
   } catch (err) {
     console.error('Stripe portal error:', err.message);
-    return res.status(500).json({ error: 'Errore nell\'apertura del portale di gestione' });
+    return res.status(500).json({ error: "Errore nell'apertura del portale di gestione" });
   }
 };

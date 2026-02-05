@@ -1,9 +1,11 @@
 # WinningBet - Claude Code Project Guide
 
 ## Project Overview
-Premium Serie A betting predictions platform. Vanilla JS frontend + Vercel serverless backend. Zero npm production dependencies.
+
+Premium multi-league betting predictions platform (Serie A, Serie B, Champions League, La Liga, Premier League). Vanilla JS frontend + Vercel serverless backend. Zero npm production dependencies.
 
 ## Tech Stack
+
 - **Frontend**: HTML5, CSS3 (custom properties), Vanilla JS (ES6+ IIFE pattern)
 - **Backend**: Node.js Vercel Serverless Functions
 - **APIs**: api-football.com (primary), football-data.org (fallback)
@@ -13,9 +15,11 @@ Premium Serie A betting predictions platform. Vanilla JS frontend + Vercel serve
 - **Package Manager**: npm
 
 ## Project Structure
+
 ```
 api/                  → Vercel serverless functions
-api/_lib/             → Shared backend utilities (API clients, cache)
+api/_lib/             → Shared backend utilities (API clients, cache, leagues config)
+api/_lib/leagues.js   → Centralized league configuration (IDs, codes, seasons)
 public/               → Static frontend (index.html, script.js, styles.css)
 eslint.config.mjs     → ESLint flat config
 .prettierrc           → Prettier config
@@ -24,6 +28,7 @@ CHANGELOG.md          → All changes (always update)
 ```
 
 ## Key Commands
+
 ```bash
 npm run dev           # Start local dev server (vercel dev)
 npm run start         # Alias for dev
@@ -34,16 +39,25 @@ npm run format:check  # Check formatting without modifying
 ```
 
 ## API Endpoints
-- `GET /api/matches` — Next 10 Serie A matches (2h cache)
-- `GET /api/results` — Last 10 results (1h cache)
-- `GET /api/odds?fixture={id}` — Betting odds (30min cache)
-- `GET /api/standings` — League standings (6h cache)
+
+All data endpoints accept an optional `?league={slug}` parameter (default: `serie-a`).
+Valid slugs: `serie-a`, `serie-b`, `champions-league`, `la-liga`, `premier-league`.
+
+- `GET /api/matches?league={slug}` — Next 10 matches (2h cache)
+- `GET /api/results?league={slug}` — Last 10 results (1h cache)
+- `GET /api/odds?fixture={id}` — Betting odds (30min cache, no league param)
+- `GET /api/standings?league={slug}` — League standings (6h cache)
+- `GET /api/tips?league={slug}` — Tips filtered by league (15min cache)
+- `POST /api/generate-tips` — Body: `{ league: "slug" }` (default: serie-a)
+- `POST /api/settle-tips` — Auto-groups pending tips by league
 
 ## Environment Variables
+
 - `API_FOOTBALL_KEY` — api-sports.io key
 - `FOOTBALL_DATA_KEY` — football-data.org key
 
 ## Code Conventions
+
 - Frontend JS uses IIFE pattern — all logic in one `script.js`
 - CSS uses custom properties for design tokens (colors, spacing, typography)
 - Serverless functions follow primary→fallback API pattern
@@ -51,6 +65,7 @@ npm run format:check  # Check formatting without modifying
 - 18+ gambling compliance (ADM disclaimer required)
 
 ## Important Notes
+
 - No build step — static site served from `public/`
 - Never commit `.env` files
 - All API keys go through serverless functions (never expose to client)

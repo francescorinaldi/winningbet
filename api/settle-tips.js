@@ -4,11 +4,15 @@
  * Chiude i pronostici confrontando le previsioni con i risultati reali.
  * Progettato per essere chiamato da un cron job giornaliero.
  *
+ * Supporta multi-lega: raggruppa i tips pendenti per lega e
+ * recupera i risultati di ciascuna lega separatamente.
+ *
  * Flusso:
  *   1. Recupera tutti i tips con status 'pending' e match_date nel passato
- *   2. Per ogni tip, cerca il risultato reale da /api/results (o API diretta)
- *   3. Confronta il pronostico con il risultato effettivo
- *   4. Aggiorna lo status del tip (won/lost/void) e crea il tip_outcome
+ *   2. Raggruppa per lega
+ *   3. Per ogni lega, recupera i risultati reali
+ *   4. Confronta il pronostico con il risultato effettivo
+ *   5. Aggiorna lo status del tip (won/lost/void) e crea il tip_outcome
  *
  * Sicurezza: richiede CRON_SECRET nell'header Authorization.
  *
@@ -52,53 +56,66 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ settled: 0, message: 'Nessun pronostico da chiudere' });
     }
 
-    // 2. Recupera i risultati recenti
-    let results;
-    try {
-      results = await apiFootball.getRecentResults(30);
-    } catch (_primaryErr) {
-      results = await footballData.getRecentResults(30);
-    }
-
-    // Mappa risultati per match_id
-    const resultsMap = new Map();
-    results.forEach(function (r) {
-      resultsMap.set(String(r.id), r);
+    // 2. Raggruppa tips per lega
+    const tipsByLeague = {};
+    pendingTips.forEach(function (tip) {
+      const league = tip.league || 'serie-a';
+      if (!tipsByLeague[league]) tipsByLeague[league] = [];
+      tipsByLeague[league].push(tip);
     });
 
-    // 3. Confronta e chiudi ogni tip
+    // 3. Per ogni lega, recupera risultati e chiudi i tips
     const settledResults = [];
 
-    for (const tip of pendingTips) {
-      const result = resultsMap.get(tip.match_id);
-
-      if (!result || result.goalsHome === null || result.goalsAway === null) {
-        // Partita non ancora terminata o risultato non disponibile
-        continue;
+    for (const [leagueSlug, tips] of Object.entries(tipsByLeague)) {
+      let results;
+      try {
+        results = await apiFootball.getRecentResults(leagueSlug, 30);
+      } catch (_primaryErr) {
+        try {
+          results = await footballData.getRecentResults(leagueSlug, 30);
+        } catch (_fallbackErr) {
+          console.error(`Could not fetch results for ${leagueSlug}, skipping`);
+          continue;
+        }
       }
 
-      const totalGoals = result.goalsHome + result.goalsAway;
-      const actualResult = buildActualResult(result);
-      const status = evaluatePrediction(tip.prediction, result, totalGoals);
-
-      // Aggiorna lo status del tip
-      await supabase.from('tips').update({ status: status }).eq('id', tip.id);
-
-      // Crea il tip_outcome
-      await supabase.from('tip_outcomes').upsert(
-        {
-          tip_id: tip.id,
-          actual_result: actualResult,
-        },
-        { onConflict: 'tip_id' },
-      );
-
-      settledResults.push({
-        match: tip.home_team + ' vs ' + tip.away_team,
-        prediction: tip.prediction,
-        actual: actualResult,
-        status: status,
+      // Mappa risultati per match_id
+      const resultsMap = new Map();
+      results.forEach(function (r) {
+        resultsMap.set(String(r.id), r);
       });
+
+      // Confronta e chiudi ogni tip di questa lega
+      for (const tip of tips) {
+        const result = resultsMap.get(tip.match_id);
+
+        if (!result || result.goalsHome === null || result.goalsAway === null) {
+          continue;
+        }
+
+        const totalGoals = result.goalsHome + result.goalsAway;
+        const actualResult = buildActualResult(result);
+        const status = evaluatePrediction(tip.prediction, result, totalGoals);
+
+        await supabase.from('tips').update({ status: status }).eq('id', tip.id);
+
+        await supabase.from('tip_outcomes').upsert(
+          {
+            tip_id: tip.id,
+            actual_result: actualResult,
+          },
+          { onConflict: 'tip_id' },
+        );
+
+        settledResults.push({
+          match: tip.home_team + ' vs ' + tip.away_team,
+          league: leagueSlug,
+          prediction: tip.prediction,
+          actual: actualResult,
+          status: status,
+        });
+      }
     }
 
     return res.status(200).json({

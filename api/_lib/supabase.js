@@ -19,10 +19,7 @@ const { createClient } = require('@supabase/supabase-js');
  * Bypassa tutte le RLS policies — usare solo lato server.
  * @type {import('@supabase/supabase-js').SupabaseClient}
  */
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SECRET_KEY,
-);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SECRET_KEY);
 
 /**
  * Crea un client Supabase che rispetta le RLS policies dell'utente.

@@ -3,15 +3,11 @@
   "headers": [
     {
       "source": "/api/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "s-maxage=1800, stale-while-revalidate=3600" }
-      ]
+      "headers": [{ "key": "Cache-Control", "value": "s-maxage=1800, stale-while-revalidate=3600" }]
     },
     {
       "source": "/api/stripe-webhook",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store" }
-      ]
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     },
     {
       "source": "/(.*)",

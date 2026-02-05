@@ -1,7 +1,8 @@
 /**
- * GET /api/matches
+ * GET /api/matches?league={slug}
  *
- * Restituisce le prossime 10 partite di Serie A.
+ * Restituisce le prossime 10 partite della lega selezionata.
+ * Default: serie-a se il parametro league e' omesso.
  *
  * Provider primario: api-football.com (api-sports.io)
  * Fallback: football-data.org
@@ -19,8 +20,8 @@
 const cache = require('./_lib/cache');
 const apiFootball = require('./_lib/api-football');
 const footballData = require('./_lib/football-data');
+const { resolveLeagueSlug } = require('./_lib/leagues');
 
-const CACHE_KEY = 'matches';
 const CACHE_TTL = 7200; // 2 ore
 
 module.exports = async function handler(req, res) {
@@ -28,8 +29,11 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const leagueSlug = resolveLeagueSlug(req.query.league);
+  const cacheKey = `matches_${leagueSlug}`;
+
   // Controlla la cache in-memory (sopravvive tra invocazioni warm)
-  const cached = cache.get(CACHE_KEY);
+  const cached = cache.get(cacheKey);
   if (cached) {
     res.setHeader('Cache-Control', 's-maxage=7200, stale-while-revalidate=3600');
     return res.status(200).json(cached);
@@ -37,16 +41,16 @@ module.exports = async function handler(req, res) {
 
   try {
     // Provider primario: API-Football
-    const matches = await apiFootball.getUpcomingMatches(10);
-    cache.set(CACHE_KEY, matches, CACHE_TTL);
+    const matches = await apiFootball.getUpcomingMatches(leagueSlug, 10);
+    cache.set(cacheKey, matches, CACHE_TTL);
     res.setHeader('Cache-Control', 's-maxage=7200, stale-while-revalidate=3600');
     return res.status(200).json(matches);
   } catch (primaryErr) {
     console.error('API-Football matches failed:', primaryErr.message);
     try {
       // Fallback: football-data.org
-      const matches = await footballData.getUpcomingMatches(10);
-      cache.set(CACHE_KEY, matches, CACHE_TTL);
+      const matches = await footballData.getUpcomingMatches(leagueSlug, 10);
+      cache.set(cacheKey, matches, CACHE_TTL);
       res.setHeader('Cache-Control', 's-maxage=7200, stale-while-revalidate=3600');
       return res.status(200).json(matches);
     } catch (fallbackErr) {

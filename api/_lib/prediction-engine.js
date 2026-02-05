@@ -1,7 +1,8 @@
 /**
  * AI Prediction Engine — Claude API Integration
  *
- * Genera pronostici per le partite di Serie A usando Claude.
+ * Genera pronostici per le partite di calcio usando Claude.
+ * Supporta tutte le leghe configurate in leagues.js.
  * Riceve dati strutturati (forma, classifica, H2H, quote) e
  * produce una previsione con confidence, analisi e tier.
  *
@@ -50,12 +51,13 @@ const PREDICTION_TYPES = [
  * @returns {number} return.odds - Quota consigliata
  * @returns {string} return.analysis - Analisi in italiano (2-3 frasi)
  */
-async function generatePrediction({ match, homeStanding, awayStanding, odds, tier }) {
+async function generatePrediction({ match, homeStanding, awayStanding, odds, tier, leagueName }) {
+  const league = leagueName || 'Serie A';
   const oddsInfo = odds
     ? `Quote 1X2: Casa ${odds.values[0].odd}, Pareggio ${odds.values[1].odd}, Trasferta ${odds.values[2].odd}`
     : 'Quote non disponibili';
 
-  const prompt = `Sei un analista di calcio professionista specializzato nella Serie A italiana.
+  const prompt = `Sei un analista di calcio professionista specializzato nella ${league}.
 Analizza questa partita e fornisci un pronostico.
 
 PARTITA: ${match.home} vs ${match.away}
@@ -127,7 +129,7 @@ Rispondi SOLO con un oggetto JSON valido (senza markdown, senza backtick) nel se
  * @param {Function} params.getOdds - Funzione per recuperare le quote (match.id => odds)
  * @returns {Promise<Array<Object>>} Array di pronostici con metadati partita
  */
-async function generateBatchPredictions({ matches, standings, getOdds }) {
+async function generateBatchPredictions({ matches, standings, getOdds, leagueName }) {
   const standingsMap = new Map();
   standings.forEach((team) => standingsMap.set(team.name, team));
 
@@ -155,6 +157,7 @@ async function generateBatchPredictions({ matches, standings, getOdds }) {
         awayStanding,
         odds,
         tier,
+        leagueName,
       });
 
       results.push({
@@ -169,7 +172,10 @@ async function generateBatchPredictions({ matches, standings, getOdds }) {
         tier,
       });
     } catch (err) {
-      console.error(`Failed to generate prediction for ${match.home} vs ${match.away}:`, err.message);
+      console.error(
+        `Failed to generate prediction for ${match.home} vs ${match.away}:`,
+        err.message,
+      );
     }
   }
 

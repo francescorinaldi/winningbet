@@ -127,7 +127,7 @@
       });
       authToggle.appendChild(link);
     } else {
-      authToggle.appendChild(document.createTextNode('Hai gia\' un account? '));
+      authToggle.appendChild(document.createTextNode("Hai gia' un account? "));
       const link = document.createElement('a');
       link.href = '#';
       link.textContent = 'Accedi';
@@ -286,7 +286,7 @@
   document.getElementById('googleAuth').addEventListener('click', async function () {
     const { error } = await SupabaseConfig.signInWithOAuth('google');
     if (error) {
-      showMessage('Errore nell\'accesso con Google: ' + error.message, 'error');
+      showMessage("Errore nell'accesso con Google: " + error.message, 'error');
     }
   });
 
