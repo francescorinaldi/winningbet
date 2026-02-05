@@ -61,7 +61,15 @@
     profile = result.data;
 
     // Aggiorna header
-    const displayName = (profile && profile.display_name) || user.email.split('@')[0];
+    const meta = user.user_metadata || {};
+    const rawName =
+      (profile && profile.display_name) ||
+      meta.display_name ||
+      meta.full_name ||
+      meta.name ||
+      user.email.split('@')[0];
+    // Capitalize first letter of the resolved name
+    const displayName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
     document.getElementById('userName').textContent = displayName;
 
     // Tier badge
