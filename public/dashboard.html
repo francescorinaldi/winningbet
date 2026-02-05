@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard — WinningBet</title>
+    <meta
+      name="description"
+      content="La tua area personale WinningBet. Pronostici, storico e gestione abbonamento."
+    />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+
+    <!-- Supabase config -->
+    <meta name="supabase-url" content="" />
+    <meta name="supabase-anon-key" content="" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Particle background -->
+    <canvas id="particles"></canvas>
+
+    <!-- Navbar -->
+    <nav class="navbar scrolled" id="navbar">
+      <div class="container nav-content">
+        <a href="/" class="logo">
+          <span class="logo-icon"
+            ><svg width="22" height="18" viewBox="0 0 28 23" fill="currentColor" aria-hidden="true">
+              <path d="M1 18L5.5 4L11 13L14 1L17 13L22.5 4L27 18H1Z" />
+              <rect x="1" y="19" width="26" height="3.5" rx="1.5" /></svg
+          ></span>
+          <span class="logo-text">WinningBet</span>
+        </a>
+        <div class="dash-nav-links">
+          <a href="/" class="btn btn-outline btn-sm">Torna al Sito</a>
+          <button class="btn btn-outline btn-sm" id="logoutBtn">Esci</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Dashboard Content -->
+    <main class="dash-main">
+      <div class="container">
+        <!-- Welcome header -->
+        <div class="dash-header" id="dashHeader">
+          <div class="dash-welcome">
+            <h1 class="dash-title">Ciao, <span class="text-gradient" id="userName">—</span></h1>
+            <p class="dash-subtitle">Ecco i tuoi pronostici e le tue statistiche.</p>
+          </div>
+          <div class="dash-tier-badge" id="tierBadge">
+            <span class="tier-label" id="tierLabel">FREE</span>
+          </div>
+        </div>
+
+        <!-- Checkout feedback -->
+        <div class="dash-alert" id="checkoutAlert" style="display: none"></div>
+
+        <!-- Tab navigation -->
+        <div class="dash-tabs">
+          <button class="dash-tab active" data-tab="tips">Tips di Oggi</button>
+          <button class="dash-tab" data-tab="history">Storico</button>
+          <button class="dash-tab" data-tab="account">Account</button>
+        </div>
+
+        <!-- TAB: Today's Tips -->
+        <section class="dash-panel" id="panelTips">
+          <div class="dash-tips-grid" id="dashTipsGrid">
+            <div class="tips-loading">
+              <span class="loading-spinner"></span>
+              <span>Caricamento pronostici...</span>
+            </div>
+          </div>
+          <div class="dash-tips-empty" id="dashTipsEmpty" style="display: none">
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+            <p>Nessun pronostico disponibile per oggi.</p>
+            <p class="dash-tips-empty-sub">
+              I nuovi tips vengono pubblicati prima di ogni giornata di Serie A.
+            </p>
+          </div>
+        </section>
+
+        <!-- TAB: History -->
+        <section class="dash-panel" id="panelHistory" style="display: none">
+          <div class="dash-history-filters">
+            <button class="filter-btn active" data-status="all">Tutti</button>
+            <button class="filter-btn" data-status="won">Vinti</button>
+            <button class="filter-btn" data-status="lost">Persi</button>
+            <button class="filter-btn" data-status="pending">In Corso</button>
+          </div>
+          <div class="dash-history-list" id="dashHistoryList">
+            <div class="tips-loading">
+              <span class="loading-spinner"></span>
+              <span>Caricamento storico...</span>
+            </div>
+          </div>
+          <div class="dash-history-empty" id="dashHistoryEmpty" style="display: none">
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <p>Nessun risultato trovato.</p>
+          </div>
+        </section>
+
+        <!-- TAB: Account -->
+        <section class="dash-panel" id="panelAccount" style="display: none">
+          <div class="dash-account-grid">
+            <!-- Subscription card -->
+            <div class="dash-account-card">
+              <h3 class="dash-card-title">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                  <line x1="1" y1="10" x2="23" y2="10" />
+                </svg>
+                Abbonamento
+              </h3>
+              <div class="dash-sub-info" id="subInfo">
+                <div class="dash-sub-row">
+                  <span class="dash-sub-label">Piano attuale</span>
+                  <span class="dash-sub-value" id="subTier">Free</span>
+                </div>
+                <div class="dash-sub-row">
+                  <span class="dash-sub-label">Stato</span>
+                  <span class="dash-sub-value" id="subStatus">—</span>
+                </div>
+                <div class="dash-sub-row" id="subRenewalRow" style="display: none">
+                  <span class="dash-sub-label">Prossimo rinnovo</span>
+                  <span class="dash-sub-value" id="subRenewal">—</span>
+                </div>
+              </div>
+              <div class="dash-sub-actions">
+                <button class="btn btn-gold btn-block" id="upgradeBtn">Passa a PRO</button>
+                <button class="btn btn-outline btn-block" id="manageSubBtn" style="display: none">
+                  Gestisci Abbonamento
+                </button>
+              </div>
+            </div>
+
+            <!-- Account info card -->
+            <div class="dash-account-card">
+              <h3 class="dash-card-title">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                Profilo
+              </h3>
+              <div class="dash-profile-info">
+                <div class="dash-sub-row">
+                  <span class="dash-sub-label">Email</span>
+                  <span class="dash-sub-value" id="userEmail">—</span>
+                </div>
+                <div class="dash-sub-row">
+                  <span class="dash-sub-label">Nome</span>
+                  <span class="dash-sub-value" id="userDisplayName">—</span>
+                </div>
+                <div class="dash-sub-row">
+                  <span class="dash-sub-label">Membro dal</span>
+                  <span class="dash-sub-value" id="userSince">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Footer minimal -->
+    <footer class="footer dash-footer">
+      <div class="container">
+        <div class="footer-copy">
+          <span>&copy; 2026 WinningBet. Tutti i diritti riservati.</span>
+          <div class="footer-age">
+            <span class="age-badge">18+</span>
+            <span>ADM</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="dashboard.js"></script>
+  </body>
+</html>
