@@ -324,7 +324,7 @@
     // Le card filtrate vengono nascoste con display:none,
     // quelle visibili hanno un'animazione fade-in.
 
-    var filterBtns = document.querySelectorAll('.filter-btn');
+    const filterBtns = document.querySelectorAll('.filter-btn');
 
     /** Inizializza i listener sui bottoni filtro della sezione tips. */
     function initTipsFilter() {
@@ -333,11 +333,11 @@
                 filterBtns.forEach(function (b) { b.classList.remove('active'); });
                 btn.classList.add('active');
 
-                var filter = btn.getAttribute('data-filter');
-                var cards = document.querySelectorAll('.tip-card');
+                const filter = btn.getAttribute('data-filter');
+                const cards = document.querySelectorAll('.tip-card');
 
                 cards.forEach(function (card) {
-                    var tier = card.getAttribute('data-tier');
+                    const tier = card.getAttribute('data-tier');
                     if (filter === 'all' || tier === filter) {
                         card.style.display = '';
                         card.style.opacity = '0';
@@ -488,15 +488,15 @@
      * @returns {HTMLElement} Elemento .match-card
      */
     function buildMatchCard(m) {
-        var card = createEl('div', 'match-card');
+        const card = createEl('div', 'match-card');
         card.appendChild(createEl('div', 'match-time', formatMatchDate(m.date)));
 
-        var teams = createEl('div', 'match-teams');
-        var homeTeam = createEl('div', 'team');
+        const teams = createEl('div', 'match-teams');
+        const homeTeam = createEl('div', 'team');
         homeTeam.appendChild(createEl('span', 'team-name', m.home));
         teams.appendChild(homeTeam);
         teams.appendChild(createEl('span', 'match-vs', 'vs'));
-        var awayTeam = createEl('div', 'team');
+        const awayTeam = createEl('div', 'team');
         awayTeam.appendChild(createEl('span', 'team-name', m.away));
         teams.appendChild(awayTeam);
         card.appendChild(teams);
@@ -516,14 +516,14 @@
      * @returns {HTMLElement} Elemento .result-item
      */
     function buildResultItem(r) {
-        var item = createEl('div', 'result-item');
+        const item = createEl('div', 'result-item');
         item.appendChild(createEl('span', 'result-date', formatResultDate(r.date)));
         item.appendChild(createEl('span', 'result-match', r.home + ' vs ' + r.away));
         item.appendChild(createEl('span', 'result-score', r.goalsHome + ' - ' + r.goalsAway));
 
-        var totalGoals = (r.goalsHome || 0) + (r.goalsAway || 0);
-        var badgeClass = totalGoals > 2 ? 'result-badge result-badge--over' : 'result-badge result-badge--under';
-        var badgeText = totalGoals > 2 ? 'O 2.5' : 'U 2.5';
+        const totalGoals = (r.goalsHome || 0) + (r.goalsAway || 0);
+        const badgeClass = totalGoals > 2 ? 'result-badge result-badge--over' : 'result-badge result-badge--under';
+        const badgeText = totalGoals > 2 ? 'O 2.5' : 'U 2.5';
         item.appendChild(createEl('span', badgeClass, badgeText));
 
         return item;
@@ -550,14 +550,14 @@
     // - MULTIPLA: combinata di 3 partite, parzialmente bloccata
 
     /** Pool di previsioni possibili per le tip card */
-    var PREDICTIONS = [
+    const PREDICTIONS = [
         'Under 2.5', 'Over 2.5', 'Goal', 'No Goal',
         '1', 'X', '2', '1X', 'X2',
         'Over 1.5', 'Under 3.5', '1 + Over 1.5', '2 + Over 1.5'
     ];
 
     /** Pool di analisi testuali per le tip card FREE */
-    var ANALYSES = [
+    const ANALYSES = [
         'Negli ultimi 5 scontri diretti, il trend e\' chiaro. Difese solide e pochi gol nelle ultime uscite casalinghe.',
         'Entrambe le squadre segnano regolarmente. Media gol combinata superiore a 3 nelle ultime 4 giornate.',
         'La squadra di casa non perde da 8 partite. Rendimento casalingo tra i migliori del campionato.',
@@ -606,18 +606,18 @@
      * @returns {SVGElement} Elemento SVG del lucchetto
      */
     function buildLockSvg() {
-        var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttribute('width', '24');
         svg.setAttribute('height', '24');
         svg.setAttribute('viewBox', '0 0 24 24');
         svg.setAttribute('fill', 'none');
         svg.setAttribute('stroke', 'currentColor');
         svg.setAttribute('stroke-width', '2');
-        var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         rect.setAttribute('x', '3'); rect.setAttribute('y', '11');
         rect.setAttribute('width', '18'); rect.setAttribute('height', '11');
         rect.setAttribute('rx', '2'); rect.setAttribute('ry', '2');
-        var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', 'M7 11V7a5 5 0 0110 0v4');
         svg.appendChild(rect);
         svg.appendChild(path);
@@ -640,13 +640,13 @@
      * @returns {HTMLElement} Elemento .tip-card completo
      */
     function buildTipCard(match, tier) {
-        var isFree = tier === 'free';
-        var isVip = tier === 'vip';
-        var cardClass = 'tip-card';
+        const isFree = tier === 'free';
+        const isVip = tier === 'vip';
+        let cardClass = 'tip-card';
         if (tier === 'pro') cardClass += ' tip-card--pro';
         if (isVip) cardClass += ' tip-card--vip';
 
-        var card = createEl('div', cardClass);
+        const card = createEl('div', cardClass);
         card.setAttribute('data-tier', tier);
 
         // Glow decorativo per card pro/vip
@@ -654,49 +654,49 @@
         if (isVip) card.appendChild(createEl('div', 'tip-card-glow tip-card-glow--gold'));
 
         // Header: badge tier + data partita
-        var header = createEl('div', 'tip-card-header');
-        var badgeClass = 'tip-badge tip-badge--' + tier;
+        const header = createEl('div', 'tip-card-header');
+        const badgeClass = 'tip-badge tip-badge--' + tier;
         header.appendChild(createEl('span', badgeClass, tier.toUpperCase()));
         header.appendChild(createEl('span', 'tip-date', formatMatchDate(match.date)));
         card.appendChild(header);
 
         // Squadre con abbreviazione come logo placeholder
-        var tipMatch = createEl('div', 'tip-match');
-        var homeTeam = createEl('div', 'tip-team');
+        const tipMatch = createEl('div', 'tip-match');
+        const homeTeam = createEl('div', 'tip-team');
         homeTeam.appendChild(createEl('div', 'team-logo', teamAbbr(match.home)));
         homeTeam.appendChild(createEl('span', null, match.home));
         tipMatch.appendChild(homeTeam);
-        var versus = createEl('div', 'tip-versus');
+        const versus = createEl('div', 'tip-versus');
         versus.appendChild(createEl('span', 'vs-text', 'VS'));
         tipMatch.appendChild(versus);
-        var awayTeam = createEl('div', 'tip-team');
+        const awayTeam = createEl('div', 'tip-team');
         awayTeam.appendChild(createEl('div', 'team-logo', teamAbbr(match.away)));
         awayTeam.appendChild(createEl('span', null, match.away));
         tipMatch.appendChild(awayTeam);
         card.appendChild(tipMatch);
 
         // Pronostico e quota (offuscati per VIP)
-        var prediction = createEl('div', 'tip-prediction');
-        var pick = createEl('div', 'tip-pick');
+        const prediction = createEl('div', 'tip-prediction');
+        const pick = createEl('div', 'tip-pick');
         pick.appendChild(createEl('span', 'pick-label', 'Pronostico'));
-        var pickVal = createEl('span', isVip ? 'pick-value tip-value--hidden' : 'pick-value');
+        const pickVal = createEl('span', isVip ? 'pick-value tip-value--hidden' : 'pick-value');
         pickVal.textContent = isVip ? '\u2605 \u2605 \u2605' : randomFrom(PREDICTIONS);
         pick.appendChild(pickVal);
         prediction.appendChild(pick);
-        var odds = createEl('div', 'tip-odds');
+        const odds = createEl('div', 'tip-odds');
         odds.appendChild(createEl('span', 'odds-label', 'Quota'));
-        var oddsVal = createEl('span', isVip ? 'odds-value tip-value--hidden' : 'odds-value');
+        const oddsVal = createEl('span', isVip ? 'odds-value tip-value--hidden' : 'odds-value');
         oddsVal.textContent = isVip ? '?.??' : randomOdd();
         odds.appendChild(oddsVal);
         prediction.appendChild(odds);
         card.appendChild(prediction);
 
         // Barra di confidence con animazione
-        var conf = randomConfidence();
-        var confDiv = createEl('div', 'tip-confidence');
+        const conf = randomConfidence();
+        const confDiv = createEl('div', 'tip-confidence');
         confDiv.appendChild(createEl('span', 'confidence-label', 'Confidence'));
-        var confBar = createEl('div', 'confidence-bar');
-        var confFill = createEl('div', isVip ? 'confidence-fill confidence-fill--gold' : 'confidence-fill');
+        const confBar = createEl('div', 'confidence-bar');
+        const confFill = createEl('div', isVip ? 'confidence-fill confidence-fill--gold' : 'confidence-fill');
         confFill.setAttribute('data-confidence', conf);
         confBar.appendChild(confFill);
         confDiv.appendChild(confBar);
@@ -705,17 +705,17 @@
 
         // Analisi: visibile per FREE, bloccata con overlay per PRO/VIP
         if (isFree) {
-            var analysis = createEl('div', 'tip-analysis');
+            const analysis = createEl('div', 'tip-analysis');
             analysis.appendChild(createEl('p', null, randomFrom(ANALYSES)));
             card.appendChild(analysis);
         } else {
-            var locked = createEl('div', 'tip-analysis tip-analysis--locked');
-            var overlayClass = isVip ? 'locked-overlay locked-overlay--gold' : 'locked-overlay';
-            var overlay = createEl('div', overlayClass);
+            const locked = createEl('div', 'tip-analysis tip-analysis--locked');
+            const overlayClass = isVip ? 'locked-overlay locked-overlay--gold' : 'locked-overlay';
+            const overlay = createEl('div', overlayClass);
             overlay.appendChild(buildLockSvg());
-            var msg = isVip ? 'Tip esclusivo riservato ai membri VIP' : 'Analisi completa riservata agli abbonati PRO';
+            const msg = isVip ? 'Tip esclusivo riservato ai membri VIP' : 'Analisi completa riservata agli abbonati PRO';
             overlay.appendChild(createEl('span', null, msg));
-            var btn = createEl('a', 'btn btn-gold btn-sm', isVip ? 'Diventa VIP' : 'Sblocca');
+            const btn = createEl('a', 'btn btn-gold btn-sm', isVip ? 'Diventa VIP' : 'Sblocca');
             btn.href = '#pricing';
             overlay.appendChild(btn);
             locked.appendChild(overlay);
@@ -737,47 +737,47 @@
      * @returns {HTMLElement} Elemento .tip-card.tip-card--multipla
      */
     function buildMultiplaCard(matches) {
-        var card = createEl('div', 'tip-card tip-card--multipla');
+        const card = createEl('div', 'tip-card tip-card--multipla');
         card.setAttribute('data-tier', 'pro');
         card.appendChild(createEl('div', 'tip-card-glow'));
 
         // Header
-        var header = createEl('div', 'tip-card-header');
+        const header = createEl('div', 'tip-card-header');
         header.appendChild(createEl('span', 'tip-badge tip-badge--pro', 'MULTIPLA'));
         header.appendChild(createEl('span', 'tip-date', formatMatchDate(matches[0].date)));
         card.appendChild(header);
 
         // Corpo multipla: lista selezioni + quota totale
-        var multipla = createEl('div', 'tip-multipla');
+        const multipla = createEl('div', 'tip-multipla');
         multipla.appendChild(createEl('h3', 'multipla-title', 'Multipla del Giorno'));
 
-        var picks = createEl('div', 'multipla-picks');
-        var totalOdds = 1;
+        const picks = createEl('div', 'multipla-picks');
+        let totalOdds = 1;
         matches.forEach(function (m, i) {
-            var isLocked = i >= 2;
-            var pickDiv = createEl('div', isLocked ? 'multipla-pick multipla-pick--locked' : 'multipla-pick');
+            const isLocked = i >= 2;
+            const pickDiv = createEl('div', isLocked ? 'multipla-pick multipla-pick--locked' : 'multipla-pick');
             pickDiv.appendChild(createEl('span', null, m.home + ' - ' + m.away));
-            var pred = isLocked ? '???' : randomFrom(PREDICTIONS);
+            const pred = isLocked ? '???' : randomFrom(PREDICTIONS);
             pickDiv.appendChild(createEl('span', 'multipla-pick-value', pred));
-            var odd = isLocked ? '?.??' : randomOdd();
+            const odd = isLocked ? '?.??' : randomOdd();
             pickDiv.appendChild(createEl('span', 'multipla-pick-odds', odd));
             if (!isLocked) totalOdds *= parseFloat(odd);
             picks.appendChild(pickDiv);
         });
         multipla.appendChild(picks);
 
-        var total = createEl('div', 'multipla-total');
+        const total = createEl('div', 'multipla-total');
         total.appendChild(createEl('span', null, 'Quota Totale'));
         total.appendChild(createEl('span', 'multipla-total-odds', totalOdds.toFixed(2) + '+'));
         multipla.appendChild(total);
         card.appendChild(multipla);
 
         // Overlay bloccato con CTA per upgrade
-        var locked = createEl('div', 'tip-analysis tip-analysis--locked');
-        var overlay = createEl('div', 'locked-overlay');
+        const locked = createEl('div', 'tip-analysis tip-analysis--locked');
+        const overlay = createEl('div', 'locked-overlay');
         overlay.appendChild(buildLockSvg());
         overlay.appendChild(createEl('span', null, 'Sblocca la multipla completa'));
-        var btn = createEl('a', 'btn btn-gold btn-sm', 'Vai PRO');
+        const btn = createEl('a', 'btn btn-gold btn-sm', 'Vai PRO');
         btn.href = '#pricing';
         overlay.appendChild(btn);
         locked.appendChild(overlay);
@@ -793,11 +793,11 @@
      * @param {HTMLElement} container - Contenitore con elementi .confidence-fill
      */
     function activateConfidenceBars(container) {
-        var fills = container.querySelectorAll('.confidence-fill');
-        var observer = new IntersectionObserver(function (entries) {
+        const fills = container.querySelectorAll('.confidence-fill');
+        const observer = new IntersectionObserver(function (entries) {
             entries.forEach(function (entry) {
                 if (entry.isIntersecting) {
-                    var val = entry.target.getAttribute('data-confidence');
+                    const val = entry.target.getAttribute('data-confidence');
                     entry.target.style.width = val + '%';
                     observer.unobserve(entry.target);
                 }
@@ -813,9 +813,9 @@
      * Dopo il rendering attiva le animazioni (confidence bars, reveal).
      */
     async function loadTips() {
-        var container = document.getElementById('tipsGrid');
+        const container = document.getElementById('tipsGrid');
         try {
-            var matches = await fetchAPI('matches');
+            const matches = await fetchAPI('matches');
             if (!matches || matches.length < 3) {
                 setEmptyState(container, 'tips-empty', 'Nessun pronostico disponibile al momento');
                 return;
@@ -835,7 +835,7 @@
             activateConfidenceBars(container);
 
             // Animazione reveal con stagger sulle nuove card
-            var cards = container.querySelectorAll('.tip-card');
+            const cards = container.querySelectorAll('.tip-card');
             cards.forEach(function (card, i) {
                 card.classList.add('reveal');
                 card.style.transitionDelay = (i * 0.1) + 's';
@@ -854,9 +854,9 @@
      * nella Live Matches Bar (scroll orizzontale).
      */
     async function loadMatches() {
-        var container = document.getElementById('matchesScroll');
+        const container = document.getElementById('matchesScroll');
         try {
-            var matches = await fetchAPI('matches');
+            const matches = await fetchAPI('matches');
             if (!matches || matches.length === 0) {
                 setEmptyState(container, 'matches-empty', 'Nessuna partita in programma');
                 return;
@@ -876,9 +876,9 @@
      * nella sezione Ultimi Risultati con badge Over/Under 2.5.
      */
     async function loadResults() {
-        var container = document.getElementById('resultsList');
+        const container = document.getElementById('resultsList');
         try {
-            var results = await fetchAPI('results');
+            const results = await fetchAPI('results');
             if (!results || results.length === 0) {
                 setEmptyState(container, 'results-empty', 'Nessun risultato disponibile');
                 return;

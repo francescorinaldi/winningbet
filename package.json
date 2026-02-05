@@ -30,5 +30,8 @@
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.8.1"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.2"
   }
 }
