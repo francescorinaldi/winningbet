@@ -288,6 +288,8 @@ img {
   display: inline-flex;
   align-items: center;
   color: var(--gold);
+  font-size: 1.4rem;
+  line-height: 1;
   filter: drop-shadow(0 0 8px var(--gold-glow));
 }
 
