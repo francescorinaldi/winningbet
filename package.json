@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.73.0",
-    "@supabase/supabase-js": "^2.95.2"
+    "@supabase/supabase-js": "^2.95.2",
+    "stripe": "^20.3.1"
   }
 }
