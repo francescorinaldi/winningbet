@@ -893,6 +893,40 @@
         }
     }
 
+    // ==========================================
+    // AUTH STATE — Navbar UI
+    // ==========================================
+    // Controlla se l'utente e' autenticato via Supabase
+    // e aggiorna i bottoni della navbar di conseguenza.
+
+    const navAuthBtn = document.getElementById('navAuthBtn');
+    const navSubscribeBtn = document.getElementById('navSubscribeBtn');
+
+    /**
+     * Aggiorna la navbar in base allo stato di autenticazione.
+     * Se l'utente e' loggato: mostra "Dashboard" e nascondi "Abbonati Ora".
+     * Se non loggato: mostra "Accedi" e "Abbonati Ora".
+     * @param {Object|null} session - Sessione Supabase corrente
+     */
+    function updateNavForAuth(session) {
+        if (session && navAuthBtn) {
+            navAuthBtn.textContent = 'Dashboard';
+            navAuthBtn.href = '/dashboard.html';
+            if (navSubscribeBtn) navSubscribeBtn.style.display = 'none';
+        }
+    }
+
+    // Controlla la sessione all'avvio (solo se SupabaseConfig e' disponibile)
+    if (typeof SupabaseConfig !== 'undefined') {
+        SupabaseConfig.getSession().then(function (result) {
+            updateNavForAuth(result.data.session);
+        });
+
+        SupabaseConfig.onAuthStateChange(function (_event, session) {
+            updateNavForAuth(session);
+        });
+    }
+
     // Avvia il caricamento dati al ready della pagina
     loadMatches();
     loadResults();

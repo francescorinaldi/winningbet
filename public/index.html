@@ -7,6 +7,10 @@
     <meta name="description" content="Pronostici Serie A premium. Tips giornalieri, statistiche avanzate e track record verificato. Unisciti ai vincenti.">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
+    <!-- Supabase config -->
+    <meta name="supabase-url" content="">
+    <meta name="supabase-anon-key" content="">
+
     <!-- Google Fonts: Space Grotesk (display/headings) + Inter (body text) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,7 +59,8 @@
                 <a href="#stats">Track Record</a>
                 <a href="#pricing">Piani</a>
                 <a href="#faq">FAQ</a>
-                <a href="#pricing" class="btn btn-gold btn-sm">Abbonati Ora</a>
+                <a href="/auth.html" class="btn btn-outline btn-sm" id="navAuthBtn">Accedi</a>
+                <a href="#pricing" class="btn btn-gold btn-sm" id="navSubscribeBtn">Abbonati Ora</a>
             </div>
             <button class="hamburger" id="hamburger" aria-label="Menu">
                 <span></span>
@@ -295,7 +300,7 @@
                             Canale Telegram VIP
                         </li>
                     </ul>
-                    <a href="#" class="btn btn-outline btn-block">Inizia Gratis</a>
+                    <a href="/auth.html" class="btn btn-outline btn-block">Inizia Gratis</a>
                 </div>
 
                 <!-- Pro Plan: 9.99 EUR/mese, tutti i tips + analisi -->
@@ -335,7 +340,7 @@
                             Tips VALUE ad alta quota
                         </li>
                     </ul>
-                    <a href="#" class="btn btn-gold btn-block">Scegli PRO</a>
+                    <a href="/auth.html" class="btn btn-gold btn-block" data-plan="pro">Scegli PRO</a>
                 </div>
 
                 <!-- VIP Plan: 29.99 EUR/mese, tutto PRO + esclusivi + Telegram -->
@@ -374,7 +379,7 @@
                             Supporto diretto 1-to-1
                         </li>
                     </ul>
-                    <a href="#" class="btn btn-gold btn-block">Diventa VIP</a>
+                    <a href="/auth.html" class="btn btn-gold btn-block" data-plan="vip">Diventa VIP</a>
                 </div>
             </div>
         </div>
@@ -515,6 +520,9 @@
         </div>
     </footer>
 
+    <!-- Supabase CDN (auth only — anon key is safe to expose) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
