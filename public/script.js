@@ -758,70 +758,6 @@
   }
 
   /**
-   * Costruisce la card "Multipla del Giorno" con piu' partite.
-   * Le prime 2 selezioni sono visibili, dalla terza in poi sono bloccate
-   * (blur + testo offuscato). Include quota totale cumulativa.
-   *
-   * @param {Array<Object>} matches - Array di partite da /api/matches (min 3)
-   * @param {string} matches[].date - Data ISO della partita
-   * @param {string} matches[].home - Nome squadra di casa
-   * @param {string} matches[].away - Nome squadra ospite
-   * @returns {HTMLElement} Elemento .tip-card.tip-card--multipla
-   */
-  function buildMultiplaCard(matches) {
-    const card = createEl('div', 'tip-card tip-card--multipla');
-    card.setAttribute('data-tier', 'pro');
-    card.appendChild(createEl('div', 'tip-card-glow'));
-
-    // Header
-    const header = createEl('div', 'tip-card-header');
-    header.appendChild(createEl('span', 'tip-badge tip-badge--pro', 'MULTIPLA'));
-    header.appendChild(createEl('span', 'tip-date', formatMatchDate(matches[0].date)));
-    card.appendChild(header);
-
-    // Corpo multipla: lista selezioni + quota totale
-    const multipla = createEl('div', 'tip-multipla');
-    multipla.appendChild(createEl('h3', 'multipla-title', 'Multipla del Giorno'));
-
-    const picks = createEl('div', 'multipla-picks');
-    let totalOdds = 1;
-    matches.forEach(function (m, i) {
-      const isLocked = i >= 2;
-      const pickDiv = createEl(
-        'div',
-        isLocked ? 'multipla-pick multipla-pick--locked' : 'multipla-pick',
-      );
-      pickDiv.appendChild(createEl('span', null, m.home + ' - ' + m.away));
-      const pred = isLocked ? '???' : randomFrom(PREDICTIONS);
-      pickDiv.appendChild(createEl('span', 'multipla-pick-value', pred));
-      const odd = isLocked ? '?.??' : randomOdd();
-      pickDiv.appendChild(createEl('span', 'multipla-pick-odds', odd));
-      if (!isLocked) totalOdds *= parseFloat(odd);
-      picks.appendChild(pickDiv);
-    });
-    multipla.appendChild(picks);
-
-    const total = createEl('div', 'multipla-total');
-    total.appendChild(createEl('span', null, 'Quota Totale'));
-    total.appendChild(createEl('span', 'multipla-total-odds', totalOdds.toFixed(2) + '+'));
-    multipla.appendChild(total);
-    card.appendChild(multipla);
-
-    // Overlay bloccato con CTA per upgrade
-    const locked = createEl('div', 'tip-analysis tip-analysis--locked');
-    const overlay = createEl('div', 'locked-overlay');
-    overlay.appendChild(buildLockSvg());
-    overlay.appendChild(createEl('span', null, 'Sblocca la multipla completa'));
-    const btn = createEl('a', 'btn btn-gold btn-sm', 'Vai PRO');
-    btn.href = '#pricing';
-    overlay.appendChild(btn);
-    locked.appendChild(overlay);
-    card.appendChild(locked);
-
-    return card;
-  }
-
-  /**
    * Attiva l'IntersectionObserver per le barre di confidence
    * all'interno di un container specifico (usato dopo il rendering
    * dinamico delle tip card).
@@ -848,7 +784,7 @@
 
   /**
    * Carica le prossime partite da /api/matches e genera le tip card.
-   * Crea 4 card: 1 FREE + 1 PRO + 1 VIP + 1 MULTIPLA.
+   * Crea 3 card: 1 FREE + 1 PRO + 1 VIP.
    * Servono almeno 3 partite, altrimenti mostra stato vuoto.
    * Dopo il rendering attiva le animazioni (confidence bars, reveal).
    */
@@ -868,8 +804,6 @@
       container.appendChild(buildTipCard(matches[1], 'pro'));
       // Card 3: VIP (terza partita)
       container.appendChild(buildTipCard(matches[2], 'vip'));
-      // Card 4: MULTIPLA (prime 3 partite combinate)
-      container.appendChild(buildMultiplaCard(matches.slice(0, 3)));
 
       // Attiva barre di confidence sui nuovi elementi
       activateConfidenceBars(container);
@@ -902,9 +836,23 @@
         return;
       }
       container.textContent = '';
+
+      // Crea il track wrapper per il ticker
+      const track = createEl('div', 'matches-track');
       matches.forEach(function (m) {
-        container.appendChild(buildMatchCard(m));
+        track.appendChild(buildMatchCard(m));
       });
+
+      // Duplica le card per un loop seamless
+      matches.forEach(function (m) {
+        track.appendChild(buildMatchCard(m));
+      });
+
+      container.appendChild(track);
+
+      // Calcola la durata in base al numero di card (3s per card)
+      const duration = matches.length * 3;
+      track.style.setProperty('--ticker-duration', duration + 's');
     } catch (err) {
       console.error('loadMatches failed:', err);
       setEmptyState(container, 'matches-empty', 'Impossibile caricare le partite');
@@ -1057,7 +1005,7 @@
 
       const amount = document.createElement('span');
       amount.className = 'chart-amount';
-      amount.textContent = (m.profit >= 0 ? '+' : '') + m.profit + 'u';
+      amount.textContent = (m.profit >= 0 ? '+' : '') + m.profit + '\u20AC';
       bar.appendChild(amount);
 
       chartContainer.appendChild(bar);

@@ -570,13 +570,28 @@ img {
 .matches-scroll {
   display: flex;
   gap: 16px;
-  overflow-x: auto;
+  overflow: hidden;
   padding-bottom: 8px;
-  scrollbar-width: none;
 }
 
-.matches-scroll::-webkit-scrollbar {
-  display: none;
+.matches-track {
+  display: flex;
+  gap: 16px;
+  animation: tickerScroll var(--ticker-duration, 30s) linear infinite;
+  will-change: transform;
+}
+
+.matches-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes tickerScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .match-card {
@@ -675,7 +690,7 @@ img {
 
 .tips-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
 }
 
