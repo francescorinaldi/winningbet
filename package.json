@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Piattaforma di pronostici premium per la Serie A italiana. Dati live, tips giornalieri e track record verificato.",
   "private": true,
-  "author": "Winning Bet",
+  "author": "WinningBet",
   "license": "UNLICENSED",
   "keywords": [
     "serie-a",
@@ -17,9 +17,18 @@
   "scripts": {
     "dev": "vercel dev",
     "build": "echo 'Static site — no build step'",
-    "start": "vercel dev"
+    "start": "vercel dev",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1"
   }
 }

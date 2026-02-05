@@ -1,5 +1,5 @@
 /* ============================================
-   WINNING BET — Script
+   WinningBet — Script
    ============================================
    Frontend IIFE che gestisce tutte le interazioni del sito:
    - Sistema di particelle animato (Canvas 2D)

@@ -1,6 +1,8 @@
 node_modules/
 .vercel/
+.claude/
 .env
 .env.local
 .env*.local
-.vercel
+firebase-debug.log
+.worktrees/
