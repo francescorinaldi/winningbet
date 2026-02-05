@@ -67,6 +67,8 @@ export default [
         supabase: 'readonly',
         SupabaseConfig: 'readonly',
         Stripe: 'readonly',
+        URLSearchParams: 'readonly',
+        Promise: 'readonly',
       },
     },
   },
