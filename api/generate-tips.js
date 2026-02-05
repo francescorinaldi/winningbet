@@ -1,0 +1,117 @@
+/**
+ * POST /api/generate-tips
+ *
+ * Genera pronostici AI per le prossime partite di Serie A.
+ * Questo endpoint e' progettato per essere chiamato:
+ *   - Manualmente (con header Authorization: Bearer <CRON_SECRET>)
+ *   - Da un cron job (Vercel Cron o servizio esterno)
+ *
+ * Flusso:
+ *   1. Recupera le prossime partite (api-football → fallback)
+ *   2. Recupera la classifica per i dati di forma
+ *   3. Per ogni partita, chiama il prediction engine (Claude API)
+ *   4. Salva i pronostici nella tabella tips di Supabase
+ *
+ * Sicurezza: richiede CRON_SECRET nell'header Authorization.
+ *
+ * Risposta 200: { generated: number, tips: Array }
+ *
+ * Errori:
+ *   401 — Segreto cron non valido
+ *   405 — Metodo non consentito (solo POST)
+ *   500 — Errore durante la generazione
+ */
+
+const { supabase } = require('./_lib/supabase');
+const apiFootball = require('./_lib/api-football');
+const footballData = require('./_lib/football-data');
+const { generateBatchPredictions } = require('./_lib/prediction-engine');
+
+module.exports = async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Verifica il segreto cron
+  const authHeader = req.headers.authorization;
+  if (!authHeader || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    // 1. Recupera le prossime partite
+    let matches;
+    try {
+      matches = await apiFootball.getUpcomingMatches(10);
+    } catch (_primaryErr) {
+      matches = await footballData.getUpcomingMatches(10);
+    }
+
+    if (!matches || matches.length === 0) {
+      return res.status(200).json({ generated: 0, message: 'Nessuna partita in programma' });
+    }
+
+    // 2. Recupera la classifica
+    let standings;
+    try {
+      standings = await apiFootball.getStandings();
+    } catch (_primaryErr) {
+      standings = await footballData.getStandings();
+    }
+
+    // 3. Controlla se ci sono gia' tips per queste partite (evita duplicati)
+    const matchIds = matches.map((m) => String(m.id));
+    const { data: existingTips } = await supabase
+      .from('tips')
+      .select('match_id')
+      .in('match_id', matchIds);
+
+    const existingMatchIds = new Set((existingTips || []).map((t) => t.match_id));
+    const newMatches = matches.filter((m) => !existingMatchIds.has(String(m.id)));
+
+    if (newMatches.length === 0) {
+      return res.status(200).json({
+        generated: 0,
+        message: 'Tutti i pronostici per queste partite sono gia\' stati generati',
+      });
+    }
+
+    // 4. Funzione per recuperare le quote di una partita
+    async function getOddsForMatch(fixtureId) {
+      try {
+        return await apiFootball.getOdds(fixtureId);
+      } catch (_err) {
+        return null;
+      }
+    }
+
+    // 5. Genera i pronostici con Claude
+    const predictions = await generateBatchPredictions({
+      matches: newMatches,
+      standings,
+      getOdds: getOddsForMatch,
+    });
+
+    // 6. Salva in Supabase
+    if (predictions.length > 0) {
+      const { error: insertError } = await supabase.from('tips').insert(predictions);
+      if (insertError) {
+        console.error('Failed to insert tips:', insertError.message);
+        return res.status(500).json({ error: 'Errore nel salvataggio dei pronostici' });
+      }
+    }
+
+    return res.status(200).json({
+      generated: predictions.length,
+      tips: predictions.map((t) => ({
+        match: `${t.home_team} vs ${t.away_team}`,
+        prediction: t.prediction,
+        tier: t.tier,
+        confidence: t.confidence,
+      })),
+    });
+  } catch (err) {
+    console.error('generate-tips error:', err);
+    return res.status(500).json({ error: 'Errore nella generazione dei pronostici' });
+  }
+};
