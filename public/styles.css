@@ -1,5 +1,5 @@
 /* ============================================
-   WINNING BET — Styles
+   WinningBet — Styles
    ============================================
    Design system premium con tema scuro e accenti gold.
 
@@ -270,7 +270,8 @@ img { max-width: 100%; display: block; }
 }
 
 .logo-icon {
-    font-size: 1.5rem;
+    display: inline-flex;
+    align-items: center;
     color: var(--gold);
     filter: drop-shadow(0 0 8px var(--gold-glow));
 }

@@ -1,4 +1,4 @@
-# Winning Bet — Pronostici Serie A
+# WinningBet — Pronostici Serie A
 
 Piattaforma premium di pronostici per la Serie A italiana. Offre tips giornalieri, statistiche avanzate e un track record verificato. Il frontend è costruito in vanilla JavaScript senza framework, con un backend serverless su Vercel che integra dati live da due provider calcistici.
 
@@ -29,8 +29,10 @@ Piattaforma premium di pronostici per la Serie A italiana. Offre tips giornalier
 | **API fallback** | [football-data.org](https://www.football-data.org/) v4 |
 | **Font** | Space Grotesk (display), Inter (body) — via Google Fonts |
 | **Deploy** | Vercel |
+| **Linting** | ESLint 9 (flat config) |
+| **Formatting** | Prettier |
 
-Nessuna dipendenza npm in produzione. Il progetto utilizza esclusivamente API del browser (Fetch, Canvas, Intersection Observer, DOM) e serverless functions Node.js native.
+Nessuna dipendenza npm in produzione. Il progetto utilizza esclusivamente API del browser (Fetch, Canvas, Intersection Observer, DOM) e serverless functions Node.js native. Gli strumenti di sviluppo (ESLint, Prettier) sono installati come `devDependencies`.
 
 ---
 
@@ -53,6 +55,10 @@ winningbet/
 │   └── styles.css                # Tutti gli stili (CSS custom properties, responsive)
 ├── .env.example                  # Template variabili d'ambiente
 ├── .gitignore                    # File esclusi dal version control
+├── .prettierrc                   # Configurazione Prettier
+├── .prettierignore               # File esclusi da Prettier
+├── eslint.config.mjs             # Configurazione ESLint (flat config)
+├── CLAUDE.md                     # Guida progetto per Claude Code
 ├── package.json                  # Manifest del progetto
 ├── vercel.json                   # Configurazione deploy Vercel
 └── README.md                     # Questo file
@@ -106,15 +112,19 @@ Ogni endpoint utilizza **api-football.com come provider primario**. Se la chiama
 
    Compila `.env` con le tue API key (vedi sezione [Variabili d'Ambiente](#variabili-dambiente)).
 
-3. **Avvia il server di sviluppo**
+3. **Installa le dipendenze di sviluppo**
+
+   ```bash
+   npm install
+   ```
+
+4. **Avvia il server di sviluppo**
 
    ```bash
    npm run dev
    ```
 
    Vercel CLI avvierà il progetto su `http://localhost:3000` con le serverless functions attive.
-
-> **Nota:** Non è necessario `npm install` — il progetto non ha dipendenze npm. Serve solo Vercel CLI installato globalmente.
 
 ---
 
@@ -138,6 +148,10 @@ Su Vercel, configura le variabili nella dashboard del progetto sotto **Settings 
 | `npm run dev` | Avvia il server di sviluppo Vercel (`vercel dev`) |
 | `npm run start` | Alias di `npm run dev` |
 | `npm run build` | Nessun build step (sito statico) |
+| `npm run lint` | Esegue ESLint su tutto il progetto |
+| `npm run lint:fix` | Esegue ESLint con auto-fix |
+| `npm run format` | Formatta tutti i file con Prettier |
+| `npm run format:check` | Verifica la formattazione senza modificare |
 
 ---
 
