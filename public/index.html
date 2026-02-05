@@ -1,25 +1,30 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WinningBet</title>
-    <meta name="description" content="Pronostici Serie A premium. Tips giornalieri, statistiche avanzate e track record verificato. Unisciti ai vincenti.">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <meta
+      name="description"
+      content="Pronostici Serie A premium. Tips giornalieri, statistiche avanzate e track record verificato. Unisciti ai vincenti."
+    />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 
     <!-- Supabase config -->
-    <meta name="supabase-url" content="">
-    <meta name="supabase-anon-key" content="">
+    <meta name="supabase-url" content="" />
+    <meta name="supabase-anon-key" content="" />
 
     <!-- Google Fonts: Space Grotesk (display/headings) + Inter (body text) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
     <!--
         STRUTTURA DELLA PAGINA
         ======================
@@ -49,25 +54,29 @@
          (backdrop-filter blur). Su mobile (<768px): overlay fullscreen
          togglato dal bottone hamburger (aria-label="Menu"). -->
     <nav class="navbar" id="navbar">
-        <div class="container nav-content">
-            <a href="#" class="logo">
-                <span class="logo-icon"><svg width="22" height="18" viewBox="0 0 28 23" fill="currentColor" aria-hidden="true"><path d="M1 18L5.5 4L11 13L14 1L17 13L22.5 4L27 18H1Z"/><rect x="1" y="19" width="26" height="3.5" rx="1.5"/></svg></span>
-                <span class="logo-text">WinningBet</span>
-            </a>
-            <div class="nav-links" id="navLinks">
-                <a href="#tips">Tips</a>
-                <a href="#stats">Track Record</a>
-                <a href="#pricing">Piani</a>
-                <a href="#faq">FAQ</a>
-                <a href="/auth.html" class="btn btn-outline btn-sm" id="navAuthBtn">Accedi</a>
-                <a href="#pricing" class="btn btn-gold btn-sm" id="navSubscribeBtn">Abbonati Ora</a>
-            </div>
-            <button class="hamburger" id="hamburger" aria-label="Menu">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
+      <div class="container nav-content">
+        <a href="#" class="logo">
+          <span class="logo-icon"
+            ><svg width="22" height="18" viewBox="0 0 28 23" fill="currentColor" aria-hidden="true">
+              <path d="M1 18L5.5 4L11 13L14 1L17 13L22.5 4L27 18H1Z" />
+              <rect x="1" y="19" width="26" height="3.5" rx="1.5" /></svg
+          ></span>
+          <span class="logo-text">WinningBet</span>
+        </a>
+        <div class="nav-links" id="navLinks">
+          <a href="#tips">Tips</a>
+          <a href="#stats">Track Record</a>
+          <a href="#pricing">Piani</a>
+          <a href="#faq">FAQ</a>
+          <a href="/auth.html" class="btn btn-outline btn-sm" id="navAuthBtn">Accedi</a>
+          <a href="#pricing" class="btn btn-gold btn-sm" id="navSubscribeBtn">Abbonati Ora</a>
         </div>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
     </nav>
 
     <!-- 3. HERO SECTION
@@ -77,48 +86,59 @@
          - .hero-cta: due bottoni (gold=pricing, outline=tips gratis)
          - .hero-scroll-indicator: linea animata che invita allo scroll -->
     <section class="hero" id="hero">
-        <div class="hero-glow"></div>
-        <div class="hero-glow hero-glow--red"></div>
-        <div class="container hero-content">
-            <div class="hero-badge">
-                <span class="badge-dot"></span>
-                SERIE A 2025/26
-            </div>
-            <h1 class="hero-title">
-                Non scommettere.<br>
-                <span class="text-gradient">Investi.</span>
-            </h1>
-            <p class="hero-subtitle">
-                Pronostici Serie A basati su dati, algoritmi e analisi tattiche.<br>
-                Track record verificato. ROI positivo dal giorno uno.
-            </p>
-            <div class="hero-stats">
-                <div class="hero-stat">
-                    <span class="hero-stat-value" data-count="73">0</span><span class="hero-stat-suffix">%</span>
-                    <span class="hero-stat-label">Win Rate</span>
-                </div>
-                <div class="hero-stat-divider"></div>
-                <div class="hero-stat">
-                    <span class="hero-stat-value" data-count="12">0</span><span class="hero-stat-suffix">.4%</span>
-                    <span class="hero-stat-label">ROI Medio</span>
-                </div>
-                <div class="hero-stat-divider"></div>
-                <div class="hero-stat">
-                    <span class="hero-stat-value" data-count="2847">0</span>
-                    <span class="hero-stat-label">Tips Inviati</span>
-                </div>
-            </div>
-            <div class="hero-cta">
-                <a href="#pricing" class="btn btn-gold btn-lg">
-                    <span>Inizia a Vincere</span>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </a>
-                <a href="#tips" class="btn btn-outline btn-lg">Vedi i Tips Gratis</a>
-            </div>
+      <div class="hero-glow"></div>
+      <div class="hero-glow hero-glow--red"></div>
+      <div class="container hero-content">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          SERIE A 2025/26
         </div>
-        <div class="hero-scroll-indicator">
-            <div class="scroll-line"></div>
+        <h1 class="hero-title">
+          Non scommettere.<br />
+          <span class="text-gradient">Investi.</span>
+        </h1>
+        <p class="hero-subtitle">
+          Pronostici Serie A basati su dati, algoritmi e analisi tattiche.<br />
+          Track record verificato. ROI positivo dal giorno uno.
+        </p>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="hero-stat-value" data-count="73">0</span
+            ><span class="hero-stat-suffix">%</span>
+            <span class="hero-stat-label">Win Rate</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-value" data-count="12">0</span
+            ><span class="hero-stat-suffix">.4%</span>
+            <span class="hero-stat-label">ROI Medio</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-value" data-count="2847">0</span>
+            <span class="hero-stat-label">Tips Inviati</span>
+          </div>
         </div>
+        <div class="hero-cta">
+          <a href="#pricing" class="btn btn-gold btn-lg">
+            <span>Inizia a Vincere</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </a>
+          <a href="#tips" class="btn btn-outline btn-lg">Vedi i Tips Gratis</a>
+        </div>
+      </div>
+      <div class="hero-scroll-indicator">
+        <div class="scroll-line"></div>
+      </div>
     </section>
 
     <!-- 4. LIVE MATCHES BAR
@@ -127,18 +147,18 @@
          script.js (funzione loadMatches -> /api/matches).
          Mostra un loading spinner fino al caricamento dei dati. -->
     <section class="live-bar">
-        <div class="container">
-            <div class="live-bar-header">
-                <span class="live-dot"></span>
-                <span>PROSSIME PARTITE — SERIE A</span>
-            </div>
-            <div class="matches-scroll" id="matchesScroll">
-                <div class="matches-loading">
-                    <span class="loading-spinner"></span>
-                    <span>Caricamento partite...</span>
-                </div>
-            </div>
+      <div class="container">
+        <div class="live-bar-header">
+          <span class="live-dot"></span>
+          <span>PROSSIME PARTITE — SERIE A</span>
         </div>
+        <div class="matches-scroll" id="matchesScroll">
+          <div class="matches-loading">
+            <span class="loading-spinner"></span>
+            <span>Caricamento partite...</span>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 5. TIPS SECTION
@@ -150,27 +170,30 @@
          - 1x VIP (pronostico + quote bloccati)
          - 1x MULTIPLA (combinata parzialmente bloccata) -->
     <section class="tips-section" id="tips">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-tag">TIPS DEL GIORNO</span>
-                <h2 class="section-title">I Nostri <span class="text-gradient">Pronostici</span></h2>
-                <p class="section-desc">Analisi dettagliate basate su statistiche avanzate, forma delle squadre e valore delle quote.</p>
-            </div>
-
-            <div class="tips-filters">
-                <button class="filter-btn active" data-filter="all">Tutti</button>
-                <button class="filter-btn" data-filter="free">Free</button>
-                <button class="filter-btn" data-filter="pro">Pro</button>
-                <button class="filter-btn" data-filter="vip">VIP</button>
-            </div>
-
-            <div class="tips-grid" id="tipsGrid">
-                <div class="tips-loading">
-                    <span class="loading-spinner"></span>
-                    <span>Caricamento pronostici...</span>
-                </div>
-            </div>
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">TIPS DEL GIORNO</span>
+          <h2 class="section-title">I Nostri <span class="text-gradient">Pronostici</span></h2>
+          <p class="section-desc">
+            Analisi dettagliate basate su statistiche avanzate, forma delle squadre e valore delle
+            quote.
+          </p>
         </div>
+
+        <div class="tips-filters">
+          <button class="filter-btn active" data-filter="all">Tutti</button>
+          <button class="filter-btn" data-filter="free">Free</button>
+          <button class="filter-btn" data-filter="pro">Pro</button>
+          <button class="filter-btn" data-filter="vip">VIP</button>
+        </div>
+
+        <div class="tips-grid" id="tipsGrid">
+          <div class="tips-loading">
+            <span class="loading-spinner"></span>
+            <span>Caricamento pronostici...</span>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 6. TRACK RECORD / STATS SECTION
@@ -179,77 +202,144 @@
          b) Chart: grafico a barre del profitto mensile (data-value per altezza, data-label per mese)
          c) Recent Results: lista #resultsList popolata da loadResults -> /api/results -->
     <section class="stats-section" id="stats">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-tag">TRACK RECORD</span>
-                <h2 class="section-title">Risultati <span class="text-gradient">Verificati</span></h2>
-                <p class="section-desc">Trasparenza totale. Ogni tip viene tracciato e i risultati sono pubblici.</p>
-            </div>
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">TRACK RECORD</span>
+          <h2 class="section-title">Risultati <span class="text-gradient">Verificati</span></h2>
+          <p class="section-desc">
+            Trasparenza totale. Ogni tip viene tracciato e i risultati sono pubblici.
+          </p>
+        </div>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                    </div>
-                    <div class="stat-value" data-count="1842">0</div>
-                    <div class="stat-label">Tips Vincenti</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-                    </div>
-                    <div class="stat-value-row">
-                        <span class="stat-value" data-count="73">0</span><span class="stat-suffix">%</span>
-                    </div>
-                    <div class="stat-label">Win Rate</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                    </div>
-                    <div class="stat-value">+12.4%</div>
-                    <div class="stat-label">ROI Mensile</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                    </div>
-                    <div class="stat-value">1.87</div>
-                    <div class="stat-label">Quota Media</div>
-                </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
             </div>
+            <div class="stat-value" data-count="1842">0</div>
+            <div class="stat-label">Tips Vincenti</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="8" r="7" />
+                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+              </svg>
+            </div>
+            <div class="stat-value-row">
+              <span class="stat-value" data-count="73">0</span><span class="stat-suffix">%</span>
+            </div>
+            <div class="stat-label">Win Rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                <polyline points="17 6 23 6 23 12" />
+              </svg>
+            </div>
+            <div class="stat-value">+12.4%</div>
+            <div class="stat-label">ROI Mensile</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="12" y1="1" x2="12" y2="23" />
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+            </div>
+            <div class="stat-value">1.87</div>
+            <div class="stat-label">Quota Media</div>
+          </div>
+        </div>
 
-            <!-- 6b. MONTHLY PERFORMANCE CHART
+        <!-- 6b. MONTHLY PERFORMANCE CHART
              Grafico a barre animato. Ogni .chart-bar ha:
              - data-value: valore numerico (altezza proporzionale, max ~140)
              - data-label: etichetta mese (mostrata sotto la barra via CSS ::after)
              L'animazione e' triggerata da chartObserver in script.js -->
-            <div class="chart-container">
-                <h3 class="chart-title">Profitto Mensile (unità)</h3>
-                <div class="chart">
-                    <div class="chart-bar" data-value="85" data-label="Set"><div class="chart-fill"></div><span class="chart-amount">+8.5u</span></div>
-                    <div class="chart-bar" data-value="120" data-label="Ott"><div class="chart-fill"></div><span class="chart-amount">+12.0u</span></div>
-                    <div class="chart-bar" data-value="65" data-label="Nov"><div class="chart-fill"></div><span class="chart-amount">+6.5u</span></div>
-                    <div class="chart-bar" data-value="140" data-label="Dic"><div class="chart-fill"></div><span class="chart-amount">+14.0u</span></div>
-                    <div class="chart-bar" data-value="95" data-label="Gen"><div class="chart-fill"></div><span class="chart-amount">+9.5u</span></div>
-                    <div class="chart-bar" data-value="110" data-label="Feb"><div class="chart-fill"></div><span class="chart-amount">+11.0u</span></div>
-                </div>
+        <div class="chart-container">
+          <h3 class="chart-title">Profitto Mensile (unità)</h3>
+          <div class="chart">
+            <div class="chart-bar" data-value="85" data-label="Set">
+              <div class="chart-fill"></div>
+              <span class="chart-amount">+8.5u</span>
             </div>
+            <div class="chart-bar" data-value="120" data-label="Ott">
+              <div class="chart-fill"></div>
+              <span class="chart-amount">+12.0u</span>
+            </div>
+            <div class="chart-bar" data-value="65" data-label="Nov">
+              <div class="chart-fill"></div>
+              <span class="chart-amount">+6.5u</span>
+            </div>
+            <div class="chart-bar" data-value="140" data-label="Dic">
+              <div class="chart-fill"></div>
+              <span class="chart-amount">+14.0u</span>
+            </div>
+            <div class="chart-bar" data-value="95" data-label="Gen">
+              <div class="chart-fill"></div>
+              <span class="chart-amount">+9.5u</span>
+            </div>
+            <div class="chart-bar" data-value="110" data-label="Feb">
+              <div class="chart-fill"></div>
+              <span class="chart-amount">+11.0u</span>
+            </div>
+          </div>
+        </div>
 
-            <!-- 6c. RECENT RESULTS
+        <!-- 6c. RECENT RESULTS
              Lista dinamica degli ultimi risultati Serie A.
              Popolata da script.js (loadResults -> /api/results).
              Ogni riga mostra: data, squadre, punteggio, badge Over/Under 2.5 -->
-            <div class="recent-results">
-                <h3 class="results-title">Ultimi Risultati</h3>
-                <div class="results-list" id="resultsList">
-                    <div class="results-loading">
-                        <span class="loading-spinner"></span>
-                        <span>Caricamento risultati...</span>
-                    </div>
-                </div>
+        <div class="recent-results">
+          <h3 class="results-title">Ultimi Risultati</h3>
+          <div class="results-list" id="resultsList">
+            <div class="results-loading">
+              <span class="loading-spinner"></span>
+              <span>Caricamento risultati...</span>
             </div>
+          </div>
         </div>
+      </div>
     </section>
 
     <!-- 7. PRICING SECTION
@@ -257,155 +347,167 @@
          Il piano PRO ha classe .pricing-card--pro (evidenziato con scale e glow).
          I link "Abbonati" puntano a # (placeholder per integrazione pagamenti). -->
     <section class="pricing-section" id="pricing">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-tag">PIANI</span>
-                <h2 class="section-title">Scegli il Tuo <span class="text-gradient">Piano</span></h2>
-                <p class="section-desc">Investi nel tuo vantaggio. Ogni piano include accesso immediato ai nostri pronostici.</p>
-            </div>
-
-            <div class="pricing-grid">
-                <!-- Free Plan: 0 EUR/mese, 1-2 tips/settimana -->
-                <div class="pricing-card">
-                    <div class="pricing-tier">FREE</div>
-                    <div class="pricing-price">
-                        <span class="price-currency">&euro;</span>
-                        <span class="price-amount">0</span>
-                        <span class="price-period">/mese</span>
-                    </div>
-                    <div class="pricing-desc">Per iniziare a scoprire il nostro metodo</div>
-                    <ul class="pricing-features">
-                        <li class="feature-included">
-                            <span class="feature-check">&#10003;</span>
-                            1-2 tips base a settimana
-                        </li>
-                        <li class="feature-included">
-                            <span class="feature-check">&#10003;</span>
-                            Statistiche generali Serie A
-                        </li>
-                        <li class="feature-included">
-                            <span class="feature-check">&#10003;</span>
-                            Classifica e calendario
-                        </li>
-                        <li class="feature-excluded">
-                            <span class="feature-x">&#10007;</span>
-                            Tips giornalieri completi
-                        </li>
-                        <li class="feature-excluded">
-                            <span class="feature-x">&#10007;</span>
-                            Analisi pre-partita
-                        </li>
-                        <li class="feature-excluded">
-                            <span class="feature-x">&#10007;</span>
-                            Canale Telegram VIP
-                        </li>
-                    </ul>
-                    <a href="/auth.html" class="btn btn-outline btn-block">Inizia Gratis</a>
-                </div>
-
-                <!-- Pro Plan: 9.99 EUR/mese, tutti i tips + analisi -->
-                <div class="pricing-card pricing-card--pro">
-                    <div class="pricing-popular">PIU' POPOLARE</div>
-                    <div class="pricing-tier">PRO</div>
-                    <div class="pricing-price">
-                        <span class="price-currency">&euro;</span>
-                        <span class="price-amount">9</span>
-                        <span class="price-decimal">.99</span>
-                        <span class="price-period">/mese</span>
-                    </div>
-                    <div class="pricing-desc">Per chi vuole fare sul serio</div>
-                    <ul class="pricing-features">
-                        <li class="feature-included">
-                            <span class="feature-check">&#10003;</span>
-                            Tutti i tips giornalieri
-                        </li>
-                        <li class="feature-included">
-                            <span class="feature-check">&#10003;</span>
-                            Analisi pre-partita dettagliate
-                        </li>
-                        <li class="feature-included">
-                            <span class="feature-check">&#10003;</span>
-                            Statistiche avanzate
-                        </li>
-                        <li class="feature-included">
-                            <span class="feature-check">&#10003;</span>
-                            Multipla del giorno
-                        </li>
-                        <li class="feature-included">
-                            <span class="feature-check">&#10003;</span>
-                            Storico completo risultati
-                        </li>
-                        <li class="feature-excluded">
-                            <span class="feature-x">&#10007;</span>
-                            Tips VALUE ad alta quota
-                        </li>
-                    </ul>
-                    <a href="/auth.html" class="btn btn-gold btn-block" data-plan="pro">Scegli PRO</a>
-                </div>
-
-                <!-- VIP Plan: 29.99 EUR/mese, tutto PRO + esclusivi + Telegram -->
-                <div class="pricing-card pricing-card--vip">
-                    <div class="pricing-tier">VIP</div>
-                    <div class="pricing-price">
-                        <span class="price-currency">&euro;</span>
-                        <span class="price-amount">29</span>
-                        <span class="price-decimal">.99</span>
-                        <span class="price-period">/mese</span>
-                    </div>
-                    <div class="pricing-desc">Per chi vuole il massimo vantaggio</div>
-                    <ul class="pricing-features">
-                        <li class="feature-included">
-                            <span class="feature-check">&#10003;</span>
-                            Tutto del piano PRO
-                        </li>
-                        <li class="feature-included">
-                            <span class="feature-check">&#10003;</span>
-                            Tips VALUE esclusivi
-                        </li>
-                        <li class="feature-included">
-                            <span class="feature-check">&#10003;</span>
-                            Canale Telegram VIP privato
-                        </li>
-                        <li class="feature-included">
-                            <span class="feature-check">&#10003;</span>
-                            Alert in tempo reale
-                        </li>
-                        <li class="feature-included">
-                            <span class="feature-check">&#10003;</span>
-                            Bankroll management personalizzato
-                        </li>
-                        <li class="feature-included">
-                            <span class="feature-check">&#10003;</span>
-                            Supporto diretto 1-to-1
-                        </li>
-                    </ul>
-                    <a href="/auth.html" class="btn btn-gold btn-block" data-plan="vip">Diventa VIP</a>
-                </div>
-            </div>
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">PIANI</span>
+          <h2 class="section-title">Scegli il Tuo <span class="text-gradient">Piano</span></h2>
+          <p class="section-desc">
+            Investi nel tuo vantaggio. Ogni piano include accesso immediato ai nostri pronostici.
+          </p>
         </div>
+
+        <div class="pricing-grid">
+          <!-- Free Plan: 0 EUR/mese, 1-2 tips/settimana -->
+          <div class="pricing-card">
+            <div class="pricing-tier">FREE</div>
+            <div class="pricing-price">
+              <span class="price-currency">&euro;</span>
+              <span class="price-amount">0</span>
+              <span class="price-period">/mese</span>
+            </div>
+            <div class="pricing-desc">Per iniziare a scoprire il nostro metodo</div>
+            <ul class="pricing-features">
+              <li class="feature-included">
+                <span class="feature-check">&#10003;</span>
+                1-2 tips base a settimana
+              </li>
+              <li class="feature-included">
+                <span class="feature-check">&#10003;</span>
+                Statistiche generali Serie A
+              </li>
+              <li class="feature-included">
+                <span class="feature-check">&#10003;</span>
+                Classifica e calendario
+              </li>
+              <li class="feature-excluded">
+                <span class="feature-x">&#10007;</span>
+                Tips giornalieri completi
+              </li>
+              <li class="feature-excluded">
+                <span class="feature-x">&#10007;</span>
+                Analisi pre-partita
+              </li>
+              <li class="feature-excluded">
+                <span class="feature-x">&#10007;</span>
+                Canale Telegram VIP
+              </li>
+            </ul>
+            <a href="/auth.html" class="btn btn-outline btn-block">Inizia Gratis</a>
+          </div>
+
+          <!-- Pro Plan: 9.99 EUR/mese, tutti i tips + analisi -->
+          <div class="pricing-card pricing-card--pro">
+            <div class="pricing-popular">PIU' POPOLARE</div>
+            <div class="pricing-tier">PRO</div>
+            <div class="pricing-price">
+              <span class="price-currency">&euro;</span>
+              <span class="price-amount">9</span>
+              <span class="price-decimal">.99</span>
+              <span class="price-period">/mese</span>
+            </div>
+            <div class="pricing-desc">Per chi vuole fare sul serio</div>
+            <ul class="pricing-features">
+              <li class="feature-included">
+                <span class="feature-check">&#10003;</span>
+                Tutti i tips giornalieri
+              </li>
+              <li class="feature-included">
+                <span class="feature-check">&#10003;</span>
+                Analisi pre-partita dettagliate
+              </li>
+              <li class="feature-included">
+                <span class="feature-check">&#10003;</span>
+                Statistiche avanzate
+              </li>
+              <li class="feature-included">
+                <span class="feature-check">&#10003;</span>
+                Multipla del giorno
+              </li>
+              <li class="feature-included">
+                <span class="feature-check">&#10003;</span>
+                Storico completo risultati
+              </li>
+              <li class="feature-excluded">
+                <span class="feature-x">&#10007;</span>
+                Tips VALUE ad alta quota
+              </li>
+            </ul>
+            <a href="/auth.html" class="btn btn-gold btn-block" data-plan="pro">Scegli PRO</a>
+          </div>
+
+          <!-- VIP Plan: 29.99 EUR/mese, tutto PRO + esclusivi + Telegram -->
+          <div class="pricing-card pricing-card--vip">
+            <div class="pricing-tier">VIP</div>
+            <div class="pricing-price">
+              <span class="price-currency">&euro;</span>
+              <span class="price-amount">29</span>
+              <span class="price-decimal">.99</span>
+              <span class="price-period">/mese</span>
+            </div>
+            <div class="pricing-desc">Per chi vuole il massimo vantaggio</div>
+            <ul class="pricing-features">
+              <li class="feature-included">
+                <span class="feature-check">&#10003;</span>
+                Tutto del piano PRO
+              </li>
+              <li class="feature-included">
+                <span class="feature-check">&#10003;</span>
+                Tips VALUE esclusivi
+              </li>
+              <li class="feature-included">
+                <span class="feature-check">&#10003;</span>
+                Canale Telegram VIP privato
+              </li>
+              <li class="feature-included">
+                <span class="feature-check">&#10003;</span>
+                Alert in tempo reale
+              </li>
+              <li class="feature-included">
+                <span class="feature-check">&#10003;</span>
+                Bankroll management personalizzato
+              </li>
+              <li class="feature-included">
+                <span class="feature-check">&#10003;</span>
+                Supporto diretto 1-to-1
+              </li>
+            </ul>
+            <a href="/auth.html" class="btn btn-gold btn-block" data-plan="vip">Diventa VIP</a>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 8. TELEGRAM CTA SECTION
          Card con glow effect che invita a entrare nel canale Telegram.
          Il link punta a # (placeholder per il link reale del canale). -->
     <section class="telegram-section">
-        <div class="container">
-            <div class="telegram-card">
-                <div class="telegram-glow"></div>
-                <div class="telegram-content">
-                    <div class="telegram-icon">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-                    </div>
-                    <h2 class="telegram-title">Unisciti al Canale Telegram</h2>
-                    <p class="telegram-desc">Ricevi i tips direttamente sul telefono. Notifiche istantanee prima di ogni partita.</p>
-                    <a href="#" class="btn btn-telegram btn-lg">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-                        Entra nel Canale
-                    </a>
-                    <span class="telegram-members">4,200+ membri attivi</span>
-                </div>
+      <div class="container">
+        <div class="telegram-card">
+          <div class="telegram-glow"></div>
+          <div class="telegram-content">
+            <div class="telegram-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"
+                />
+              </svg>
             </div>
+            <h2 class="telegram-title">Unisciti al Canale Telegram</h2>
+            <p class="telegram-desc">
+              Ricevi i tips direttamente sul telefono. Notifiche istantanee prima di ogni partita.
+            </p>
+            <a href="#" class="btn btn-telegram btn-lg">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"
+                />
+              </svg>
+              Entra nel Canale
+            </a>
+            <span class="telegram-members">4,200+ membri attivi</span>
+          </div>
         </div>
+      </div>
     </section>
 
     <!-- 9. FAQ SECTION
@@ -414,60 +516,83 @@
          La classe .active viene togglata sul .faq-item, l'animazione
          di apertura usa max-height transition in CSS. -->
     <section class="faq-section" id="faq">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-tag">FAQ</span>
-                <h2 class="section-title">Domande <span class="text-gradient">Frequenti</span></h2>
-            </div>
-
-            <div class="faq-list">
-                <div class="faq-item">
-                    <button class="faq-question">
-                        <span>Come funzionano i vostri pronostici?</span>
-                        <span class="faq-icon">+</span>
-                    </button>
-                    <div class="faq-answer">
-                        <p>I nostri pronostici sono basati su un mix di analisi statistica avanzata, studio della forma delle squadre, analisi tattiche e monitoraggio delle quote di mercato. Ogni tip viene validato da un modello proprietario che valuta il valore atteso della scommessa rispetto alla quota offerta dai bookmaker.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question">
-                        <span>Posso davvero guadagnare con le scommesse?</span>
-                        <span class="faq-icon">+</span>
-                    </button>
-                    <div class="faq-answer">
-                        <p>Le scommesse sportive comportano sempre un rischio. Noi forniamo analisi e pronostici basati su dati, ma nessun risultato e' garantito. Il nostro track record mostra un ROI positivo nel lungo periodo, ma e' fondamentale scommettere responsabilmente e solo con denaro che ci si puo' permettere di perdere.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question">
-                        <span>Come funziona l'abbonamento?</span>
-                        <span class="faq-icon">+</span>
-                    </button>
-                    <div class="faq-answer">
-                        <p>L'abbonamento e' mensile e si rinnova automaticamente. Puoi cancellare in qualsiasi momento dalla tua area personale. Con il piano PRO hai accesso a tutti i tips giornalieri e le analisi. Con il piano VIP, oltre a tutto cio', ricevi tips esclusivi ad alta quota e accesso al canale Telegram privato.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question">
-                        <span>Che bookmaker consigliate?</span>
-                        <span class="faq-icon">+</span>
-                    </button>
-                    <div class="faq-answer">
-                        <p>Consigliamo esclusivamente bookmaker con licenza ADM (ex AAMS) per operare in totale legalita' in Italia. Tra i principali: bet365, Snai, Sisal, Goldbet e Betflag. Registrandoti tramite i nostri link potrai ottenere bonus di benvenuto esclusivi.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question">
-                        <span>Quanto dovrei puntare su ogni tip?</span>
-                        <span class="faq-icon">+</span>
-                    </button>
-                    <div class="faq-answer">
-                        <p>Raccomandiamo di non superare mai il 2-5% del proprio bankroll per singola scommessa. I membri VIP ricevono consigli personalizzati sul bankroll management basati sul proprio budget e profilo di rischio.</p>
-                    </div>
-                </div>
-            </div>
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">FAQ</span>
+          <h2 class="section-title">Domande <span class="text-gradient">Frequenti</span></h2>
         </div>
+
+        <div class="faq-list">
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Come funzionano i vostri pronostici?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                I nostri pronostici sono basati su un mix di analisi statistica avanzata, studio
+                della forma delle squadre, analisi tattiche e monitoraggio delle quote di mercato.
+                Ogni tip viene validato da un modello proprietario che valuta il valore atteso della
+                scommessa rispetto alla quota offerta dai bookmaker.
+              </p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Posso davvero guadagnare con le scommesse?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                Le scommesse sportive comportano sempre un rischio. Noi forniamo analisi e
+                pronostici basati su dati, ma nessun risultato e' garantito. Il nostro track record
+                mostra un ROI positivo nel lungo periodo, ma e' fondamentale scommettere
+                responsabilmente e solo con denaro che ci si puo' permettere di perdere.
+              </p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Come funziona l'abbonamento?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                L'abbonamento e' mensile e si rinnova automaticamente. Puoi cancellare in qualsiasi
+                momento dalla tua area personale. Con il piano PRO hai accesso a tutti i tips
+                giornalieri e le analisi. Con il piano VIP, oltre a tutto cio', ricevi tips
+                esclusivi ad alta quota e accesso al canale Telegram privato.
+              </p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Che bookmaker consigliate?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                Consigliamo esclusivamente bookmaker con licenza ADM (ex AAMS) per operare in totale
+                legalita' in Italia. Tra i principali: bet365, Snai, Sisal, Goldbet e Betflag.
+                Registrandoti tramite i nostri link potrai ottenere bonus di benvenuto esclusivi.
+              </p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Quanto dovrei puntare su ogni tip?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                Raccomandiamo di non superare mai il 2-5% del proprio bankroll per singola
+                scommessa. I membri VIP ricevono consigli personalizzati sul bankroll management
+                basati sul proprio budget e profilo di rischio.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 10. FOOTER
@@ -475,54 +600,86 @@
          .footer-disclaimer: disclaimer gambling responsabile con numero verde.
          .footer-age: badge 18+ e riferimento ADM per compliance italiana. -->
     <footer class="footer">
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <a href="#" class="logo">
-                        <span class="logo-icon"><svg width="22" height="18" viewBox="0 0 28 23" fill="currentColor" aria-hidden="true"><path d="M1 18L5.5 4L11 13L14 1L17 13L22.5 4L27 18H1Z"/><rect x="1" y="19" width="26" height="3.5" rx="1.5"/></svg></span>
-                        <span class="logo-text">WinningBet</span>
-                    </a>
-                    <p class="footer-desc">Pronostici Serie A premium basati su dati e analisi avanzate.</p>
-                </div>
-                <div class="footer-links">
-                    <h4>Navigazione</h4>
-                    <a href="#tips">Tips del Giorno</a>
-                    <a href="#stats">Track Record</a>
-                    <a href="#pricing">Piani</a>
-                    <a href="#faq">FAQ</a>
-                </div>
-                <div class="footer-links">
-                    <h4>Legale</h4>
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Termini di Servizio</a>
-                    <a href="#">Cookie Policy</a>
-                </div>
-                <div class="footer-links">
-                    <h4>Seguici</h4>
-                    <a href="#">Telegram</a>
-                    <a href="#">Instagram</a>
-                    <a href="#">TikTok</a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <div class="footer-disclaimer">
-                    <p><strong>Disclaimer:</strong> Il gioco d'azzardo puo' causare dipendenza. Gioca responsabilmente. Questo sito fornisce solo pronostici e analisi a scopo informativo. Non raccogliamo ne' gestiamo scommesse. Vietato ai minori di 18 anni. Se hai problemi di gioco, chiama il numero verde 800-558822.</p>
-                    <p>I link ai bookmaker presenti su questo sito sono link di affiliazione verso operatori con regolare licenza ADM.</p>
-                </div>
-                <div class="footer-copy">
-                    <span>&copy; 2026 WinningBet. Tutti i diritti riservati.</span>
-                    <div class="footer-age">
-                        <span class="age-badge">18+</span>
-                        <span>ADM</span>
-                    </div>
-                </div>
-            </div>
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <a href="#" class="logo">
+              <span class="logo-icon"
+                ><svg
+                  width="22"
+                  height="18"
+                  viewBox="0 0 28 23"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M1 18L5.5 4L11 13L14 1L17 13L22.5 4L27 18H1Z" />
+                  <rect x="1" y="19" width="26" height="3.5" rx="1.5" /></svg
+              ></span>
+              <span class="logo-text">WinningBet</span>
+            </a>
+            <p class="footer-desc">Pronostici Serie A premium basati su dati e analisi avanzate.</p>
+          </div>
+          <div class="footer-links">
+            <h4>Navigazione</h4>
+            <a href="#tips">Tips del Giorno</a>
+            <a href="#stats">Track Record</a>
+            <a href="#pricing">Piani</a>
+            <a href="#faq">FAQ</a>
+          </div>
+          <div class="footer-links">
+            <h4>Legale</h4>
+            <a href="/privacy.html">Privacy Policy</a>
+            <a href="/terms.html">Termini di Servizio</a>
+            <a href="/cookies.html">Cookie Policy</a>
+          </div>
+          <div class="footer-links">
+            <h4>Seguici</h4>
+            <a href="#">Telegram</a>
+            <a href="#">Instagram</a>
+            <a href="#">TikTok</a>
+          </div>
         </div>
+        <div class="footer-bottom">
+          <div class="footer-disclaimer">
+            <p>
+              <strong>Disclaimer:</strong> Il gioco d'azzardo puo' causare dipendenza. Gioca
+              responsabilmente. Questo sito fornisce solo pronostici e analisi a scopo informativo.
+              Non raccogliamo ne' gestiamo scommesse. Vietato ai minori di 18 anni. Se hai problemi
+              di gioco, chiama il numero verde 800-558822.
+            </p>
+            <p>
+              I link ai bookmaker presenti su questo sito sono link di affiliazione verso operatori
+              con regolare licenza ADM.
+            </p>
+          </div>
+          <div class="footer-copy">
+            <span>&copy; 2026 WinningBet. Tutti i diritti riservati.</span>
+            <div class="footer-age">
+              <span class="age-badge">18+</span>
+              <span>ADM</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </footer>
+
+    <!-- Cookie Consent Banner -->
+    <div class="cookie-banner" id="cookieBanner" hidden>
+      <div class="cookie-inner">
+        <p class="cookie-text">
+          Utilizziamo cookie tecnici per il funzionamento del sito. Per maggiori informazioni
+          consulta la nostra <a href="/cookies.html">Cookie Policy</a>.
+        </p>
+        <div class="cookie-actions">
+          <button class="btn btn-sm btn-outline" id="cookieReject">Rifiuta</button>
+          <button class="btn btn-sm btn-gold" id="cookieAccept">Accetta</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Supabase CDN (auth only — anon key is safe to expose) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="supabase-config.js"></script>
     <script src="script.js"></script>
-</body>
+  </body>
 </html>
