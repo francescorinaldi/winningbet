@@ -12,7 +12,10 @@
 
     <!-- Supabase config -->
     <meta name="supabase-url" content="https://xqrxfnovlukbbuvhbavj.supabase.co" />
-    <meta name="supabase-anon-key" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhxcnhmbm92bHVrYmJ1dmhiYXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMjczNTYsImV4cCI6MjA4NTkwMzM1Nn0.M9IJED7_yoNdRDf3yjwULxWqIlgO1FTEwhHFNBpULSg" />
+    <meta
+      name="supabase-anon-key"
+      content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhxcnhmbm92bHVrYmJ1dmhiYXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMjczNTYsImV4cCI6MjA4NTkwMzM1Nn0.M9IJED7_yoNdRDf3yjwULxWqIlgO1FTEwhHFNBpULSg"
+    />
 
     <!-- Google Fonts: Space Grotesk (display/headings) + Inter (body text) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -160,11 +163,10 @@
     <!-- 5. TIPS SECTION
          Pronostici del giorno. I bottoni .filter-btn filtrano per tier
          (data-filter: all/free/pro/vip). La griglia #tipsGrid e' popolata
-         da script.js (funzione loadTips) con 4 card:
+         da script.js (funzione loadTips) con 3 card:
          - 1x FREE (analisi visibile)
          - 1x PRO (analisi bloccata)
-         - 1x VIP (pronostico + quote bloccati)
-         - 1x MULTIPLA (combinata parzialmente bloccata) -->
+         - 1x VIP (pronostico + quote bloccati) -->
     <section class="tips-section" id="tips">
       <div class="container">
         <div class="section-header">
@@ -293,31 +295,31 @@
              - data-label: etichetta mese (mostrata sotto la barra via CSS ::after)
              L'animazione e' triggerata da chartObserver in script.js -->
         <div class="chart-container">
-          <h3 class="chart-title">Profitto Mensile (unità)</h3>
+          <h3 class="chart-title">Profitto Mensile (&euro;)</h3>
           <div class="chart">
             <div class="chart-bar" data-value="85" data-label="Set">
               <div class="chart-fill"></div>
-              <span class="chart-amount">+8.5u</span>
+              <span class="chart-amount">+8.5€</span>
             </div>
             <div class="chart-bar" data-value="120" data-label="Ott">
               <div class="chart-fill"></div>
-              <span class="chart-amount">+12.0u</span>
+              <span class="chart-amount">+12.0€</span>
             </div>
             <div class="chart-bar" data-value="65" data-label="Nov">
               <div class="chart-fill"></div>
-              <span class="chart-amount">+6.5u</span>
+              <span class="chart-amount">+6.5€</span>
             </div>
             <div class="chart-bar" data-value="140" data-label="Dic">
               <div class="chart-fill"></div>
-              <span class="chart-amount">+14.0u</span>
+              <span class="chart-amount">+14.0€</span>
             </div>
             <div class="chart-bar" data-value="95" data-label="Gen">
               <div class="chart-fill"></div>
-              <span class="chart-amount">+9.5u</span>
+              <span class="chart-amount">+9.5€</span>
             </div>
             <div class="chart-bar" data-value="110" data-label="Feb">
               <div class="chart-fill"></div>
-              <span class="chart-amount">+11.0u</span>
+              <span class="chart-amount">+11.0€</span>
             </div>
           </div>
         </div>

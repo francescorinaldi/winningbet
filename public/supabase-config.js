@@ -82,7 +82,12 @@ const SupabaseConfig = (function () {
      * @returns {Promise<{data: Object, error: Object|null}>}
      */
     signInWithOAuth: function (provider) {
-      return client.auth.signInWithOAuth({ provider: provider });
+      return client.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: window.location.origin + '/dashboard.html',
+        },
+      });
     },
 
     /**

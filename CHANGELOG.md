@@ -25,6 +25,7 @@ All notable changes to WinningBet will be documented in this file.
 - Monthly profit chart: changed unit from "(unita')" to "(€)" — title, bar labels, and dynamic values
 - Tips section: reduced from 4 cards to 3 (FREE, PRO, VIP) for better symmetry; removed Multipla card
 - Tips grid: changed from `auto-fill` to fixed 3-column layout
+- Unified navbar across all pages (privacy, terms, cookies, auth, dashboard) — same nav links (Tips, Track Record, Piani, FAQ) with hamburger menu on mobile
 
 ## [0.1.0]
 
