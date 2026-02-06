@@ -6,8 +6,9 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Added
 
-- **Multi-league support**: Serie B, Champions League, La Liga, Premier League alongside existing Serie A
-- League selector tab bar in frontend (5 buttons above the live matches bar)
+- **Multi-league support**: Champions League, La Liga, Premier League alongside existing Serie A
+- League selector tab bar in frontend (4 buttons above the live matches bar)
+- Serie B config in backend (api/\_lib/leagues.js) ready for when API coverage is available
 - Centralized league configuration in `api/_lib/leagues.js` — single source of truth for all league IDs and codes
 - `?league=` query parameter on `/api/matches`, `/api/results`, `/api/standings`, `/api/tips` endpoints (default: `serie-a`)
 - `league` column on Supabase `tips` table with indexes for filtering
@@ -54,12 +55,14 @@ All notable changes to WinningBet will be documented in this file.
 ## TODO — Prossimi Step
 
 ### 1. Stripe — Pagamenti
+
 - Creare account Stripe e prodotti: **PRO** (€9.99/mese), **VIP** (€29.99/mese)
 - Configurare env vars: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRO_PRICE_ID`, `STRIPE_VIP_PRICE_ID`
 - Testare checkout flow end-to-end (test mode → produzione)
 - Webhook per aggiornare tier utente in Supabase automaticamente
 
 ### 2. Telegram — Tip Delivery (FULL AUTOMATED)
+
 - Creare bot Telegram via @BotFather
 - Canale pubblico: tips FREE pubblicati automaticamente dopo la generazione
 - Canale privato: tips PRO/VIP, accesso riservato agli abbonati
@@ -69,6 +72,7 @@ All notable changes to WinningBet will be documented in this file.
 - Env vars: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_PUBLIC_CHANNEL_ID`, `TELEGRAM_PRIVATE_CHANNEL_ID`
 
 ### 3. Email — Dominio Custom
+
 - Acquistare dominio (es. winningbet.it)
 - Configurare provider email con dominio custom (sostituisce SendGrid)
 - Email di benvenuto, conferma abbonamento, tip summary giornaliero
