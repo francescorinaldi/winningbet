@@ -126,3 +126,77 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Errore nella generazione dei pronostici' });
   }
 };
+
+/**
+ * Genera pronostici per una lega specifica.
+ * Funzione callable internamente (senza req/res) — usata dal cron orchestrator.
+ *
+ * @param {string} leagueSlug - Slug della lega (es. "serie-a", "premier-league")
+ * @returns {Promise<{generated: number, league: string}>}
+ */
+module.exports.generateForLeague = async function generateForLeague(leagueSlug) {
+  const league = getLeague(leagueSlug);
+
+  // 1. Recupera le prossime partite
+  let matches;
+  try {
+    matches = await apiFootball.getUpcomingMatches(leagueSlug, 10);
+  } catch (_primaryErr) {
+    matches = await footballData.getUpcomingMatches(leagueSlug, 10);
+  }
+
+  if (!matches || matches.length === 0) {
+    return { generated: 0, league: leagueSlug };
+  }
+
+  // 2. Recupera la classifica
+  let standings;
+  try {
+    standings = await apiFootball.getStandings(leagueSlug);
+  } catch (_primaryErr) {
+    standings = await footballData.getStandings(leagueSlug);
+  }
+
+  // 3. Controlla se ci sono gia' tips per queste partite (evita duplicati)
+  const matchIds = matches.map((m) => String(m.id));
+  const { data: existingTips } = await supabase
+    .from('tips')
+    .select('match_id')
+    .eq('league', leagueSlug)
+    .in('match_id', matchIds);
+
+  const existingMatchIds = new Set((existingTips || []).map((t) => t.match_id));
+  const newMatches = matches.filter((m) => !existingMatchIds.has(String(m.id)));
+
+  if (newMatches.length === 0) {
+    return { generated: 0, league: leagueSlug };
+  }
+
+  // 4. Funzione per recuperare le quote di una partita
+  async function getOddsForMatch(fixtureId) {
+    try {
+      return await apiFootball.getOdds(fixtureId);
+    } catch (_err) {
+      return null;
+    }
+  }
+
+  // 5. Genera i pronostici con Claude
+  const predictions = await generateBatchPredictions({
+    matches: newMatches,
+    standings,
+    getOdds: getOddsForMatch,
+    leagueName: league.name,
+  });
+
+  // 6. Salva in Supabase (aggiunge il campo league)
+  if (predictions.length > 0) {
+    const tipsWithLeague = predictions.map((p) => ({ ...p, league: leagueSlug }));
+    const { error: insertError } = await supabase.from('tips').insert(tipsWithLeague);
+    if (insertError) {
+      throw new Error('Errore nel salvataggio dei pronostici: ' + insertError.message);
+    }
+  }
+
+  return { generated: predictions.length, league: leagueSlug };
+};
