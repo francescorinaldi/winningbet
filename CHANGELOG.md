@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- `api/telegram-webhook.js` — POST endpoint for Telegram bot webhook; handles `/start <token>` deep link for account linking with secret token verification
+
 ### Fixed
 
 - **BUG: dashboard.html** — Navbar "Esci" button was a `<button>` instead of `<a>`, causing misalignment with homepage nav (`.nav-links a` styles and mobile overlay `font-size: 1.2rem` didn't apply to `<button>`)
