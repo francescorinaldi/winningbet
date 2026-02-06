@@ -452,6 +452,7 @@ Endpoint: `GET /api/generate-tips` (richiede `CRON_SECRET`).
 ### Telegram Bot
 
 Il bot Telegram gestisce:
+
 - **Invio pronostici** ai canali pubblico (free) e privato (pro/vip)
 - **Collegamento account** tramite deep link `/start` dalla dashboard
 - **Accesso automatico** al canale privato in base all'abbonamento Stripe

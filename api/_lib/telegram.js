@@ -261,7 +261,10 @@ async function removeFromPrivateChannel(userId) {
     const unbanData = await unbanResponse.json();
 
     if (!unbanData.ok) {
-      console.error('CRITICAL: User ' + userId + ' banned but unban failed:', unbanData.description);
+      console.error(
+        'CRITICAL: User ' + userId + ' banned but unban failed:',
+        unbanData.description,
+      );
     }
   } catch (err) {
     console.error('CRITICAL: User ' + userId + ' banned but unban request failed:', err.message);

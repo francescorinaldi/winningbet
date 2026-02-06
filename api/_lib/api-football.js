@@ -28,9 +28,6 @@ function headers() {
 
 /**
  * Esegue una richiesta GET autenticata all'API.
- * Gestisce sia errori HTTP che errori nel body della risposta
- * (l'API restituisce status 200 con campo "errors" in caso di problemi).
- *
  * @param {string} path - Percorso dell'endpoint (es. "/fixtures")
  * @param {Object} params - Query parameters da aggiungere all'URL
  * @returns {Promise<Array>} Campo "response" dal JSON restituito
@@ -53,10 +50,8 @@ async function request(path, params = {}) {
 
 /**
  * Recupera le prossime partite di una lega.
- * Usa il parametro "next" dell'API per ottenere i prossimi N match schedulati.
- *
- * @param {string} leagueSlug - Slug della lega (es. "serie-a", "premier-league")
- * @param {number} count - Numero massimo di partite da restituire (default: 10)
+ * @param {string} leagueSlug - Slug della lega
+ * @param {number} count - Numero massimo di partite (default: 10)
  * @returns {Promise<Array<Object>>} Array di oggetti partita normalizzati
  */
 async function getUpcomingMatches(leagueSlug, count = 10) {
@@ -81,8 +76,6 @@ async function getUpcomingMatches(leagueSlug, count = 10) {
 
 /**
  * Recupera gli ultimi risultati di una lega (partite concluse).
- * Usa il parametro "last" dell'API per ottenere gli ultimi N match terminati.
- *
  * @param {string} leagueSlug - Slug della lega
  * @param {number} count - Numero massimo di risultati (default: 10)
  * @returns {Promise<Array<Object>>} Array di oggetti risultato
@@ -109,9 +102,6 @@ async function getRecentResults(leagueSlug, count = 10) {
 
 /**
  * Recupera le quote pre-match Match Winner (1X2) per una partita.
- * Filtra per Bet365 (bookmaker ID 8) e restituisce solo la scommessa
- * "Match Winner" (bet ID 1) con i tre esiti: Home, Draw, Away.
- *
  * @param {number|string} fixtureId - ID della partita
  * @returns {Promise<Object|null>} Oggetto quote o null se non disponibili
  */
@@ -123,14 +113,13 @@ async function getOdds(fixtureId) {
   if (!data || data.length === 0) return null;
   if (!data[0].bookmakers || data[0].bookmakers.length === 0) return null;
   const bookmaker = data[0].bookmakers[0];
-  // Estrae solo la scommessa "Match Winner" (1X2, bet ID 1)
   const matchWinner = bookmaker.bets.find((b) => b.id === 1);
   if (!matchWinner) return null;
   return {
     fixtureId,
     bookmaker: bookmaker.name,
     values: matchWinner.values.map((v) => ({
-      outcome: v.value, // "Home", "Draw", "Away"
+      outcome: v.value,
       odd: v.odd,
     })),
   };
@@ -138,9 +127,6 @@ async function getOdds(fixtureId) {
 
 /**
  * Recupera la classifica completa di una lega.
- * Restituisce un array ordinato per posizione con statistiche complete
- * per ogni squadra, inclusa la forma recente (ultimi 5 risultati).
- *
  * @param {string} leagueSlug - Slug della lega
  * @returns {Promise<Array<Object>>} Array ordinato per rank
  */
@@ -154,8 +140,6 @@ async function getStandings(leagueSlug) {
   if (!data[0].league || !data[0].league.standings || data[0].league.standings.length === 0) {
     return [];
   }
-  // API returns multiple standings arrays for group-stage competitions (e.g., Champions League).
-  // Flatten all groups into a single array.
   const allStandings = data[0].league.standings.flat();
   return allStandings.map((team) => ({
     rank: team.rank,
@@ -173,4 +157,92 @@ async function getStandings(leagueSlug) {
   }));
 }
 
-module.exports = { getUpcomingMatches, getRecentResults, getOdds, getStandings };
+/**
+ * Looks up team IDs from standings data for a given league.
+ * @param {string} leagueSlug - Slug della lega
+ * @returns {Promise<Object>} Map of lowercase team name to { id, name }
+ */
+async function getTeamIds(leagueSlug) {
+  const league = getLeague(leagueSlug);
+  const data = await request('/standings', {
+    league: league.apiFootballId,
+    season: league.season,
+  });
+  if (!data || data.length === 0 || !data[0].league || !data[0].league.standings) {
+    return {};
+  }
+  const teams = {};
+  data[0].league.standings.flat().forEach((entry) => {
+    teams[entry.team.name.toLowerCase()] = {
+      id: entry.team.id,
+      name: entry.team.name,
+    };
+  });
+  return teams;
+}
+
+/**
+ * Recupera lo storico scontri diretti tra due squadre.
+ * @param {string} leagueSlug - Slug della lega
+ * @param {string} homeTeamName - Nome squadra di casa
+ * @param {string} awayTeamName - Nome squadra ospite
+ * @param {number} lastN - Numero di scontri (default: 10)
+ * @returns {Promise<Object>} { home, away, draws, total, matches }
+ */
+async function getHeadToHead(leagueSlug, homeTeamName, awayTeamName, lastN = 10) {
+  const teamMap = await getTeamIds(leagueSlug);
+  const homeTeam = teamMap[homeTeamName.toLowerCase()];
+  const awayTeam = teamMap[awayTeamName.toLowerCase()];
+
+  if (!homeTeam || !awayTeam) {
+    return {
+      home: { name: homeTeamName, wins: 0 },
+      away: { name: awayTeamName, wins: 0 },
+      draws: 0,
+      total: 0,
+      matches: [],
+    };
+  }
+
+  const data = await request('/fixtures/headtohead', {
+    h2h: homeTeam.id + '-' + awayTeam.id,
+    last: lastN,
+  });
+
+  let homeWins = 0;
+  let awayWins = 0;
+  let draws = 0;
+  const matches = [];
+
+  (data || []).forEach((item) => {
+    const gh = item.goals.home;
+    const ga = item.goals.away;
+    const isHome = item.teams.home.id === homeTeam.id;
+
+    if (gh === ga) {
+      draws++;
+    } else if ((gh > ga && isHome) || (ga > gh && !isHome)) {
+      homeWins++;
+    } else {
+      awayWins++;
+    }
+
+    matches.push({
+      date: item.fixture.date,
+      home: item.teams.home.name,
+      away: item.teams.away.name,
+      goalsHome: gh,
+      goalsAway: ga,
+    });
+  });
+
+  return {
+    home: { name: homeTeam.name, wins: homeWins },
+    away: { name: awayTeam.name, wins: awayWins },
+    draws,
+    total: homeWins + awayWins + draws,
+    matches,
+  };
+}
+
+module.exports = { getUpcomingMatches, getRecentResults, getOdds, getStandings, getHeadToHead };

@@ -4,6 +4,45 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added — UX Roadmap Phase 1-3
+
+#### Phase 1: Quick Wins
+
+- **League Selector** in dashboard — bar above tabs, persists in localStorage, reloads tips/history on change
+- **Expandable Tip Cards** — "Dettagli" button with chevron animation, lazy-loads team form and H2H data
+- **Tip del Giorno** — Highest confidence tip gets gold glow border and "TIP DEL GIORNO" badge
+- **Pull-to-Refresh** — Touch gesture on mobile (< 768px) reloads tips and history
+- **Countdown** — Empty tips state shows countdown to next scheduled match
+
+#### Phase 2: Rich Content + Personalization
+
+- **User Preferences** (`api/preferences.js`) — GET/PUT endpoint, auto-creates on first access
+- `user_preferences` table with `preferred_league`, `favorite_teams[]`, notification toggles
+- **Favorite Teams** — Search dropdown from standings data, chip UI, highlighted tips with star
+- **Team Form** (`api/team-form.js`) — W/D/L dots from last 5 results, 6h cache
+- **Head-to-Head** (`api/h2h.js`) — Horizontal bar chart of historical matchups, 24h cache
+- **Favorites Filter** — "Preferiti" button in history tab filters by favorite teams
+- **Dashboard Chart** — Track record profit chart replicated in History tab
+- **Interactive Charts** — Hover tooltips (profit, win rate, tips count) + SVG cumulative ROI line overlay
+
+#### Phase 3: Engagement + Gamification
+
+- **Activity Tracking** (`api/activity.js`) — Daily streak system (POST registers visit, GET returns stats)
+- `profiles` table extended with `current_streak`, `longest_streak`, `last_visit_date`, `total_visits`
+- **Streak Display** — Flame icon + count in dashboard header, celebration animation on consecutive days
+- **User Bets Tracker** (`api/user-bets.js`) — Follow/unfollow tips with CRUD API
+- `user_bets` table with RLS policies
+- **Notification Center** (`api/notifications.js`) — Bell icon in navbar, dropdown with unread count
+- `notifications` table with partial index on unread, 60s polling
+- Mark individual or all notifications as read
+
+#### Database Migrations
+
+- `005_create_user_preferences.sql` — user_preferences table + RLS
+- `006_add_activity_tracking.sql` — activity columns on profiles
+- `007_create_user_bets.sql` — user_bets table + RLS
+- `008_create_notifications.sql` — notifications table + partial index + RLS
+
 ### Added — Telegram Full Automation (Issue #15)
 
 - **Vercel Cron Job** — Daily automation at 08:00 UTC: settle → generate (all leagues) → send

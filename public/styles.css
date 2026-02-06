@@ -2808,3 +2808,762 @@ img {
     flex: 1;
   }
 }
+
+/* ============================================
+   PHASE 1-3: Dashboard UX Enhancements
+   ============================================ */
+
+/* ─── Dashboard Header Right ────────────────── */
+
+.dash-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ─── Streak Display ────────────────────────── */
+
+.dash-streak {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(212, 168, 83, 0.1);
+  border: 1px solid rgba(212, 168, 83, 0.3);
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-family: var(--font-display);
+}
+
+.streak-flame {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.streak-count {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+/* ─── Streak Celebration ────────────────────── */
+
+.streak-celebration {
+  text-align: center;
+  padding: 12px 20px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, rgba(212, 168, 83, 0.15), rgba(212, 168, 83, 0.05));
+  border: 1px solid rgba(212, 168, 83, 0.3);
+  border-radius: var(--radius-md);
+  animation: streakPulse 2s ease-out forwards;
+}
+
+.streak-celebration-text {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+@keyframes streakPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ─── Notification Bell ─────────────────────── */
+
+.dash-notif-bell {
+  position: relative;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+  padding: 4px;
+  margin-right: 8px;
+}
+
+.dash-notif-bell:hover {
+  color: var(--gold);
+}
+
+.notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--gold);
+  color: var(--bg-primary);
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+/* ─── Notification Dropdown ─────────────────── */
+
+.notif-dropdown {
+  position: fixed;
+  top: 70px;
+  right: 20px;
+  width: 340px;
+  max-height: 400px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.notif-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.notif-mark-all {
+  background: none;
+  border: none;
+  color: var(--gold);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0;
+}
+
+.notif-mark-all:hover {
+  text-decoration: underline;
+}
+
+.notif-dropdown-list {
+  overflow-y: auto;
+  max-height: 340px;
+  padding: 8px 0;
+}
+
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.notif-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.notif-item--unread {
+  background: rgba(212, 168, 83, 0.05);
+}
+
+.notif-item--unread::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.notif-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-item-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: var(--text-primary);
+}
+
+.notif-item-body {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notif-item-time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.notif-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* ─── Dashboard League Selector ─────────────── */
+
+.dash-league-selector {
+  margin-bottom: 20px;
+}
+
+.dash-league-selector .league-selector {
+  justify-content: flex-start;
+}
+
+/* ─── Pull to Refresh ───────────────────────── */
+
+.ptr-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 0;
+  overflow: hidden;
+  transition: height 0.3s ease;
+}
+
+.ptr-indicator.active {
+  height: 50px;
+}
+
+.ptr-indicator .loading-spinner {
+  width: 24px;
+  height: 24px;
+}
+
+/* ─── Tips Countdown ────────────────────────── */
+
+.tips-countdown {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.countdown-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.countdown-value {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 2px;
+}
+
+/* ─── Tip of the Day Highlight ──────────────── */
+
+.tip-card--highlighted {
+  border-color: var(--gold) !important;
+  box-shadow:
+    0 0 20px rgba(212, 168, 83, 0.2),
+    0 0 40px rgba(212, 168, 83, 0.1);
+}
+
+.tip-of-day-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+  color: var(--bg-primary);
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+/* ─── Expandable Tip Cards ──────────────────── */
+
+.tip-card-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  padding: 10px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  margin-top: 12px;
+}
+
+.tip-card-expand-btn:hover {
+  color: var(--gold);
+}
+
+.tip-card-expand-btn .chevron {
+  display: inline-block;
+  transition: transform 0.3s ease;
+  font-size: 0.7rem;
+}
+
+.tip-card-expand-btn.expanded .chevron {
+  transform: rotate(180deg);
+}
+
+.tip-card-details {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+}
+
+.tip-card-details.open {
+  max-height: 600px;
+}
+
+.tip-card-details-inner {
+  padding: 16px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ─── Form Dots (W/D/L) ────────────────────── */
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-team-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-team-name {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.form-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.form-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.form-dot--W {
+  background: #22c55e;
+}
+
+.form-dot--D {
+  background: var(--gold);
+  color: var(--bg-primary);
+}
+
+.form-dot--L {
+  background: #ef4444;
+}
+
+/* ─── H2H Section ───────────────────────────── */
+
+.h2h-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.h2h-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.h2h-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.h2h-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.h2h-bar-home {
+  background: #22c55e;
+  transition: width 0.6s ease;
+}
+
+.h2h-bar-draw {
+  background: var(--gold);
+  transition: width 0.6s ease;
+}
+
+.h2h-bar-away {
+  background: #ef4444;
+  transition: width 0.6s ease;
+}
+
+.h2h-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.h2h-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.h2h-stat-value {
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--text-secondary);
+}
+
+/* ─── Bet Follow Button ─────────────────────── */
+
+.bet-follow-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  background: rgba(212, 168, 83, 0.1);
+  border: 1px solid rgba(212, 168, 83, 0.3);
+  color: var(--gold);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bet-follow-btn:hover {
+  background: rgba(212, 168, 83, 0.2);
+}
+
+.bet-follow-btn.followed {
+  background: var(--gold);
+  color: var(--bg-primary);
+  border-color: var(--gold);
+}
+
+/* ─── Favorite Team Highlight ───────────────── */
+
+.tip-card--favorite {
+  position: relative;
+}
+
+.tip-card--favorite::after {
+  content: '\2605';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  color: var(--gold);
+  font-size: 1.1rem;
+}
+
+/* ─── Preferences Card ──────────────────────── */
+
+.pref-section {
+  margin-bottom: 20px;
+}
+
+.pref-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.pref-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* ─── Toggle Switches ───────────────────────── */
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  transition: background 0.3s ease;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--gold);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+  background: var(--bg-primary);
+}
+
+/* ─── Team Selector ─────────────────────────── */
+
+.team-selector {
+  position: relative;
+}
+
+.team-search-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.team-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.team-search-input:focus {
+  border-color: var(--gold);
+}
+
+.team-search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 50;
+}
+
+.team-search-option {
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.team-search-option:hover {
+  background: rgba(212, 168, 83, 0.1);
+  color: var(--gold);
+}
+
+/* ─── Team Chips ────────────────────────────── */
+
+.team-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.team-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(212, 168, 83, 0.1);
+  border: 1px solid rgba(212, 168, 83, 0.3);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  color: var(--gold);
+}
+
+.team-chip-remove {
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.team-chip-remove:hover {
+  opacity: 1;
+}
+
+/* ─── Pref Save Status ──────────────────────── */
+
+.pref-save-status {
+  font-size: 0.8rem;
+  color: var(--gold);
+  text-align: center;
+  min-height: 20px;
+  transition: opacity 0.3s ease;
+}
+
+/* ─── Dashboard Chart Container ─────────────── */
+
+.dash-chart-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.dash-chart-container .chart-title {
+  margin-bottom: 20px;
+}
+
+.dash-chart-container .chart {
+  height: 160px;
+}
+
+/* ─── Chart Tooltip ─────────────────────────── */
+
+.chart-tooltip {
+  position: absolute;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.chart-tooltip.visible {
+  opacity: 1;
+}
+
+.chart-bar:hover .chart-tooltip {
+  opacity: 1;
+}
+
+/* ─── History Favorites Filter ──────────────── */
+
+.filter-btn[data-status='favorites'] {
+  position: relative;
+}
+
+.filter-btn[data-status='favorites']::before {
+  content: '\2605';
+  margin-right: 4px;
+  color: var(--gold);
+}
+
+/* ─── Responsive: Phase 1-3 ─────────────────── */
+
+@media (max-width: 768px) {
+  .notif-dropdown {
+    right: 10px;
+    left: 10px;
+    width: auto;
+  }
+
+  .dash-league-selector .league-selector {
+    gap: 6px;
+  }
+
+  .dash-league-selector .league-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+
+  .dash-chart-container .chart {
+    height: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dash-header-right {
+    gap: 8px;
+  }
+
+  .dash-streak {
+    padding: 4px 8px;
+  }
+
+  .streak-count {
+    font-size: 0.8rem;
+  }
+}

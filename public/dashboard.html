@@ -35,7 +35,7 @@
     <nav class="navbar scrolled" id="navbar">
       <div class="container nav-content">
         <a href="/" class="logo">
-          <span class="logo-icon">♠</span>
+          <span class="logo-icon">&#9824;</span>
           <span class="logo-text">WinningBet</span>
         </a>
         <div class="nav-links" id="navLinks">
@@ -45,6 +45,21 @@
           <a href="/#faq">FAQ</a>
           <a href="#" class="btn btn-outline btn-sm" id="logoutBtn">Esci</a>
         </div>
+        <!-- Notification bell -->
+        <div class="dash-notif-bell" id="notifBell" style="display: none">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 01-3.46 0" />
+          </svg>
+          <span class="notif-badge" id="notifCount" style="display: none">0</span>
+        </div>
         <button class="hamburger" id="hamburger" aria-label="Menu">
           <span></span>
           <span></span>
@@ -53,22 +68,61 @@
       </div>
     </nav>
 
+    <!-- Notification dropdown -->
+    <div class="notif-dropdown" id="notifDropdown" style="display: none">
+      <div class="notif-dropdown-header">
+        <span>Notifiche</span>
+        <button class="notif-mark-all" id="notifMarkAll">Segna tutte lette</button>
+      </div>
+      <div class="notif-dropdown-list" id="notifList"></div>
+    </div>
+
     <!-- Dashboard Content -->
     <main class="dash-main">
+      <!-- Pull-to-refresh indicator -->
+      <div class="ptr-indicator" id="ptrIndicator">
+        <span class="loading-spinner"></span>
+      </div>
+
       <div class="container">
         <!-- Welcome header -->
         <div class="dash-header" id="dashHeader">
           <div class="dash-welcome">
-            <h1 class="dash-title">Ciao, <span class="text-gradient" id="userName">—</span></h1>
+            <h1 class="dash-title">
+              Ciao, <span class="text-gradient" id="userName">&mdash;</span>
+            </h1>
             <p class="dash-subtitle">Ecco i tuoi pronostici e le tue statistiche.</p>
           </div>
-          <div class="dash-tier-badge" id="tierBadge">
-            <span class="tier-label" id="tierLabel">FREE</span>
+          <div class="dash-header-right">
+            <!-- Streak display -->
+            <div class="dash-streak" id="streakDisplay" style="display: none">
+              <span class="streak-flame">&#128293;</span>
+              <span class="streak-count" id="streakCount">0</span>
+            </div>
+            <div class="dash-tier-badge" id="tierBadge">
+              <span class="tier-label" id="tierLabel">FREE</span>
+            </div>
           </div>
         </div>
 
         <!-- Checkout feedback -->
         <div class="dash-alert" id="checkoutAlert" style="display: none"></div>
+
+        <!-- Streak celebration -->
+        <div class="streak-celebration" id="streakCelebration" style="display: none">
+          <span class="streak-celebration-text" id="streakCelebrationText"></span>
+        </div>
+
+        <!-- League selector -->
+        <div class="dash-league-selector" id="dashLeagueSelector">
+          <div class="league-selector">
+            <button class="league-btn active" data-league="serie-a">Serie A</button>
+            <button class="league-btn" data-league="serie-b">Serie B</button>
+            <button class="league-btn" data-league="champions-league">UCL</button>
+            <button class="league-btn" data-league="la-liga">La Liga</button>
+            <button class="league-btn" data-league="premier-league">PL</button>
+          </div>
+        </div>
 
         <!-- Tab navigation -->
         <div class="dash-tabs">
@@ -101,8 +155,13 @@
             </svg>
             <p>Nessun pronostico disponibile per oggi.</p>
             <p class="dash-tips-empty-sub">
-              I nuovi tips vengono pubblicati prima di ogni giornata di Serie A.
+              I nuovi tips vengono pubblicati prima di ogni giornata.
             </p>
+            <!-- Countdown -->
+            <div class="tips-countdown" id="tipsCountdown" style="display: none">
+              <span class="countdown-label">Prossimi pronostici tra:</span>
+              <span class="countdown-value" id="countdownValue">--:--</span>
+            </div>
           </div>
         </section>
 
@@ -113,6 +172,12 @@
             <button class="filter-btn" data-status="won">Vinti</button>
             <button class="filter-btn" data-status="lost">Persi</button>
             <button class="filter-btn" data-status="pending">In Corso</button>
+            <button class="filter-btn" data-status="favorites">Preferiti</button>
+          </div>
+          <!-- Dashboard chart -->
+          <div class="dash-chart-container" id="dashChartContainer" style="display: none">
+            <div class="chart-title">Profitto Mensile</div>
+            <div class="chart dash-chart" id="dashChart"></div>
           </div>
           <div class="dash-history-list" id="dashHistoryList">
             <div class="tips-loading">
@@ -164,11 +229,11 @@
                 </div>
                 <div class="dash-sub-row">
                   <span class="dash-sub-label">Stato</span>
-                  <span class="dash-sub-value" id="subStatus">—</span>
+                  <span class="dash-sub-value" id="subStatus">&mdash;</span>
                 </div>
                 <div class="dash-sub-row" id="subRenewalRow" style="display: none">
                   <span class="dash-sub-label">Prossimo rinnovo</span>
-                  <span class="dash-sub-value" id="subRenewal">—</span>
+                  <span class="dash-sub-value" id="subRenewal">&mdash;</span>
                 </div>
               </div>
               <div class="dash-sub-actions">
@@ -198,15 +263,15 @@
               <div class="dash-profile-info">
                 <div class="dash-sub-row">
                   <span class="dash-sub-label">Email</span>
-                  <span class="dash-sub-value" id="userEmail">—</span>
+                  <span class="dash-sub-value" id="userEmail">&mdash;</span>
                 </div>
                 <div class="dash-sub-row">
                   <span class="dash-sub-label">Nome</span>
-                  <span class="dash-sub-value" id="userDisplayName">—</span>
+                  <span class="dash-sub-value" id="userDisplayName">&mdash;</span>
                 </div>
                 <div class="dash-sub-row">
                   <span class="dash-sub-label">Membro dal</span>
-                  <span class="dash-sub-value" id="userSince">—</span>
+                  <span class="dash-sub-value" id="userSince">&mdash;</span>
                 </div>
               </div>
             </div>
@@ -222,7 +287,9 @@
                   stroke="currentColor"
                   stroke-width="1.5"
                 >
-                  <path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-16.5 7.5a2.25 2.25 0 0 0 .126 4.16l4.5 1.5 1.5 4.5a2.25 2.25 0 0 0 4.16.126l7.5-16.5a2.242 2.242 0 0 0-0.264-1.501z" />
+                  <path
+                    d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-16.5 7.5a2.25 2.25 0 0 0 .126 4.16l4.5 1.5 1.5 4.5a2.25 2.25 0 0 0 4.16.126l7.5-16.5a2.242 2.242 0 0 0-0.264-1.501z"
+                  />
                 </svg>
                 Telegram
               </h3>
@@ -230,10 +297,72 @@
                 <p class="dash-telegram-status" id="telegramStatus">Verifica in corso...</p>
               </div>
               <div class="dash-sub-actions">
-                <button class="btn btn-telegram btn-block" id="linkTelegramBtn" style="display: none">
+                <button
+                  class="btn btn-telegram btn-block"
+                  id="linkTelegramBtn"
+                  style="display: none"
+                >
                   Collega Telegram
                 </button>
               </div>
+            </div>
+
+            <!-- Preferences card -->
+            <div class="dash-account-card">
+              <h3 class="dash-card-title">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <circle cx="12" cy="12" r="3" />
+                  <path
+                    d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"
+                  />
+                </svg>
+                Preferenze
+              </h3>
+              <!-- Favorite teams -->
+              <div class="pref-section">
+                <label class="pref-label">Squadre preferite</label>
+                <div class="team-selector">
+                  <input
+                    type="text"
+                    class="team-search-input"
+                    id="teamSearchInput"
+                    placeholder="Cerca squadra..."
+                    autocomplete="off"
+                  />
+                  <div
+                    class="team-search-dropdown"
+                    id="teamSearchDropdown"
+                    style="display: none"
+                  ></div>
+                </div>
+                <div class="team-chips" id="teamChips"></div>
+              </div>
+              <!-- Notification toggles -->
+              <div class="pref-section">
+                <label class="pref-label">Notifiche</label>
+                <div class="pref-toggle-row">
+                  <span>Nuovi tips</span>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="prefNotifTips" checked />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="pref-toggle-row">
+                  <span>Risultati</span>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="prefNotifResults" checked />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="pref-save-status" id="prefSaveStatus"></div>
             </div>
           </div>
         </section>
