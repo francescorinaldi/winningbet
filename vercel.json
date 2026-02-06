@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/cron/daily",
+      "path": "/api/generate-tips",
       "schedule": "0 8 * * *"
     }
   ],
@@ -9,11 +9,15 @@
   "headers": [
     {
       "source": "/api/matches",
-      "headers": [{ "key": "Cache-Control", "value": "s-maxage=7200, stale-while-revalidate=3600" }]
+      "headers": [
+        { "key": "Cache-Control", "value": "s-maxage=7200, stale-while-revalidate=3600" }
+      ]
     },
     {
       "source": "/api/results",
-      "headers": [{ "key": "Cache-Control", "value": "s-maxage=3600, stale-while-revalidate=1800" }]
+      "headers": [
+        { "key": "Cache-Control", "value": "s-maxage=3600, stale-while-revalidate=1800" }
+      ]
     },
     {
       "source": "/api/standings",
@@ -23,14 +27,18 @@
     },
     {
       "source": "/api/odds",
-      "headers": [{ "key": "Cache-Control", "value": "s-maxage=1800, stale-while-revalidate=900" }]
+      "headers": [
+        { "key": "Cache-Control", "value": "s-maxage=1800, stale-while-revalidate=900" }
+      ]
     },
     {
       "source": "/api/track-record",
-      "headers": [{ "key": "Cache-Control", "value": "s-maxage=3600, stale-while-revalidate=1800" }]
+      "headers": [
+        { "key": "Cache-Control", "value": "s-maxage=3600, stale-while-revalidate=1800" }
+      ]
     },
     {
-      "source": "/api/(generate-tips|settle-tips|send-tips|create-checkout|create-portal|stripe-webhook|tips|link-telegram|telegram-webhook|cron/daily)",
+      "source": "/api/(generate-tips|settle-tips|send-tips|billing|stripe-webhook|tips|telegram)",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     },
     {

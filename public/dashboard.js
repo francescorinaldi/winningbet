@@ -196,13 +196,13 @@
     btn.textContent = 'Caricamento...';
 
     try {
-      const response = await fetch('/api/create-checkout', {
+      const response = await fetch('/api/billing', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: 'Bearer ' + session.access_token,
         },
-        body: JSON.stringify({ tier: tier }),
+        body: JSON.stringify({ action: 'checkout', tier: tier }),
       });
 
       const data = await response.json();
@@ -230,12 +230,13 @@
     btn.textContent = 'Apertura...';
 
     try {
-      const response = await fetch('/api/create-portal', {
+      const response = await fetch('/api/billing', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: 'Bearer ' + session.access_token,
         },
+        body: JSON.stringify({ action: 'portal' }),
       });
 
       const data = await response.json();
@@ -702,7 +703,7 @@
     linkBtn.textContent = 'Caricamento...';
 
     try {
-      const response = await fetch('/api/link-telegram', {
+      const response = await fetch('/api/telegram', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -21,13 +21,12 @@ Premium multi-league betting predictions platform (Serie A, Serie B, Champions L
 ## Project Structure
 
 ```
-api/                    → Vercel serverless functions (15 endpoints)
+api/                    → Vercel serverless functions (12 endpoints)
 api/_lib/               → Shared backend utilities (10 modules)
 api/_lib/leagues.js     → Centralized league configuration (IDs, codes, seasons)
 api/_lib/telegram.js    → Telegram Bot API client (send tips, invite, kick, DM)
-api/cron/daily.js       → Daily cron orchestrator (settle → generate → send)
-api/link-telegram.js    → Telegram account linking endpoint
-api/telegram-webhook.js → Telegram bot webhook handler (/start deep link)
+api/billing.js          → Unified Stripe billing (checkout + portal)
+api/telegram.js         → Unified Telegram (webhook + account linking)
 public/                 → Static frontend (HTML, JS, CSS)
 public/script.js        → Main landing page logic (IIFE pattern)
 public/auth.js          → Authentication logic (Supabase Auth)
@@ -61,15 +60,13 @@ Valid slugs: `serie-a`, `serie-b`, `champions-league`, `la-liga`, `premier-leagu
 - `GET /api/standings?league={slug}` — League standings (6h cache)
 - `GET /api/tips?league={slug}` — Tips filtered by league (15min cache)
 - `POST /api/generate-tips` — Body: `{ league: "slug" }` (default: serie-a)
+- `GET /api/generate-tips` — Cron orchestrator (settle → generate all leagues → send)
 - `POST /api/settle-tips` — Auto-groups pending tips by league
 - `POST /api/send-tips` — Dispatches tips via Telegram + email
 - `GET /api/track-record` — Performance statistics (1h cache)
-- `POST /api/create-checkout` — Stripe checkout session
-- `POST /api/create-portal` — Stripe customer portal session
+- `POST /api/billing` — Body: `{ action: "checkout", tier }` or `{ action: "portal" }`
 - `POST /api/stripe-webhook` — Stripe event handler (+ auto Telegram invite/kick)
-- `GET /api/cron/daily` — Daily cron orchestrator (settle → generate all leagues → send)
-- `POST /api/link-telegram` — Generate Telegram deep link for account linking
-- `POST /api/telegram-webhook` — Telegram bot webhook handler (/start deep link)
+- `POST /api/telegram` — Telegram webhook (with secret header) or account linking (with JWT)
 
 ## Environment Variables
 

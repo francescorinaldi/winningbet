@@ -7,9 +7,8 @@ All notable changes to WinningBet will be documented in this file.
 ### Added — Telegram Full Automation (Issue #15)
 
 - **Vercel Cron Job** — Daily automation at 08:00 UTC: settle → generate (all leagues) → send
-- `GET /api/cron/daily` — Cron orchestrator endpoint (settle → generate all leagues → send)
-- `POST /api/link-telegram` — Generates one-time deep link token for Telegram account linking
-- `POST /api/telegram-webhook` — Handles Telegram bot `/start` command for account linking with secret token verification
+- `GET /api/generate-tips` — Cron orchestrator (settle → generate all leagues → send), also accepts POST for single-league generation
+- `POST /api/telegram` — Unified Telegram endpoint: webhook handler (with secret header) + account linking (with JWT)
 - `generate-tips.js` — Exported `generateForLeague()` callable function for cron orchestrator
 - **Auto-invite** to private Telegram channel on Stripe subscription activation (`stripe-webhook.js`)
 - **Auto-remove** from private Telegram channel on subscription cancellation (`stripe-webhook.js`)
@@ -18,6 +17,15 @@ All notable changes to WinningBet will be documented in this file.
 - `telegram_user_id` (BIGINT) and `telegram_link_token` (TEXT) columns on `profiles` table
 - `TELEGRAM_BOT_USERNAME` and `TELEGRAM_WEBHOOK_SECRET` environment variables
 - Vercel cron schedule in `vercel.json`
+
+### Changed — Serverless Function Consolidation (Hobby Plan Limit)
+
+- Merged `create-checkout.js` + `create-portal.js` → `api/billing.js` (routes by `action` field in body)
+- Merged `link-telegram.js` + `telegram-webhook.js` → `api/telegram.js` (routes by secret token header)
+- Merged `api/cron/daily.js` into `api/generate-tips.js` (GET = cron, POST = single-league generate)
+- Reduced serverless functions from 15 to 12 (Vercel Hobby plan limit)
+- Updated `dashboard.js` fetch URLs to use new consolidated endpoints
+- Updated `vercel.json` cron path and no-store cache rules
 
 ### Fixed
 
