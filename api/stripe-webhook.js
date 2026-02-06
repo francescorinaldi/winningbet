@@ -24,6 +24,7 @@
 
 const { stripe } = require('./_lib/stripe');
 const { supabase } = require('./_lib/supabase');
+const telegram = require('./_lib/telegram');
 
 /**
  * Vercel config: disabilita il body parsing per ricevere il raw body.
@@ -144,6 +145,8 @@ async function handleCheckoutCompleted(session) {
   }
 
   console.log(`Subscription created: user=${userId}, tier=${tier}`);
+
+  await manageTelegramAccess(userId, 'grant');
 }
 
 /**
@@ -208,6 +211,8 @@ async function handleSubscriptionDeleted(subscription) {
   // Se non ha altri abbonamenti attivi, riporta a free
   if (!activeSubscriptions || activeSubscriptions.length === 0) {
     await supabase.from('profiles').update({ tier: 'free' }).eq('user_id', userId);
+
+    await manageTelegramAccess(userId, 'revoke');
   }
 
   console.log(`Subscription deleted: user=${userId}`);
@@ -228,6 +233,46 @@ async function handlePaymentFailed(invoice) {
     .eq('stripe_subscription_id', subscriptionId);
 
   console.log(`Payment failed for subscription: ${subscriptionId}`);
+}
+
+/**
+ * Gestisce l'accesso al canale Telegram privato in base al tier.
+ * Invia un link di invito se l'utente ha un abbonamento attivo,
+ * oppure lo rimuove dal canale se l'abbonamento e' stato cancellato.
+ *
+ * @param {string} userId - Supabase user ID
+ * @param {'grant'|'revoke'} action - Azione da eseguire
+ */
+async function manageTelegramAccess(userId, action) {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('telegram_user_id')
+    .eq('user_id', userId)
+    .single();
+
+  if (!profile || !profile.telegram_user_id) {
+    return; // Utente non ha collegato Telegram
+  }
+
+  try {
+    if (action === 'grant') {
+      const inviteLink = await telegram.createPrivateInviteLink('Sub ' + userId.slice(0, 8));
+      const msg =
+        "Il tuo abbonamento WinningBet e' attivo! Unisciti al canale privato: " + inviteLink;
+      await telegram.sendDirectMessage(profile.telegram_user_id, msg);
+      console.log('Telegram invite sent to user:', userId);
+    } else if (action === 'revoke') {
+      await telegram.removeFromPrivateChannel(profile.telegram_user_id);
+      await telegram.sendDirectMessage(
+        profile.telegram_user_id,
+        "Il tuo abbonamento WinningBet e' scaduto. Rinnova per riottenere l'accesso al canale privato.",
+      );
+      console.log('Telegram access revoked for user:', userId);
+    }
+  } catch (err) {
+    // Non-fatal: non bloccare il webhook per errori Telegram
+    console.error('Telegram access management error:', err.message);
+  }
 }
 
 /**
