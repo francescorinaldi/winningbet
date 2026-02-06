@@ -62,7 +62,9 @@ module.exports = async function handler(req, res) {
     }
 
     // Crea la sessione Checkout
-    const origin = req.headers.origin || req.headers.referer || 'https://winningbet.it';
+    const ALLOWED_ORIGINS = ['https://winningbet.it', 'https://www.winningbet.it'];
+    const rawOrigin = req.headers.origin || req.headers.referer || '';
+    const origin = ALLOWED_ORIGINS.includes(rawOrigin) ? rawOrigin : 'https://winningbet.it';
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',

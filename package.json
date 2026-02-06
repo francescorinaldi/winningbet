@@ -1,7 +1,7 @@
 {
   "name": "winningbet",
   "version": "1.0.0",
-  "description": "Piattaforma di pronostici premium per la Serie A italiana. Dati live, tips giornalieri e track record verificato.",
+  "description": "Piattaforma di pronostici premium multi-lega. Dati live, tips AI giornalieri e track record verificato.",
   "private": true,
   "author": "WinningBet",
   "license": "UNLICENSED",

@@ -75,12 +75,4 @@ function resolveLeagueSlug(slug) {
   return slug;
 }
 
-/**
- * Restituisce tutti gli slug validi.
- * @returns {string[]} Array di slug
- */
-function getAllSlugs() {
-  return VALID_SLUGS;
-}
-
-module.exports = { LEAGUES, getLeague, resolveLeagueSlug, getAllSlugs, DEFAULT_SLUG };
+module.exports = { getLeague, resolveLeagueSlug };

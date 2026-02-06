@@ -39,8 +39,10 @@ module.exports = async function handler(req, res) {
   }
 
   const leagueSlug = resolveLeagueSlug(req.query.league);
-  const status = req.query.status || 'pending';
-  const limit = Math.min(parseInt(req.query.limit, 10) || 10, 50);
+  const validStatuses = ['pending', 'won', 'lost', 'void'];
+  const status = validStatuses.includes(req.query.status) ? req.query.status : 'pending';
+  const parsedLimit = parseInt(req.query.limit, 10);
+  const limit = Math.min(Math.max(parsedLimit > 0 ? parsedLimit : 10, 1), 50);
 
   // Determina il tier dell'utente (se autenticato)
   let userTier = 'free';
@@ -53,7 +55,7 @@ module.exports = async function handler(req, res) {
   const cacheKey = `tips_${leagueSlug}_${userTier}_${status}_${limit}`;
   const cached = cache.get(cacheKey);
   if (cached) {
-    res.setHeader('Cache-Control', 'private, s-maxage=900, stale-while-revalidate=300');
+    res.setHeader('Cache-Control', 'private, max-age=900, stale-while-revalidate=300');
     return res.status(200).json(cached);
   }
 
@@ -64,14 +66,21 @@ module.exports = async function handler(req, res) {
     if (hasAccess(userTier, 'pro')) accessibleTiers.push('pro');
     if (hasAccess(userTier, 'vip')) accessibleTiers.push('vip');
 
-    const { data: tips, error } = await supabase
+    let query = supabase
       .from('tips')
       .select('*')
       .eq('league', leagueSlug)
       .in('tier', accessibleTiers)
-      .eq('status', status)
-      .gte('match_date', new Date().toISOString())
-      .order('match_date', { ascending: true })
+      .eq('status', status);
+
+    // Solo per tips pendenti filtriamo per partite future;
+    // per won/lost/void le partite sono nel passato
+    if (status === 'pending') {
+      query = query.gte('match_date', new Date().toISOString());
+    }
+
+    const { data: tips, error } = await query
+      .order('match_date', { ascending: status === 'pending' })
       .limit(limit);
 
     if (error) {
@@ -79,24 +88,11 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'Errore nel recupero dei pronostici' });
     }
 
-    // Per utenti non autenticati o free, oscura analisi dei tips pro/vip
-    const sanitizedTips = (tips || []).map((tip) => {
-      if (tip.tier === 'free' || hasAccess(userTier, tip.tier)) {
-        return tip;
-      }
-      // Questo non dovrebbe succedere con la query .in() sopra,
-      // ma e' un livello extra di sicurezza
-      return {
-        ...tip,
-        prediction: null,
-        odds: null,
-        analysis: null,
-      };
-    });
+    const result = tips || [];
 
-    cache.set(cacheKey, sanitizedTips, CACHE_TTL);
-    res.setHeader('Cache-Control', 'private, s-maxage=900, stale-while-revalidate=300');
-    return res.status(200).json(sanitizedTips);
+    cache.set(cacheKey, result, CACHE_TTL);
+    res.setHeader('Cache-Control', 'private, max-age=900, stale-while-revalidate=300');
+    return res.status(200).json(result);
   } catch (err) {
     console.error('Tips endpoint error:', err);
     return res.status(500).json({ error: 'Errore nel recupero dei pronostici' });

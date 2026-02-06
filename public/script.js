@@ -550,7 +550,7 @@
   function createEl(tag, className, textContent) {
     const el = document.createElement(tag);
     if (className) el.className = className;
-    if (textContent) el.textContent = textContent;
+    if (textContent !== null && textContent !== undefined) el.textContent = textContent;
     return el;
   }
 
@@ -1047,16 +1047,16 @@
     // Pulisce le barre esistenti
     chartContainer.textContent = '';
 
+    const maxProfit = Math.max.apply(
+      null,
+      monthly.map(function (x) {
+        return Math.abs(x.profit);
+      }),
+    );
+
     monthly.forEach(function (m) {
       const bar = document.createElement('div');
       bar.className = 'chart-bar';
-      // Normalizza il profitto per l'altezza della barra (max 140)
-      const maxProfit = Math.max.apply(
-        null,
-        monthly.map(function (x) {
-          return Math.abs(x.profit);
-        }),
-      );
       const normalizedValue =
         maxProfit > 0 ? Math.round((Math.abs(m.profit) / maxProfit) * 140) : 0;
       bar.setAttribute('data-value', normalizedValue);

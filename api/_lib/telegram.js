@@ -166,9 +166,6 @@ function delay(ms) {
 }
 
 module.exports = {
-  sendMessage,
   sendPublicTips,
   sendPrivateTips,
-  formatTipMessage,
-  escapeMarkdown,
 };

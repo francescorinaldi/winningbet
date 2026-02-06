@@ -2,13 +2,17 @@
 
 ## Project Overview
 
-Premium multi-league betting predictions platform (Serie A, Serie B, Champions League, La Liga, Premier League). Vanilla JS frontend + Vercel serverless backend. Zero npm production dependencies.
+Premium multi-league betting predictions platform (Serie A, Serie B, Champions League, La Liga, Premier League). Vanilla JS frontend + Vercel serverless backend.
 
 ## Tech Stack
 
 - **Frontend**: HTML5, CSS3 (custom properties), Vanilla JS (ES6+ IIFE pattern)
 - **Backend**: Node.js Vercel Serverless Functions
+- **Database**: Supabase (PostgreSQL + Auth + RLS)
+- **AI**: Anthropic Claude API (prediction engine)
+- **Payments**: Stripe (subscriptions, webhooks, customer portal)
 - **APIs**: api-football.com (primary), football-data.org (fallback)
+- **Notifications**: Telegram Bot API, SendGrid (email)
 - **Deployment**: Vercel
 - **Linting**: ESLint 9 (flat config)
 - **Formatting**: Prettier
@@ -17,13 +21,17 @@ Premium multi-league betting predictions platform (Serie A, Serie B, Champions L
 ## Project Structure
 
 ```
-api/                  → Vercel serverless functions
-api/_lib/             → Shared backend utilities (API clients, cache, leagues config)
+api/                  → Vercel serverless functions (12 endpoints)
+api/_lib/             → Shared backend utilities (10 modules)
 api/_lib/leagues.js   → Centralized league configuration (IDs, codes, seasons)
-public/               → Static frontend (index.html, script.js, styles.css)
+public/               → Static frontend (HTML, JS, CSS)
+public/script.js      → Main landing page logic (IIFE pattern)
+public/auth.js        → Authentication logic (Supabase Auth)
+public/dashboard.js   → User dashboard logic
+supabase/migrations/  → Database schema migrations
 eslint.config.mjs     → ESLint flat config
 .prettierrc           → Prettier config
-vercel.json           → Deployment config + caching headers
+vercel.json           → Deployment config + per-endpoint caching headers
 CHANGELOG.md          → All changes (always update)
 ```
 
@@ -50,11 +58,30 @@ Valid slugs: `serie-a`, `serie-b`, `champions-league`, `la-liga`, `premier-leagu
 - `GET /api/tips?league={slug}` — Tips filtered by league (15min cache)
 - `POST /api/generate-tips` — Body: `{ league: "slug" }` (default: serie-a)
 - `POST /api/settle-tips` — Auto-groups pending tips by league
+- `POST /api/send-tips` — Dispatches tips via Telegram + email
+- `GET /api/track-record` — Performance statistics (1h cache)
+- `POST /api/create-checkout` — Stripe checkout session
+- `POST /api/create-portal` — Stripe customer portal session
+- `POST /api/stripe-webhook` — Stripe event handler
 
 ## Environment Variables
 
 - `API_FOOTBALL_KEY` — api-sports.io key
 - `FOOTBALL_DATA_KEY` — football-data.org key
+- `SUPABASE_URL` — Supabase project URL
+- `SUPABASE_ANON_KEY` — Supabase anon key (frontend, protected by RLS)
+- `SUPABASE_SECRET_KEY` — Supabase secret key (backend only, bypasses RLS)
+- `ANTHROPIC_API_KEY` — Anthropic Claude API key
+- `CRON_SECRET` — Secret for cron job authentication
+- `STRIPE_SECRET_KEY` — Stripe secret key
+- `STRIPE_WEBHOOK_SECRET` — Stripe webhook signing secret
+- `STRIPE_PRO_PRICE_ID` — Stripe Price ID for PRO plan
+- `STRIPE_VIP_PRICE_ID` — Stripe Price ID for VIP plan
+- `TELEGRAM_BOT_TOKEN` — Telegram bot token
+- `TELEGRAM_PUBLIC_CHANNEL_ID` — Public channel chat ID (free tips)
+- `TELEGRAM_PRIVATE_CHANNEL_ID` — Private channel chat ID (pro/vip tips)
+- `SENDGRID_API_KEY` — SendGrid API key
+- `SENDGRID_FROM_EMAIL` — Verified sender email address
 
 ## Code Conventions
 

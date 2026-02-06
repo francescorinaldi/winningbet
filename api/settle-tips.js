@@ -27,15 +27,16 @@
 const { supabase } = require('./_lib/supabase');
 const apiFootball = require('./_lib/api-football');
 const footballData = require('./_lib/football-data');
+const { verifyCronSecret } = require('./_lib/auth-middleware');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const authHeader = req.headers.authorization;
-  if (!authHeader || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  const { authorized, error: cronError } = verifyCronSecret(req);
+  if (!authorized) {
+    return res.status(401).json({ error: cronError });
   }
 
   try {
@@ -98,15 +99,27 @@ module.exports = async function handler(req, res) {
         const actualResult = buildActualResult(result);
         const status = evaluatePrediction(tip.prediction, result, totalGoals);
 
-        await supabase.from('tips').update({ status: status }).eq('id', tip.id);
+        const { error: updateError } = await supabase
+          .from('tips')
+          .update({ status: status })
+          .eq('id', tip.id);
 
-        await supabase.from('tip_outcomes').upsert(
+        if (updateError) {
+          console.error(`Failed to update tip ${tip.id}:`, updateError.message);
+          continue;
+        }
+
+        const { error: upsertError } = await supabase.from('tip_outcomes').upsert(
           {
             tip_id: tip.id,
             actual_result: actualResult,
           },
           { onConflict: 'tip_id' },
         );
+
+        if (upsertError) {
+          console.error(`Failed to upsert outcome for tip ${tip.id}:`, upsertError.message);
+        }
 
         settledResults.push({
           match: tip.home_team + ' vs ' + tip.away_team,

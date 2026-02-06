@@ -10,10 +10,12 @@
  *   - Non c'e' limite di dimensione (il numero di chiavi e' fisso e ridotto)
  *
  * Chiavi utilizzate nel progetto:
- *   - "matches"      → /api/matches   (TTL: 2h)
- *   - "results"      → /api/results   (TTL: 1h)
- *   - "odds_{id}"    → /api/odds      (TTL: 30min, una entry per fixture)
- *   - "standings"    → /api/standings  (TTL: 6h)
+ *   - "matches_{league}"                        → /api/matches       (TTL: 2h)
+ *   - "results_{league}"                        → /api/results       (TTL: 1h)
+ *   - "odds_{fixtureId}"                        → /api/odds          (TTL: 30min)
+ *   - "standings_{league}"                      → /api/standings      (TTL: 6h)
+ *   - "tips_{league}_{tier}_{status}_{limit}"   → /api/tips          (TTL: 15min)
+ *   - "track_record"                            → /api/track-record  (TTL: 1h)
  */
 const store = new Map();
 
