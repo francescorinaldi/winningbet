@@ -173,6 +173,9 @@ function delay(ms) {
  * @returns {Promise<Object>} Risposta dell'API Telegram
  */
 async function sendDirectMessage(userId, text) {
+  if (!BOT_TOKEN) {
+    throw new Error('Telegram: BOT_TOKEN not configured');
+  }
   return sendMessage(String(userId), text);
 }
 
@@ -242,21 +245,26 @@ async function removeFromPrivateChannel(userId) {
     throw new Error('Telegram: ' + banData.description);
   }
 
-  const unbanResponse = await fetch(BASE_URL + '/unbanChatMember', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: PRIVATE_CHANNEL,
-      user_id: Number(userId),
-      only_if_banned: true,
-    }),
-  });
+  // Unban per permettere un futuro re-join (senza ban permanente).
+  // Se l'unban fallisce, l'utente resta bannato — log critico per recovery manuale.
+  try {
+    const unbanResponse = await fetch(BASE_URL + '/unbanChatMember', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: PRIVATE_CHANNEL,
+        user_id: Number(userId),
+        only_if_banned: true,
+      }),
+    });
 
-  const unbanData = await unbanResponse.json();
+    const unbanData = await unbanResponse.json();
 
-  if (!unbanData.ok) {
-    console.error('Telegram API error (unban):', unbanData.description);
-    throw new Error('Telegram: ' + unbanData.description);
+    if (!unbanData.ok) {
+      console.error('CRITICAL: User ' + userId + ' banned but unban failed:', unbanData.description);
+    }
+  } catch (err) {
+    console.error('CRITICAL: User ' + userId + ' banned but unban request failed:', err.message);
   }
 }
 
