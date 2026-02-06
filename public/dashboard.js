@@ -80,17 +80,26 @@
 
     profile = result.data;
 
-    // Aggiorna header
+    // Risolvi display name: Auth metadata ha priorità (fonte di verità dell'utente),
+    // poi profilo DB, poi fallback a email prefix
     const meta = user.user_metadata || {};
-    const rawName =
-      (profile && profile.display_name) ||
-      meta.display_name ||
-      meta.full_name ||
-      meta.name ||
-      user.email.split('@')[0];
-    // Capitalize first letter of the resolved name
+    const authName = meta.display_name || meta.full_name || meta.name || '';
+    const profileName = (profile && profile.display_name) || '';
+    const emailPrefix = user.email.split('@')[0];
+
+    // Usa Auth metadata se disponibile, altrimenti profilo DB, altrimenti email
+    const rawName = authName || profileName || emailPrefix;
     const displayName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
     document.getElementById('userName').textContent = displayName;
+
+    // Sincronizza profilo DB se Auth metadata ha un nome migliore
+    if (authName && profile && profile.display_name !== authName) {
+      SupabaseConfig.client
+        .from('profiles')
+        .update({ display_name: authName })
+        .eq('user_id', user.id)
+        .then();
+    }
 
     // Tier badge
     const tier = (profile && profile.tier) || 'free';

@@ -25,7 +25,7 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Fixed
 
-- Dashboard greeting showed raw email prefix (e.g. "francesco3.rinaldi") instead of display name — now checks profile, user metadata (display_name/full_name/name), then capitalizes the result
+- Dashboard greeting showed raw email prefix (e.g. "francesco3.rinaldi") instead of display name — root cause: `signUp()` didn't pass name in metadata, so the DB trigger fell back to email prefix. Now: name is passed in `signUp` options, Auth metadata has priority over stale DB value, and dashboard auto-syncs profile if metadata differs
 - Google OAuth login — enabled Google provider in Supabase Auth via Management API
 - Added `redirectTo` option in `signInWithOAuth` to redirect to dashboard after Google login
 - Configured Supabase URI allow list for OAuth redirect URLs
