@@ -60,44 +60,130 @@ function escapeMarkdown(text) {
   return String(text).replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
 }
 
+const LEAGUE_FLAGS = {
+  'serie-a': '\uD83C\uDDEE\uD83C\uDDF9',
+  'serie-b': '\uD83C\uDDEE\uD83C\uDDF9',
+  'champions-league': '\uD83C\uDFC6',
+  'la-liga': '\uD83C\uDDEA\uD83C\uDDF8',
+  'premier-league': '\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F',
+};
+
+const LEAGUE_NAMES = {
+  'serie-a': 'SERIE A',
+  'serie-b': 'SERIE B',
+  'champions-league': 'CHAMPIONS LEAGUE',
+  'la-liga': 'LA LIGA',
+  'premier-league': 'PREMIER LEAGUE',
+};
+
 /**
- * Formatta un tip come messaggio Telegram.
- *
- * @param {Object} tip - Oggetto tip dal database
- * @returns {string} Messaggio formattato in MarkdownV2
+ * Formatta la data odierna in italiano.
+ * @returns {string} Es. "Venerdi 7 Febbraio 2026"
  */
-function formatTipMessage(tip) {
+function formatItalianDate() {
+  const days = ['Domenica', 'Lunedi', 'Martedi', 'Mercoledi', 'Giovedi', 'Venerdi', 'Sabato'];
+  const months = [
+    'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+    'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
+  ];
+  const now = new Date();
+  return days[now.getDay()] + ' ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+}
+
+/**
+ * Formatta un singolo tip come blocco nel digest.
+ * @param {Object} tip - Oggetto tip dal database
+ * @returns {string} Blocco MarkdownV2 per il tip
+ */
+function formatTipBlock(tip) {
   const home = escapeMarkdown(tip.home_team);
   const away = escapeMarkdown(tip.away_team);
   const prediction = escapeMarkdown(tip.prediction);
   const odds = escapeMarkdown(parseFloat(tip.odds).toFixed(2));
   const confidence = escapeMarkdown(tip.confidence + '%');
-  const tier = tip.tier.toUpperCase();
 
   const lines = [
     '\u26BD *' + home + ' vs ' + away + '*',
-    '',
-    '\uD83C\uDFAF *Pronostico:* ' + prediction,
-    '\uD83D\uDCCA *Quota:* ' + odds,
-    '\uD83D\uDD25 *Fiducia:* ' + confidence,
+    '\u251C \uD83C\uDFAF ' + prediction,
+    '\u251C \uD83D\uDCCA Quota: ' + odds,
+    '\u251C \uD83D\uDD25 Fiducia: ' + confidence,
   ];
 
   if (tip.analysis) {
-    lines.push('');
-    lines.push('\uD83D\uDCDD ' + escapeMarkdown(tip.analysis));
+    lines.push('\u2514 \uD83D\uDCDD _' + escapeMarkdown(tip.analysis) + '_');
+  } else {
+    // Replace last ├ with └
+    lines[lines.length - 1] = lines[lines.length - 1].replace('\u251C', '\u2514');
   }
-
-  lines.push('');
-  lines.push('\\[' + escapeMarkdown(tier) + '\\] \\| WinningBet');
 
   return lines.join('\n');
 }
 
 /**
- * Invia tips al canale pubblico (solo tips free).
+ * Formatta un array di tips come digest giornaliero (Format A).
+ * Raggruppa i tips per lega con header, separatori e quota combinata.
+ *
+ * @param {Array<Object>} tips - Array di tips dal database
+ * @returns {string} Messaggio digest formattato in MarkdownV2
+ */
+function formatDigest(tips) {
+  if (!tips || tips.length === 0) {
+    return '';
+  }
+
+  const lines = [
+    '\uD83C\uDFC6 *PRONOSTICI DEL GIORNO*',
+    '_' + escapeMarkdown(formatItalianDate()) + '_',
+    '',
+    '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501',
+  ];
+
+  // Group tips by league
+  const byLeague = {};
+  for (const tip of tips) {
+    const league = tip.league || 'serie-a';
+    if (!byLeague[league]) {
+      byLeague[league] = [];
+    }
+    byLeague[league].push(tip);
+  }
+
+  let comboOdds = 1;
+  let tipCount = 0;
+
+  for (const leagueSlug of Object.keys(byLeague)) {
+    const leagueTips = byLeague[leagueSlug];
+    const flag = LEAGUE_FLAGS[leagueSlug] || '\u26BD';
+    const name = LEAGUE_NAMES[leagueSlug] || leagueSlug.toUpperCase();
+
+    lines.push('');
+    lines.push(flag + ' *' + escapeMarkdown(name) + '*');
+    lines.push('');
+
+    for (const tip of leagueTips) {
+      lines.push(formatTipBlock(tip));
+      lines.push('');
+      comboOdds *= parseFloat(tip.odds) || 1;
+      tipCount++;
+    }
+
+    lines.push('\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501');
+  }
+
+  lines.push('');
+  lines.push(
+    '_' + escapeMarkdown(tipCount + ' pronostici | Quota combinata: ' + comboOdds.toFixed(2)) + '_',
+  );
+  lines.push('\uD83D\uDC51 *WinningBet* \u2014 Pronostici Calcio Premium');
+
+  return lines.join('\n');
+}
+
+/**
+ * Invia tips al canale pubblico (solo tips free) come digest giornaliero.
  *
  * @param {Array<Object>} tips - Array di tips da inviare
- * @returns {Promise<number>} Numero di messaggi inviati
+ * @returns {Promise<number>} Numero di tips inclusi nel digest
  */
 async function sendPublicTips(tips) {
   if (!BOT_TOKEN || !PUBLIC_CHANNEL) {
@@ -108,27 +194,25 @@ async function sendPublicTips(tips) {
   const freeTips = tips.filter(function (t) {
     return t.tier === 'free';
   });
-  let sent = 0;
 
-  for (const tip of freeTips) {
-    try {
-      await sendMessage(PUBLIC_CHANNEL, formatTipMessage(tip));
-      sent++;
-      // Rate limiting: max 20 messaggi/minuto per canale
-      await delay(3000);
-    } catch (err) {
-      console.error('Failed to send public tip:', err.message);
-    }
+  if (freeTips.length === 0) {
+    return 0;
   }
 
-  return sent;
+  try {
+    await sendMessage(PUBLIC_CHANNEL, formatDigest(freeTips));
+    return freeTips.length;
+  } catch (err) {
+    console.error('Failed to send public digest:', err.message);
+    return 0;
+  }
 }
 
 /**
- * Invia tips al canale privato (tips pro + vip).
+ * Invia tips al canale privato (tips pro + vip) come digest giornaliero.
  *
  * @param {Array<Object>} tips - Array di tips da inviare
- * @returns {Promise<number>} Numero di messaggi inviati
+ * @returns {Promise<number>} Numero di tips inclusi nel digest
  */
 async function sendPrivateTips(tips) {
   if (!BOT_TOKEN || !PRIVATE_CHANNEL) {
@@ -139,30 +223,18 @@ async function sendPrivateTips(tips) {
   const premiumTips = tips.filter(function (t) {
     return t.tier === 'pro' || t.tier === 'vip';
   });
-  let sent = 0;
 
-  for (const tip of premiumTips) {
-    try {
-      await sendMessage(PRIVATE_CHANNEL, formatTipMessage(tip));
-      sent++;
-      await delay(3000);
-    } catch (err) {
-      console.error('Failed to send private tip:', err.message);
-    }
+  if (premiumTips.length === 0) {
+    return 0;
   }
 
-  return sent;
-}
-
-/**
- * Utility per delay (rate limiting Telegram).
- * @param {number} ms - Millisecondi di attesa
- * @returns {Promise<void>}
- */
-function delay(ms) {
-  return new Promise(function (resolve) {
-    setTimeout(resolve, ms);
-  });
+  try {
+    await sendMessage(PRIVATE_CHANNEL, formatDigest(premiumTips));
+    return premiumTips.length;
+  } catch (err) {
+    console.error('Failed to send private digest:', err.message);
+    return 0;
+  }
 }
 
 /**
