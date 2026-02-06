@@ -7,6 +7,9 @@ All notable changes to WinningBet will be documented in this file.
 ### Fixed
 
 - **BUG: dashboard.html** — Navbar "Esci" button was a `<button>` instead of `<a>`, causing misalignment with homepage nav (`.nav-links a` styles and mobile overlay `font-size: 1.2rem` didn't apply to `<button>`)
+- **PERF: RLS policies** — Wrapped all `auth.uid()` / `auth.role()` calls in `(select ...)` for initplan caching (9 policies fixed)
+- **PERF: RLS policies** — Scoped `*_service_all` policies to `TO service_role` instead of `TO public`, eliminating ~20 multiple permissive policy warnings
+- **PERF: RLS policies** — Consolidated 3 separate tips SELECT policies (`tips_select_free/pro/vip`) into 1 per role (`tips_select_anon` + `tips_select_authenticated`)
 
 ### Fixed (Code Quality Assessment)
 

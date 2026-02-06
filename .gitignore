@@ -7,3 +7,4 @@ node_modules/
 firebase-debug.log
 .worktrees/
 .vercel
+supabase/.temp/
