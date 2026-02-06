@@ -35,6 +35,7 @@
   let session = null;
   let profile = null;
   let allHistory = [];
+  let currentLeague = localStorage.getItem('wb_dashboard_league') || 'serie-a';
 
   // ─── INIT ───────────────────────────────────────────────
 
@@ -42,6 +43,7 @@
     checkAuth();
     setupTabs();
     setupHistoryFilters();
+    setupLeagueSelector();
     setupLogout();
     handleCheckoutFeedback();
   });
@@ -261,9 +263,10 @@
     const emptyState = document.getElementById('dashTipsEmpty');
 
     try {
-      const response = await fetch('/api/tips?status=pending&limit=20', {
-        headers: { Authorization: 'Bearer ' + session.access_token },
-      });
+      const response = await fetch(
+        '/api/tips?status=pending&limit=20&league=' + encodeURIComponent(currentLeague),
+        { headers: { Authorization: 'Bearer ' + session.access_token } },
+      );
 
       const tips = await response.json();
 
@@ -420,12 +423,13 @@
 
       // Carica won, lost, void, pending in parallelo
       const statuses = ['won', 'lost', 'void', 'pending'];
+      const leagueParam = '&league=' + encodeURIComponent(currentLeague);
       const promises = statuses.map(function (s) {
-        return fetch('/api/tips?status=' + s + '&limit=50', { headers: headers }).then(
-          function (r) {
-            return r.json();
-          },
-        );
+        return fetch('/api/tips?status=' + s + '&limit=50' + leagueParam, {
+          headers: headers,
+        }).then(function (r) {
+          return r.json();
+        });
       });
 
       const responses = await Promise.all(promises);
@@ -566,6 +570,46 @@
       btn.classList.add('active');
 
       renderHistory(btn.getAttribute('data-status'));
+    });
+  }
+
+  // ─── LEAGUE SELECTOR ───────────────────────────────
+
+  /**
+   * Setup del selettore lega nella dashboard.
+   * Salva la scelta in localStorage e ricarica tips/storico.
+   */
+  function setupLeagueSelector() {
+    const selector = document.getElementById('dashLeagueSelector');
+    if (!selector) return;
+
+    // Ripristina selezione salvata
+    const buttons = selector.querySelectorAll('.league-btn');
+    buttons.forEach(function (btn) {
+      btn.classList.remove('active');
+      if (btn.getAttribute('data-league') === currentLeague) {
+        btn.classList.add('active');
+      }
+    });
+
+    selector.addEventListener('click', function (e) {
+      const btn = e.target.closest('.league-btn');
+      if (!btn) return;
+
+      const league = btn.getAttribute('data-league');
+      if (league === currentLeague) return;
+
+      buttons.forEach(function (b) {
+        b.classList.remove('active');
+      });
+      btn.classList.add('active');
+
+      currentLeague = league;
+      localStorage.setItem('wb_dashboard_league', league);
+
+      // Ricarica dati per la nuova lega
+      loadTodayTips();
+      loadHistory();
     });
   }
 
