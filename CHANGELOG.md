@@ -47,13 +47,11 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Added
 
-- `supabase/migrations/002_add_league_column.sql` — Migration to add missing `league` column to `tips` table with indexes
-
-### Added
-
-- **Multi-league support**: Serie B, Champions League, La Liga, Premier League alongside existing Serie A
-- League selector tab bar in frontend (5 buttons above the live matches bar)
+- **Multi-league support**: Champions League, La Liga, Premier League alongside existing Serie A
+- League selector tab bar in frontend (4 buttons above the live matches bar)
+- Serie B config in backend (api/\_lib/leagues.js) ready for when API coverage is available
 - Centralized league configuration in `api/_lib/leagues.js` — single source of truth for all league IDs and codes
+- `supabase/migrations/002_add_league_column.sql` — Migration to add `league` column to `tips` table with indexes
 - `?league=` query parameter on `/api/matches`, `/api/results`, `/api/standings`, `/api/tips` endpoints (default: `serie-a`)
 - `league` column on Supabase `tips` table with indexes for filtering
 - Per-league cache keys to avoid serving wrong data across leagues
@@ -70,7 +68,7 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Fixed
 
-- Dashboard greeting showed raw email prefix (e.g. "francesco3.rinaldi") instead of display name — now checks profile, user metadata (display_name/full_name/name), then capitalizes the result
+- Dashboard greeting showed raw email prefix (e.g. "francesco3.rinaldi") instead of display name — root cause: `signUp()` didn't pass name in metadata, so the DB trigger fell back to email prefix. Now: name is passed in `signUp` options, Auth metadata has priority over stale DB value, and dashboard auto-syncs profile if metadata differs
 - Google OAuth login — enabled Google provider in Supabase Auth via Management API
 - Added `redirectTo` option in `signInWithOAuth` to redirect to dashboard after Google login
 - Configured Supabase URI allow list for OAuth redirect URLs

@@ -258,20 +258,14 @@
 
     setLoading(submitBtn, true);
 
-    const { error } = await SupabaseConfig.signUp(email, password);
+    const signUpOptions = name ? { data: { display_name: name } } : undefined;
+    const { error } = await SupabaseConfig.signUp(email, password, signUpOptions);
 
     setLoading(submitBtn, false);
 
     if (error) {
       showMessage(error.message, 'error');
       return;
-    }
-
-    // Se il nome e' fornito, aggiorniamo i metadata
-    if (name) {
-      await SupabaseConfig.client.auth.updateUser({
-        data: { display_name: name },
-      });
     }
 
     showMessage(

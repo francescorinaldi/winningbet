@@ -72,8 +72,8 @@ const SupabaseConfig = (function () {
      * @param {string} password
      * @returns {Promise<{data: Object, error: Object|null}>}
      */
-    signUp: function (email, password) {
-      return client.auth.signUp({ email: email, password: password });
+    signUp: function (email, password, options) {
+      return client.auth.signUp({ email: email, password: password, options: options });
     },
 
     /**
