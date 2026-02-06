@@ -21,18 +21,22 @@ Premium multi-league betting predictions platform (Serie A, Serie B, Champions L
 ## Project Structure
 
 ```
-api/                  → Vercel serverless functions (12 endpoints)
-api/_lib/             → Shared backend utilities (10 modules)
-api/_lib/leagues.js   → Centralized league configuration (IDs, codes, seasons)
-public/               → Static frontend (HTML, JS, CSS)
-public/script.js      → Main landing page logic (IIFE pattern)
-public/auth.js        → Authentication logic (Supabase Auth)
-public/dashboard.js   → User dashboard logic
-supabase/migrations/  → Database schema migrations
-eslint.config.mjs     → ESLint flat config
-.prettierrc           → Prettier config
-vercel.json           → Deployment config + per-endpoint caching headers
-CHANGELOG.md          → All changes (always update)
+api/                    → Vercel serverless functions (15 endpoints)
+api/_lib/               → Shared backend utilities (10 modules)
+api/_lib/leagues.js     → Centralized league configuration (IDs, codes, seasons)
+api/_lib/telegram.js    → Telegram Bot API client (send tips, invite, kick, DM)
+api/cron/daily.js       → Daily cron orchestrator (settle → generate → send)
+api/link-telegram.js    → Telegram account linking endpoint
+api/telegram-webhook.js → Telegram bot webhook handler (/start deep link)
+public/                 → Static frontend (HTML, JS, CSS)
+public/script.js        → Main landing page logic (IIFE pattern)
+public/auth.js          → Authentication logic (Supabase Auth)
+public/dashboard.js     → User dashboard logic + Telegram linking
+supabase/migrations/    → Database schema migrations (4 files)
+eslint.config.mjs       → ESLint flat config
+.prettierrc             → Prettier config
+vercel.json             → Deployment config + caching headers + cron schedule
+CHANGELOG.md            → All changes (always update)
 ```
 
 ## Key Commands
@@ -62,7 +66,10 @@ Valid slugs: `serie-a`, `serie-b`, `champions-league`, `la-liga`, `premier-leagu
 - `GET /api/track-record` — Performance statistics (1h cache)
 - `POST /api/create-checkout` — Stripe checkout session
 - `POST /api/create-portal` — Stripe customer portal session
-- `POST /api/stripe-webhook` — Stripe event handler
+- `POST /api/stripe-webhook` — Stripe event handler (+ auto Telegram invite/kick)
+- `GET /api/cron/daily` — Daily cron orchestrator (settle → generate all leagues → send)
+- `POST /api/link-telegram` — Generate Telegram deep link for account linking
+- `POST /api/telegram-webhook` — Telegram bot webhook handler (/start deep link)
 
 ## Environment Variables
 
@@ -80,6 +87,8 @@ Valid slugs: `serie-a`, `serie-b`, `champions-league`, `la-liga`, `premier-leagu
 - `TELEGRAM_BOT_TOKEN` — Telegram bot token
 - `TELEGRAM_PUBLIC_CHANNEL_ID` — Public channel chat ID (free tips)
 - `TELEGRAM_PRIVATE_CHANNEL_ID` — Private channel chat ID (pro/vip tips)
+- `TELEGRAM_BOT_USERNAME` — Bot username (without @) for deep link generation
+- `TELEGRAM_WEBHOOK_SECRET` — Secret token for Telegram webhook verification
 - `SENDGRID_API_KEY` — SendGrid API key
 - `SENDGRID_FROM_EMAIL` — Verified sender email address
 

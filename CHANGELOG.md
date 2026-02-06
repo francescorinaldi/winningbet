@@ -4,17 +4,24 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
-### Added
+### Added — Telegram Full Automation (Issue #15)
 
-- `api/cron/daily.js` — GET endpoint orchestrating the daily automation cycle: settle pending tips, generate new predictions for all 5 leagues, send daily digest via Telegram + email. Secured via `CRON_SECRET` header.
-- `api/generate-tips.js` — Exported `generateForLeague(slug)` callable function (no req/res) for internal use by the cron orchestrator
-- `api/link-telegram.js` — POST endpoint that generates a Telegram deep link token for account linking; checks if already linked, saves token to profile, returns `https://t.me/bot?start=token` URL
-- `api/telegram-webhook.js` — POST endpoint for Telegram bot webhook; handles `/start <token>` deep link for account linking with secret token verification
-- **Dashboard "Collega Telegram" UI** — New Telegram linking card in the Account tab with status display (linked/not linked), deep link button, and 60-second polling to detect successful linking; includes `loadTelegramStatus()`, `handleLinkTelegram()`, `pollTelegramLink()` functions in `dashboard.js`
+- **Vercel Cron Job** — Daily automation at 08:00 UTC: settle → generate (all leagues) → send
+- `GET /api/cron/daily` — Cron orchestrator endpoint (settle → generate all leagues → send)
+- `POST /api/link-telegram` — Generates one-time deep link token for Telegram account linking
+- `POST /api/telegram-webhook` — Handles Telegram bot `/start` command for account linking with secret token verification
+- `generate-tips.js` — Exported `generateForLeague()` callable function for cron orchestrator
+- **Auto-invite** to private Telegram channel on Stripe subscription activation (`stripe-webhook.js`)
+- **Auto-remove** from private Telegram channel on subscription cancellation (`stripe-webhook.js`)
+- `telegram.js` — Added `sendDirectMessage()`, `createPrivateInviteLink()`, `removeFromPrivateChannel()`
+- **Dashboard "Collega Telegram" UI** — Telegram linking card in Account tab with status, deep link button, and polling
+- `telegram_user_id` (BIGINT) and `telegram_link_token` (TEXT) columns on `profiles` table
+- `TELEGRAM_BOT_USERNAME` and `TELEGRAM_WEBHOOK_SECRET` environment variables
+- Vercel cron schedule in `vercel.json`
 
 ### Fixed
 
-- **BUG: dashboard.html** — Navbar "Esci" button was a `<button>` instead of `<a>`, causing misalignment with homepage nav (`.nav-links a` styles and mobile overlay `font-size: 1.2rem` didn't apply to `<button>`)
+- **BUG: dashboard.html** — Navbar "Esci" button was a `<button>` instead of `<a>`, causing misalignment with homepage nav
 - **PERF: RLS policies** — Wrapped all `auth.uid()` / `auth.role()` calls in `(select ...)` for initplan caching (9 policies fixed)
 - **PERF: RLS policies** — Scoped `*_service_all` policies to `TO service_role` instead of `TO public`, eliminating ~20 multiple permissive policy warnings
 - **PERF: RLS policies** — Consolidated 3 separate tips SELECT policies (`tips_select_free/pro/vip`) into 1 per role (`tips_select_anon` + `tips_select_authenticated`)
