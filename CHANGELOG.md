@@ -6,6 +6,8 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Added
 
+- `api/cron/daily.js` — GET endpoint orchestrating the daily automation cycle: settle pending tips, generate new predictions for all 5 leagues, send daily digest via Telegram + email. Secured via `CRON_SECRET` header.
+- `api/generate-tips.js` — Exported `generateForLeague(slug)` callable function (no req/res) for internal use by the cron orchestrator
 - `api/link-telegram.js` — POST endpoint that generates a Telegram deep link token for account linking; checks if already linked, saves token to profile, returns `https://t.me/bot?start=token` URL
 - `api/telegram-webhook.js` — POST endpoint for Telegram bot webhook; handles `/start <token>` deep link for account linking with secret token verification
 - **Dashboard "Collega Telegram" UI** — New Telegram linking card in the Account tab with status display (linked/not linked), deep link button, and 60-second polling to detect successful linking; includes `loadTelegramStatus()`, `handleLinkTelegram()`, `pollTelegramLink()` functions in `dashboard.js`
@@ -104,6 +106,12 @@ All notable changes to WinningBet will be documented in this file.
 - Tips section: reduced from 4 cards to 3 (FREE, PRO, VIP) for better symmetry; removed Multipla card
 - Tips grid: changed from `auto-fill` to fixed 3-column layout
 - Unified navbar across all pages (privacy, terms, cookies, auth, dashboard) — same nav links (Tips, Track Record, Piani, FAQ) with hamburger menu on mobile
+
+---
+
+## TODO
+
+- [ ] **Supabase: Enable Leaked Password Protection** — Requires Supabase Pro plan. Blocks compromised passwords via HaveIBeenPwned. Activate in: Authentication > Settings > Leaked Password Protection ([docs](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection))
 
 ---
 
