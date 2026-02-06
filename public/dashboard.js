@@ -572,7 +572,8 @@
    * Setup bottone logout.
    */
   function setupLogout() {
-    document.getElementById('logoutBtn').addEventListener('click', async function () {
+    document.getElementById('logoutBtn').addEventListener('click', async function (e) {
+      e.preventDefault();
       await SupabaseConfig.signOut();
       window.location.href = '/';
     });
