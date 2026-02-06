@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/cron/daily",
+      "schedule": "0 8 * * *"
+    }
+  ],
   "outputDirectory": "public",
   "headers": [
     {
