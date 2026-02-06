@@ -8,6 +8,7 @@ All notable changes to WinningBet will be documented in this file.
 
 - `api/link-telegram.js` — POST endpoint that generates a Telegram deep link token for account linking; checks if already linked, saves token to profile, returns `https://t.me/bot?start=token` URL
 - `api/telegram-webhook.js` — POST endpoint for Telegram bot webhook; handles `/start <token>` deep link for account linking with secret token verification
+- **Dashboard "Collega Telegram" UI** — New Telegram linking card in the Account tab with status display (linked/not linked), deep link button, and 60-second polling to detect successful linking; includes `loadTelegramStatus()`, `handleLinkTelegram()`, `pollTelegramLink()` functions in `dashboard.js`
 
 ### Fixed
 

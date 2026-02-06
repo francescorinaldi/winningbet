@@ -115,6 +115,9 @@
 
     // Subscription info
     updateSubscriptionUI(tier);
+
+    // Telegram linking status
+    loadTelegramStatus();
   }
 
   /**
@@ -612,6 +615,113 @@
     setTimeout(function () {
       alertEl.style.display = 'none';
     }, 8000);
+  }
+
+  // ─── TELEGRAM LINKING ──────────────────────────────────
+
+  /**
+   * Carica lo stato del collegamento Telegram dal profilo utente.
+   * Mostra stato "collegato" o il pulsante per avviare il linking.
+   */
+  async function loadTelegramStatus() {
+    const statusEl = document.getElementById('telegramStatus');
+    const linkBtn = document.getElementById('linkTelegramBtn');
+
+    const result = await SupabaseConfig.client
+      .from('profiles')
+      .select('telegram_user_id')
+      .eq('user_id', session.user.id)
+      .single();
+
+    const telegramId = result.data && result.data.telegram_user_id;
+
+    if (telegramId) {
+      statusEl.textContent = 'Account Telegram collegato';
+      statusEl.className = 'dash-telegram-status dash-telegram-status--linked';
+      linkBtn.style.display = 'none';
+    } else {
+      statusEl.textContent =
+        'Collega il tuo account Telegram per ricevere i pronostici direttamente in chat.';
+      statusEl.className = 'dash-telegram-status';
+      linkBtn.style.display = '';
+      linkBtn.onclick = handleLinkTelegram;
+    }
+  }
+
+  /**
+   * Avvia il flusso di collegamento Telegram.
+   * Chiama POST /api/link-telegram per ottenere il deep link e lo apre in un nuovo tab.
+   */
+  async function handleLinkTelegram() {
+    const linkBtn = document.getElementById('linkTelegramBtn');
+    linkBtn.disabled = true;
+    linkBtn.textContent = 'Caricamento...';
+
+    try {
+      const response = await fetch('/api/link-telegram', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + session.access_token,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.status === 'already_linked') {
+        showAlert('Il tuo account Telegram è già collegato.', 'success');
+        loadTelegramStatus();
+        return;
+      }
+
+      if (data.url) {
+        window.open(data.url, '_blank');
+        showAlert(
+          'Apri Telegram e premi START nel bot per completare il collegamento.',
+          'success',
+        );
+        pollTelegramLink();
+      } else {
+        showAlert('Errore nella generazione del link. Riprova.', 'error');
+      }
+    } catch (_err) {
+      showAlert('Errore di rete. Riprova.', 'error');
+    } finally {
+      linkBtn.disabled = false;
+      linkBtn.textContent = 'Collega Telegram';
+    }
+  }
+
+  /**
+   * Polling per verificare se l'utente ha completato il collegamento Telegram.
+   * Controlla ogni 3 secondi per un massimo di 60 secondi (20 tentativi).
+   */
+  function pollTelegramLink() {
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    const interval = setInterval(async function () {
+      attempts++;
+
+      const result = await SupabaseConfig.client
+        .from('profiles')
+        .select('telegram_user_id')
+        .eq('user_id', session.user.id)
+        .single();
+
+      const telegramId = result.data && result.data.telegram_user_id;
+
+      if (telegramId) {
+        clearInterval(interval);
+        showAlert('Account Telegram collegato con successo!', 'success');
+        loadTelegramStatus();
+        return;
+      }
+
+      if (attempts >= maxAttempts) {
+        clearInterval(interval);
+      }
+    }, 3000);
   }
 
   // ─── HELPERS ────────────────────────────────────────────
