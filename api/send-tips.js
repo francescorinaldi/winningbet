@@ -28,15 +28,16 @@
 const { supabase } = require('./_lib/supabase');
 const telegram = require('./_lib/telegram');
 const { sendEmail, buildDailyDigest } = require('./_lib/email');
+const { verifyCronSecret, hasAccess } = require('./_lib/auth-middleware');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const authHeader = req.headers.authorization;
-  if (!authHeader || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  const { authorized, error: cronError } = verifyCronSecret(req);
+  if (!authorized) {
+    return res.status(401).json({ error: cronError });
   }
 
   try {
@@ -137,11 +138,9 @@ async function sendEmailDigest(tips) {
 
     // Filtra tips in base al tier dell'utente
     const userTier = (userProfile && userProfile.tier) || 'free';
-    const tierLevels = { free: 0, pro: 1, vip: 2 };
-    const userLevel = tierLevels[userTier] || 0;
 
     const accessibleTips = tips.filter(function (t) {
-      return (tierLevels[t.tier] || 0) <= userLevel;
+      return hasAccess(userTier, t.tier);
     });
 
     if (accessibleTips.length === 0) continue;

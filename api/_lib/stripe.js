@@ -23,10 +23,4 @@ const PRICE_IDS = {
   vip: process.env.STRIPE_VIP_PRICE_ID,
 };
 
-/**
- * URL del Stripe Customer Portal per la gestione abbonamento.
- * Configurato in Stripe Dashboard > Settings > Customer Portal.
- */
-const CUSTOMER_PORTAL_URL = process.env.STRIPE_CUSTOMER_PORTAL_URL || '';
-
-module.exports = { stripe, PRICE_IDS, CUSTOMER_PORTAL_URL };
+module.exports = { stripe, PRICE_IDS };

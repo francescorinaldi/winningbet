@@ -127,7 +127,7 @@ function buildDailyDigest(tips) {
     '    </a>',
     '  </div>',
     '  <div style="text-align:center;margin-top:32px;color:#55556a;font-size:12px;">',
-    '    <p>WinningBet — Pronostici Serie A Premium</p>',
+    '    <p>WinningBet — Pronostici Calcio Premium</p>',
     "    <p>Il gioco d'azzardo puo' causare dipendenza. Gioca responsabilmente. 18+</p>",
     '  </div>',
     '</div>',
@@ -169,7 +169,8 @@ function escapeHtml(str) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 module.exports = { sendEmail, buildDailyDigest };

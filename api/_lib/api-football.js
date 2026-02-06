@@ -121,8 +121,8 @@ async function getOdds(fixtureId) {
     bookmaker: 8, // Bet365 (ID 8)
   });
   if (!data || data.length === 0) return null;
+  if (!data[0].bookmakers || data[0].bookmakers.length === 0) return null;
   const bookmaker = data[0].bookmakers[0];
-  if (!bookmaker) return null;
   // Estrae solo la scommessa "Match Winner" (1X2, bet ID 1)
   const matchWinner = bookmaker.bets.find((b) => b.id === 1);
   if (!matchWinner) return null;
@@ -151,8 +151,13 @@ async function getStandings(leagueSlug) {
     season: league.season,
   });
   if (!data || data.length === 0) return [];
-  const standings = data[0].league.standings[0];
-  return standings.map((team) => ({
+  if (!data[0].league || !data[0].league.standings || data[0].league.standings.length === 0) {
+    return [];
+  }
+  // API returns multiple standings arrays for group-stage competitions (e.g., Champions League).
+  // Flatten all groups into a single array.
+  const allStandings = data[0].league.standings.flat();
+  return allStandings.map((team) => ({
     rank: team.rank,
     name: team.team.name,
     logo: team.team.logo,

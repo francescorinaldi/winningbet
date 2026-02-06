@@ -4,6 +4,51 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed (Code Quality Assessment)
+
+- **CRITICAL: tips.js** — `.gte('match_date', now())` filter excluded all won/lost/void tips, making dashboard history permanently empty. Now conditional on status.
+- **CRITICAL: prediction-engine.js** — `result.odds.toFixed(2)` crashed when AI returned odds as string. Added `parseFloat()` before `toFixed()`.
+- **CRITICAL: prediction-engine.js** — Unsafe `odds.values[0/1/2]` access without length check. Added array bounds validation.
+- **CRITICAL: api-football.js** — Champions League standings only returned first group. Now flattens all groups with `.flat()`.
+- **CRITICAL: api-football.js** — Unsafe `data[0].bookmakers[0]` access without null check. Added defensive check.
+- **CRITICAL: football-data.js** — Missing null check on `data.standings` in `getStandings()`.
+- **CRITICAL: settle-tips.js** — Unchecked Supabase errors on `update`/`upsert` could silently corrupt data. Now checks and logs errors.
+- **CRITICAL: stripe-webhook.js** — All webhook handler errors silently swallowed (returned 200). Now returns 500 for transient errors so Stripe retries.
+- **CRITICAL: stripe-webhook.js** — Unchecked Supabase errors in `handleCheckoutCompleted` could lose subscription activations. Now throws on failure.
+- **SECURITY: create-checkout.js/create-portal.js** — Open redirect via user-controlled `origin`/`referer` headers. Now validates against allowlist.
+- **SECURITY: CRON_SECRET** — If env var undefined, `Bearer undefined` granted access. Extracted `verifyCronSecret()` with env var validation and `crypto.timingSafeEqual`.
+- **SECURITY: vercel.json** — Blanket `s-maxage=1800` CDN cache applied to all API routes, including POST mutation endpoints. Now per-endpoint with `no-store` for mutations.
+- **SECURITY: tips.js** — `private` + `s-maxage` were contradictory Cache-Control directives. Changed to `private` + `max-age`.
+- **BUG: tips.js** — Negative `limit` parameter (e.g., `limit=-1`) not clamped. Now clamped to `[1, 50]`.
+- **BUG: tips.js** — No validation on `status` parameter. Now validates against whitelist.
+- **BUG: email.js** — Footer said "Pronostici Serie A Premium" despite being multi-league. Changed to "Pronostici Calcio Premium".
+- **BUG: email.js** — `escapeHtml()` missing single quote escape. Added `&#39;` mapping.
+- **BUG: script.js** — `createEl()` treated `0` as falsy, silently dropping numeric textContent. Changed to `!= null` check.
+- **PERF: script.js** — `maxProfit` recalculated inside every `forEach` iteration. Moved outside loop.
+
+### Removed (Dead Code)
+
+- `supabase.js` — Removed unused `createUserClient()` function (never imported)
+- `stripe.js` — Removed unused `CUSTOMER_PORTAL_URL` export (never imported)
+- `leagues.js` — Removed unused `getAllSlugs()` function and dead exports (`LEAGUES`, `DEFAULT_SLUG`)
+- `prediction-engine.js` — Removed dead `generatePrediction` export (only used internally)
+- `telegram.js` — Removed dead exports `sendMessage`, `formatTipMessage`, `escapeMarkdown` (only used internally)
+- `tips.js` — Removed unreachable sanitization branch (dead code by design, as documented by its own comment)
+- `send-tips.js` — Removed duplicated tier levels mapping, now uses shared `hasAccess()` from auth-middleware
+- `CHANGELOG.md` — Removed stale TODO section listing Stripe/Telegram/Email as future work (all implemented)
+
+### Changed
+
+- `auth-middleware.js` — Added centralized `verifyCronSecret()` function with timing-safe comparison
+- `vercel.json` — Replaced blanket `/api/(.*)` cache rule with per-endpoint Cache-Control headers
+- `CLAUDE.md` — Updated tech stack, project structure, env vars list, and API endpoints to reflect current codebase
+- `cache.js` — Updated stale comments to reflect current multi-league cache key patterns
+- `package.json` — Updated description from "Serie A" to "multi-lega"
+
+### Added
+
+- `supabase/migrations/002_add_league_column.sql` — Migration to add missing `league` column to `tips` table with indexes
+
 ### Added
 
 - **Multi-league support**: Serie B, Champions League, La Liga, Premier League alongside existing Serie A
@@ -48,31 +93,6 @@ All notable changes to WinningBet will be documented in this file.
 - Tips section: reduced from 4 cards to 3 (FREE, PRO, VIP) for better symmetry; removed Multipla card
 - Tips grid: changed from `auto-fill` to fixed 3-column layout
 - Unified navbar across all pages (privacy, terms, cookies, auth, dashboard) — same nav links (Tips, Track Record, Piani, FAQ) with hamburger menu on mobile
-
----
-
-## TODO — Prossimi Step
-
-### 1. Stripe — Pagamenti
-- Creare account Stripe e prodotti: **PRO** (€9.99/mese), **VIP** (€29.99/mese)
-- Configurare env vars: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRO_PRICE_ID`, `STRIPE_VIP_PRICE_ID`
-- Testare checkout flow end-to-end (test mode → produzione)
-- Webhook per aggiornare tier utente in Supabase automaticamente
-
-### 2. Telegram — Tip Delivery (FULL AUTOMATED)
-- Creare bot Telegram via @BotFather
-- Canale pubblico: tips FREE pubblicati automaticamente dopo la generazione
-- Canale privato: tips PRO/VIP, accesso riservato agli abbonati
-- **Sync completo con il sito**: ogni tip generato da `generate-tips.js` viene pushato automaticamente su Telegram (nessun intervento manuale)
-- Gestione automatica accessi: quando un utente si abbona/disabbona, viene aggiunto/rimosso dal canale privato
-- Formattazione messaggi Telegram allineata ai tip del sito (match, prediction, confidence, analisi)
-- Env vars: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_PUBLIC_CHANNEL_ID`, `TELEGRAM_PRIVATE_CHANNEL_ID`
-
-### 3. Email — Dominio Custom
-- Acquistare dominio (es. winningbet.it)
-- Configurare provider email con dominio custom (sostituisce SendGrid)
-- Email di benvenuto, conferma abbonamento, tip summary giornaliero
-- Env vars: da definire in base al provider scelto
 
 ---
 

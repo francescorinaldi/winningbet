@@ -30,16 +30,16 @@ const apiFootball = require('./_lib/api-football');
 const footballData = require('./_lib/football-data');
 const { generateBatchPredictions } = require('./_lib/prediction-engine');
 const { resolveLeagueSlug, getLeague } = require('./_lib/leagues');
+const { verifyCronSecret } = require('./_lib/auth-middleware');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Verifica il segreto cron
-  const authHeader = req.headers.authorization;
-  if (!authHeader || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  const { authorized, error: cronError } = verifyCronSecret(req);
+  if (!authorized) {
+    return res.status(401).json({ error: cronError });
   }
 
   const leagueSlug = resolveLeagueSlug(req.body && req.body.league);

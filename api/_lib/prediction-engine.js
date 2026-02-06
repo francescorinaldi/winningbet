@@ -53,9 +53,10 @@ const PREDICTION_TYPES = [
  */
 async function generatePrediction({ match, homeStanding, awayStanding, odds, tier, leagueName }) {
   const league = leagueName || 'Serie A';
-  const oddsInfo = odds
-    ? `Quote 1X2: Casa ${odds.values[0].odd}, Pareggio ${odds.values[1].odd}, Trasferta ${odds.values[2].odd}`
-    : 'Quote non disponibili';
+  const oddsInfo =
+    odds && odds.values && odds.values.length >= 3
+      ? `Quote 1X2: Casa ${odds.values[0].odd}, Pareggio ${odds.values[1].odd}, Trasferta ${odds.values[2].odd}`
+      : 'Quote non disponibili';
 
   const prompt = `Sei un analista di calcio professionista specializzato nella ${league}.
 Analizza questa partita e fornisci un pronostico.
@@ -107,10 +108,15 @@ Rispondi SOLO con un oggetto JSON valido (senza markdown, senza backtick) nel se
       throw new Error(`Tipo di pronostico non valido: ${result.prediction}`);
     }
 
+    const parsedOdds = parseFloat(result.odds);
+    if (isNaN(parsedOdds)) {
+      throw new Error(`Invalid odds value from AI: ${result.odds}`);
+    }
+
     return {
       prediction: result.prediction,
       confidence: Math.min(95, Math.max(60, Math.round(result.confidence))),
-      odds: Math.min(5.0, Math.max(1.2, parseFloat(result.odds.toFixed(2)))),
+      odds: parseFloat(Math.min(5.0, Math.max(1.2, parsedOdds)).toFixed(2)),
       analysis: result.analysis,
     };
   } catch (parseErr) {
@@ -202,4 +208,4 @@ function createDefaultStanding(name) {
   };
 }
 
-module.exports = { generatePrediction, generateBatchPredictions };
+module.exports = { generateBatchPredictions };

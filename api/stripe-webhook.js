@@ -90,7 +90,9 @@ module.exports = async function handler(req, res) {
     }
   } catch (err) {
     console.error('Webhook handler error:', err.message);
-    // Rispondi 200 comunque per evitare retry infiniti da Stripe
+    // Restituisci 500 per errori transitori cosi' Stripe riprova.
+    // Stripe ha un backoff esponenziale fino a 3 giorni di retry.
+    return res.status(500).json({ error: 'Webhook handler failed' });
   }
 
   return res.status(200).json({ received: true });
@@ -116,7 +118,7 @@ async function handleCheckoutCompleted(session) {
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
   // Crea il record di abbonamento
-  await supabase.from('subscriptions').upsert(
+  const { error: subError } = await supabase.from('subscriptions').upsert(
     {
       user_id: userId,
       stripe_subscription_id: subscriptionId,
@@ -127,8 +129,19 @@ async function handleCheckoutCompleted(session) {
     { onConflict: 'stripe_subscription_id' },
   );
 
+  if (subError) {
+    throw new Error(`Failed to upsert subscription: ${subError.message}`);
+  }
+
   // Aggiorna il tier del profilo
-  await supabase.from('profiles').update({ tier: tier }).eq('user_id', userId);
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .update({ tier: tier })
+    .eq('user_id', userId);
+
+  if (profileError) {
+    throw new Error(`Failed to update profile tier: ${profileError.message}`);
+  }
 
   console.log(`Subscription created: user=${userId}, tier=${tier}`);
 }

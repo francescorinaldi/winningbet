@@ -116,6 +116,7 @@ async function getRecentResults(leagueSlug, count = 10) {
 async function getStandings(leagueSlug) {
   const league = getLeague(leagueSlug);
   const data = await request(`/competitions/${league.footballDataCode}/standings`);
+  if (!data.standings || data.standings.length === 0) return [];
   const table = data.standings.find((s) => s.type === 'TOTAL');
   if (!table) return [];
   return table.table.map((team) => ({

@@ -66,4 +66,37 @@ function hasAccess(userTier, requiredTier) {
   return (tierLevels[userTier] || 0) >= (tierLevels[requiredTier] || 0);
 }
 
-module.exports = { authenticate, hasAccess };
+/**
+ * Verifica il CRON_SECRET nell'header Authorization.
+ * Usa confronto a tempo costante per prevenire timing attacks.
+ *
+ * @param {Object} req - Request object di Vercel
+ * @returns {{ authorized: boolean, error: string|null }}
+ */
+function verifyCronSecret(req) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    console.error('CRON_SECRET environment variable is not set');
+    return { authorized: false, error: 'Server misconfigured' };
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { authorized: false, error: 'Unauthorized' };
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+
+  // Confronto a tempo costante per prevenire timing attacks
+  const crypto = require('crypto');
+  const tokenBuf = Buffer.from(token);
+  const secretBuf = Buffer.from(secret);
+
+  if (tokenBuf.length !== secretBuf.length || !crypto.timingSafeEqual(tokenBuf, secretBuf)) {
+    return { authorized: false, error: 'Unauthorized' };
+  }
+
+  return { authorized: true, error: null };
+}
+
+module.exports = { authenticate, hasAccess, verifyCronSecret };

@@ -2,11 +2,29 @@
   "outputDirectory": "public",
   "headers": [
     {
-      "source": "/api/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "s-maxage=1800, stale-while-revalidate=3600" }]
+      "source": "/api/matches",
+      "headers": [{ "key": "Cache-Control", "value": "s-maxage=7200, stale-while-revalidate=3600" }]
     },
     {
-      "source": "/api/stripe-webhook",
+      "source": "/api/results",
+      "headers": [{ "key": "Cache-Control", "value": "s-maxage=3600, stale-while-revalidate=1800" }]
+    },
+    {
+      "source": "/api/standings",
+      "headers": [
+        { "key": "Cache-Control", "value": "s-maxage=21600, stale-while-revalidate=3600" }
+      ]
+    },
+    {
+      "source": "/api/odds",
+      "headers": [{ "key": "Cache-Control", "value": "s-maxage=1800, stale-while-revalidate=900" }]
+    },
+    {
+      "source": "/api/track-record",
+      "headers": [{ "key": "Cache-Control", "value": "s-maxage=3600, stale-while-revalidate=1800" }]
+    },
+    {
+      "source": "/api/(generate-tips|settle-tips|send-tips|create-checkout|create-portal|stripe-webhook|tips)",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     },
     {
