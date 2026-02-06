@@ -24,7 +24,7 @@
       "headers": [{ "key": "Cache-Control", "value": "s-maxage=3600, stale-while-revalidate=1800" }]
     },
     {
-      "source": "/api/(generate-tips|settle-tips|send-tips|create-checkout|create-portal|stripe-webhook|tips)",
+      "source": "/api/(generate-tips|settle-tips|send-tips|create-checkout|create-portal|stripe-webhook|tips|link-telegram|telegram-webhook|cron/daily)",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     },
     {

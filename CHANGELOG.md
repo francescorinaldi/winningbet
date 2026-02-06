@@ -6,6 +6,7 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Added
 
+- `api/link-telegram.js` — POST endpoint that generates a Telegram deep link token for account linking; checks if already linked, saves token to profile, returns `https://t.me/bot?start=token` URL
 - `api/telegram-webhook.js` — POST endpoint for Telegram bot webhook; handles `/start <token>` deep link for account linking with secret token verification
 
 ### Fixed
