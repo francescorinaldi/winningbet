@@ -1,28 +1,13 @@
 /**
- * POST /api/generate-tips
+ * /api/generate-tips
  *
- * Genera pronostici AI per le prossime partite di una lega.
- * Questo endpoint e' progettato per essere chiamato:
- *   - Manualmente (con header Authorization: Bearer <CRON_SECRET>)
- *   - Da un cron job (Vercel Cron o servizio esterno)
+ * POST — Genera pronostici AI per le prossime partite di una lega.
+ *   Body: { league?: "serie-a" | "la-liga" | ... }
  *
- * Body (JSON):
- *   league (optional) — Slug della lega (default: 'serie-a')
- *
- * Flusso:
- *   1. Recupera le prossime partite (api-football -> fallback)
- *   2. Recupera la classifica per i dati di forma
- *   3. Per ogni partita, chiama il prediction engine (Claude API)
- *   4. Salva i pronostici nella tabella tips di Supabase con la lega
+ * GET — Cron orchestrator giornaliero (Vercel Cron).
+ *   Esegue in sequenza: settle → generate (tutte le leghe) → send.
  *
  * Sicurezza: richiede CRON_SECRET nell'header Authorization.
- *
- * Risposta 200: { generated: number, tips: Array }
- *
- * Errori:
- *   401 — Segreto cron non valido
- *   405 — Metodo non consentito (solo POST)
- *   500 — Errore durante la generazione
  */
 
 const { supabase } = require('./_lib/supabase');
@@ -32,7 +17,12 @@ const { generateBatchPredictions } = require('./_lib/prediction-engine');
 const { resolveLeagueSlug, getLeague } = require('./_lib/leagues');
 const { verifyCronSecret } = require('./_lib/auth-middleware');
 
+const LEAGUE_SLUGS = ['serie-a', 'serie-b', 'champions-league', 'la-liga', 'premier-league'];
+
 module.exports = async function handler(req, res) {
+  if (req.method === 'GET') {
+    return handleCron(req, res);
+  }
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -127,17 +117,86 @@ module.exports = async function handler(req, res) {
   }
 };
 
-/**
- * Genera pronostici per una lega specifica.
- * Funzione callable internamente (senza req/res) — usata dal cron orchestrator.
- *
- * @param {string} leagueSlug - Slug della lega (es. "serie-a", "premier-league")
- * @returns {Promise<{generated: number, league: string}>}
- */
-module.exports.generateForLeague = async function generateForLeague(leagueSlug) {
+// ─── Cron Handler (GET) ─────────────────────────────────────────────────────
+
+function callHandler(handler, method) {
+  return new Promise(function (resolve, reject) {
+    const fakeReq = {
+      method: method,
+      headers: { authorization: 'Bearer ' + process.env.CRON_SECRET },
+      body: {},
+    };
+
+    let statusCode = 200;
+    const fakeRes = {
+      status: function (code) {
+        statusCode = code;
+        return fakeRes;
+      },
+      json: function (data) {
+        if (statusCode >= 200 && statusCode < 300) {
+          resolve(data);
+        } else {
+          reject(new Error(JSON.stringify(data)));
+        }
+      },
+    };
+
+    Promise.resolve(handler(fakeReq, fakeRes)).catch(reject);
+  });
+}
+
+async function handleCron(req, res) {
+  const { authorized, error: cronError } = verifyCronSecret(req);
+  if (!authorized) {
+    return res.status(401).json({ error: cronError });
+  }
+
+  const settleHandler = require('./settle-tips');
+  const sendHandler = require('./send-tips');
+
+  const results = { settle: null, generate: [], send: null };
+
+  try {
+    // Step 1 — Settle
+    try {
+      results.settle = await callHandler(settleHandler, 'POST');
+    } catch (err) {
+      console.error('Cron daily — settle error:', err.message);
+      results.settle = { error: err.message };
+    }
+
+    // Step 2 — Generate (all leagues)
+    for (const slug of LEAGUE_SLUGS) {
+      try {
+        const result = await generateForLeague(slug);
+        results.generate.push(result);
+      } catch (err) {
+        console.error('Cron daily — generate error for ' + slug + ':', err.message);
+        results.generate.push({ league: slug, error: err.message });
+      }
+    }
+
+    // Step 3 — Send
+    try {
+      results.send = await callHandler(sendHandler, 'POST');
+    } catch (err) {
+      console.error('Cron daily — send error:', err.message);
+      results.send = { error: err.message };
+    }
+
+    return res.status(200).json(results);
+  } catch (err) {
+    console.error('Cron daily — fatal error:', err);
+    return res.status(500).json({ error: 'Errore fatale nel cron giornaliero', partial: results });
+  }
+}
+
+// ─── generateForLeague (callable internamente) ─────────────────────────────
+
+async function generateForLeague(leagueSlug) {
   const league = getLeague(leagueSlug);
 
-  // 1. Recupera le prossime partite
   let matches;
   try {
     matches = await apiFootball.getUpcomingMatches(leagueSlug, 10);
@@ -149,7 +208,6 @@ module.exports.generateForLeague = async function generateForLeague(leagueSlug) 
     return { generated: 0, league: leagueSlug };
   }
 
-  // 2. Recupera la classifica
   let standings;
   try {
     standings = await apiFootball.getStandings(leagueSlug);
@@ -157,7 +215,6 @@ module.exports.generateForLeague = async function generateForLeague(leagueSlug) 
     standings = await footballData.getStandings(leagueSlug);
   }
 
-  // 3. Controlla se ci sono gia' tips per queste partite (evita duplicati)
   const matchIds = matches.map((m) => String(m.id));
   const { data: existingTips } = await supabase
     .from('tips')
@@ -172,7 +229,6 @@ module.exports.generateForLeague = async function generateForLeague(leagueSlug) 
     return { generated: 0, league: leagueSlug };
   }
 
-  // 4. Funzione per recuperare le quote di una partita
   async function getOddsForMatch(fixtureId) {
     try {
       return await apiFootball.getOdds(fixtureId);
@@ -181,7 +237,6 @@ module.exports.generateForLeague = async function generateForLeague(leagueSlug) 
     }
   }
 
-  // 5. Genera i pronostici con Claude
   const predictions = await generateBatchPredictions({
     matches: newMatches,
     standings,
@@ -189,7 +244,6 @@ module.exports.generateForLeague = async function generateForLeague(leagueSlug) 
     leagueName: league.name,
   });
 
-  // 6. Salva in Supabase (aggiunge il campo league)
   if (predictions.length > 0) {
     const tipsWithLeague = predictions.map((p) => ({ ...p, league: leagueSlug }));
     const { error: insertError } = await supabase.from('tips').insert(tipsWithLeague);
@@ -199,4 +253,6 @@ module.exports.generateForLeague = async function generateForLeague(leagueSlug) 
   }
 
   return { generated: predictions.length, league: leagueSlug };
-};
+}
+
+module.exports.generateForLeague = generateForLeague;

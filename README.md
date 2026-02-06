@@ -447,7 +447,7 @@ Il sistema di automazione esegue giornalmente alle 08:00 UTC (09:00 CET):
 2. **Generate** — Genera nuovi pronostici per ogni lega con partite in programma
 3. **Send** — Invia i tips via Telegram (canali pubblico/privato) + email
 
-Endpoint: `GET /api/cron/daily` (richiede `CRON_SECRET`).
+Endpoint: `GET /api/generate-tips` (richiede `CRON_SECRET`).
 
 ### Telegram Bot
 
@@ -464,7 +464,7 @@ Il bot Telegram gestisce:
    ```bash
    curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
      -H "Content-Type: application/json" \
-     -d '{"url":"https://<domain>/api/telegram-webhook","secret_token":"<SECRET>","allowed_updates":["message"]}'
+     -d '{"url":"https://<domain>/api/telegram","secret_token":"<SECRET>","allowed_updates":["message"]}'
    ```
 4. Configura le variabili d'ambiente su Vercel (`TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET`)
 
