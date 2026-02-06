@@ -8,41 +8,11 @@
   "outputDirectory": "public",
   "headers": [
     {
-      "source": "/api/matches",
-      "headers": [{ "key": "Cache-Control", "value": "s-maxage=7200, stale-while-revalidate=3600" }]
-    },
-    {
-      "source": "/api/results",
-      "headers": [{ "key": "Cache-Control", "value": "s-maxage=3600, stale-while-revalidate=1800" }]
-    },
-    {
-      "source": "/api/standings",
-      "headers": [
-        { "key": "Cache-Control", "value": "s-maxage=21600, stale-while-revalidate=3600" }
-      ]
-    },
-    {
       "source": "/api/odds",
       "headers": [{ "key": "Cache-Control", "value": "s-maxage=1800, stale-while-revalidate=900" }]
     },
     {
-      "source": "/api/track-record",
-      "headers": [{ "key": "Cache-Control", "value": "s-maxage=3600, stale-while-revalidate=1800" }]
-    },
-    {
-      "source": "/api/team-form",
-      "headers": [
-        { "key": "Cache-Control", "value": "s-maxage=21600, stale-while-revalidate=3600" }
-      ]
-    },
-    {
-      "source": "/api/h2h",
-      "headers": [
-        { "key": "Cache-Control", "value": "s-maxage=86400, stale-while-revalidate=3600" }
-      ]
-    },
-    {
-      "source": "/api/(generate-tips|settle-tips|send-tips|billing|stripe-webhook|tips|telegram|preferences|activity|user-bets|notifications)",
+      "source": "/api/(generate-tips|cron-tasks|billing|stripe-webhook|tips|telegram|user-settings|user-bets)",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     },
     {

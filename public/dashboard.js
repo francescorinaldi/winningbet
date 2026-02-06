@@ -526,7 +526,7 @@
   async function loadTeamForm(container, homeTeam, awayTeam, league) {
     try {
       const response = await fetch(
-        '/api/team-form?teams=' +
+        '/api/match-insights?type=form&teams=' +
           encodeURIComponent(homeTeam + ',' + awayTeam) +
           '&league=' +
           encodeURIComponent(league),
@@ -572,7 +572,7 @@
   async function loadH2H(container, homeTeam, awayTeam, league) {
     try {
       const response = await fetch(
-        '/api/h2h?home=' +
+        '/api/match-insights?type=h2h&home=' +
           encodeURIComponent(homeTeam) +
           '&away=' +
           encodeURIComponent(awayTeam) +
@@ -800,7 +800,7 @@
     if (!chartContainer || !chartEl) return;
 
     try {
-      const response = await fetch('/api/track-record');
+      const response = await fetch('/api/stats?type=track-record');
       const data = await response.json();
       if (!data || !data.monthly || data.monthly.length === 0) return;
 
@@ -945,7 +945,7 @@
     el.style.display = '';
 
     // Fetch next match to determine when tips will come
-    fetch('/api/matches?league=' + encodeURIComponent(currentLeague) + '&limit=1')
+    fetch('/api/fixtures?type=matches&league=' + encodeURIComponent(currentLeague) + '&limit=1')
       .then(function (r) {
         return r.json();
       })
@@ -1047,7 +1047,7 @@
 
     try {
       // POST to register today's visit
-      const postRes = await fetch('/api/activity', {
+      const postRes = await fetch('/api/user-settings?resource=activity', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1093,7 +1093,7 @@
     if (!session) return;
 
     try {
-      const response = await fetch('/api/notifications?limit=20', {
+      const response = await fetch('/api/user-settings?resource=notifications&limit=20', {
         headers: { Authorization: 'Bearer ' + session.access_token },
       });
       const data = await response.json();
@@ -1196,7 +1196,7 @@
   async function markNotificationRead(id) {
     if (!session) return;
     try {
-      await fetch('/api/notifications', {
+      await fetch('/api/user-settings?resource=notifications', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1213,7 +1213,7 @@
   async function markAllNotificationsRead() {
     if (!session) return;
     try {
-      await fetch('/api/notifications', {
+      await fetch('/api/user-settings?resource=notifications', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1233,7 +1233,7 @@
     if (!session) return;
 
     try {
-      const response = await fetch('/api/preferences', {
+      const response = await fetch('/api/user-settings?resource=preferences', {
         headers: { Authorization: 'Bearer ' + session.access_token },
       });
       userPrefs = await response.json();
@@ -1280,7 +1280,7 @@
   async function saveFavoriteTeams(teams) {
     if (!session) return;
     try {
-      await fetch('/api/preferences', {
+      await fetch('/api/user-settings?resource=preferences', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1337,7 +1337,7 @@
       debounceTimer = setTimeout(function () {
         if (allTeams.length === 0) {
           // Fetch team list from standings
-          fetch('/api/standings?league=' + encodeURIComponent(currentLeague))
+          fetch('/api/stats?type=standings&league=' + encodeURIComponent(currentLeague))
             .then(function (r) {
               return r.json();
             })
@@ -1397,7 +1397,7 @@
 
     function saveToggle() {
       if (!session) return;
-      fetch('/api/preferences', {
+      fetch('/api/user-settings?resource=preferences', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

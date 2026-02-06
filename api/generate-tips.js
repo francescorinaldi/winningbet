@@ -119,11 +119,12 @@ module.exports = async function handler(req, res) {
 
 // ─── Cron Handler (GET) ─────────────────────────────────────────────────────
 
-function callHandler(handler, method) {
+function callHandler(handler, method, query) {
   return new Promise(function (resolve, reject) {
     const fakeReq = {
       method: method,
       headers: { authorization: 'Bearer ' + process.env.CRON_SECRET },
+      query: query || {},
       body: {},
     };
 
@@ -152,15 +153,14 @@ async function handleCron(req, res) {
     return res.status(401).json({ error: cronError });
   }
 
-  const settleHandler = require('./settle-tips');
-  const sendHandler = require('./send-tips');
+  const cronTasks = require('./cron-tasks');
 
   const results = { settle: null, generate: [], send: null };
 
   try {
     // Step 1 — Settle
     try {
-      results.settle = await callHandler(settleHandler, 'POST');
+      results.settle = await callHandler(cronTasks, 'POST', { task: 'settle' });
     } catch (err) {
       console.error('Cron daily — settle error:', err.message);
       results.settle = { error: err.message };
@@ -179,7 +179,7 @@ async function handleCron(req, res) {
 
     // Step 3 — Send
     try {
-      results.send = await callHandler(sendHandler, 'POST');
+      results.send = await callHandler(cronTasks, 'POST', { task: 'send' });
     } catch (err) {
       console.error('Cron daily — send error:', err.message);
       results.send = { error: err.message };

@@ -57,7 +57,19 @@ All notable changes to WinningBet will be documented in this file.
 - `TELEGRAM_BOT_USERNAME` and `TELEGRAM_WEBHOOK_SECRET` environment variables
 - Vercel cron schedule in `vercel.json`
 
-### Changed — Serverless Function Consolidation (Hobby Plan Limit)
+### Changed — Serverless Function Consolidation Phase 2 (18 → 12)
+
+- Merged `settle-tips.js` + `send-tips.js` → `api/cron-tasks.js` (routes by `?task=settle|send`)
+- Merged `activity.js` + `notifications.js` + `preferences.js` → `api/user-settings.js` (routes by `?resource=activity|notifications|preferences`)
+- Merged `matches.js` + `results.js` → `api/fixtures.js` (routes by `?type=matches|results`)
+- Merged `h2h.js` + `team-form.js` → `api/match-insights.js` (routes by `?type=h2h|form`)
+- Merged `standings.js` + `track-record.js` → `api/stats.js` (routes by `?type=standings|track-record`)
+- Updated `generate-tips.js` to require `cron-tasks.js` instead of deleted `settle-tips.js`/`send-tips.js`
+- Updated all fetch URLs in `dashboard.js` and `script.js` to use new consolidated endpoints
+- Updated `vercel.json` cache headers — removed per-endpoint rules for merged endpoints (now set programmatically), updated no-store regex
+- **Fixed bug:** `h2h.js` and `team-form.js` imported `getCached`/`setCached` from cache module which only exports `get`/`set` — corrected in `match-insights.js`
+
+### Changed — Serverless Function Consolidation Phase 1 (15 → 12)
 
 - Merged `create-checkout.js` + `create-portal.js` → `api/billing.js` (routes by `action` field in body)
 - Merged `link-telegram.js` + `telegram-webhook.js` → `api/telegram.js` (routes by secret token header)

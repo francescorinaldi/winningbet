@@ -1,42 +1,76 @@
 /**
- * GET /api/track-record
+ * GET /api/stats?type=standings|track-record
  *
- * Restituisce le statistiche aggregate dei pronostici:
- * win rate, ROI, quota media, totali e breakdown mensile.
+ * Endpoint unificato per statistiche e classifiche.
  *
- * Nessuna autenticazione richiesta (dati pubblici).
+ * type=standings    — Classifica completa della lega (cache 6h)
+ *                     Param: league={slug} (default: serie-a)
+ * type=track-record — Statistiche aggregate dei pronostici (cache 1h)
  *
- * Cache: 1 ora in-memory + CDN s-maxage=3600
- *
- * Risposta 200:
- *   {
- *     total_tips: number,
- *     won: number,
- *     lost: number,
- *     void: number,
- *     pending: number,
- *     win_rate: number (percentuale),
- *     avg_odds: number,
- *     roi: number (percentuale),
- *     recent: Array<Object>,
- *     monthly: Array<Object>
- *   }
- *
- * Errori:
- *   405 — Metodo non consentito
- *   500 — Errore database
+ * Provider primario: api-football.com (api-sports.io)
+ * Fallback: football-data.org (solo standings)
  */
 
 const cache = require('./_lib/cache');
+const apiFootball = require('./_lib/api-football');
+const footballData = require('./_lib/football-data');
+const { resolveLeagueSlug } = require('./_lib/leagues');
 const { supabase } = require('./_lib/supabase');
-
-const CACHE_KEY = 'track_record';
-const CACHE_TTL = 3600; // 1 ora
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  const type = req.query.type;
+
+  if (type === 'standings') {
+    return handleStandings(req, res);
+  }
+  if (type === 'track-record') {
+    return handleTrackRecord(req, res);
+  }
+
+  return res.status(400).json({ error: 'Parametro type richiesto: standings o track-record' });
+};
+
+// ─── Standings ──────────────────────────────────────────────────────────────
+
+async function handleStandings(req, res) {
+  const leagueSlug = resolveLeagueSlug(req.query.league);
+  const cacheKey = `standings_${leagueSlug}`;
+  const CACHE_TTL = 21600; // 6 ore
+
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    res.setHeader('Cache-Control', 's-maxage=21600, stale-while-revalidate=3600');
+    return res.status(200).json(cached);
+  }
+
+  try {
+    const standings = await apiFootball.getStandings(leagueSlug);
+    cache.set(cacheKey, standings, CACHE_TTL);
+    res.setHeader('Cache-Control', 's-maxage=21600, stale-while-revalidate=3600');
+    return res.status(200).json(standings);
+  } catch (primaryErr) {
+    console.error('API-Football standings failed:', primaryErr.message);
+    try {
+      const standings = await footballData.getStandings(leagueSlug);
+      cache.set(cacheKey, standings, CACHE_TTL);
+      res.setHeader('Cache-Control', 's-maxage=21600, stale-while-revalidate=3600');
+      return res.status(200).json(standings);
+    } catch (fallbackErr) {
+      console.error('football-data.org standings failed:', fallbackErr.message);
+      return res.status(502).json({ error: 'Unable to fetch standings from any source' });
+    }
+  }
+}
+
+// ─── Track Record ───────────────────────────────────────────────────────────
+
+async function handleTrackRecord(_req, res) {
+  const CACHE_KEY = 'track_record';
+  const CACHE_TTL = 3600; // 1 ora
 
   const cached = cache.get(CACHE_KEY);
   if (cached) {
@@ -45,7 +79,6 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // Recupera tutti i tips chiusi (non pending)
     const { data: tips, error } = await supabase
       .from('tips')
       .select(
@@ -59,7 +92,6 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'Errore nel recupero delle statistiche' });
     }
 
-    // Recupera il conteggio dei tip pendenti
     const { count: pendingCount } = await supabase
       .from('tips')
       .select('*', { count: 'exact', head: true })
@@ -75,12 +107,10 @@ module.exports = async function handler(req, res) {
     const voidCount = allTips.filter(function (t) {
       return t.status === 'void';
     }).length;
-    const settled = won + lost; // void non conta per win rate
+    const settled = won + lost;
 
-    // Win rate (basato solo su won/lost, esclude void)
     const winRate = settled > 0 ? parseFloat(((won / settled) * 100).toFixed(1)) : 0;
 
-    // Quota media dei tips vincenti
     const wonTips = allTips.filter(function (t) {
       return t.status === 'won' && t.odds;
     });
@@ -95,15 +125,12 @@ module.exports = async function handler(req, res) {
           )
         : 0;
 
-    // ROI: ((profitto totale) / (puntata totale)) * 100
-    // Assumendo puntata unitaria (1u) per ogni tip
     const profit =
       wonTips.reduce(function (sum, t) {
         return sum + (parseFloat(t.odds) - 1);
       }, 0) - lost;
     const roi = settled > 0 ? parseFloat(((profit / settled) * 100).toFixed(1)) : 0;
 
-    // Ultimi 10 risultati
     const recent = allTips.slice(0, 10).map(function (t) {
       return {
         home_team: t.home_team,
@@ -115,7 +142,6 @@ module.exports = async function handler(req, res) {
       };
     });
 
-    // Breakdown mensile (ultimi 6 mesi)
     const monthly = buildMonthlyBreakdown(allTips);
 
     const result = {
@@ -138,13 +164,8 @@ module.exports = async function handler(req, res) {
     console.error('Track record error:', err);
     return res.status(500).json({ error: 'Errore nel recupero delle statistiche' });
   }
-};
+}
 
-/**
- * Costruisce il breakdown mensile dei risultati (ultimi 6 mesi).
- * @param {Array<Object>} tips - Array di tips chiusi
- * @returns {Array<Object>} Array di oggetti mensili
- */
 function buildMonthlyBreakdown(tips) {
   const months = {};
   const monthNames = [
@@ -185,7 +206,6 @@ function buildMonthlyBreakdown(tips) {
     }
   });
 
-  // Ordina per data e prendi gli ultimi 6 mesi
   return Object.keys(months)
     .sort()
     .slice(-6)

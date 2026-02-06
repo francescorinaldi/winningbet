@@ -854,7 +854,7 @@
   async function loadTips() {
     const container = document.getElementById('tipsGrid');
     try {
-      const matches = await fetchAPI('matches', { league: currentLeague });
+      const matches = await fetchAPI('fixtures', { type: 'matches', league: currentLeague });
       if (!matches || matches.length < 3) {
         setEmptyState(container, 'tips-empty', 'Nessun pronostico disponibile al momento');
         return;
@@ -893,7 +893,7 @@
   async function loadMatches() {
     const container = document.getElementById('matchesScroll');
     try {
-      const matches = await fetchAPI('matches', { league: currentLeague });
+      const matches = await fetchAPI('fixtures', { type: 'matches', league: currentLeague });
       if (!matches || matches.length === 0) {
         setEmptyState(container, 'matches-empty', 'Nessuna partita in programma');
         return;
@@ -929,7 +929,7 @@
   async function loadResults() {
     const container = document.getElementById('resultsList');
     try {
-      const results = await fetchAPI('results', { league: currentLeague });
+      const results = await fetchAPI('fixtures', { type: 'results', league: currentLeague });
       if (!results || results.length === 0) {
         setEmptyState(container, 'results-empty', 'Nessun risultato disponibile');
         return;
@@ -991,7 +991,7 @@
    */
   async function loadTrackRecord() {
     try {
-      const data = await fetchAPI('track-record');
+      const data = await fetchAPI('stats', { type: 'track-record' });
       if (!data || data.total_tips === 0) return;
 
       // Aggiorna le stat card della hero section

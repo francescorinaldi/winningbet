@@ -25,8 +25,18 @@ api/                    → Vercel serverless functions (12 endpoints)
 api/_lib/               → Shared backend utilities (10 modules)
 api/_lib/leagues.js     → Centralized league configuration (IDs, codes, seasons)
 api/_lib/telegram.js    → Telegram Bot API client (send tips, invite, kick, DM)
-api/billing.js          → Unified Stripe billing (checkout + portal)
-api/telegram.js         → Unified Telegram (webhook + account linking)
+api/billing.js          → Stripe billing (checkout + portal)
+api/cron-tasks.js       → Cron tasks (settle + send tips)
+api/fixtures.js         → Matches + results (by league)
+api/generate-tips.js    → Cron orchestrator + single-league generation
+api/match-insights.js   → H2H + team form
+api/odds.js             → Betting odds (by fixture)
+api/stats.js            → Standings + track record
+api/stripe-webhook.js   → Stripe webhook handler
+api/telegram.js         → Telegram webhook + account linking
+api/tips.js             → Tip listing (filtered by league)
+api/user-bets.js        → Follow/unfollow tips
+api/user-settings.js    → Activity + notifications + preferences
 public/                 → Static frontend (HTML, JS, CSS)
 public/script.js        → Main landing page logic (IIFE pattern)
 public/auth.js          → Authentication logic (Supabase Auth)
@@ -54,19 +64,18 @@ npm run format:check  # Check formatting without modifying
 All data endpoints accept an optional `?league={slug}` parameter (default: `serie-a`).
 Valid slugs: `serie-a`, `serie-b`, `champions-league`, `la-liga`, `premier-league`.
 
-- `GET /api/matches?league={slug}` — Next 10 matches (2h cache)
-- `GET /api/results?league={slug}` — Last 10 results (1h cache)
-- `GET /api/odds?fixture={id}` — Betting odds (30min cache, no league param)
-- `GET /api/standings?league={slug}` — League standings (6h cache)
-- `GET /api/tips?league={slug}` — Tips filtered by league (15min cache)
-- `POST /api/generate-tips` — Body: `{ league: "slug" }` (default: serie-a)
-- `GET /api/generate-tips` — Cron orchestrator (settle → generate all leagues → send)
-- `POST /api/settle-tips` — Auto-groups pending tips by league
-- `POST /api/send-tips` — Dispatches tips via Telegram + email
-- `GET /api/track-record` — Performance statistics (1h cache)
 - `POST /api/billing` — Body: `{ action: "checkout", tier }` or `{ action: "portal" }`
+- `POST /api/cron-tasks?task=settle|send` — Settle tips or send tips (CRON_SECRET auth)
+- `GET /api/fixtures?type=matches|results&league={slug}` — Next 10 matches (2h) or last 10 results (1h)
+- `GET/POST /api/generate-tips` — Cron orchestrator (GET) or single-league generation (POST)
+- `GET /api/match-insights?type=h2h|form` — Head-to-head (24h) or team form (6h)
+- `GET /api/odds?fixture={id}` — Betting odds (30min cache, no league param)
+- `GET /api/stats?type=standings|track-record&league={slug}` — League standings (6h) or track record (1h)
 - `POST /api/stripe-webhook` — Stripe event handler (+ auto Telegram invite/kick)
 - `POST /api/telegram` — Telegram webhook (with secret header) or account linking (with JWT)
+- `GET /api/tips?league={slug}` — Tips filtered by league (15min cache)
+- `CRUD /api/user-bets` — Follow/unfollow tips (JWT auth)
+- `GET/POST/PUT /api/user-settings?resource=activity|notifications|preferences` — User settings (JWT auth)
 
 ## Environment Variables
 

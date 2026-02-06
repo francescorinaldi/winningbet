@@ -1,33 +1,23 @@
 /**
- * POST /api/settle-tips
+ * POST /api/cron-tasks?task=settle|send
  *
- * Chiude i pronostici confrontando le previsioni con i risultati reali.
- * Progettato per essere chiamato da un cron job giornaliero.
+ * Endpoint unificato per i task del cron job giornaliero.
  *
- * Supporta multi-lega: raggruppa i tips pendenti per lega e
- * recupera i risultati di ciascuna lega separatamente.
+ * task=settle — Chiude i pronostici confrontando le previsioni con i risultati reali.
+ *   Raggruppa i tips pendenti per lega e recupera i risultati di ciascuna.
  *
- * Flusso:
- *   1. Recupera tutti i tips con status 'pending' e match_date nel passato
- *   2. Raggruppa per lega
- *   3. Per ogni lega, recupera i risultati reali
- *   4. Confronta il pronostico con il risultato effettivo
- *   5. Aggiorna lo status del tip (won/lost/void) e crea il tip_outcome
+ * task=send — Invia i tips del giorno via Telegram ed email.
+ *   Recupera i tips pendenti per oggi, li invia su Telegram e via email agli abbonati.
  *
  * Sicurezza: richiede CRON_SECRET nell'header Authorization.
- *
- * Risposta 200: { settled: number, results: Array }
- *
- * Errori:
- *   401 — Segreto cron non valido
- *   405 — Metodo non consentito
- *   500 — Errore durante il settlement
  */
 
 const { supabase } = require('./_lib/supabase');
 const apiFootball = require('./_lib/api-football');
 const footballData = require('./_lib/football-data');
-const { verifyCronSecret } = require('./_lib/auth-middleware');
+const telegram = require('./_lib/telegram');
+const { sendEmail, buildDailyDigest } = require('./_lib/email');
+const { verifyCronSecret, hasAccess } = require('./_lib/auth-middleware');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -39,6 +29,21 @@ module.exports = async function handler(req, res) {
     return res.status(401).json({ error: cronError });
   }
 
+  const task = req.query.task;
+
+  if (task === 'settle') {
+    return handleSettle(req, res);
+  }
+  if (task === 'send') {
+    return handleSend(req, res);
+  }
+
+  return res.status(400).json({ error: 'Parametro task richiesto: settle o send' });
+};
+
+// ─── Settle Handler ─────────────────────────────────────────────────────────
+
+async function handleSettle(_req, res) {
   try {
     // 1. Recupera tips pendenti con partite gia' giocate
     const { data: pendingTips, error: fetchError } = await supabase
@@ -139,13 +144,126 @@ module.exports = async function handler(req, res) {
     console.error('settle-tips error:', err);
     return res.status(500).json({ error: 'Errore nella chiusura dei pronostici' });
   }
-};
+}
 
-/**
- * Costruisce una stringa descrittiva del risultato effettivo.
- * @param {Object} result - Risultato della partita
- * @returns {string} Descrizione (es. "2-1 (Home Win, Over 2.5)")
- */
+// ─── Send Handler ───────────────────────────────────────────────────────────
+
+async function handleSend(_req, res) {
+  try {
+    // 1. Recupera i tips di oggi
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const tomorrowStr = new Date(today.getTime() + 86400000).toISOString().split('T')[0];
+
+    const { data: tips, error: tipsError } = await supabase
+      .from('tips')
+      .select('*')
+      .eq('status', 'pending')
+      .gte('match_date', todayStr)
+      .lt('match_date', tomorrowStr)
+      .order('match_date', { ascending: true });
+
+    if (tipsError) {
+      console.error('Failed to fetch tips:', tipsError.message);
+      return res.status(500).json({ error: 'Errore nel recupero dei pronostici' });
+    }
+
+    if (!tips || tips.length === 0) {
+      return res.status(200).json({
+        message: 'Nessun tip da inviare per oggi',
+        telegram: { public: 0, private: 0 },
+        email: { sent: 0, failed: 0 },
+      });
+    }
+
+    // 2. Invia su Telegram
+    const publicSent = await telegram.sendPublicTips(tips);
+    const privateSent = await telegram.sendPrivateTips(tips);
+
+    // 3. Invia email agli abbonati attivi
+    const emailResult = await sendEmailDigest(tips);
+
+    return res.status(200).json({
+      tips_count: tips.length,
+      telegram: { public: publicSent, private: privateSent },
+      email: emailResult,
+    });
+  } catch (err) {
+    console.error('send-tips error:', err);
+    return res.status(500).json({ error: "Errore nell'invio dei pronostici" });
+  }
+}
+
+// ─── Shared Helpers ─────────────────────────────────────────────────────────
+
+async function sendEmailDigest(tips) {
+  const { data: subscribers, error: subError } = await supabase
+    .from('subscriptions')
+    .select('user_id')
+    .eq('status', 'active');
+
+  if (subError || !subscribers || subscribers.length === 0) {
+    return { sent: 0, failed: 0 };
+  }
+
+  const userIds = subscribers.map(function (s) {
+    return s.user_id;
+  });
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('user_id, tier')
+    .in('user_id', userIds);
+
+  const profileMap = new Map();
+  (profiles || []).forEach(function (p) {
+    profileMap.set(p.user_id, p);
+  });
+
+  const { data: authUsers } = await supabase.auth.admin.listUsers();
+
+  const emailMap = new Map();
+  if (authUsers && authUsers.users) {
+    authUsers.users.forEach(function (u) {
+      emailMap.set(u.id, u.email);
+    });
+  }
+
+  let sent = 0;
+  let failed = 0;
+
+  for (const sub of subscribers) {
+    const email = emailMap.get(sub.user_id);
+    const userProfile = profileMap.get(sub.user_id);
+    if (!email) continue;
+
+    const userTier = (userProfile && userProfile.tier) || 'free';
+
+    const accessibleTips = tips.filter(function (t) {
+      return hasAccess(userTier, t.tier);
+    });
+
+    if (accessibleTips.length === 0) continue;
+
+    const digest = buildDailyDigest(accessibleTips);
+
+    try {
+      const success = await sendEmail({
+        to: email,
+        subject: digest.subject,
+        html: digest.html,
+        text: digest.text,
+      });
+
+      if (success) sent++;
+      else failed++;
+    } catch (_err) {
+      failed++;
+    }
+  }
+
+  return { sent: sent, failed: failed };
+}
+
 function buildActualResult(result) {
   const score = result.goalsHome + '-' + result.goalsAway;
   const totalGoals = result.goalsHome + result.goalsAway;
@@ -162,14 +280,6 @@ function buildActualResult(result) {
   return parts.join(', ');
 }
 
-/**
- * Valuta se un pronostico e' vincente confrontandolo con il risultato.
- *
- * @param {string} prediction - Tipo di pronostico (es. "Over 2.5", "1", "Goal")
- * @param {Object} result - Risultato della partita
- * @param {number} totalGoals - Gol totali
- * @returns {string} 'won', 'lost', o 'void'
- */
 function evaluatePrediction(prediction, result, totalGoals) {
   const homeWin = result.goalsHome > result.goalsAway;
   const draw = result.goalsHome === result.goalsAway;
@@ -209,3 +319,7 @@ function evaluatePrediction(prediction, result, totalGoals) {
       return 'void';
   }
 }
+
+// Named exports for direct require by generate-tips.js
+module.exports.handleSettle = handleSettle;
+module.exports.handleSend = handleSend;
