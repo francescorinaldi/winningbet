@@ -165,7 +165,105 @@ function delay(ms) {
   });
 }
 
+/**
+ * Invia un messaggio diretto a un utente Telegram.
+ *
+ * @param {number|string} userId - ID Telegram dell'utente
+ * @param {string} text - Testo del messaggio (MarkdownV2)
+ * @returns {Promise<Object>} Risposta dell'API Telegram
+ */
+async function sendDirectMessage(userId, text) {
+  return sendMessage(String(userId), text);
+}
+
+/**
+ * Crea un link di invito monouso per il canale privato.
+ *
+ * Utilizza `createChatInviteLink` con `member_limit: 1` per garantire
+ * che ogni link possa essere usato da un solo utente.
+ *
+ * @param {string} name - Nome descrittivo del link (es. nome utente)
+ * @returns {Promise<string>} URL del link di invito
+ * @throws {Error} Se BOT_TOKEN o PRIVATE_CHANNEL non sono configurati
+ */
+async function createPrivateInviteLink(name) {
+  if (!BOT_TOKEN || !PRIVATE_CHANNEL) {
+    throw new Error('Telegram: BOT_TOKEN or PRIVATE_CHANNEL not configured');
+  }
+
+  const response = await fetch(BASE_URL + '/createChatInviteLink', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: PRIVATE_CHANNEL,
+      name: name,
+      member_limit: 1,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!data.ok) {
+    console.error('Telegram API error:', data.description);
+    throw new Error('Telegram: ' + data.description);
+  }
+
+  return data.result.invite_link;
+}
+
+/**
+ * Rimuove un utente dal canale privato.
+ *
+ * Esegue `banChatMember` seguito da `unbanChatMember` (con `only_if_banned: true`)
+ * per rimuovere l'utente senza applicare un ban permanente.
+ *
+ * @param {number|string} userId - ID Telegram dell'utente da rimuovere
+ * @returns {Promise<void>}
+ * @throws {Error} Se BOT_TOKEN o PRIVATE_CHANNEL non sono configurati
+ */
+async function removeFromPrivateChannel(userId) {
+  if (!BOT_TOKEN || !PRIVATE_CHANNEL) {
+    throw new Error('Telegram: BOT_TOKEN or PRIVATE_CHANNEL not configured');
+  }
+
+  const banResponse = await fetch(BASE_URL + '/banChatMember', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: PRIVATE_CHANNEL,
+      user_id: Number(userId),
+    }),
+  });
+
+  const banData = await banResponse.json();
+
+  if (!banData.ok) {
+    console.error('Telegram API error (ban):', banData.description);
+    throw new Error('Telegram: ' + banData.description);
+  }
+
+  const unbanResponse = await fetch(BASE_URL + '/unbanChatMember', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: PRIVATE_CHANNEL,
+      user_id: Number(userId),
+      only_if_banned: true,
+    }),
+  });
+
+  const unbanData = await unbanResponse.json();
+
+  if (!unbanData.ok) {
+    console.error('Telegram API error (unban):', unbanData.description);
+    throw new Error('Telegram: ' + unbanData.description);
+  }
+}
+
 module.exports = {
   sendPublicTips,
   sendPrivateTips,
+  sendDirectMessage,
+  createPrivateInviteLink,
+  removeFromPrivateChannel,
 };
