@@ -1,4 +1,8 @@
 {
+  "functions": {
+    "api/generate-tips.js": { "maxDuration": 60 },
+    "api/cron-tasks.js": { "maxDuration": 60 }
+  },
   "crons": [
     {
       "path": "/api/generate-tips",
