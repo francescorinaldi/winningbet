@@ -26,6 +26,7 @@ Analyze football data like a professional analyst with 15+ years of experience i
 ## Parse Arguments
 
 From `$ARGUMENTS`:
+
 - No args → all 4 leagues
 - A league slug (e.g., `serie-a`) or name (e.g., "Serie A", "Premier League") → that league only
 - `--send` → send to Telegram after generating
@@ -83,12 +84,15 @@ For EACH match individually, perform ALL of the following steps before moving to
 Use **WebSearch** to find specific information for THIS matchup:
 
 **Search 1** (match-specific):
+
 - `"<home_team> vs <away_team> preview injuries lineup <date>"`
 
 **Search 2** (if needed — team-specific context):
+
 - `"<team_name> team news injuries suspensions"` (for the team with less data)
 
 Look for:
+
 - **Injuries and suspensions** — which key players are OUT
 - **Expected lineups** — any rotation, resting players
 - **Key player availability** — returns from injury, suspensions ending
@@ -102,6 +106,7 @@ Look for:
 From the league data already fetched, extract for THIS match:
 
 **From standings (total + home/away):**
+
 - Both teams' league position, points, form string (W/D/L)
 - Home team's HOME record (W/D/L, GF/GA from home standings)
 - Away team's AWAY record (W/D/L, GF/GA from away standings)
@@ -109,15 +114,18 @@ From the league data already fetched, extract for THIS match:
 - Zone: Champions (rank ≤ 4), Europa (≤ 6), Conference (≤ 7), Relegation (bottom 3)
 
 **From recent results (filter last 5 per team):**
+
 - Each team's last 5 results with scores
 - BTTS%: % of those matches where BOTH teams scored
 - Clean sheet%: % with 0 goals conceded
 - Current streak (winning/drawing/losing run)
 
 **Expected goals:**
+
 - xGoals = (homeAvgGF + awayAvgGA) / 2 + (awayAvgGF + homeAvgGA) / 2
 
 **From bookmaker odds (if available):**
+
 - Implied probabilities: 1/odds for home, draw, away
 - Compare with your statistical assessment — look for value
 
@@ -138,14 +146,15 @@ Only THEN select your prediction. Choose the option with the highest probability
 
 #### 4d. Generate prediction (per match)
 
-| Field | Rules |
-|-------|-------|
-| `prediction` | One of the 14 valid types. Choose the SAFEST pick with highest expected accuracy. Avoid exotic picks unless data is overwhelming. |
+| Field        | Rules                                                                                                                                                                                       |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prediction` | One of the 14 valid types. Choose the SAFEST pick with highest expected accuracy. Avoid exotic picks unless data is overwhelming.                                                           |
 | `confidence` | 60-95. Reflects statistical reality. Must be justified by specific numbers. Never exceed 85 unless 4+ independent data points align. Never exceed 90 without truly exceptional convergence. |
-| `odds` | Fair decimal odds 1.20-5.00. Derived from your assessed probability: odds ≈ 100/confidence. |
-| `analysis` | 2-3 sentences IN ITALIAN citing specific numbers (position, form, avg goals, BTTS%, injuries). Must justify the pick. |
+| `odds`       | Fair decimal odds 1.20-5.00. Derived from your assessed probability: odds ≈ 100/confidence.                                                                                                 |
+| `analysis`   | 2-3 sentences IN ITALIAN citing specific numbers (position, form, avg goals, BTTS%, injuries). Must justify the pick.                                                                       |
 
 **Accuracy-first rules:**
+
 1. **Safer picks win more.** Prefer 1X, X2, Over 1.5, Under 3.5 over exact outcomes unless evidence is very strong.
 2. **Analyze ALL data** — standings, form, home/away splits, goals, injuries, motivation, odds.
 3. **For Over/Under**: calculate avg total goals from BOTH teams' stats. Only pick Over 2.5 if xGoals > 2.8. Only pick Under 2.5 if xGoals < 2.2.
@@ -168,6 +177,7 @@ ELSE → "free"
 ```
 
 **Tier balancing** (if a league has 3+ tips but any tier has 0):
+
 - Sort predictions by value (confidence × odds) ascending
 - Bottom third → free, middle third → pro, top third → vip
 
@@ -216,6 +226,7 @@ Read Telegram credentials from `.env` file (use Read tool on the .env, extract T
 Format per league block in MarkdownV2. Send ONE message per league (to avoid the 4096 char limit).
 
 Each message structure:
+
 ```
 <flag> *<LEAGUE NAME>*
 
@@ -225,6 +236,7 @@ Each message structure:
 ```
 
 Each tip block:
+
 ```
 <ball> *<home> vs <away>*
 <tee> <target> <prediction>
@@ -236,6 +248,7 @@ Each tip block:
 **MarkdownV2 escaping**: Put `\` before these chars: `_ * [ ] ( ) ~ ` > # + - = | { } . !`
 
 Send via curl:
+
 ```bash
 curl -s -X POST "https://api.telegram.org/bot<TOKEN>/sendMessage" \
   -H "Content-Type: application/json" \

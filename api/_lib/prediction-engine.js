@@ -72,7 +72,7 @@ const BATCH_PREDICTION_SCHEMA = {
         properties: {
           match_index: {
             type: 'integer',
-            description: 'Indice della partita (0-based, corrispondente all\'ordine nel prompt)',
+            description: "Indice della partita (0-based, corrispondente all'ordine nel prompt)",
           },
           prediction: {
             type: 'string',
@@ -242,7 +242,7 @@ function computeDerivedStats(standing, recentMatches, teamName, totalTeams) {
   const cleanSheetPercent = Math.round((cleanSheetCount / recentCount) * 100);
 
   // Contesto in classifica
-  let zoneContext = 'Meta\' classifica';
+  let zoneContext = "Meta' classifica";
   if (totalTeams > 0) {
     const rank = standing.rank;
     if (rank <= 4) zoneContext = 'Zona Champions';
@@ -268,7 +268,17 @@ function computeDerivedStats(standing, recentMatches, teamName, totalTeams) {
  * @param {number} totalTeams - Numero totale squadre in classifica
  * @returns {string} Blocco formattato per il prompt
  */
-function formatMatchBlock(index, match, homeStanding, awayStanding, homeHomeStanding, awayAwayStanding, odds, recentResults, totalTeams) {
+function formatMatchBlock(
+  index,
+  match,
+  homeStanding,
+  awayStanding,
+  homeHomeStanding,
+  awayAwayStanding,
+  odds,
+  recentResults,
+  totalTeams,
+) {
   const oddsInfo =
     odds && odds.values && odds.values.length >= 3
       ? `Quote 1X2: Casa ${odds.values[0].odd}, Pareggio ${odds.values[1].odd}, Trasferta ${odds.values[2].odd}`
@@ -338,15 +348,11 @@ function balanceTiers(predictions) {
   if (counts.free >= 1 && counts.pro >= 1 && counts.vip >= 1) return predictions;
 
   // Riordina per valore (confidence * odds) e ridistribuisci
-  const sorted = [...predictions].sort(
-    (a, b) => a.confidence * a.odds - b.confidence * b.odds,
-  );
+  const sorted = [...predictions].sort((a, b) => a.confidence * a.odds - b.confidence * b.odds);
 
   const third = Math.floor(sorted.length / 3);
   for (let i = 0; i < sorted.length; i++) {
-    const original = predictions.find(
-      (p) => p.match_id === sorted[i].match_id,
-    );
+    const original = predictions.find((p) => p.match_id === sorted[i].match_id);
     if (i < third) original.tier = 'free';
     else if (i < third * 2) original.tier = 'pro';
     else original.tier = 'vip';
@@ -398,9 +404,7 @@ async function generateBatchPredictions({
   const totalTeams = standings.length;
 
   // Pre-fetch: quote per tutte le partite in parallelo
-  const oddsResults = await Promise.allSettled(
-    matches.map((m) => getOdds(m.id)),
-  );
+  const oddsResults = await Promise.allSettled(matches.map((m) => getOdds(m.id)));
   const oddsMap = new Map();
   matches.forEach((m, i) => {
     oddsMap.set(m.id, oddsResults[i].status === 'fulfilled' ? oddsResults[i].value : null);
@@ -419,7 +423,10 @@ async function generateBatchPredictions({
     const homeStanding = standingsMap.get(match.home) || createDefaultStanding(match.home);
     const awayStanding = standingsMap.get(match.away) || createDefaultStanding(match.away);
     return formatMatchBlock(
-      index, match, homeStanding, awayStanding,
+      index,
+      match,
+      homeStanding,
+      awayStanding,
       homeMap.get(match.home) || null,
       awayMap.get(match.away) || null,
       oddsMap.get(match.id),

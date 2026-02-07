@@ -64,7 +64,8 @@ const LEAGUE_FLAGS = {
   'serie-a': '\uD83C\uDDEE\uD83C\uDDF9',
   'champions-league': '\uD83C\uDFC6',
   'la-liga': '\uD83C\uDDEA\uD83C\uDDF8',
-  'premier-league': '\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F',
+  'premier-league':
+    '\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F',
 };
 
 const LEAGUE_NAMES = {
@@ -81,11 +82,29 @@ const LEAGUE_NAMES = {
 function formatItalianDate() {
   const days = ['Domenica', 'Lunedi', 'Martedi', 'Mercoledi', 'Giovedi', 'Venerdi', 'Sabato'];
   const months = [
-    'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-    'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
+    'Gennaio',
+    'Febbraio',
+    'Marzo',
+    'Aprile',
+    'Maggio',
+    'Giugno',
+    'Luglio',
+    'Agosto',
+    'Settembre',
+    'Ottobre',
+    'Novembre',
+    'Dicembre',
   ];
   const now = new Date();
-  return days[now.getDay()] + ' ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+  return (
+    days[now.getDay()] +
+    ' ' +
+    now.getDate() +
+    ' ' +
+    months[now.getMonth()] +
+    ' ' +
+    now.getFullYear()
+  );
 }
 
 /**
@@ -165,7 +184,9 @@ function formatDigest(tips) {
       tipCount++;
     }
 
-    lines.push('\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501');
+    lines.push(
+      '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501',
+    );
   }
 
   lines.push('');

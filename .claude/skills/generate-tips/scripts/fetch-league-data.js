@@ -106,7 +106,11 @@ async function main() {
       result.matches.map((m) => apiFootball.getOdds(m.id)),
     );
     result.matches.forEach((match, i) => {
-      if (oddsResults[i].status === 'fulfilled' && oddsResults[i].value && oddsResults[i].value.values) {
+      if (
+        oddsResults[i].status === 'fulfilled' &&
+        oddsResults[i].value &&
+        oddsResults[i].value.values
+      ) {
         const v = oddsResults[i].value.values;
         match.odds = {
           home: (v[0] && v[0].odd) || null,
