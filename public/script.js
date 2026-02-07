@@ -1080,10 +1080,12 @@
         animateCounter(heroWinRate);
       }
 
-      const heroRoi = findHeroStat('ROI Medio');
-      if (heroRoi) {
-        heroRoi.setAttribute('data-count', Math.round(data.roi));
-        animateCounter(heroRoi);
+      const heroWL = document.getElementById('heroWinLoss');
+      if (heroWL) {
+        heroWL.textContent = '';
+        heroWL.appendChild(createEl('span', 'stat-won', won + 'W'));
+        heroWL.appendChild(createEl('span', 'stat-sep', '\u2009\u2014\u2009'));
+        heroWL.appendChild(createEl('span', 'stat-lost', lost + 'L'));
       }
 
       const heroTips = findHeroStat('Tips Inviati');
@@ -1099,14 +1101,17 @@
         const value = card.querySelector('.stat-value');
         if (!label || !value) return;
 
-        if (label.textContent === 'Tips Vincenti' && value.hasAttribute('data-count')) {
-          value.setAttribute('data-count', won);
-          animateCounter(value);
-        } else if (label.textContent === 'Win Rate' && value.hasAttribute('data-count')) {
+        if (label.textContent === 'Win Rate' && value.hasAttribute('data-count')) {
           value.setAttribute('data-count', Math.round(data.win_rate));
           animateCounter(value);
-        } else if (label.textContent === 'ROI Mensile') {
-          value.textContent = (data.roi >= 0 ? '+' : '') + data.roi + '%';
+        } else if (label.textContent === 'Vinti - Persi') {
+          value.textContent = '';
+          const wonSpan = createEl('span', 'stat-won', won + 'W');
+          const sep = createEl('span', 'stat-sep', '\u2009\u2014\u2009');
+          const lostSpan = createEl('span', 'stat-lost', lost + 'L');
+          value.appendChild(wonSpan);
+          value.appendChild(sep);
+          value.appendChild(lostSpan);
         } else if (label.textContent === 'Quota Media') {
           value.textContent = data.avg_odds.toFixed(2);
         }
