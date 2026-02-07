@@ -4,6 +4,16 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Changed — Tiered Prediction Access + Google-Only Auth
+
+- **Auth: Google-only login** — Removed email/password registration and login forms. Auth page now shows only "Accedi con Google" button with terms/privacy links. Simplified `auth.js` and `auth.html`
+- **Homepage: tier-aware tip cards** — Tip cards on the homepage now respect the user's subscription tier. Free cards are always visible. PRO/VIP cards show grayed-out locked state with value proposition + CTA (login for unauthenticated, upgrade for free/pro users). Added `canAccessTier()`, `buildLockedOverlay()`, and `homepageUserTier` detection via profile fetch
+- **Homepage: tier comparison strip** — Added a visual tier comparison section between the tips filters and the tips grid showing concrete benefits of each tier (FREE: 1-2 tips/settimana, PRO: 10+ tips/giorno + analisi, VIP: Tutto PRO + VALUE bets + Telegram)
+- **Homepage: locked overlay with value proposition** — Locked overlays now show concrete benefit bullets (e.g. "Tutti i tips giornalieri", "Canale Telegram VIP privato") instead of generic "riservato agli abbonati" messages
+- **Dashboard renamed to "I Miei Tips"** — Page title, navbar link updated from "Dashboard" to "I Miei Tips"
+- **Dashboard: Account moved to settings gear** — Account section removed from tab bar. Added a settings gear icon in the dashboard header that toggles the account panel. Tabs now show only "Tips di Oggi" and "Storico"
+- **CSS: new components** — Added styles for `.tip-card--locked` (desaturated locked state), `.tier-comparison` strip, `.auth-heading`/`.auth-subtitle`/`.auth-footer-text` for Google-only auth, `.dash-settings-btn` with rotation animation
+
 ### Changed — Dashboard Tips UX Improvements
 
 - **Tips di Oggi: show started/past matches** — Changed date filter from `>= now()` to `>= startOfToday(UTC)` so matches that already kicked off still appear in the tips grid, displayed with greyed-out styling (`.tip-card--started`) and an "Iniziata" label

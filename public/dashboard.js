@@ -56,6 +56,7 @@
     setupNotifications();
     setupTeamSearch();
     setupPreferenceToggles();
+    setupSettingsToggle();
   });
 
   /**
@@ -398,7 +399,8 @@
       if (isSettled) {
         const statusLabel = document.createElement('span');
         statusLabel.className = 'tip-status-label tip-status-label--' + tip.status;
-        statusLabel.textContent = tip.status === 'won' ? 'Vinto' : tip.status === 'lost' ? 'Perso' : 'Annullata';
+        statusLabel.textContent =
+          tip.status === 'won' ? 'Vinto' : tip.status === 'lost' ? 'Perso' : 'Annullata';
         header.appendChild(statusLabel);
       } else if (matchStarted) {
         const startedLabel = document.createElement('span');
@@ -946,11 +948,47 @@
         });
         tab.classList.add('active');
 
+        // Deactivate settings when switching to a tab
+        const settingsBtn = document.getElementById('settingsBtn');
+        if (settingsBtn) settingsBtn.classList.remove('active');
+
         const target = tab.getAttribute('data-tab');
         document.getElementById('panelTips').style.display = target === 'tips' ? '' : 'none';
         document.getElementById('panelHistory').style.display = target === 'history' ? '' : 'none';
-        document.getElementById('panelAccount').style.display = target === 'account' ? '' : 'none';
+        document.getElementById('panelAccount').style.display = 'none';
       });
+    });
+  }
+
+  /**
+   * Configura il pulsante gear per mostrare/nascondere il pannello Account.
+   */
+  function setupSettingsToggle() {
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (!settingsBtn) return;
+
+    settingsBtn.addEventListener('click', function () {
+      const panelAccount = document.getElementById('panelAccount');
+      const panelTips = document.getElementById('panelTips');
+      const panelHistory = document.getElementById('panelHistory');
+      const isAccountVisible = panelAccount.style.display !== 'none';
+
+      if (isAccountVisible) {
+        // Chiudi account, torna alla tab attiva
+        panelAccount.style.display = 'none';
+        settingsBtn.classList.remove('active');
+
+        const activeTab = document.querySelector('.dash-tab.active');
+        const activePanel = activeTab ? activeTab.getAttribute('data-tab') : 'tips';
+        panelTips.style.display = activePanel === 'tips' ? '' : 'none';
+        panelHistory.style.display = activePanel === 'history' ? '' : 'none';
+      } else {
+        // Apri account, nascondi gli altri pannelli
+        panelTips.style.display = 'none';
+        panelHistory.style.display = 'none';
+        panelAccount.style.display = '';
+        settingsBtn.classList.add('active');
+      }
     });
   }
 
