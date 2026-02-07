@@ -248,7 +248,7 @@
 
   // Reveal elements — aggiunge .reveal a card, stat, pricing, ecc.
   const revealElements = document.querySelectorAll(
-    '.tip-card, .stat-card, .pricing-card, .faq-item, .telegram-card, .chart-container, .recent-results',
+    '.tip-card, .stat-card, .pricing-card, .faq-item, .telegram-card, .recent-results',
   );
   revealElements.forEach((el) => el.classList.add('reveal'));
 
@@ -1112,11 +1112,6 @@
         }
       });
 
-      // Monthly chart
-      if (data.monthly && data.monthly.length > 0) {
-        updateChart(data.monthly);
-      }
-
       // Populate recent results with settled tips
       if (data.recent && data.recent.length > 0) {
         const container = document.getElementById('resultsList');
@@ -1146,148 +1141,6 @@
       }
     }
     return null;
-  }
-
-  /**
-   * Aggiorna le barre del grafico mensile con dati reali.
-   * Include tooltips on hover e linea ROI cumulativo.
-   * @param {Array<Object>} monthly - Dati mensili dal track record
-   */
-  function updateChart(monthly) {
-    const chartContainer = document.querySelector('.chart');
-    if (!chartContainer) return;
-
-    // Pulisce le barre esistenti
-    chartContainer.textContent = '';
-    chartContainer.style.position = 'relative';
-
-    const maxProfit = Math.max.apply(
-      null,
-      monthly.map(function (x) {
-        return Math.abs(x.profit);
-      }),
-    );
-
-    // Calcola ROI cumulativo per la linea overlay
-    let cumProfit = 0;
-    const cumPoints = [];
-
-    monthly.forEach(function (m, index) {
-      cumProfit += m.profit;
-      const settled = (m.won || 0) + (m.lost || 0);
-      cumPoints.push({
-        index: index,
-        cumProfit: parseFloat(cumProfit.toFixed(1)),
-        settled: settled,
-      });
-
-      const bar = document.createElement('div');
-      bar.className = 'chart-bar';
-      const normalizedValue =
-        maxProfit > 0 ? Math.round((Math.abs(m.profit) / maxProfit) * 140) : 0;
-      bar.setAttribute('data-value', normalizedValue);
-      bar.setAttribute('data-label', m.label);
-
-      const fill = document.createElement('div');
-      fill.className = 'chart-fill';
-      bar.appendChild(fill);
-
-      const amount = document.createElement('span');
-      amount.className = 'chart-amount';
-      amount.textContent = (m.profit >= 0 ? '+' : '') + m.profit + '\u20AC';
-      bar.appendChild(amount);
-
-      // Tooltip on hover
-      const tooltip = document.createElement('div');
-      tooltip.className = 'chart-tooltip';
-      tooltip.textContent =
-        m.label +
-        ': ' +
-        (m.profit >= 0 ? '+' : '') +
-        m.profit +
-        '\u20AC | ' +
-        (m.win_rate || 0) +
-        '% win | ' +
-        settled +
-        ' tips';
-      bar.appendChild(tooltip);
-
-      bar.addEventListener('mouseenter', function () {
-        tooltip.classList.add('visible');
-      });
-      bar.addEventListener('mouseleave', function () {
-        tooltip.classList.remove('visible');
-      });
-
-      chartContainer.appendChild(bar);
-    });
-
-    // SVG overlay: cumulative ROI line
-    if (cumPoints.length > 1) {
-      const svgNS = 'http://www.w3.org/2000/svg';
-      const svg = document.createElementNS(svgNS, 'svg');
-      svg.setAttribute('class', 'chart-roi-line');
-      svg.style.position = 'absolute';
-      svg.style.inset = '0';
-      svg.style.width = '100%';
-      svg.style.height = '100%';
-      svg.style.pointerEvents = 'none';
-
-      const maxCum = Math.max.apply(
-        null,
-        cumPoints.map(function (p) {
-          return Math.abs(p.cumProfit);
-        }),
-      );
-
-      if (maxCum > 0) {
-        const points = cumPoints
-          .map(function (p) {
-            const x = ((p.index + 0.5) / cumPoints.length) * 100;
-            const y = 50 - (p.cumProfit / maxCum) * 40;
-            return x + ',' + y;
-          })
-          .join(' ');
-
-        const polyline = document.createElementNS(svgNS, 'polyline');
-        polyline.setAttribute('points', points);
-        polyline.setAttribute('fill', 'none');
-        polyline.setAttribute('stroke', 'rgba(212, 168, 83, 0.6)');
-        polyline.setAttribute('stroke-width', '2');
-        polyline.setAttribute('stroke-linecap', 'round');
-        polyline.setAttribute('stroke-linejoin', 'round');
-        polyline.setAttribute('vector-effect', 'non-scaling-stroke');
-        svg.setAttribute('viewBox', '0 0 100 100');
-        svg.setAttribute('preserveAspectRatio', 'none');
-        svg.appendChild(polyline);
-        chartContainer.appendChild(svg);
-      }
-    }
-
-    // Re-attiva l'animazione delle barre
-    const bars = chartContainer.querySelectorAll('.chart-bar');
-    if (bars.length > 0) {
-      const chartObs = new IntersectionObserver(
-        function (entries) {
-          entries.forEach(function (entry) {
-            if (entry.isIntersecting) {
-              const allBars = entry.target.closest('.chart').querySelectorAll('.chart-bar');
-              allBars.forEach(function (b, index) {
-                setTimeout(function () {
-                  const val = b.getAttribute('data-value');
-                  const f = b.querySelector('.chart-fill');
-                  f.style.height = (val / 140) * 100 + '%';
-                  b.classList.add('animated');
-                }, index * 150);
-              });
-              chartObs.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.3 },
-      );
-      chartObs.observe(bars[0]);
-    }
   }
 
   /**
