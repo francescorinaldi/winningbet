@@ -53,10 +53,12 @@ async function handleWebhook(req, res) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const baseUrl = 'https://api.telegram.org/bot' + botToken;
 
+  // /start con token → collegamento account
   if (text.startsWith('/start ')) {
     const token = text.slice('/start '.length).trim();
 
     if (!token) {
+      await sendWelcome(baseUrl, chatId);
       return res.status(200).json({ ok: true });
     }
 
@@ -98,7 +100,33 @@ async function handleWebhook(req, res) {
     return res.status(200).json({ ok: true });
   }
 
+  // /start senza token o qualsiasi altro messaggio → benvenuto
+  await sendWelcome(baseUrl, chatId);
   return res.status(200).json({ ok: true });
+}
+
+async function sendWelcome(baseUrl, chatId) {
+  const welcome =
+    '\uD83D\uDC4B Benvenuto su *WinningBet*\\!\n\n' +
+    '\u26BD Pronostici calcio giornalieri su Serie A, Premier League, La Liga e Champions League\\.\n\n' +
+    '\uD83D\uDCE2 Unisciti al nostro canale per ricevere i tip ogni giorno:\n' +
+    '\uD83D\uDC49 @thewinningbettips\n\n' +
+    '\uD83C\uDF10 Visita il sito: [winningbet\\.vercel\\.app](https://winningbet.vercel.app)';
+
+  try {
+    await fetch(baseUrl + '/sendMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: welcome,
+        parse_mode: 'MarkdownV2',
+        disable_web_page_preview: true,
+      }),
+    });
+  } catch (err) {
+    console.error('Telegram sendWelcome failed:', err.message);
+  }
 }
 
 async function sendReply(baseUrl, chatId, text) {
