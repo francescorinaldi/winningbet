@@ -398,7 +398,7 @@
       if (isSettled) {
         const statusLabel = document.createElement('span');
         statusLabel.className = 'tip-status-label tip-status-label--' + tip.status;
-        statusLabel.textContent = tip.status === 'won' ? 'Vinto' : tip.status === 'lost' ? 'Perso' : 'Void';
+        statusLabel.textContent = tip.status === 'won' ? 'Vinto' : tip.status === 'lost' ? 'Perso' : 'Annullata';
         header.appendChild(statusLabel);
       } else if (matchStarted) {
         const startedLabel = document.createElement('span');
@@ -852,7 +852,7 @@
       const statusText = {
         won: 'Vinto',
         lost: 'Perso',
-        void: 'Void',
+        void: 'Annullata',
         pending: 'In Corso',
       };
       badgeEl.textContent = statusText[tip.status] || tip.status;

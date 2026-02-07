@@ -131,16 +131,21 @@ async function handleTrackRecord(_req, res) {
       }, 0) - lost;
     const roi = settled > 0 ? parseFloat(((profit / settled) * 100).toFixed(1)) : 0;
 
-    const recent = allTips.slice(0, 10).map(function (t) {
-      return {
-        home_team: t.home_team,
-        away_team: t.away_team,
-        prediction: t.prediction,
-        odds: t.odds,
-        status: t.status,
-        match_date: t.match_date,
-      };
-    });
+    const recent = allTips
+      .filter(function (t) {
+        return t.status === 'won' || t.status === 'lost';
+      })
+      .slice(0, 10)
+      .map(function (t) {
+        return {
+          home_team: t.home_team,
+          away_team: t.away_team,
+          prediction: t.prediction,
+          odds: t.odds,
+          status: t.status,
+          match_date: t.match_date,
+        };
+      });
 
     const monthly = buildMonthlyBreakdown(allTips);
 
