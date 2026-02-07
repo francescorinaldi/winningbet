@@ -9,6 +9,8 @@ All notable changes to WinningBet will be documented in this file.
 - **Tips di Oggi: show started/past matches** — Changed date filter from `>= now()` to `>= startOfToday(UTC)` so matches that already kicked off still appear in the tips grid, displayed with greyed-out styling (`.tip-card--started`) and an "Iniziata" label
 - **"Tutte le leghe" tab** — Added `league=all` support in backend (`api/tips.js`) and a "Tutte" button in the dashboard league selector. Shows all leagues combined with a league badge on each card
 - **Storico: last 7 days, max 20** — History tab now filters to the last 7 days with a cap of 20 results
+- **Match results on tip cards** — Added `result` column to `tips` table. Settlement (cron + opportunistic) now saves the score (e.g. "2-1") directly on the tip. Cards show score between team names, won/lost badge, and colored left border (green=won, red=lost)
+- **`status=today` API mode** — New tips API mode that returns all statuses from today (pending + won + lost + void), used by "Tips di Oggi" to show the complete picture
 - **Fixed Cache-Control conflict** — `api/tips.js` was setting `Cache-Control: private, max-age=900` which overrode `vercel.json`'s `no-store` for personalized endpoints. Now correctly uses `no-store` to prevent browser caching of tier-specific responses
 
 ### Changed — Honest Track Record + Opportunistic Settlement

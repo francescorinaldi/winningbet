@@ -609,6 +609,33 @@
   }
 
   /**
+   * Costruisce una riga per i tip settati (won/lost) nella sezione Ultimi Risultati.
+   * @param {Object} tip - Dati tip dal track record API
+   * @param {string} tip.home_team - Nome squadra di casa
+   * @param {string} tip.away_team - Nome squadra ospite
+   * @param {string} tip.prediction - Previsione (es. "1", "Goal", "Over 2.5")
+   * @param {number} tip.odds - Quota
+   * @param {string} tip.status - Esito: "won" o "lost"
+   * @param {string} tip.match_date - Data ISO della partita
+   * @returns {HTMLElement} Elemento .result-item con badge won/lost
+   */
+  function buildTipResultItem(tip) {
+    const isWin = tip.status === 'won';
+    const item = createEl(
+      'div',
+      'result-item ' + (isWin ? 'result-item--win' : 'result-item--loss'),
+    );
+    item.appendChild(createEl('span', 'result-status', isWin ? '\u2713' : '\u2717'));
+    item.appendChild(createEl('span', 'result-date', formatResultDate(tip.match_date)));
+    item.appendChild(createEl('span', 'result-match', tip.home_team + ' vs ' + tip.away_team));
+    item.appendChild(createEl('span', 'result-pick', tip.prediction));
+    item.appendChild(createEl('span', 'result-odds', '@' + Number(tip.odds).toFixed(2)));
+    const badgeClass = 'result-badge ' + (isWin ? 'result-badge--win' : 'result-badge--loss');
+    item.appendChild(createEl('span', badgeClass, isWin ? 'WIN' : 'LOSS'));
+    return item;
+  }
+
+  /**
    * Mostra uno stato vuoto/errore in un container, sostituendo il contenuto.
    * @param {HTMLElement} container - Elemento contenitore
    * @param {string} className - Classe CSS per il messaggio
@@ -1088,6 +1115,17 @@
       // Monthly chart
       if (data.monthly && data.monthly.length > 0) {
         updateChart(data.monthly);
+      }
+
+      // Populate recent results with settled tips
+      if (data.recent && data.recent.length > 0) {
+        const container = document.getElementById('resultsList');
+        if (container) {
+          container.textContent = '';
+          data.recent.forEach(function (tip) {
+            container.appendChild(buildTipResultItem(tip));
+          });
+        }
       }
     } catch (_err) {
       // Leave em dash placeholders — honest "no data" state

@@ -270,7 +270,7 @@
     try {
       const tipLimit = currentLeague === 'all' ? 50 : 20;
       const response = await fetch(
-        '/api/tips?status=pending&limit=' + tipLimit + '&league=' + encodeURIComponent(currentLeague),
+        '/api/tips?status=today&limit=' + tipLimit + '&league=' + encodeURIComponent(currentLeague),
         { headers: { Authorization: 'Bearer ' + session.access_token } },
       );
 
@@ -286,14 +286,14 @@
       emptyState.style.display = 'none';
       stopCountdown();
 
-      // Sort: future matches first (ascending), then started matches at the bottom
+      // Sort: future pending first (ascending), then started/settled at the bottom
       const now = new Date();
       tips.sort(function (a, b) {
-        const aStarted = new Date(a.match_date) < now;
-        const bStarted = new Date(b.match_date) < now;
-        if (aStarted !== bStarted) return aStarted ? 1 : -1;
-        // Within same group: future ascending, started descending
-        if (aStarted) return new Date(b.match_date) - new Date(a.match_date);
+        const aPast = new Date(a.match_date) < now || a.status !== 'pending';
+        const bPast = new Date(b.match_date) < now || b.status !== 'pending';
+        if (aPast !== bPast) return aPast ? 1 : -1;
+        // Within same group: future ascending, past descending
+        if (aPast) return new Date(b.match_date) - new Date(a.match_date);
         return new Date(a.match_date) - new Date(b.match_date);
       });
 
@@ -340,16 +340,22 @@
 
     tips.forEach(function (tip) {
       const matchStarted = new Date(tip.match_date) < now;
+      const isSettled = tip.status === 'won' || tip.status === 'lost' || tip.status === 'void';
+      const isPast = matchStarted || isSettled;
       const card = document.createElement('div');
       card.className = 'tip-card tip-card--' + tip.tier;
 
-      // Grey out started/past matches
-      if (matchStarted) {
+      // Grey out started/settled matches
+      if (isPast) {
         card.classList.add('tip-card--started');
       }
+      // Won/lost specific class
+      if (isSettled) {
+        card.classList.add('tip-card--' + tip.status);
+      }
 
-      // Tip of the Day highlight (only for future matches)
-      if (!matchStarted && tip.id === tipOfDayId && maxConf > 0) {
+      // Tip of the Day highlight (only for future pending matches)
+      if (!isPast && tip.id === tipOfDayId && maxConf > 0) {
         card.classList.add('tip-card--highlighted');
         const todBadge = document.createElement('div');
         todBadge.className = 'tip-of-day-badge';
@@ -388,11 +394,16 @@
         header.appendChild(leagueBadge);
       }
 
-      // Started label
-      if (matchStarted) {
+      // Status label for started/settled matches
+      if (isSettled) {
+        const statusLabel = document.createElement('span');
+        statusLabel.className = 'tip-status-label tip-status-label--' + tip.status;
+        statusLabel.textContent = tip.status === 'won' ? 'Vinto' : tip.status === 'lost' ? 'Perso' : 'Void';
+        header.appendChild(statusLabel);
+      } else if (matchStarted) {
         const startedLabel = document.createElement('span');
         startedLabel.className = 'tip-started-label';
-        startedLabel.textContent = 'Iniziata';
+        startedLabel.textContent = 'In corso';
         header.appendChild(startedLabel);
       }
 
@@ -403,7 +414,7 @@
 
       card.appendChild(header);
 
-      // Match
+      // Match + result
       const match = document.createElement('div');
       match.className = 'dash-tip-match';
 
@@ -412,10 +423,17 @@
       homeTeam.textContent = tip.home_team;
       match.appendChild(homeTeam);
 
-      const vs = document.createElement('span');
-      vs.className = 'dash-tip-vs';
-      vs.textContent = 'vs';
-      match.appendChild(vs);
+      if (tip.result) {
+        const scoreEl = document.createElement('span');
+        scoreEl.className = 'dash-tip-score';
+        scoreEl.textContent = tip.result;
+        match.appendChild(scoreEl);
+      } else {
+        const vs = document.createElement('span');
+        vs.className = 'dash-tip-vs';
+        vs.textContent = 'vs';
+        match.appendChild(vs);
+      }
 
       const awayTeam = document.createElement('span');
       awayTeam.className = 'dash-tip-team';

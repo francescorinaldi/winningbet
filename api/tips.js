@@ -12,7 +12,7 @@
  *
  * Query parameters:
  *   league (optional) — Slug della lega o 'all' per tutte (default: 'serie-a')
- *   status (optional) — Filtra per stato: 'pending', 'won', 'lost', 'void' (default: 'pending')
+ *   status (optional) — 'pending', 'won', 'lost', 'void', o 'today' per tutti da oggi (default: 'pending')
  *   limit (optional) — Numero massimo di tips (default: 10, max: 50)
  *
  * Per status=pending, include anche match gia' iniziati (da inizio giornata UTC).
@@ -39,8 +39,9 @@ module.exports = async function handler(req, res) {
 
   const isAllLeagues = req.query.league === 'all';
   const leagueSlug = isAllLeagues ? 'all' : resolveLeagueSlug(req.query.league);
-  const validStatuses = ['pending', 'won', 'lost', 'void'];
+  const validStatuses = ['pending', 'won', 'lost', 'void', 'today'];
   const status = validStatuses.includes(req.query.status) ? req.query.status : 'pending';
+  const isToday = status === 'today';
   const parsedLimit = parseInt(req.query.limit, 10);
   const limit = Math.min(Math.max(parsedLimit > 0 ? parsedLimit : 10, 1), 50);
 
@@ -69,23 +70,27 @@ module.exports = async function handler(req, res) {
     let query = supabase
       .from('tips')
       .select('*')
-      .in('tier', accessibleTiers)
-      .eq('status', status);
+      .in('tier', accessibleTiers);
+
+    // status=today: tutti gli status da inizio giornata (pending + settled)
+    if (!isToday) {
+      query = query.eq('status', status);
+    }
 
     // Filtra per lega (skip per 'all')
     if (!isAllLeagues) {
       query = query.eq('league', leagueSlug);
     }
 
-    // Per tips pendenti: include match da inizio giornata (anche gia' iniziati)
-    if (status === 'pending') {
+    // Per pending e today: filtra da inizio giornata
+    if (status === 'pending' || isToday) {
       const today = new Date();
       today.setUTCHours(0, 0, 0, 0);
       query = query.gte('match_date', today.toISOString());
     }
 
     const { data: tips, error } = await query
-      .order('match_date', { ascending: status === 'pending' })
+      .order('match_date', { ascending: status === 'pending' || isToday })
       .limit(limit);
 
     if (error) {

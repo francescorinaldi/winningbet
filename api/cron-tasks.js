@@ -102,11 +102,12 @@ async function handleSettle(_req, res) {
 
         const totalGoals = result.goalsHome + result.goalsAway;
         const actualResult = buildActualResult(result);
+        const score = result.goalsHome + '-' + result.goalsAway;
         const status = evaluatePrediction(tip.prediction, result, totalGoals);
 
         const { error: updateError } = await supabase
           .from('tips')
-          .update({ status: status })
+          .update({ status: status, result: score })
           .eq('id', tip.id);
 
         if (updateError) {
