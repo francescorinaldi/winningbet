@@ -114,12 +114,56 @@ async function getRecentResults(leagueSlug, count = 10) {
  * @returns {Promise<Array<Object>>} Array ordinato per posizione
  */
 async function getStandings(leagueSlug) {
-  const league = getLeague(leagueSlug);
-  const data = await request(`/competitions/${league.footballDataCode}/standings`);
-  if (!data.standings || data.standings.length === 0) return [];
+  const data = await fetchStandingsData(leagueSlug);
+  if (!data) return [];
   const table = data.standings.find((s) => s.type === 'TOTAL');
   if (!table) return [];
-  return table.table.map((team) => ({
+  return table.table.map(normalizeStandingEntry);
+}
+
+/**
+ * Recupera classifica totale, casa e trasferta in una singola chiamata API.
+ * L'endpoint /standings di football-data.org restituisce gia' i 3 tipi
+ * (TOTAL, HOME, AWAY) nella stessa risposta — zero chiamate extra.
+ *
+ * @param {string} leagueSlug - Slug della lega
+ * @returns {Promise<Object>} { total: [...], home: [...], away: [...] }
+ */
+async function getFullStandings(leagueSlug) {
+  const data = await fetchStandingsData(leagueSlug);
+  if (!data) return { total: [], home: [], away: [] };
+
+  const extract = (type) => {
+    const table = data.standings.find((s) => s.type === type);
+    return table ? table.table.map(normalizeStandingEntry) : [];
+  };
+
+  return {
+    total: extract('TOTAL'),
+    home: extract('HOME'),
+    away: extract('AWAY'),
+  };
+}
+
+/**
+ * Recupera i dati grezzi della classifica dall'API.
+ * @param {string} leagueSlug - Slug della lega
+ * @returns {Promise<Object|null>} Dati grezzi o null
+ */
+async function fetchStandingsData(leagueSlug) {
+  const league = getLeague(leagueSlug);
+  const data = await request(`/competitions/${league.footballDataCode}/standings`);
+  if (!data.standings || data.standings.length === 0) return null;
+  return data;
+}
+
+/**
+ * Normalizza un singolo entry della classifica football-data.org.
+ * @param {Object} team - Entry grezza dalla tabella
+ * @returns {Object} Entry normalizzata
+ */
+function normalizeStandingEntry(team) {
+  return {
     rank: team.position,
     name: team.team.shortName || team.team.name,
     logo: team.team.crest,
@@ -132,7 +176,7 @@ async function getStandings(leagueSlug) {
     goalsAgainst: team.goalsAgainst,
     goalDiff: team.goalDifference,
     form: team.form,
-  }));
+  };
 }
 
-module.exports = { getUpcomingMatches, getRecentResults, getStandings };
+module.exports = { getUpcomingMatches, getRecentResults, getStandings, getFullStandings };
