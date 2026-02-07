@@ -98,7 +98,9 @@ Rispondi SOLO con un oggetto JSON valido (senza markdown, senza backtick) nel se
     messages: [{ role: 'user', content: prompt }],
   });
 
-  const text = response.content[0].text.trim();
+  let text = response.content[0].text.trim();
+  // Strip markdown code fences if present (e.g. ```json ... ```)
+  text = text.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
 
   try {
     const result = JSON.parse(text);
