@@ -268,8 +268,9 @@
     const emptyState = document.getElementById('dashTipsEmpty');
 
     try {
+      const tipLimit = currentLeague === 'all' ? 50 : 20;
       const response = await fetch(
-        '/api/tips?status=pending&limit=20&league=' + encodeURIComponent(currentLeague),
+        '/api/tips?status=pending&limit=' + tipLimit + '&league=' + encodeURIComponent(currentLeague),
         { headers: { Authorization: 'Bearer ' + session.access_token } },
       );
 
@@ -284,6 +285,18 @@
 
       emptyState.style.display = 'none';
       stopCountdown();
+
+      // Sort: future matches first (ascending), then started matches at the bottom
+      const now = new Date();
+      tips.sort(function (a, b) {
+        const aStarted = new Date(a.match_date) < now;
+        const bStarted = new Date(b.match_date) < now;
+        if (aStarted !== bStarted) return aStarted ? 1 : -1;
+        // Within same group: future ascending, started descending
+        if (aStarted) return new Date(b.match_date) - new Date(a.match_date);
+        return new Date(a.match_date) - new Date(b.match_date);
+      });
+
       renderTipsGrid(grid, tips);
     } catch (_err) {
       grid.textContent = '';
@@ -316,12 +329,27 @@
       }),
     );
 
+    const now = new Date();
+    // League display names for 'all' view
+    const leagueNames = {
+      'serie-a': 'Serie A',
+      'champions-league': 'UCL',
+      'la-liga': 'La Liga',
+      'premier-league': 'PL',
+    };
+
     tips.forEach(function (tip) {
+      const matchStarted = new Date(tip.match_date) < now;
       const card = document.createElement('div');
       card.className = 'tip-card tip-card--' + tip.tier;
 
-      // Tip of the Day highlight
-      if (tip.id === tipOfDayId && maxConf > 0) {
+      // Grey out started/past matches
+      if (matchStarted) {
+        card.classList.add('tip-card--started');
+      }
+
+      // Tip of the Day highlight (only for future matches)
+      if (!matchStarted && tip.id === tipOfDayId && maxConf > 0) {
         card.classList.add('tip-card--highlighted');
         const todBadge = document.createElement('div');
         todBadge.className = 'tip-of-day-badge';
@@ -351,6 +379,22 @@
       badgeEl.className = 'tip-badge ' + badge;
       badgeEl.textContent = tip.tier.toUpperCase();
       header.appendChild(badgeEl);
+
+      // League badge (visible in 'all' mode)
+      if (currentLeague === 'all' && tip.league) {
+        const leagueBadge = document.createElement('span');
+        leagueBadge.className = 'tip-league-badge';
+        leagueBadge.textContent = leagueNames[tip.league] || tip.league;
+        header.appendChild(leagueBadge);
+      }
+
+      // Started label
+      if (matchStarted) {
+        const startedLabel = document.createElement('span');
+        startedLabel.className = 'tip-started-label';
+        startedLabel.textContent = 'Iniziata';
+        header.appendChild(startedLabel);
+      }
 
       const dateEl = document.createElement('span');
       dateEl.className = 'tip-date';
@@ -689,9 +733,18 @@
         }
       });
 
-      allHistory = results.sort(function (a, b) {
-        return new Date(b.match_date) - new Date(a.match_date);
-      });
+      // Filtra ultimi 7 giorni, max 20 risultati
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      allHistory = results
+        .filter(function (tip) {
+          return new Date(tip.match_date) >= sevenDaysAgo;
+        })
+        .sort(function (a, b) {
+          return new Date(b.match_date) - new Date(a.match_date);
+        })
+        .slice(0, 20);
 
       renderHistory('all');
       loadDashboardChart();

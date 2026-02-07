@@ -3322,6 +3322,51 @@ img {
   font-size: 1.1rem;
 }
 
+/* ─── Started / Past Match Card ────────────── */
+
+.tip-card--started {
+  opacity: 0.5;
+  border-color: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tip-card--started:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.tip-card--started .confidence-fill {
+  background: var(--text-muted);
+}
+
+.tip-started-label {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── League Badge (All Leagues View) ─────── */
+
+.tip-league-badge {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+}
+
 /* ─── Preferences Card ──────────────────────── */
 
 .pref-section {

@@ -436,11 +436,14 @@
   let currentLeague = 'serie-a';
 
   const LEAGUE_NAMES = {
+    all: { label: 'Tutte le Leghe', season: '2025/26' },
     'serie-a': { label: 'Serie A', season: '2025/26' },
     'champions-league': { label: 'Champions League', season: '2025/26' },
     'la-liga': { label: 'La Liga', season: '2025/26' },
     'premier-league': { label: 'Premier League', season: '2025/26' },
   };
+
+  const ALL_LEAGUE_SLUGS = ['serie-a', 'champions-league', 'la-liga', 'premier-league'];
 
   function initLeagueSelector() {
     const selector = document.getElementById('leagueSelector');
@@ -892,7 +895,22 @@
   async function loadMatches() {
     const container = document.getElementById('matchesScroll');
     try {
-      const matches = await fetchAPI('fixtures', { type: 'matches', league: currentLeague });
+      let matches;
+      if (currentLeague === 'all') {
+        const results = await Promise.all(
+          ALL_LEAGUE_SLUGS.map(function (slug) {
+            return fetchAPI('fixtures', { type: 'matches', league: slug }).catch(function () {
+              return [];
+            });
+          }),
+        );
+        matches = results.flat().sort(function (a, b) {
+          return new Date(a.date) - new Date(b.date);
+        });
+      } else {
+        matches = await fetchAPI('fixtures', { type: 'matches', league: currentLeague });
+      }
+
       if (!matches || matches.length === 0) {
         setEmptyState(container, 'matches-empty', 'Nessuna partita in programma');
         return;
@@ -928,7 +946,22 @@
   async function loadResults() {
     const container = document.getElementById('resultsList');
     try {
-      const results = await fetchAPI('fixtures', { type: 'results', league: currentLeague });
+      let results;
+      if (currentLeague === 'all') {
+        const responses = await Promise.all(
+          ALL_LEAGUE_SLUGS.map(function (slug) {
+            return fetchAPI('fixtures', { type: 'results', league: slug }).catch(function () {
+              return [];
+            });
+          }),
+        );
+        results = responses.flat().sort(function (a, b) {
+          return new Date(b.date) - new Date(a.date);
+        });
+      } else {
+        results = await fetchAPI('fixtures', { type: 'results', league: currentLeague });
+      }
+
       if (!results || results.length === 0) {
         setEmptyState(container, 'results-empty', 'Nessun risultato disponibile');
         return;
