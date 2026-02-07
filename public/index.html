@@ -90,7 +90,7 @@
       <div class="container hero-content">
         <div class="hero-badge" id="heroBadge">
           <span class="badge-dot"></span>
-          <span id="heroBadgeText">SERIE A 2025/26</span>
+          <span id="heroBadgeText">4 TOP LEAGUE · 2025/26</span>
         </div>
         <h1 class="hero-title">
           Non scommettere.<br />
@@ -98,23 +98,23 @@
         </h1>
         <p class="hero-subtitle">
           Pronostici calcio basati su dati, algoritmi e analisi tattiche.<br />
-          Track record verificato. ROI positivo dal giorno uno.
+          Track record verificato e trasparente.
         </p>
         <div class="hero-stats">
           <div class="hero-stat">
-            <span class="hero-stat-value" data-count="73">0</span
+            <span class="hero-stat-value" data-count="0">&mdash;</span
             ><span class="hero-stat-suffix">%</span>
             <span class="hero-stat-label">Win Rate</span>
           </div>
           <div class="hero-stat-divider"></div>
           <div class="hero-stat">
-            <span class="hero-stat-value" data-count="12">0</span
-            ><span class="hero-stat-suffix">.4%</span>
+            <span class="hero-stat-value" data-count="0">&mdash;</span
+            ><span class="hero-stat-suffix">%</span>
             <span class="hero-stat-label">ROI Medio</span>
           </div>
           <div class="hero-stat-divider"></div>
           <div class="hero-stat">
-            <span class="hero-stat-value" data-count="2847">0</span>
+            <span class="hero-stat-value" data-count="0">&mdash;</span>
             <span class="hero-stat-label">Tips Inviati</span>
           </div>
         </div>
@@ -163,7 +163,7 @@
       <div class="container">
         <div class="live-bar-header">
           <span class="live-dot"></span>
-          <span id="liveBarLabel">PROSSIME PARTITE — SERIE A</span>
+          <span id="liveBarLabel">PROSSIME PARTITE — SERIE A · UCL · LA LIGA · PL</span>
         </div>
         <div class="matches-scroll" id="matchesScroll">
           <div class="matches-loading">
@@ -239,7 +239,7 @@
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
               </svg>
             </div>
-            <div class="stat-value" data-count="1842">0</div>
+            <div class="stat-value" data-count="0">&mdash;</div>
             <div class="stat-label">Tips Vincenti</div>
           </div>
           <div class="stat-card">
@@ -259,7 +259,7 @@
               </svg>
             </div>
             <div class="stat-value-row">
-              <span class="stat-value" data-count="73">0</span><span class="stat-suffix">%</span>
+              <span class="stat-value" data-count="0">&mdash;</span><span class="stat-suffix">%</span>
             </div>
             <div class="stat-label">Win Rate</div>
           </div>
@@ -279,7 +279,7 @@
                 <polyline points="17 6 23 6 23 12" />
               </svg>
             </div>
-            <div class="stat-value">+12.4%</div>
+            <div class="stat-value">&mdash;</div>
             <div class="stat-label">ROI Mensile</div>
           </div>
           <div class="stat-card">
@@ -298,43 +298,18 @@
                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
             </div>
-            <div class="stat-value">1.87</div>
+            <div class="stat-value">&mdash;</div>
             <div class="stat-label">Quota Media</div>
           </div>
         </div>
 
         <!-- 6b. MONTHLY PERFORMANCE CHART
-             Grafico a barre animato. Ogni .chart-bar ha:
-             - data-value: valore numerico (altezza proporzionale, max ~140)
-             - data-label: etichetta mese (mostrata sotto la barra via CSS ::after)
-             L'animazione e' triggerata da chartObserver in script.js -->
+             Populated dynamically by loadTrackRecord() in script.js.
+             Shows empty placeholder until real data is available. -->
         <div class="chart-container">
           <h3 class="chart-title">Profitto Mensile (&euro;)</h3>
           <div class="chart">
-            <div class="chart-bar" data-value="85" data-label="Set">
-              <div class="chart-fill"></div>
-              <span class="chart-amount">+8.5€</span>
-            </div>
-            <div class="chart-bar" data-value="120" data-label="Ott">
-              <div class="chart-fill"></div>
-              <span class="chart-amount">+12.0€</span>
-            </div>
-            <div class="chart-bar" data-value="65" data-label="Nov">
-              <div class="chart-fill"></div>
-              <span class="chart-amount">+6.5€</span>
-            </div>
-            <div class="chart-bar" data-value="140" data-label="Dic">
-              <div class="chart-fill"></div>
-              <span class="chart-amount">+14.0€</span>
-            </div>
-            <div class="chart-bar" data-value="95" data-label="Gen">
-              <div class="chart-fill"></div>
-              <span class="chart-amount">+9.5€</span>
-            </div>
-            <div class="chart-bar" data-value="110" data-label="Feb">
-              <div class="chart-fill"></div>
-              <span class="chart-amount">+11.0€</span>
-            </div>
+            <div class="chart-empty">Dati in costruzione</div>
           </div>
         </div>
 
@@ -385,7 +360,7 @@
               </li>
               <li class="feature-included">
                 <span class="feature-check">&#10003;</span>
-                Statistiche generali Serie A
+                Statistiche generali per lega
               </li>
               <li class="feature-included">
                 <span class="feature-check">&#10003;</span>
@@ -516,7 +491,7 @@
               </svg>
               Entra nel Canale
             </a>
-            <span class="telegram-members">4,200+ membri attivi</span>
+            <span class="telegram-members">Entra nella community</span>
           </div>
         </div>
       </div>

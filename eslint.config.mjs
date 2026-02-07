@@ -73,7 +73,7 @@ export default [
     },
   },
   {
-    ignores: ['node_modules/', '.vercel/', 'supabase/'],
+    ignores: ['node_modules/', '.vercel/', 'supabase/', '.claude/'],
   },
   prettier,
 ];

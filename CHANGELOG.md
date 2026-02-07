@@ -4,12 +4,45 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Changed — Honest Track Record + Opportunistic Settlement
+
+- **Homepage: removed all fake numbers** — Hero stats (73% win rate, 12.4% ROI, 2847 tips), stats cards (1842 tips vincenti, 73% win rate, +12.4% ROI, 1.87 quota media), and monthly chart (6 fake bars) all replaced with em dash placeholders and `data-count="0"`
+- **Hero subtitle**: "ROI positivo dal giorno uno" replaced with "Track record verificato e trasparente"
+- **Telegram CTA**: "4,200+ membri attivi" replaced with "Entra nella community"
+- **`loadTrackRecord()` rewritten** — If `won+lost===0`: shows "in costruzione" state with em dashes (only pending count if available). If real data exists: updates DOM with real values and triggers counter animation. On API error: leaves honest em dash placeholders
+- **Monthly chart**: fake bars removed, replaced with "Dati in costruzione" placeholder (`.chart-empty` CSS class)
+- **Opportunistic settlement** in `api/fixtures.js` — When fresh results are fetched (cache miss), pending tips are settled fire-and-forget using the same data. Zero extra API calls. Idempotent (`WHERE status='pending'`)
+- **Exported** `evaluatePrediction()` and `buildActualResult()` from `api/cron-tasks.js` for reuse by fixtures.js
+- **`animateCounter()`** — Fixed: explicit `isNaN(target) || target === 0` check instead of falsy `!target`
+
+### Changed — Unified Prediction Engine Documentation
+
+- Created [`PREDICTION-ENGINE.md`](PREDICTION-ENGINE.md) as single authoritative reference for the prediction engine architecture, algorithm, and configuration
+- Added links from `CLAUDE.md`, `CHANGELOG.md`, and `SKILL.md` to the new document
+- Trimmed verbose algorithm details from `CHANGELOG.md` (now linked)
+
+### Added — `/generate-tips` Claude Code Skill
+
+- Claude Code as prediction engine (zero API cost), replacing the Claude API pipeline — see [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md) for full architecture
+- Skill file: `.claude/skills/generate-tips/SKILL.md`, data fetch script: `.claude/skills/generate-tips/scripts/fetch-league-data.js`
+- Supports flags: `--send` (Telegram), `--delete` (clear pending), league filter
+
+### Changed — Homepage Multi-League Branding
+
+- Hero badge: "SERIE A 2025/26" → "4 TOP LEAGUE · 2025/26" to reflect multi-league coverage
+- Live bar initial label: now shows all 4 leagues instead of only Serie A
+- Free plan feature: "Statistiche generali Serie A" → "Statistiche generali per lega"
+- Badge updates to specific league name when a league tab is selected
+
 ### Changed — Prediction Engine V2.1 (Batched)
 
-- **Batched Opus calls**: All matches for a league now processed in a single Opus 4.6 call instead of one per match (10x fewer API calls, ~80% faster, significantly lower cost)
-- **Parallel odds prefetch**: All match odds fetched concurrently via `Promise.allSettled` before the Opus call
-- **Schema**: Switched from single-prediction to batch-prediction JSON schema with `match_index` mapping
-- **Max tokens**: Dynamic `600 * matchCount` instead of fixed 700 per match
+- Batched Opus calls: all matches per league in a single API call (10x fewer, ~80% faster) with parallel odds prefetch — see [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md)
+
+### Removed — Automatic Cron Schedule
+
+- Removed Vercel cron from `vercel.json` (too expensive for Hobby plan — each run triggers Claude API calls)
+- Tip generation now triggered manually via `/generate-tips` skill or `POST /api/generate-tips`
+- Settle and send tasks still available via `POST /api/cron-tasks?task=settle|send`
 
 ### Removed — Serie B
 
@@ -19,34 +52,20 @@ All notable changes to WinningBet will be documented in this file.
 ### Added — Developer Tooling
 
 - `npm run env:pull` — syncs local .env from Vercel production (single source of truth)
+- `.gitignore` — `.claude/*` with `!.claude/skills/` exception (skills tracked, settings ignored)
+- `eslint.config.mjs` — added `.claude/` to ignores (skill scripts are utility code)
 
 ### Added — Prediction Engine V2
 
-- **2-Phase Pipeline**: Phase 1 (Research) uses Haiku 4.5 + web search for live context; Phase 2 (Prediction) uses Opus 4.6 + structured output per match
-- **Structured Output**: `output_config.format` with JSON schema — enum-constrained prediction types, typed confidence/odds, new `reasoning` field for chain-of-thought
-- **System Prompt**: Dedicated analyst persona with 8 calibration rules for confidence, Over/Under, Goal/No Goal analysis
-- **Home/Away Standings**: `getFullStandings()` in both `api-football.js` and `football-data.js` — extracts HOME and AWAY rankings from the same API response (zero extra calls)
-- **Recent Results**: Fetches last 30 results per league, filters last 5 per team with scores for the prompt
-- **Derived Stats**: Pre-computed avg goals for/against, BTTS%, clean sheet%, expected goals, classification zone context (Zona Champions, Europa, retrocessione)
-- **Web Search Research**: `researchLeagueContext()` — one Haiku 4.5 call per league with up to 3 web searches for injuries, suspensions, tactical news. Silent fallback on failure
-- **Tier Post-Generation**: `assignTier()` based on confidence/odds (replaces fixed rotation pattern) + `balanceTiers()` for minimum distribution guarantee
-- **Historical Accuracy Feedback Loop**: Queries Supabase win rate per prediction type per league, injects into prompt when 20+ closed tips exist
+- Two-phase pipeline (Haiku 4.5 research + Opus 4.6 prediction), structured output, derived stats, historical accuracy feedback loop — see [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md)
 
 ### Changed — Prediction Engine V2
 
-- **Model**: `claude-haiku-4-5-20251001` → `claude-opus-4-6` with `temperature: 0.3`
-- **Max Tokens**: 500 → 700 (for reasoning field)
-- **generate-tips.js**: POST handler now delegates to `generateForLeague()` (eliminated duplicated logic)
-- **football-data.js**: Refactored `getStandings()` to use shared `fetchStandingsData()` + `normalizeStandingEntry()`
-- **api-football.js**: Refactored `getStandings()` to use shared `fetchStandingsData()` + `normalizeStandingEntry()`
+- Model upgrade to Opus 4.6, refactored standings to shared `fetchStandingsData()` + `normalizeStandingEntry()`, post-generation tier assignment — see [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md)
 
 ### Removed — Prediction Engine V2
 
-- Regex strip markdown fences (no longer needed with structured output)
-- "Rispondi SOLO con JSON" prompt instruction (schema handles it)
-- Tier in Claude prompt (now assigned post-generation)
-- `tierPattern` fixed rotation array
-- Duplicated generation logic in POST handler
+- Regex JSON parsing, prompt-based tier assignment, `tierPattern` rotation, duplicated generation logic — see [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md)
 
 ### Added — UX Roadmap Phase 1-3
 

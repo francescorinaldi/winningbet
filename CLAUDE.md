@@ -9,7 +9,7 @@ Premium multi-league betting predictions platform (Serie A, Champions League, La
 - **Frontend**: HTML5, CSS3 (custom properties), Vanilla JS (ES6+ IIFE pattern)
 - **Backend**: Node.js Vercel Serverless Functions
 - **Database**: Supabase (PostgreSQL + Auth + RLS)
-- **AI**: Anthropic Claude API (prediction engine)
+- **AI**: Claude Code skill `/generate-tips` (primary), Anthropic Claude API (legacy serverless) — see [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md)
 - **Payments**: Stripe (subscriptions, webhooks, customer portal)
 - **APIs**: api-football.com (primary), football-data.org (fallback)
 - **Notifications**: Telegram Bot API, SendGrid (email)
@@ -42,9 +42,11 @@ public/script.js        → Main landing page logic (IIFE pattern)
 public/auth.js          → Authentication logic (Supabase Auth)
 public/dashboard.js     → User dashboard logic + Telegram linking
 supabase/migrations/    → Database schema migrations (4 files)
+.claude/skills/         → Claude Code skills (slash commands)
+.claude/skills/generate-tips/ → /generate-tips skill (prediction engine)
 eslint.config.mjs       → ESLint flat config
 .prettierrc             → Prettier config
-vercel.json             → Deployment config + caching headers + cron schedule
+vercel.json             → Deployment config + caching headers
 CHANGELOG.md            → All changes (always update)
 ```
 
@@ -57,7 +59,20 @@ npm run lint          # ESLint on all JS files
 npm run lint:fix      # ESLint with auto-fix
 npm run format        # Format all files with Prettier
 npm run format:check  # Check formatting without modifying
+npm run env:pull      # Sync .env from Vercel production (single source of truth)
 ```
+
+### Claude Code Skills (Slash Commands)
+
+```bash
+/generate-tips                      # Generate tips for ALL leagues
+/generate-tips serie-a              # Generate for one league only
+/generate-tips --send               # Generate and send to Telegram
+/generate-tips --delete             # Delete pending tips, then regenerate
+/generate-tips serie-a --send       # Combine flags
+```
+
+Full prediction engine architecture: [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md)
 
 ## API Endpoints
 
@@ -112,6 +127,8 @@ Valid slugs: `serie-a`, `champions-league`, `la-liga`, `premier-league`.
 - Never commit `.env` files
 - All API keys go through serverless functions (never expose to client)
 - Cache-Control headers set in vercel.json for API routes
+- **Prefer Claude Code over Claude API** — If something can be done directly by Claude Code (analysis, prediction, data processing, research), do NOT call the Claude/Anthropic API for it. Claude Code IS Claude — use your own capabilities instead of paying for API calls. The `/generate-tips` skill exists for this reason: Claude Code is the prediction engine, not a wrapper around the API.
+- **No autonomous API spending** — Never call Claude API, external paid APIs, or any cost-incurring service autonomously. If a check or verification can be done together with the user (e.g. querying Supabase, checking track record data, testing endpoints), always do it collaboratively instead of burning API credits
 
 ---
 

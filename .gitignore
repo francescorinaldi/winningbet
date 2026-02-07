@@ -1,6 +1,7 @@
 node_modules/
 .vercel/
-.claude/
+.claude/*
+!.claude/skills/
 .env
 .env.*
 .env.local
