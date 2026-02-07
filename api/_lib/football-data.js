@@ -12,7 +12,7 @@
  *   - 10 richieste/minuto
  *   - Dati aggiornati ogni ~1 minuto
  *   - Non fornisce quote scommesse (nessun equivalente di getOdds)
- *   - Non copre Serie B (SB) — il fallback fallira' silenziosamente
+ *   - Non fornisce copertura per tutte le leghe secondarie
  *
  * Variabile d'ambiente richiesta: FOOTBALL_DATA_KEY
  */

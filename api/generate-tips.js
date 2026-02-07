@@ -17,7 +17,7 @@ const { generateBatchPredictions } = require('./_lib/prediction-engine');
 const { resolveLeagueSlug, getLeague } = require('./_lib/leagues');
 const { verifyCronSecret } = require('./_lib/auth-middleware');
 
-const LEAGUE_SLUGS = ['serie-a', 'serie-b', 'champions-league', 'la-liga', 'premier-league'];
+const LEAGUE_SLUGS = ['serie-a', 'champions-league', 'la-liga', 'premier-league'];
 
 module.exports = async function handler(req, res) {
   if (req.method === 'GET') {

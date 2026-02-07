@@ -437,7 +437,6 @@
 
   const LEAGUE_NAMES = {
     'serie-a': { label: 'Serie A', season: '2025/26' },
-    'serie-b': { label: 'Serie B', season: '2025/26' },
     'champions-league': { label: 'Champions League', season: '2025/26' },
     'la-liga': { label: 'La Liga', season: '2025/26' },
     'premier-league': { label: 'Premier League', season: '2025/26' },

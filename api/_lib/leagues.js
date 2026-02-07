@@ -15,13 +15,6 @@ const LEAGUES = {
     name: 'Serie A',
     nameShort: 'Serie A',
   },
-  'serie-b': {
-    apiFootballId: 136,
-    footballDataCode: 'SB',
-    season: 2025,
-    name: 'Serie B',
-    nameShort: 'Serie B',
-  },
   'champions-league': {
     apiFootballId: 2,
     footballDataCode: 'CL',
