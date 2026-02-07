@@ -3,12 +3,6 @@
     "api/generate-tips.js": { "maxDuration": 60 },
     "api/cron-tasks.js": { "maxDuration": 60 }
   },
-  "crons": [
-    {
-      "path": "/api/generate-tips",
-      "schedule": "0 8 * * *"
-    }
-  ],
   "outputDirectory": "public",
   "headers": [
     {
