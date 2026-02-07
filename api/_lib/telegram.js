@@ -62,7 +62,6 @@ function escapeMarkdown(text) {
 
 const LEAGUE_FLAGS = {
   'serie-a': '\uD83C\uDDEE\uD83C\uDDF9',
-  'serie-b': '\uD83C\uDDEE\uD83C\uDDF9',
   'champions-league': '\uD83C\uDFC6',
   'la-liga': '\uD83C\uDDEA\uD83C\uDDF8',
   'premier-league': '\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F',
@@ -70,7 +69,6 @@ const LEAGUE_FLAGS = {
 
 const LEAGUE_NAMES = {
   'serie-a': 'SERIE A',
-  'serie-b': 'SERIE B',
   'champions-league': 'CHAMPIONS LEAGUE',
   'la-liga': 'LA LIGA',
   'premier-league': 'PREMIER LEAGUE',

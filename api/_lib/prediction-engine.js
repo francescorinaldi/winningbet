@@ -1,9 +1,11 @@
 /**
- * AI Prediction Engine V2 — Claude API Integration
+ * AI Prediction Engine V2.1 — Claude API Integration (Batched)
  *
  * Pipeline a 2 fasi per pronostici calcistici:
- *   Fase 1 — Research: Haiku 4.5 + web search per contesto live
- *   Fase 2 — Prediction: Opus 4.6 + structured output per ogni partita
+ *   Fase 1 — Research: Haiku 4.5 + web search per contesto live (1 call/lega)
+ *   Fase 2 — Prediction: Opus 4.6 + structured output per TUTTE le partite (1 call/lega)
+ *
+ * V2.1: Tutte le partite di una lega in una singola chiamata Opus (10x meno API calls).
  *
  * Dati arricchiti: classifica totale + casa/trasferta, risultati recenti,
  * statistiche derivate, contesto web, storico accuratezza.
@@ -56,36 +58,50 @@ REGOLE:
 8. Considera il contesto della partita: obiettivi stagionali, rivalita', fattore campo.`;
 
 /**
- * Schema JSON per structured output (Opus 4.6).
- * Garantisce output conforme senza bisogno di parsing manuale.
+ * Schema JSON per structured output batch (Opus 4.6).
+ * Una singola chiamata restituisce pronostici per TUTTE le partite della lega.
  * @type {Object}
  */
-const PREDICTION_SCHEMA = {
+const BATCH_PREDICTION_SCHEMA = {
   type: 'object',
   properties: {
-    prediction: {
-      type: 'string',
-      enum: PREDICTION_TYPES,
-      description: 'Tipo di pronostico selezionato',
-    },
-    confidence: {
-      type: 'integer',
-      description: 'Livello di fiducia tra 60 e 95',
-    },
-    odds: {
-      type: 'number',
-      description: 'Quota decimale consigliata tra 1.20 e 5.00',
-    },
-    analysis: {
-      type: 'string',
-      description: 'Analisi in italiano di 2-3 frasi con riferimenti a dati specifici',
-    },
-    reasoning: {
-      type: 'string',
-      description: 'Chain-of-thought interna con il processo logico completo',
+    predictions: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          match_index: {
+            type: 'integer',
+            description: 'Indice della partita (0-based, corrispondente all\'ordine nel prompt)',
+          },
+          prediction: {
+            type: 'string',
+            enum: PREDICTION_TYPES,
+            description: 'Tipo di pronostico selezionato',
+          },
+          confidence: {
+            type: 'integer',
+            description: 'Livello di fiducia tra 60 e 95',
+          },
+          odds: {
+            type: 'number',
+            description: 'Quota decimale consigliata tra 1.20 e 5.00',
+          },
+          analysis: {
+            type: 'string',
+            description: 'Analisi in italiano di 2-3 frasi con riferimenti a dati specifici',
+          },
+          reasoning: {
+            type: 'string',
+            description: 'Chain-of-thought interna con il processo logico completo',
+          },
+        },
+        required: ['match_index', 'prediction', 'confidence', 'odds', 'analysis', 'reasoning'],
+        additionalProperties: false,
+      },
     },
   },
-  required: ['prediction', 'confidence', 'odds', 'analysis', 'reasoning'],
+  required: ['predictions'],
   additionalProperties: false,
 };
 
@@ -239,60 +255,38 @@ function computeDerivedStats(standing, recentMatches, teamName, totalTeams) {
 }
 
 /**
- * Genera un pronostico AI per una singola partita (Fase 2).
- * Usa Opus 4.6 con structured output per output vincolato.
+ * Formatta un blocco dati per una singola partita nel prompt batch.
  *
- * @param {Object} params
- * @param {Object} params.match - Dati della partita
- * @param {Object} params.homeStanding - Classifica totale squadra casa
- * @param {Object} params.awayStanding - Classifica totale squadra ospite
- * @param {Object|null} params.homeHomeStanding - Classifica CASA della squadra di casa
- * @param {Object|null} params.awayAwayStanding - Classifica TRASFERTA della squadra ospite
- * @param {Object|null} params.odds - Quote 1X2
- * @param {string} params.leagueName - Nome della lega
- * @param {Array<Object>} params.recentResults - Risultati recenti della lega
- * @param {string} params.webContext - Contesto da web research (Fase 1)
- * @param {string} params.accuracyContext - Storico accuratezza per tipo di pronostico
- * @param {number} params.totalTeams - Numero totale squadre in classifica
- * @returns {Promise<Object>} Pronostico generato
+ * @param {number} index - Indice della partita (0-based)
+ * @param {Object} match - Dati della partita
+ * @param {Object} homeStanding - Classifica totale squadra casa
+ * @param {Object} awayStanding - Classifica totale squadra ospite
+ * @param {Object|null} homeHomeStanding - Classifica CASA della squadra di casa
+ * @param {Object|null} awayAwayStanding - Classifica TRASFERTA della squadra ospite
+ * @param {Object|null} odds - Quote 1X2
+ * @param {Array<Object>} recentResults - Risultati recenti della lega
+ * @param {number} totalTeams - Numero totale squadre in classifica
+ * @returns {string} Blocco formattato per il prompt
  */
-async function generatePrediction({
-  match,
-  homeStanding,
-  awayStanding,
-  homeHomeStanding,
-  awayAwayStanding,
-  odds,
-  leagueName,
-  recentResults,
-  webContext,
-  accuracyContext,
-  totalTeams,
-}) {
-  const league = leagueName || 'Serie A';
+function formatMatchBlock(index, match, homeStanding, awayStanding, homeHomeStanding, awayAwayStanding, odds, recentResults, totalTeams) {
   const oddsInfo =
     odds && odds.values && odds.values.length >= 3
       ? `Quote 1X2: Casa ${odds.values[0].odd}, Pareggio ${odds.values[1].odd}, Trasferta ${odds.values[2].odd}`
       : 'Quote non disponibili';
 
-  // Risultati recenti per squadra
   const homeRecent = getTeamRecentMatches(match.home, recentResults);
   const awayRecent = getTeamRecentMatches(match.away, recentResults);
 
-  // Statistiche derivate
   const homeStats = computeDerivedStats(homeStanding, homeRecent, match.home, totalTeams);
   const awayStats = computeDerivedStats(awayStanding, awayRecent, match.away, totalTeams);
 
-  // Gol attesi nel match
   const expectedGoals = (
     (parseFloat(homeStats.avgGoalsFor) + parseFloat(awayStats.avgGoalsAgainst)) / 2 +
     (parseFloat(awayStats.avgGoalsFor) + parseFloat(homeStats.avgGoalsAgainst)) / 2
   ).toFixed(2);
 
-  const prompt = `Analizza questa partita di ${league} e fornisci un pronostico.
-
-PARTITA: ${match.home} vs ${match.away}
-DATA: ${match.date}
+  return `--- PARTITA ${index} ---
+${match.home} vs ${match.away} | ${match.date}
 
 ${formatStandingSection('CASA', match.home, homeStanding, homeHomeStanding)}
 
@@ -303,44 +297,10 @@ STATISTICHE DERIVATE:
 - ${match.away}: media gol fatti ${awayStats.avgGoalsFor}/partita, subiti ${awayStats.avgGoalsAgainst}/partita | BTTS ${awayStats.bttsPercent}% | Clean sheet ${awayStats.cleanSheetPercent}% | ${awayStats.zoneContext}
 - Gol attesi nel match: ${expectedGoals}
 
-RISULTATI RECENTI ${match.home} (ultime 5):
-${formatRecentResults(match.home, homeRecent)}
+RISULTATI RECENTI ${match.home} (ultime 5): ${formatRecentResults(match.home, homeRecent)}
+RISULTATI RECENTI ${match.away} (ultime 5): ${formatRecentResults(match.away, awayRecent)}
 
-RISULTATI RECENTI ${match.away} (ultime 5):
-${formatRecentResults(match.away, awayRecent)}
-
-${oddsInfo}
-${webContext ? `\nCONTESTO AGGIORNATO (da ricerche web):\n${webContext}` : ''}
-${accuracyContext ? `\n${accuracyContext}` : ''}
-
-TIPI DI PRONOSTICO VALIDI: ${PREDICTION_TYPES.join(', ')}
-
-Fornisci il tuo pronostico. La confidence deve essere tra 60 e 95, le odds tra 1.20 e 5.00.`;
-
-  const response = await anthropic.messages.create({
-    model: 'claude-opus-4-6',
-    max_tokens: 700,
-    temperature: 0.3,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: prompt }],
-    output_config: {
-      format: {
-        type: 'json_schema',
-        schema: PREDICTION_SCHEMA,
-      },
-    },
-  });
-
-  const result = JSON.parse(response.content[0].text);
-
-  // Validazione bounds (lo schema garantisce il tipo ma non min/max)
-  return {
-    prediction: result.prediction,
-    confidence: Math.min(95, Math.max(60, result.confidence)),
-    odds: parseFloat(Math.min(5.0, Math.max(1.2, result.odds)).toFixed(2)),
-    analysis: result.analysis,
-    reasoning: result.reasoning,
-  };
+${oddsInfo}`;
 }
 
 // ─── Tier Assignment ────────────────────────────────────────────────────────
@@ -398,8 +358,8 @@ function balanceTiers(predictions) {
 // ─── Batch Generation ───────────────────────────────────────────────────────
 
 /**
- * Genera pronostici per un batch di partite.
- * Pipeline: web research → per-match prediction → tier assignment → balancing.
+ * Genera pronostici per un batch di partite in una singola chiamata Opus.
+ * Pipeline: odds prefetch → web research → batch prediction → tier assignment → balancing.
  *
  * @param {Object} params
  * @param {Array<Object>} params.matches - Array di partite
@@ -437,6 +397,15 @@ async function generateBatchPredictions({
 
   const totalTeams = standings.length;
 
+  // Pre-fetch: quote per tutte le partite in parallelo
+  const oddsResults = await Promise.allSettled(
+    matches.map((m) => getOdds(m.id)),
+  );
+  const oddsMap = new Map();
+  matches.forEach((m, i) => {
+    oddsMap.set(m.id, oddsResults[i].status === 'fulfilled' ? oddsResults[i].value : null);
+  });
+
   // Fase 1: Web Research (una volta per lega)
   let webContext = '';
   try {
@@ -445,56 +414,68 @@ async function generateBatchPredictions({
     console.warn('Web research skipped:', err.message);
   }
 
-  // Fase 2: Prediction per ogni partita
-  const results = [];
-
-  for (const match of matches) {
+  // Fase 2: Batch prediction — una singola chiamata Opus per tutte le partite
+  const matchBlocks = matches.map((match, index) => {
     const homeStanding = standingsMap.get(match.home) || createDefaultStanding(match.home);
     const awayStanding = standingsMap.get(match.away) || createDefaultStanding(match.away);
-    const homeHomeStanding = homeMap.get(match.home) || null;
-    const awayAwayStanding = awayMap.get(match.away) || null;
+    return formatMatchBlock(
+      index, match, homeStanding, awayStanding,
+      homeMap.get(match.home) || null,
+      awayMap.get(match.away) || null,
+      oddsMap.get(match.id),
+      recentResults || [],
+      totalTeams,
+    );
+  });
 
-    let odds = null;
-    try {
-      odds = await getOdds(match.id);
-    } catch (_err) {
-      console.warn(`Could not fetch odds for fixture ${match.id}`);
-    }
+  const league = leagueName || 'Serie A';
+  const prompt = `Analizza queste ${matches.length} partite di ${league} e fornisci un pronostico per ciascuna.
+Restituisci un pronostico per OGNI partita, usando match_index corrispondente.
 
-    try {
-      const prediction = await generatePrediction({
-        match,
-        homeStanding,
-        awayStanding,
-        homeHomeStanding,
-        awayAwayStanding,
-        odds,
-        leagueName,
-        recentResults: recentResults || [],
-        webContext,
-        accuracyContext: accuracyContext || '',
-        totalTeams,
-      });
+${matchBlocks.join('\n\n')}
 
-      const tier = assignTier(prediction);
+${webContext ? `\nCONTESTO AGGIORNATO (da ricerche web):\n${webContext}` : ''}
+${accuracyContext ? `\n${accuracyContext}` : ''}
 
-      results.push({
-        match_id: String(match.id),
-        home_team: match.home,
-        away_team: match.away,
-        match_date: match.date,
-        prediction: prediction.prediction,
-        odds: prediction.odds,
-        confidence: prediction.confidence,
-        analysis: prediction.analysis,
-        tier,
-      });
-    } catch (err) {
-      console.error(
-        `Failed to generate prediction for ${match.home} vs ${match.away}:`,
-        err.message,
-      );
-    }
+TIPI DI PRONOSTICO VALIDI: ${PREDICTION_TYPES.join(', ')}
+
+Per ogni partita, la confidence deve essere tra 60 e 95, le odds tra 1.20 e 5.00.`;
+
+  const response = await anthropic.messages.create({
+    model: 'claude-opus-4-6',
+    max_tokens: 600 * matches.length,
+    temperature: 0.3,
+    system: SYSTEM_PROMPT,
+    messages: [{ role: 'user', content: prompt }],
+    output_config: {
+      format: {
+        type: 'json_schema',
+        schema: BATCH_PREDICTION_SCHEMA,
+      },
+    },
+  });
+
+  const parsed = JSON.parse(response.content[0].text);
+  const results = [];
+
+  for (const pred of parsed.predictions) {
+    const idx = pred.match_index;
+    if (idx < 0 || idx >= matches.length) continue;
+
+    const match = matches[idx];
+    const tier = assignTier(pred);
+
+    results.push({
+      match_id: String(match.id),
+      home_team: match.home,
+      away_team: match.away,
+      match_date: match.date,
+      prediction: pred.prediction,
+      odds: parseFloat(Math.min(5.0, Math.max(1.2, pred.odds)).toFixed(2)),
+      confidence: Math.min(95, Math.max(60, pred.confidence)),
+      analysis: pred.analysis,
+      tier,
+    });
   }
 
   return balanceTiers(results);

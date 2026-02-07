@@ -4,6 +4,22 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Changed — Prediction Engine V2.1 (Batched)
+
+- **Batched Opus calls**: All matches for a league now processed in a single Opus 4.6 call instead of one per match (10x fewer API calls, ~80% faster, significantly lower cost)
+- **Parallel odds prefetch**: All match odds fetched concurrently via `Promise.allSettled` before the Opus call
+- **Schema**: Switched from single-prediction to batch-prediction JSON schema with `match_index` mapping
+- **Max tokens**: Dynamic `600 * matchCount` instead of fixed 700 per match
+
+### Removed — Serie B
+
+- Removed Serie B from all league configurations (no API data available)
+- Affected files: leagues.js, generate-tips.js, telegram.js, user-settings.js, football-data.js, dashboard.html, index.html, script.js, CLAUDE.md
+
+### Added — Developer Tooling
+
+- `npm run env:pull` — syncs local .env from Vercel production (single source of truth)
+
 ### Added — Prediction Engine V2
 
 - **2-Phase Pipeline**: Phase 1 (Research) uses Haiku 4.5 + web search for live context; Phase 2 (Prediction) uses Opus 4.6 + structured output per match

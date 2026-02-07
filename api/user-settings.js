@@ -13,7 +13,7 @@
 const { authenticate } = require('./_lib/auth-middleware');
 const { supabase } = require('./_lib/supabase');
 
-const VALID_LEAGUES = ['serie-a', 'serie-b', 'champions-league', 'la-liga', 'premier-league'];
+const VALID_LEAGUES = ['serie-a', 'champions-league', 'la-liga', 'premier-league'];
 
 module.exports = async function handler(req, res) {
   const { user, error: authError } = await authenticate(req);
