@@ -205,7 +205,7 @@
    */
   function animateCounter(el) {
     const target = parseInt(el.getAttribute('data-count'), 10);
-    if (!target) return;
+    if (isNaN(target) || target === 0) return;
 
     const duration = 2000;
     const startTime = performance.now();
@@ -471,7 +471,7 @@
 
     const badgeText = document.getElementById('heroBadgeText');
     if (badgeText) {
-      badgeText.textContent = info.label.toUpperCase() + ' ' + info.season;
+      badgeText.textContent = info.label.toUpperCase() + ' \u00B7 ' + info.season;
     }
 
     const liveBarLabel = document.getElementById('liveBarLabel');
@@ -985,30 +985,54 @@
 
   /**
    * Carica le statistiche dal track record API e aggiorna il DOM.
-   * Aggiorna: tips vincenti, win rate, ROI mensile, quota media,
-   * e il grafico mensile se ci sono dati.
+   * Se won+lost===0: mostra stato "in costruzione" (em dash, pending count).
+   * Se ci sono dati reali: aggiorna DOM con valori veri + trigger counter animation.
+   * Se errore: lascia i placeholder em dash (stato onesto "nessun dato").
    */
   async function loadTrackRecord() {
     try {
       const data = await fetchAPI('stats', { type: 'track-record' });
-      if (!data || data.total_tips === 0) return;
+      if (!data) return;
 
-      // Aggiorna le stat card della hero section
-      const heroStats = document.querySelectorAll('.hero-stat-value[data-count]');
-      heroStats.forEach(function (el) {
-        const label = el.closest('.hero-stat');
-        if (!label) return;
-        const labelText = label.querySelector('.hero-stat-label');
-        if (!labelText) return;
+      const won = data.won || 0;
+      const lost = data.lost || 0;
+      const settled = won + lost;
 
-        if (labelText.textContent === 'Win Rate') {
-          el.setAttribute('data-count', Math.round(data.win_rate));
-        } else if (labelText.textContent === 'Tips Inviati') {
-          el.setAttribute('data-count', data.total_tips);
+      // No settled tips yet — show "in costruzione" state
+      if (settled === 0) {
+        // Show pending count in hero if available
+        if (data.total_tips > 0) {
+          const heroTipsEl = findHeroStat('Tips Inviati');
+          if (heroTipsEl) {
+            heroTipsEl.setAttribute('data-count', data.total_tips);
+            animateCounter(heroTipsEl);
+          }
         }
-      });
+        return;
+      }
 
-      // Aggiorna le stat card della sezione track record
+      // We have real data — update everything
+
+      // Hero section stats
+      const heroWinRate = findHeroStat('Win Rate');
+      if (heroWinRate) {
+        heroWinRate.setAttribute('data-count', Math.round(data.win_rate));
+        animateCounter(heroWinRate);
+      }
+
+      const heroRoi = findHeroStat('ROI Medio');
+      if (heroRoi) {
+        heroRoi.setAttribute('data-count', Math.round(data.roi));
+        animateCounter(heroRoi);
+      }
+
+      const heroTips = findHeroStat('Tips Inviati');
+      if (heroTips) {
+        heroTips.setAttribute('data-count', data.total_tips);
+        animateCounter(heroTips);
+      }
+
+      // Track record stat cards
       const statCards = document.querySelectorAll('.stat-card');
       statCards.forEach(function (card) {
         const label = card.querySelector('.stat-label');
@@ -1016,9 +1040,11 @@
         if (!label || !value) return;
 
         if (label.textContent === 'Tips Vincenti' && value.hasAttribute('data-count')) {
-          value.setAttribute('data-count', data.won);
+          value.setAttribute('data-count', won);
+          animateCounter(value);
         } else if (label.textContent === 'Win Rate' && value.hasAttribute('data-count')) {
           value.setAttribute('data-count', Math.round(data.win_rate));
+          animateCounter(value);
         } else if (label.textContent === 'ROI Mensile') {
           value.textContent = (data.roi >= 0 ? '+' : '') + data.roi + '%';
         } else if (label.textContent === 'Quota Media') {
@@ -1026,13 +1052,29 @@
         }
       });
 
-      // Aggiorna il grafico mensile se ci sono dati
+      // Monthly chart
       if (data.monthly && data.monthly.length > 0) {
         updateChart(data.monthly);
       }
     } catch (_err) {
-      // Silenzioso: se l'API non e' disponibile, i valori hardcoded rimangono
+      // Leave em dash placeholders — honest "no data" state
     }
+  }
+
+  /**
+   * Finds a hero stat value element by its label text.
+   * @param {string} labelText - The label to search for (e.g. "Win Rate")
+   * @returns {HTMLElement|null} The .hero-stat-value element, or null
+   */
+  function findHeroStat(labelText) {
+    const stats = document.querySelectorAll('.hero-stat');
+    for (let i = 0; i < stats.length; i++) {
+      const label = stats[i].querySelector('.hero-stat-label');
+      if (label && label.textContent === labelText) {
+        return stats[i].querySelector('.hero-stat-value[data-count]');
+      }
+    }
+    return null;
   }
 
   /**

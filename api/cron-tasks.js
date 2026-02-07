@@ -320,6 +320,8 @@ function evaluatePrediction(prediction, result, totalGoals) {
   }
 }
 
-// Named exports for direct require by generate-tips.js
+// Named exports for direct require by generate-tips.js and fixtures.js
 module.exports.handleSettle = handleSettle;
 module.exports.handleSend = handleSend;
+module.exports.evaluatePrediction = evaluatePrediction;
+module.exports.buildActualResult = buildActualResult;

@@ -1223,6 +1223,18 @@ img {
   opacity: 1;
 }
 
+.chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+
 /* Recent Results */
 .recent-results {
   background: var(--bg-card);
