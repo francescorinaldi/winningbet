@@ -744,12 +744,69 @@
   }
 
   /**
+   * Costruisce l'overlay di blocco con proposta di valore per le tip card.
+   * Mostra i benefit concreti del tier + CTA (login o upgrade).
+   * @param {string} cardTier - Tier della card ('pro' o 'vip')
+   * @param {string|null} userTier - Tier dell'utente (null se non autenticato)
+   * @returns {HTMLElement} Elemento .locked-overlay
+   */
+  function buildLockedOverlay(cardTier, userTier) {
+    const isVipCard = cardTier === 'vip';
+    const isAuthenticated = userTier !== null;
+
+    const overlayClass = isVipCard ? 'locked-overlay locked-overlay--gold' : 'locked-overlay';
+    const overlay = createEl('div', overlayClass);
+    overlay.appendChild(buildLockSvg());
+
+    // Titolo con proposta di valore
+    const title = isVipCard ? 'Pronostici VIP Esclusivi' : 'Sblocca i Pronostici PRO';
+    overlay.appendChild(createEl('span', 'locked-overlay-title', title));
+
+    // Lista benefit concreti
+    const benefits = createEl('ul', 'locked-benefits');
+    const benefitItems = isVipCard
+      ? [
+          'Tips VALUE ad alta quota',
+          'Canale Telegram VIP privato',
+          'Bankroll management personalizzato',
+        ]
+      : [
+          'Tutti i tips giornalieri',
+          'Analisi pre-partita dettagliate',
+          'Storico completo risultati',
+        ];
+
+    benefitItems.forEach(function (text) {
+      const li = createEl('li', null, '\u2713 ' + text);
+      benefits.appendChild(li);
+    });
+    overlay.appendChild(benefits);
+
+    // CTA: login se non autenticato, upgrade se autenticato
+    if (isAuthenticated) {
+      const btn = createEl('a', 'btn btn-gold btn-sm');
+      btn.textContent = isVipCard
+        ? 'Diventa VIP \u2014 \u20AC29.99/mese'
+        : 'Passa a PRO \u2014 \u20AC9.99/mese';
+      btn.href = '#pricing';
+      overlay.appendChild(btn);
+    } else {
+      const loginBtn = createEl('a', 'btn btn-gold btn-sm');
+      loginBtn.textContent = 'Accedi con Google';
+      loginBtn.href = '/auth.html';
+      overlay.appendChild(loginBtn);
+    }
+
+    return overlay;
+  }
+
+  /**
    * Costruisce una tip card per un singolo pronostico.
    *
-   * La card varia in base al tier:
-   * - "free": tutto visibile (pronostico, quota, analisi)
-   * - "pro": pronostico e quota visibili, analisi bloccata con overlay
-   * - "vip": pronostico e quota offuscati, analisi bloccata con overlay gold
+   * La visibilita' del contenuto dipende dal tier dell'utente (homepageUserTier):
+   * - canAccessTier = true: tutto visibile (pronostico, quota, analisi)
+   * - canAccessTier = false: card grayed out con overlay di blocco e proposta upgrade/login
+   * - I tips FREE sono sempre visibili a tutti
    *
    * @param {Object} match - Dati partita da /api/matches
    * @param {string} match.date - Data ISO della partita
@@ -759,11 +816,12 @@
    * @returns {HTMLElement} Elemento .tip-card completo
    */
   function buildTipCard(match, tier) {
-    const isFree = tier === 'free';
+    const hasAccess = canAccessTier(homepageUserTier, tier);
     const isVip = tier === 'vip';
     let cardClass = 'tip-card';
     if (tier === 'pro') cardClass += ' tip-card--pro';
     if (isVip) cardClass += ' tip-card--vip';
+    if (!hasAccess) cardClass += ' tip-card--locked';
 
     const card = createEl('div', cardClass);
     card.setAttribute('data-tier', tier);
@@ -794,18 +852,18 @@
     tipMatch.appendChild(awayTeam);
     card.appendChild(tipMatch);
 
-    // Pronostico e quota (offuscati per VIP)
+    // Pronostico e quota (nascosti se non si ha accesso)
     const prediction = createEl('div', 'tip-prediction');
     const pick = createEl('div', 'tip-pick');
     pick.appendChild(createEl('span', 'pick-label', 'Pronostico'));
-    const pickVal = createEl('span', isVip ? 'pick-value tip-value--hidden' : 'pick-value');
-    pickVal.textContent = isVip ? '\u2605 \u2605 \u2605' : randomFrom(PREDICTIONS);
+    const pickVal = createEl('span', !hasAccess ? 'pick-value tip-value--hidden' : 'pick-value');
+    pickVal.textContent = !hasAccess ? '\u2605 \u2605 \u2605' : randomFrom(PREDICTIONS);
     pick.appendChild(pickVal);
     prediction.appendChild(pick);
     const odds = createEl('div', 'tip-odds');
     odds.appendChild(createEl('span', 'odds-label', 'Quota'));
-    const oddsVal = createEl('span', isVip ? 'odds-value tip-value--hidden' : 'odds-value');
-    oddsVal.textContent = isVip ? '?.??' : randomOdd();
+    const oddsVal = createEl('span', !hasAccess ? 'odds-value tip-value--hidden' : 'odds-value');
+    oddsVal.textContent = !hasAccess ? '?.??' : randomOdd();
     odds.appendChild(oddsVal);
     prediction.appendChild(odds);
     card.appendChild(prediction);
@@ -825,24 +883,14 @@
     confDiv.appendChild(createEl('span', 'confidence-value', conf + '%'));
     card.appendChild(confDiv);
 
-    // Analisi: visibile per FREE, bloccata con overlay per PRO/VIP
-    if (isFree) {
+    // Analisi: visibile se ha accesso, altrimenti overlay con benefit + CTA
+    if (hasAccess) {
       const analysis = createEl('div', 'tip-analysis');
       analysis.appendChild(createEl('p', null, randomFrom(ANALYSES)));
       card.appendChild(analysis);
     } else {
       const locked = createEl('div', 'tip-analysis tip-analysis--locked');
-      const overlayClass = isVip ? 'locked-overlay locked-overlay--gold' : 'locked-overlay';
-      const overlay = createEl('div', overlayClass);
-      overlay.appendChild(buildLockSvg());
-      const msg = isVip
-        ? 'Tip esclusivo riservato ai membri VIP'
-        : 'Analisi completa riservata agli abbonati PRO';
-      overlay.appendChild(createEl('span', null, msg));
-      const btn = createEl('a', 'btn btn-gold btn-sm', isVip ? 'Diventa VIP' : 'Sblocca');
-      btn.href = '#pricing';
-      overlay.appendChild(btn);
-      locked.appendChild(overlay);
+      locked.appendChild(buildLockedOverlay(tier, homepageUserTier));
       card.appendChild(locked);
     }
 
@@ -1004,36 +1052,81 @@
   }
 
   // ==========================================
-  // AUTH STATE — Navbar UI
+  // AUTH STATE — Navbar UI + User Tier
   // ==========================================
-  // Controlla se l'utente e' autenticato via Supabase
-  // e aggiorna i bottoni della navbar di conseguenza.
+  // Controlla se l'utente e' autenticato via Supabase,
+  // aggiorna i bottoni della navbar e recupera il tier
+  // per il rendering condizionale delle tip card.
 
   const navAuthBtn = document.getElementById('navAuthBtn');
   const navSubscribeBtn = document.getElementById('navSubscribeBtn');
 
+  /** Tier dell'utente sulla homepage: null = non autenticato, 'free'/'pro'/'vip' */
+  let homepageUserTier = null;
+
+  /**
+   * Controlla se l'utente puo' accedere al contenuto di un certo tier.
+   * I tips FREE sono sempre accessibili a tutti.
+   * @param {string|null} userTier - Tier dell'utente (null se non autenticato)
+   * @param {string} cardTier - Tier della tip card ('free', 'pro', 'vip')
+   * @returns {boolean}
+   */
+  function canAccessTier(userTier, cardTier) {
+    if (cardTier === 'free') return true;
+    const hierarchy = { free: 0, pro: 1, vip: 2 };
+    const userLevel = userTier ? hierarchy[userTier] || 0 : -1;
+    const cardLevel = hierarchy[cardTier] || 0;
+    return userLevel >= cardLevel;
+  }
+
   /**
    * Aggiorna la navbar in base allo stato di autenticazione.
-   * Se l'utente e' loggato: mostra "Dashboard" e nascondi "Abbonati Ora".
+   * Se l'utente e' loggato: mostra "I Miei Tips" e nascondi "Abbonati Ora".
    * Se non loggato: mostra "Accedi" e "Abbonati Ora".
    * @param {Object|null} session - Sessione Supabase corrente
    */
   function updateNavForAuth(session) {
     if (session && navAuthBtn) {
-      navAuthBtn.textContent = 'Dashboard';
+      navAuthBtn.textContent = 'I Miei Tips';
       navAuthBtn.href = '/dashboard.html';
       if (navSubscribeBtn) navSubscribeBtn.style.display = 'none';
     }
+  }
+
+  /**
+   * Carica il tier dell'utente autenticato dal profilo Supabase.
+   * Aggiorna homepageUserTier e ricarica i tips per applicare il locking corretto.
+   * @param {Object} session - Sessione Supabase attiva
+   */
+  async function loadHomepageUserTier(session) {
+    try {
+      const result = await SupabaseConfig.client
+        .from('profiles')
+        .select('tier')
+        .eq('user_id', session.user.id)
+        .single();
+      homepageUserTier = (result.data && result.data.tier) || 'free';
+    } catch (_err) {
+      homepageUserTier = 'free';
+    }
+    // Ricarica i tips con il tier aggiornato
+    loadTipsFromAPI();
   }
 
   // Controlla la sessione all'avvio (solo se SupabaseConfig e' disponibile)
   if (typeof SupabaseConfig !== 'undefined') {
     SupabaseConfig.getSession().then(function (result) {
       updateNavForAuth(result.data.session);
+      if (result.data.session) {
+        loadHomepageUserTier(result.data.session);
+      }
     });
 
     SupabaseConfig.onAuthStateChange(function (_event, session) {
       updateNavForAuth(session);
+      if (session) {
+        loadHomepageUserTier(session);
+      }
     });
   }
 
@@ -1150,12 +1243,28 @@
 
   /**
    * Tenta di caricare i tips dal database (API).
+   * Mostra sempre tutte e 3 le tier (free, pro, vip) sulla homepage.
+   * Se l'utente non ha accesso a un tier, mostra card bloccate con benefici.
    * Se il database non ha tips, usa il fallback client-side.
    */
   async function loadTipsFromAPI() {
     try {
-      const tips = await fetchAPI('tips', { league: currentLeague });
-      if (!tips || tips.length === 0) {
+      // Fetch tips con auth se disponibile, altrimenti solo free
+      const fetchOptions = {};
+      if (typeof SupabaseConfig !== 'undefined') {
+        const sessionResult = await SupabaseConfig.getSession();
+        if (sessionResult.data.session) {
+          fetchOptions.headers = {
+            Authorization: 'Bearer ' + sessionResult.data.session.access_token,
+          };
+        }
+      }
+
+      const url = '/api/tips?league=' + encodeURIComponent(currentLeague);
+      const response = await fetch(url, fetchOptions);
+      const tips = await response.json();
+
+      if (!tips || !Array.isArray(tips) || tips.length === 0) {
         // Fallback: genera tips client-side dalle partite
         loadTips();
         return;
@@ -1164,15 +1273,43 @@
       const container = document.getElementById('tipsGrid');
       container.textContent = '';
 
+      // Renderizza i tips dal database
       tips.forEach(function (tip) {
         const match = {
           date: tip.match_date,
           home: tip.home_team,
           away: tip.away_team,
         };
-        const card = buildTipCardFromAPI(match, tip);
-        container.appendChild(card);
+        container.appendChild(buildTipCardFromAPI(match, tip));
       });
+
+      // Verifica quali tier sono presenti nei tips dal database
+      const tiersPresent = new Set();
+      tips.forEach(function (tip) {
+        tiersPresent.add(tip.tier);
+      });
+
+      // Se mancano tier, genera card bloccate sample dalle partite
+      const missingTiers = ['free', 'pro', 'vip'].filter(function (t) {
+        return !tiersPresent.has(t) && !canAccessTier(homepageUserTier, t);
+      });
+
+      if (missingTiers.length > 0) {
+        try {
+          const matches = await fetchAPI('fixtures', { type: 'matches', league: currentLeague });
+          if (matches && matches.length > 0) {
+            let matchIndex = 0;
+            missingTiers.forEach(function (tier) {
+              if (matchIndex < matches.length) {
+                container.appendChild(buildTipCard(matches[matchIndex], tier));
+                matchIndex++;
+              }
+            });
+          }
+        } catch (_matchErr) {
+          // Nessun match disponibile, mostra solo i tips dal database
+        }
+      }
 
       activateConfidenceBars(container);
 
@@ -1192,16 +1329,18 @@
 
   /**
    * Costruisce una tip card da dati API (pronostico reale dal database).
+   * La visibilita' dipende dal tier dell'utente (homepageUserTier).
    * @param {Object} match - Dati partita
    * @param {Object} tip - Dati pronostico dal database
    * @returns {HTMLElement} Elemento .tip-card
    */
   function buildTipCardFromAPI(match, tip) {
-    const isFree = tip.tier === 'free';
+    const hasAccess = canAccessTier(homepageUserTier, tip.tier);
     const isVip = tip.tier === 'vip';
     let cardClass = 'tip-card';
     if (tip.tier === 'pro') cardClass += ' tip-card--pro';
     if (isVip) cardClass += ' tip-card--vip';
+    if (!hasAccess) cardClass += ' tip-card--locked';
 
     const card = createEl('div', cardClass);
     card.setAttribute('data-tier', tip.tier);
@@ -1232,19 +1371,19 @@
     tipMatch.appendChild(awayTeam);
     card.appendChild(tipMatch);
 
-    // Pronostico e quota
+    // Pronostico e quota (nascosti se non si ha accesso)
     const prediction = createEl('div', 'tip-prediction');
     const pick = createEl('div', 'tip-pick');
     pick.appendChild(createEl('span', 'pick-label', 'Pronostico'));
-    const pickClass = isVip && !tip.prediction ? 'pick-value tip-value--hidden' : 'pick-value';
-    const pickText = tip.prediction || '\u2605 \u2605 \u2605';
+    const pickClass = !hasAccess ? 'pick-value tip-value--hidden' : 'pick-value';
+    const pickText = hasAccess ? tip.prediction || '\u2014' : '\u2605 \u2605 \u2605';
     pick.appendChild(createEl('span', pickClass, pickText));
     prediction.appendChild(pick);
 
     const odds = createEl('div', 'tip-odds');
     odds.appendChild(createEl('span', 'odds-label', 'Quota'));
-    const oddsClass = isVip && !tip.odds ? 'odds-value tip-value--hidden' : 'odds-value';
-    const oddsText = tip.odds ? parseFloat(tip.odds).toFixed(2) : '?.??';
+    const oddsClass = !hasAccess ? 'odds-value tip-value--hidden' : 'odds-value';
+    const oddsText = hasAccess ? (tip.odds ? parseFloat(tip.odds).toFixed(2) : '\u2014') : '?.??';
     odds.appendChild(createEl('span', oddsClass, oddsText));
     prediction.appendChild(odds);
     card.appendChild(prediction);
@@ -1264,24 +1403,14 @@
     confDiv.appendChild(createEl('span', 'confidence-value', conf + '%'));
     card.appendChild(confDiv);
 
-    // Analisi
-    if (isFree && tip.analysis) {
+    // Analisi: visibile se ha accesso, overlay con benefit se bloccata
+    if (hasAccess && tip.analysis) {
       const analysis = createEl('div', 'tip-analysis');
       analysis.appendChild(createEl('p', null, tip.analysis));
       card.appendChild(analysis);
-    } else if (!isFree) {
+    } else if (!hasAccess) {
       const locked = createEl('div', 'tip-analysis tip-analysis--locked');
-      const overlayClass = isVip ? 'locked-overlay locked-overlay--gold' : 'locked-overlay';
-      const overlay = createEl('div', overlayClass);
-      overlay.appendChild(buildLockSvg());
-      const msg = isVip
-        ? 'Tip esclusivo riservato ai membri VIP'
-        : 'Analisi completa riservata agli abbonati PRO';
-      overlay.appendChild(createEl('span', null, msg));
-      const btn = createEl('a', 'btn btn-gold btn-sm', isVip ? 'Diventa VIP' : 'Sblocca');
-      btn.href = '#pricing';
-      overlay.appendChild(btn);
-      locked.appendChild(overlay);
+      locked.appendChild(buildLockedOverlay(tip.tier, homepageUserTier));
       card.appendChild(locked);
     }
 

@@ -1,8 +1,7 @@
 /**
  * WinningBet — Auth Page Logic
  *
- * Gestisce login, registrazione e OAuth via Supabase Auth.
- * Toggle tra form di login e registrazione.
+ * Gestisce accesso via Google OAuth tramite Supabase Auth.
  * Redirect a dashboard dopo autenticazione riuscita.
  */
 
@@ -95,184 +94,15 @@
   }
 
   // ==========================================
-  // FORM TOGGLE (Login <-> Register)
-  // ==========================================
-  const tabLogin = document.getElementById('tabLogin');
-  const tabRegister = document.getElementById('tabRegister');
-  const loginForm = document.getElementById('loginForm');
-  const registerForm = document.getElementById('registerForm');
-  const authToggle = document.getElementById('authToggle');
-  const authMessage = document.getElementById('authMessage');
-
-  let isLoginMode = true;
-
-  /**
-   * Ricostruisce il testo del toggle in modo sicuro (senza innerHTML).
-   * @param {boolean} toLogin - Se true mostra "Registrati", altrimenti "Accedi"
-   */
-  function updateToggleText(toLogin) {
-    // Pulisce il contenuto esistente
-    while (authToggle.firstChild) {
-      authToggle.removeChild(authToggle.firstChild);
-    }
-
-    if (toLogin) {
-      authToggle.appendChild(document.createTextNode('Non hai un account? '));
-      const link = document.createElement('a');
-      link.href = '#';
-      link.textContent = 'Registrati';
-      link.addEventListener('click', function (e) {
-        e.preventDefault();
-        switchMode(false);
-      });
-      authToggle.appendChild(link);
-    } else {
-      authToggle.appendChild(document.createTextNode("Hai gia' un account? "));
-      const link = document.createElement('a');
-      link.href = '#';
-      link.textContent = 'Accedi';
-      link.addEventListener('click', function (e) {
-        e.preventDefault();
-        switchMode(true);
-      });
-      authToggle.appendChild(link);
-    }
-  }
-
-  function switchMode(toLogin) {
-    isLoginMode = toLogin;
-    hideMessage();
-
-    if (toLogin) {
-      tabLogin.classList.add('active');
-      tabRegister.classList.remove('active');
-      loginForm.style.display = '';
-      registerForm.style.display = 'none';
-    } else {
-      tabRegister.classList.add('active');
-      tabLogin.classList.remove('active');
-      registerForm.style.display = '';
-      loginForm.style.display = 'none';
-    }
-
-    updateToggleText(toLogin);
-  }
-
-  tabLogin.addEventListener('click', function () {
-    switchMode(true);
-  });
-  tabRegister.addEventListener('click', function () {
-    switchMode(false);
-  });
-
-  // Bind del link toggle iniziale
-  const initialToggle = authToggle.querySelector('a');
-  if (initialToggle) {
-    initialToggle.addEventListener('click', function (e) {
-      e.preventDefault();
-      switchMode(false);
-    });
-  }
-
-  // ==========================================
   // MESSAGE DISPLAY
   // ==========================================
+  const authMessage = document.getElementById('authMessage');
+
   function showMessage(text, type) {
     authMessage.textContent = text;
     authMessage.className = 'auth-message auth-message--' + type;
     authMessage.style.display = '';
   }
-
-  function hideMessage() {
-    authMessage.style.display = 'none';
-  }
-
-  function setLoading(button, loading) {
-    if (loading) {
-      button.disabled = true;
-      button.querySelector('span').textContent = 'Caricamento...';
-    } else {
-      button.disabled = false;
-      button.querySelector('span').textContent = isLoginMode ? 'Accedi' : 'Crea Account';
-    }
-  }
-
-  // ==========================================
-  // LOGIN
-  // ==========================================
-  loginForm.addEventListener('submit', async function (e) {
-    e.preventDefault();
-    hideMessage();
-
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const submitBtn = document.getElementById('loginSubmit');
-
-    if (!email || !password) {
-      showMessage('Compila tutti i campi', 'error');
-      return;
-    }
-
-    setLoading(submitBtn, true);
-
-    const { error } = await SupabaseConfig.signIn(email, password);
-
-    if (error) {
-      setLoading(submitBtn, false);
-      if (error.message.includes('Invalid login')) {
-        showMessage('Email o password non corretti', 'error');
-      } else {
-        showMessage(error.message, 'error');
-      }
-      return;
-    }
-
-    // Login riuscito — redirect a dashboard
-    showMessage('Accesso effettuato! Reindirizzamento...', 'success');
-    setTimeout(function () {
-      location.href = '/dashboard.html';
-    }, 500);
-  });
-
-  // ==========================================
-  // REGISTER
-  // ==========================================
-  registerForm.addEventListener('submit', async function (e) {
-    e.preventDefault();
-    hideMessage();
-
-    const name = document.getElementById('registerName').value.trim();
-    const email = document.getElementById('registerEmail').value.trim();
-    const password = document.getElementById('registerPassword').value;
-    const submitBtn = document.getElementById('registerSubmit');
-
-    if (!email || !password) {
-      showMessage('Compila tutti i campi obbligatori', 'error');
-      return;
-    }
-
-    if (password.length < 8) {
-      showMessage('La password deve essere di almeno 8 caratteri', 'error');
-      return;
-    }
-
-    setLoading(submitBtn, true);
-
-    const signUpOptions = name ? { data: { display_name: name } } : undefined;
-    const { error } = await SupabaseConfig.signUp(email, password, signUpOptions);
-
-    setLoading(submitBtn, false);
-
-    if (error) {
-      showMessage(error.message, 'error');
-      return;
-    }
-
-    showMessage(
-      'Account creato! Controlla la tua email per confermare la registrazione.',
-      'success',
-    );
-  });
 
   // ==========================================
   // GOOGLE OAUTH

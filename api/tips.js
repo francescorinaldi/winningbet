@@ -67,10 +67,7 @@ module.exports = async function handler(req, res) {
     if (hasAccess(userTier, 'pro')) accessibleTiers.push('pro');
     if (hasAccess(userTier, 'vip')) accessibleTiers.push('vip');
 
-    let query = supabase
-      .from('tips')
-      .select('*')
-      .in('tier', accessibleTiers);
+    let query = supabase.from('tips').select('*').in('tier', accessibleTiers);
 
     // status=today: tutti gli status da inizio giornata (pending + settled)
     if (!isToday) {
