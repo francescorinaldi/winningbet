@@ -131,30 +131,70 @@ async function getOdds(fixtureId) {
  * @returns {Promise<Array<Object>>} Array ordinato per rank
  */
 async function getStandings(leagueSlug) {
+  const data = await fetchStandingsData(leagueSlug);
+  if (!data) return [];
+  return data.map((team) => normalizeStandingEntry(team, 'all'));
+}
+
+/**
+ * Recupera classifica totale, casa e trasferta in una singola chiamata API.
+ * L'endpoint /standings di api-football.com restituisce team.all, team.home,
+ * team.away nella stessa risposta — zero chiamate extra.
+ *
+ * @param {string} leagueSlug - Slug della lega
+ * @returns {Promise<Object>} { total: [...], home: [...], away: [...] }
+ */
+async function getFullStandings(leagueSlug) {
+  const data = await fetchStandingsData(leagueSlug);
+  if (!data) return { total: [], home: [], away: [] };
+
+  return {
+    total: data.map((team) => normalizeStandingEntry(team, 'all')),
+    home: data.map((team) => normalizeStandingEntry(team, 'home')),
+    away: data.map((team) => normalizeStandingEntry(team, 'away')),
+  };
+}
+
+/**
+ * Recupera i dati grezzi della classifica dall'API.
+ * @param {string} leagueSlug - Slug della lega
+ * @returns {Promise<Array|null>} Array di team entries o null
+ */
+async function fetchStandingsData(leagueSlug) {
   const league = getLeague(leagueSlug);
   const data = await request('/standings', {
     league: league.apiFootballId,
     season: league.season,
   });
-  if (!data || data.length === 0) return [];
+  if (!data || data.length === 0) return null;
   if (!data[0].league || !data[0].league.standings || data[0].league.standings.length === 0) {
-    return [];
+    return null;
   }
-  const allStandings = data[0].league.standings.flat();
-  return allStandings.map((team) => ({
+  return data[0].league.standings.flat();
+}
+
+/**
+ * Normalizza un singolo entry della classifica api-football.com.
+ * @param {Object} team - Entry grezza
+ * @param {string} context - 'all', 'home', o 'away'
+ * @returns {Object} Entry normalizzata
+ */
+function normalizeStandingEntry(team, context) {
+  const stats = team[context];
+  return {
     rank: team.rank,
     name: team.team.name,
     logo: team.team.logo,
     points: team.points,
-    played: team.all.played,
-    win: team.all.win,
-    draw: team.all.draw,
-    lose: team.all.lose,
-    goalsFor: team.all.goals.for,
-    goalsAgainst: team.all.goals.against,
+    played: stats.played,
+    win: stats.win,
+    draw: stats.draw,
+    lose: stats.lose,
+    goalsFor: stats.goals.for,
+    goalsAgainst: stats.goals.against,
     goalDiff: team.goalsDiff,
     form: team.form,
-  }));
+  };
 }
 
 /**
@@ -245,4 +285,11 @@ async function getHeadToHead(leagueSlug, homeTeamName, awayTeamName, lastN = 10)
   };
 }
 
-module.exports = { getUpcomingMatches, getRecentResults, getOdds, getStandings, getHeadToHead };
+module.exports = {
+  getUpcomingMatches,
+  getRecentResults,
+  getOdds,
+  getStandings,
+  getFullStandings,
+  getHeadToHead,
+};

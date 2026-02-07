@@ -4,6 +4,34 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added — Prediction Engine V2
+
+- **2-Phase Pipeline**: Phase 1 (Research) uses Haiku 4.5 + web search for live context; Phase 2 (Prediction) uses Opus 4.6 + structured output per match
+- **Structured Output**: `output_config.format` with JSON schema — enum-constrained prediction types, typed confidence/odds, new `reasoning` field for chain-of-thought
+- **System Prompt**: Dedicated analyst persona with 8 calibration rules for confidence, Over/Under, Goal/No Goal analysis
+- **Home/Away Standings**: `getFullStandings()` in both `api-football.js` and `football-data.js` — extracts HOME and AWAY rankings from the same API response (zero extra calls)
+- **Recent Results**: Fetches last 30 results per league, filters last 5 per team with scores for the prompt
+- **Derived Stats**: Pre-computed avg goals for/against, BTTS%, clean sheet%, expected goals, classification zone context (Zona Champions, Europa, retrocessione)
+- **Web Search Research**: `researchLeagueContext()` — one Haiku 4.5 call per league with up to 3 web searches for injuries, suspensions, tactical news. Silent fallback on failure
+- **Tier Post-Generation**: `assignTier()` based on confidence/odds (replaces fixed rotation pattern) + `balanceTiers()` for minimum distribution guarantee
+- **Historical Accuracy Feedback Loop**: Queries Supabase win rate per prediction type per league, injects into prompt when 20+ closed tips exist
+
+### Changed — Prediction Engine V2
+
+- **Model**: `claude-haiku-4-5-20251001` → `claude-opus-4-6` with `temperature: 0.3`
+- **Max Tokens**: 500 → 700 (for reasoning field)
+- **generate-tips.js**: POST handler now delegates to `generateForLeague()` (eliminated duplicated logic)
+- **football-data.js**: Refactored `getStandings()` to use shared `fetchStandingsData()` + `normalizeStandingEntry()`
+- **api-football.js**: Refactored `getStandings()` to use shared `fetchStandingsData()` + `normalizeStandingEntry()`
+
+### Removed — Prediction Engine V2
+
+- Regex strip markdown fences (no longer needed with structured output)
+- "Rispondi SOLO con JSON" prompt instruction (schema handles it)
+- Tier in Claude prompt (now assigned post-generation)
+- `tierPattern` fixed rotation array
+- Duplicated generation logic in POST handler
+
 ### Added — UX Roadmap Phase 1-3
 
 #### Phase 1: Quick Wins

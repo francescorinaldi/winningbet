@@ -33,83 +33,14 @@ module.exports = async function handler(req, res) {
   }
 
   const leagueSlug = resolveLeagueSlug(req.body && req.body.league);
-  const league = getLeague(leagueSlug);
 
   try {
-    // 1. Recupera le prossime partite
-    let matches;
-    try {
-      matches = await apiFootball.getUpcomingMatches(leagueSlug, 10);
-    } catch (_primaryErr) {
-      matches = await footballData.getUpcomingMatches(leagueSlug, 10);
-    }
-
-    if (!matches || matches.length === 0) {
-      return res.status(200).json({ generated: 0, message: 'Nessuna partita in programma' });
-    }
-
-    // 2. Recupera la classifica
-    let standings;
-    try {
-      standings = await apiFootball.getStandings(leagueSlug);
-    } catch (_primaryErr) {
-      standings = await footballData.getStandings(leagueSlug);
-    }
-
-    // 3. Controlla se ci sono gia' tips per queste partite (evita duplicati)
-    const matchIds = matches.map((m) => String(m.id));
-    const { data: existingTips } = await supabase
-      .from('tips')
-      .select('match_id')
-      .eq('league', leagueSlug)
-      .in('match_id', matchIds);
-
-    const existingMatchIds = new Set((existingTips || []).map((t) => t.match_id));
-    const newMatches = matches.filter((m) => !existingMatchIds.has(String(m.id)));
-
-    if (newMatches.length === 0) {
-      return res.status(200).json({
-        generated: 0,
-        message: "Tutti i pronostici per queste partite sono gia' stati generati",
-      });
-    }
-
-    // 4. Funzione per recuperare le quote di una partita
-    async function getOddsForMatch(fixtureId) {
-      try {
-        return await apiFootball.getOdds(fixtureId);
-      } catch (_err) {
-        return null;
-      }
-    }
-
-    // 5. Genera i pronostici con Claude
-    const predictions = await generateBatchPredictions({
-      matches: newMatches,
-      standings,
-      getOdds: getOddsForMatch,
-      leagueName: league.name,
-    });
-
-    // 6. Salva in Supabase (aggiunge il campo league)
-    if (predictions.length > 0) {
-      const tipsWithLeague = predictions.map((p) => ({ ...p, league: leagueSlug }));
-      const { error: insertError } = await supabase.from('tips').insert(tipsWithLeague);
-      if (insertError) {
-        console.error('Failed to insert tips:', insertError.message);
-        return res.status(500).json({ error: 'Errore nel salvataggio dei pronostici' });
-      }
-    }
+    const result = await generateForLeague(leagueSlug);
 
     return res.status(200).json({
-      generated: predictions.length,
+      generated: result.generated,
       league: leagueSlug,
-      tips: predictions.map((t) => ({
-        match: `${t.home_team} vs ${t.away_team}`,
-        prediction: t.prediction,
-        tier: t.tier,
-        confidence: t.confidence,
-      })),
+      tips: result.tips || [],
     });
   } catch (err) {
     console.error('generate-tips error:', err);
@@ -192,11 +123,102 @@ async function handleCron(req, res) {
   }
 }
 
+// ─── Historical Accuracy ────────────────────────────────────────────────────
+
+/**
+ * Query Supabase per lo storico accuratezza per tipo di pronostico in una lega.
+ * Ritorna una stringa formattata da iniettare nel prompt, oppure '' se dati insufficienti.
+ *
+ * @param {string} leagueSlug - Slug della lega
+ * @returns {Promise<string>} Contesto storico formattato
+ */
+async function getAccuracyContext(leagueSlug) {
+  try {
+    const { data, error } = await supabase.rpc('get_prediction_accuracy', {
+      p_league: leagueSlug,
+    });
+
+    // Se la RPC non esiste, fallback a query diretta
+    if (error) {
+      return await getAccuracyContextFallback(leagueSlug);
+    }
+
+    return formatAccuracyData(data, leagueSlug);
+  } catch (_err) {
+    return await getAccuracyContextFallback(leagueSlug);
+  }
+}
+
+/**
+ * Fallback: query diretta alla tabella tips per calcolare accuratezza.
+ * @param {string} leagueSlug - Slug della lega
+ * @returns {Promise<string>} Contesto storico formattato
+ */
+async function getAccuracyContextFallback(leagueSlug) {
+  try {
+    const { data } = await supabase
+      .from('tips')
+      .select('prediction, status')
+      .eq('league', leagueSlug)
+      .in('status', ['won', 'lost']);
+
+    if (!data || data.length < 20) return '';
+
+    // Raggruppa per tipo di pronostico
+    const grouped = {};
+    for (const tip of data) {
+      if (!grouped[tip.prediction]) {
+        grouped[tip.prediction] = { won: 0, total: 0 };
+      }
+      grouped[tip.prediction].total++;
+      if (tip.status === 'won') grouped[tip.prediction].won++;
+    }
+
+    return formatAccuracyData(
+      Object.entries(grouped).map(([prediction, stats]) => ({
+        prediction,
+        won: stats.won,
+        total: stats.total,
+      })),
+      leagueSlug,
+    );
+  } catch (_err) {
+    return '';
+  }
+}
+
+/**
+ * Formatta i dati di accuratezza in una stringa per il prompt.
+ * @param {Array<Object>} data - Array di { prediction, won, total }
+ * @param {string} leagueSlug - Slug della lega
+ * @returns {string} Contesto formattato
+ */
+function formatAccuracyData(data, leagueSlug) {
+  if (!data || data.length === 0) return '';
+
+  const totalTips = data.reduce((sum, d) => sum + (d.total || 0), 0);
+  if (totalTips < 20) return '';
+
+  const leagueName = getLeague(leagueSlug).name;
+  const lines = data
+    .filter((d) => d.total >= 5)
+    .sort((a, b) => b.total - a.total)
+    .map((d) => {
+      const pct = Math.round(((d.won || 0) / d.total) * 100);
+      return `${d.prediction}: ${pct}% (${d.total} pronostici)`;
+    });
+
+  if (lines.length === 0) return '';
+
+  return `STORICO ACCURATEZZA ${leagueName}:\n${lines.join('\n')}`;
+}
+
 // ─── generateForLeague (callable internamente) ─────────────────────────────
 
 async function generateForLeague(leagueSlug) {
   const league = getLeague(leagueSlug);
 
+  // 1. Recupera le prossime partite
   let matches;
   try {
     matches = await apiFootball.getUpcomingMatches(leagueSlug, 10);
@@ -208,13 +230,27 @@ async function generateForLeague(leagueSlug) {
     return { generated: 0, league: leagueSlug };
   }
 
-  let standings;
+  // 2. Recupera classifica completa (totale + casa + trasferta)
+  let fullStandings;
   try {
-    standings = await apiFootball.getStandings(leagueSlug);
+    fullStandings = await apiFootball.getFullStandings(leagueSlug);
   } catch (_primaryErr) {
-    standings = await footballData.getStandings(leagueSlug);
+    fullStandings = await footballData.getFullStandings(leagueSlug);
   }
 
+  // 3. Recupera risultati recenti (ultime 30 partite della lega)
+  let recentResults = [];
+  try {
+    recentResults = await footballData.getRecentResults(leagueSlug, 30);
+  } catch (_err) {
+    try {
+      recentResults = await apiFootball.getRecentResults(leagueSlug, 30);
+    } catch (_fallbackErr) {
+      console.warn('Could not fetch recent results for ' + leagueSlug);
+    }
+  }
+
+  // 4. Controlla se ci sono gia' tips per queste partite (evita duplicati)
   const matchIds = matches.map((m) => String(m.id));
   const { data: existingTips } = await supabase
     .from('tips')
@@ -229,6 +265,10 @@ async function generateForLeague(leagueSlug) {
     return { generated: 0, league: leagueSlug };
   }
 
+  // 5. Recupera storico accuratezza
+  const accuracyContext = await getAccuracyContext(leagueSlug);
+
+  // 6. Funzione per recuperare le quote di una partita
   async function getOddsForMatch(fixtureId) {
     try {
       return await apiFootball.getOdds(fixtureId);
@@ -237,13 +277,19 @@ async function generateForLeague(leagueSlug) {
     }
   }
 
+  // 7. Genera i pronostici con Claude (pipeline V2)
   const predictions = await generateBatchPredictions({
     matches: newMatches,
-    standings,
+    standings: fullStandings.total,
+    homeStandings: fullStandings.home,
+    awayStandings: fullStandings.away,
+    recentResults,
     getOdds: getOddsForMatch,
     leagueName: league.name,
+    accuracyContext,
   });
 
+  // 8. Salva in Supabase (aggiunge il campo league)
   if (predictions.length > 0) {
     const tipsWithLeague = predictions.map((p) => ({ ...p, league: leagueSlug }));
     const { error: insertError } = await supabase.from('tips').insert(tipsWithLeague);
@@ -252,7 +298,16 @@ async function generateForLeague(leagueSlug) {
     }
   }
 
-  return { generated: predictions.length, league: leagueSlug };
+  return {
+    generated: predictions.length,
+    league: leagueSlug,
+    tips: predictions.map((t) => ({
+      match: `${t.home_team} vs ${t.away_team}`,
+      prediction: t.prediction,
+      tier: t.tier,
+      confidence: t.confidence,
+    })),
+  };
 }
 
 module.exports.generateForLeague = generateForLeague;
