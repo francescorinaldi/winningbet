@@ -6,7 +6,7 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Changed — Issue #29: UX Improvements + Odds Accuracy Fix
 
-- **CRITICAL: Real bookmaker odds** — Tips now use actual Bet365 odds for the specific prediction market (Over/Under, Goal/No Goal, 1X2, Double Chance) instead of AI-estimated values. Added `getAllOdds()` and `findOddsForPrediction()` to `api-football.js`. Prediction engine maps each prediction type to the correct bookmaker market and uses real odds. AI estimate used only as fallback when bookmaker odds are unavailable.
+- **CRITICAL: Real bookmaker odds only** — Tips now use EXCLUSIVELY actual Bet365 odds. If real odds are not available for a prediction type, the tip is skipped entirely (no fallback, no AI estimates, no invented numbers). Added `getAllOdds()` and `findOddsForPrediction()` to `api-football.js`. Removed `odds` field from AI schema — the AI never outputs odds. Prediction engine maps each prediction type to the correct bookmaker market post-generation.
 - **Auto-hide started tips** — Homepage now filters out tips for matches that have already kicked off. This automatically masks lost/losing predictions during live matches. Won tips surface later in track record; lost tips disappear silently.
 - **Hero subtitle** — Updated to "Pronostici di calcio basati su dati, algoritmi e analisi tecnico-tattiche. Track record verificato e trasparente."
 - **CTA button** — "INIZIA A VINCERE" now displays in uppercase black text with letter-spacing

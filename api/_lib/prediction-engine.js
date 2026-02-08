@@ -84,11 +84,6 @@ const BATCH_PREDICTION_SCHEMA = {
             type: 'integer',
             description: 'Livello di fiducia tra 60 e 95',
           },
-          odds: {
-            type: 'number',
-            description:
-              'Quota decimale stimata tra 1.20 e 5.00. Verra sostituita con la quota reale del bookmaker se disponibile.',
-          },
           analysis: {
             type: 'string',
             description: 'Analisi in italiano di 2-3 frasi con riferimenti a dati specifici',
@@ -98,7 +93,7 @@ const BATCH_PREDICTION_SCHEMA = {
             description: 'Chain-of-thought interna con il processo logico completo',
           },
         },
-        required: ['match_index', 'prediction', 'confidence', 'odds', 'analysis', 'reasoning'],
+        required: ['match_index', 'prediction', 'confidence', 'analysis', 'reasoning'],
         additionalProperties: false,
       },
     },
@@ -478,7 +473,7 @@ ${accuracyContext ? `\n${accuracyContext}` : ''}
 
 TIPI DI PRONOSTICO VALIDI: ${PREDICTION_TYPES.join(', ')}
 
-Per ogni partita, la confidence deve essere tra 60 e 95, le odds tra 1.20 e 5.00.`;
+Per ogni partita, la confidence deve essere tra 60 e 95. Le quote verranno prese automaticamente dal bookmaker (Bet365) — NON inserire odds nel risultato.`;
 
   const response = await anthropic.messages.create({
     model: 'claude-opus-4-6',
@@ -503,12 +498,12 @@ Per ogni partita, la confidence deve essere tra 60 e 95, le odds tra 1.20 e 5.00
 
     const match = matches[idx];
 
-    // Use real bookmaker odds if available, fall back to AI estimate
+    // Only use real bookmaker odds — never AI estimates
     const allOdds = oddsMap.get(match.id);
     const realOdds = findOddsForPrediction(allOdds, pred.prediction);
-    const finalOdds = realOdds || parseFloat(Math.min(5.0, Math.max(1.2, pred.odds)).toFixed(2));
+    if (!realOdds) continue; // Skip tip if no real bookmaker odds available
 
-    const tier = assignTier({ ...pred, odds: finalOdds });
+    const tier = assignTier({ ...pred, odds: realOdds });
 
     results.push({
       match_id: String(match.id),
@@ -516,7 +511,7 @@ Per ogni partita, la confidence deve essere tra 60 e 95, le odds tra 1.20 e 5.00
       away_team: match.away,
       match_date: match.date,
       prediction: pred.prediction,
-      odds: finalOdds,
+      odds: realOdds,
       confidence: Math.min(95, Math.max(60, pred.confidence)),
       analysis: pred.analysis,
       tier,
