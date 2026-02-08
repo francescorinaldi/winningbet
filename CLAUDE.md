@@ -21,30 +21,32 @@ Premium multi-league betting predictions platform (Serie A, Champions League, La
 ## Project Structure
 
 ```
-api/                    → Vercel serverless functions (12 endpoints)
+api/                    → Vercel serverless functions (13 endpoints)
 api/_lib/               → Shared backend utilities (10 modules)
 api/_lib/leagues.js     → Centralized league configuration (IDs, codes, seasons)
 api/_lib/telegram.js    → Telegram Bot API client (send tips, invite, kick, DM)
 api/billing.js          → Stripe billing (checkout + portal)
-api/cron-tasks.js       → Cron tasks (settle + send tips)
+api/cron-tasks.js       → Cron tasks (settle tips + schedine + send)
 api/fixtures.js         → Matches + results (by league)
 api/generate-tips.js    → Cron orchestrator + single-league generation
 api/match-insights.js   → H2H + team form
 api/odds.js             → Betting odds (by fixture)
+api/schedina.js         → Smart betting slips (schedine del giorno)
 api/stats.js            → Standings + track record
 api/stripe-webhook.js   → Stripe webhook handler
 api/telegram.js         → Telegram webhook + account linking
 api/tips.js             → Tip listing (filtered by league)
 api/user-bets.js        → Follow/unfollow tips
-api/user-settings.js    → Activity + notifications + preferences
+api/user-settings.js    → Activity + notifications + preferences + risk profile
 public/                 → Static frontend (HTML, JS, CSS)
 public/script.js        → Main landing page logic (IIFE pattern)
 public/auth.js          → Authentication logic (Supabase Auth)
 public/dashboard.js     → User dashboard logic + Telegram linking
-supabase/migrations/    → Database schema migrations (4 files)
+supabase/migrations/    → Database schema migrations (5 files)
 .claude/skills/         → Claude Code skills (slash commands)
-.claude/skills/generate-tips/ → /generate-tips skill (prediction engine)
-.claude/skills/code-review/  → /code-review skill (multi-agent code analysis)
+.claude/skills/generate-tips/     → /generate-tips skill (prediction engine)
+.claude/skills/generate-schedina/ → /generate-schedina skill (smart betting slips)
+.claude/skills/code-review/       → /code-review skill (multi-agent code analysis)
 eslint.config.mjs       → ESLint flat config
 .prettierrc             → Prettier config
 vercel.json             → Deployment config + caching headers
@@ -74,6 +76,12 @@ npm run env:pull      # Sync .env.local from Vercel production (single source of
 ```
 
 ```bash
+/generate-schedina                  # Generate schedine from today's tips (default 50 EUR budget)
+/generate-schedina --budget 100     # Generate with custom budget
+/generate-schedina --send           # Generate and send to Telegram
+```
+
+```bash
 /code-review                        # Run ALL 9 review agents
 /code-review security               # Run only the security agent
 /code-review --file api/            # Scope to a directory
@@ -95,6 +103,7 @@ Valid slugs: `serie-a`, `champions-league`, `la-liga`, `premier-league`.
 - `GET/POST /api/generate-tips` — Cron orchestrator (GET) or single-league generation (POST)
 - `GET /api/match-insights?type=h2h|form` — Head-to-head (24h) or team form (6h)
 - `GET /api/odds?fixture={id}` — Betting odds (30min cache, no league param)
+- `GET /api/schedina?date={YYYY-MM-DD}&status={status}` — Smart betting slips (JWT auth, PRO+VIP only)
 - `GET /api/stats?type=standings|track-record&league={slug}` — League standings (6h) or track record (1h)
 - `POST /api/stripe-webhook` — Stripe event handler (+ auto Telegram invite/kick)
 - `POST /api/telegram` — Telegram webhook (with secret header) or account linking (with JWT)

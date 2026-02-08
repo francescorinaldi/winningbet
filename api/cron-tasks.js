@@ -137,14 +137,96 @@ async function handleSettle(_req, res) {
       }
     }
 
+    // Settle schedine based on their tips' statuses
+    let schedineSettled = 0;
+    try {
+      schedineSettled = await settleSchedule();
+    } catch (schedErr) {
+      console.error('settle-schedine error:', schedErr.message);
+    }
+
     return res.status(200).json({
       settled: settledResults.length,
       results: settledResults,
+      schedine_settled: schedineSettled,
     });
   } catch (err) {
     console.error('settle-tips error:', err);
     return res.status(500).json({ error: 'Errore nella chiusura dei pronostici' });
   }
+}
+
+/**
+ * Settle schedine: una schedina e' vinta se TUTTI i suoi tips sono vinti,
+ * persa se ALMENO uno e' perso, void se tutti sono void.
+ * Resta pending se ci sono ancora tips non chiusi.
+ */
+async function settleSchedule() {
+  let settled = 0;
+
+  // Get all pending schedine
+  const schedineResult = await supabase.from('schedine').select('id').eq('status', 'pending');
+
+  if (schedineResult.error || !schedineResult.data || schedineResult.data.length === 0) {
+    return 0;
+  }
+
+  for (const schedina of schedineResult.data) {
+    // Get all tip statuses for this schedina
+    const linksResult = await supabase
+      .from('schedina_tips')
+      .select('tip_id')
+      .eq('schedina_id', schedina.id);
+
+    if (linksResult.error || !linksResult.data || linksResult.data.length === 0) continue;
+
+    const tipIds = linksResult.data.map(function (l) {
+      return l.tip_id;
+    });
+
+    const tipsResult = await supabase.from('tips').select('status').in('id', tipIds);
+
+    if (tipsResult.error || !tipsResult.data) continue;
+
+    const statuses = tipsResult.data.map(function (t) {
+      return t.status;
+    });
+    const hasPending = statuses.indexOf('pending') !== -1;
+    const hasLost = statuses.indexOf('lost') !== -1;
+    const allWon = statuses.every(function (s) {
+      return s === 'won';
+    });
+    const allVoid = statuses.every(function (s) {
+      return s === 'void';
+    });
+    const allWonOrVoid = statuses.every(function (s) {
+      return s === 'won' || s === 'void';
+    });
+
+    let newStatus = null;
+
+    if (hasLost) {
+      newStatus = 'lost';
+    } else if (allWon) {
+      newStatus = 'won';
+    } else if (allVoid) {
+      newStatus = 'void';
+    } else if (allWonOrVoid && !hasPending) {
+      // Mix of won + void (no lost, no pending) — treat as won with reduced odds
+      newStatus = 'won';
+    }
+
+    if (newStatus) {
+      const updateResult = await supabase
+        .from('schedine')
+        .update({ status: newStatus })
+        .eq('id', schedina.id);
+
+      if (!updateResult.error) settled++;
+    }
+  }
+
+  return settled;
 }
 
 // ─── Send Handler ───────────────────────────────────────────────────────────
