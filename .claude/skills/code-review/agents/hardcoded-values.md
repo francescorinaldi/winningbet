@@ -21,10 +21,13 @@ Detect magic numbers, hardcoded strings, and configuration values that should be
 - Cache durations as raw numbers
 - Pagination limits hardcoded
 
-### 4. Hardcoded UI Text
-- Error messages that could be localized but are hardcoded
-- Note: Italian UI text is intentional for this project — don't flag as needing i18n
-- But DO flag if the same message is hardcoded in multiple places (should be a constant)
+### 4. Hardcoded UI Text (i18n)
+- All user-facing strings hardcoded in Italian (or any language) instead of using an i18n system
+- Error messages, labels, button text, tooltips, placeholder text, confirmation dialogs
+- Legal disclaimers (e.g. ADM gambling notice) — even legally required text should go through i18n for multilanguage support
+- Alert/confirm messages with hardcoded text
+- **Method**: Search for Italian text in JS string literals, HTML content, and template literals
+- **Severity**: MEDIUM for each hardcoded locale-specific string; HIGH if the same string is duplicated in 3+ places
 
 ### 5. Configuration That Should Be Environment Variables
 - API rate limits, timeouts
@@ -79,8 +82,8 @@ Detect magic numbers, hardcoded strings, and configuration values that should be
 
 ## Codex Prompt
 
-Search all JavaScript files in api/ and public/ for hardcoded values: (1) Find all numeric literals used in Cache-Control headers (like s-maxage=7200) — list each with file and line. (2) Find all hardcoded price strings (€, EUR, 9.99, 29.99) — list each location. (3) Find all hardcoded season strings like '2024/25' or '2025/26'. (4) Find all hardcoded array limits or pagination values (numbers used with .limit() or as array slice arguments). (5) Find all hardcoded timeout values (setTimeout, setInterval durations). Ignore HTTP status codes (200, 400, 500, etc). Format each finding as: ### [SEVERITY] Title with File, Category (hardcoded-values), Issue, Evidence, Suggestion.
+Search all JavaScript files in api/ and public/ for hardcoded values: (1) Find all numeric literals used in Cache-Control headers (like s-maxage=7200) — list each with file and line. (2) Find all hardcoded price strings (€, EUR, 9.99, 29.99) — list each location. (3) Find all hardcoded season strings like '2024/25' or '2025/26'. (4) Find all hardcoded array limits or pagination values (numbers used with .limit() or as array slice arguments). (5) Find all hardcoded timeout values (setTimeout, setInterval durations). (6) Find all hardcoded Italian strings in JavaScript — user-facing text like alert messages, error messages, button labels, placeholder text, confirmation dialogs, and legal disclaimers. List each with file and line — these all need i18n. Ignore HTTP status codes (200, 400, 500, etc). Format each finding as: ### [SEVERITY] Title with File, Category (hardcoded-values), Issue, Evidence, Suggestion.
 
 ## Gemini Prompt
 
-Search the codebase for configuration that should be centralized: (1) Find all places where cache TTL durations are set as raw numbers — group them and check if a shared CACHE_DURATIONS config would help. (2) Find all places where tier names (free, pro, vip) are used as string literals in comparisons — should these use a shared TIERS constant? (3) Check public/script.js and public/dashboard.js for hardcoded API endpoint URLs — are they consistent? (4) Find any hardcoded Supabase table names that appear in 3+ files. Format each finding as: ### [SEVERITY] Title with File, Category (hardcoded-values), Issue, Evidence, Suggestion.
+Search the codebase for configuration that should be centralized: (1) Find all places where cache TTL durations are set as raw numbers — group them and check if a shared CACHE_DURATIONS config would help. (2) Find all places where tier names (free, pro, vip) are used as string literals in comparisons — should these use a shared TIERS constant? (3) Check public/script.js and public/dashboard.js for hardcoded API endpoint URLs — are they consistent? (4) Find any hardcoded Supabase table names that appear in 3+ files. (5) Find all hardcoded Italian text in HTML files and JavaScript template literals — list every user-facing string that should be extracted to a translation file for i18n/multilanguage support. Format each finding as: ### [SEVERITY] Title with File, Category (hardcoded-values), Issue, Evidence, Suggestion.

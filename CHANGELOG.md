@@ -14,6 +14,8 @@ All notable changes to WinningBet will be documented in this file.
 - **Severity matrix**: CRITICAL/HIGH/MEDIUM/LOW/INFO classification with documented thresholds
 - Skill files: `.claude/skills/code-review/SKILL.md`, 9 agent prompts in `agents/`, scripts in `scripts/`
 - Runs from any Claude Code instance — portable via `.claude/skills/` directory
+- **i18n / multilanguage auditing**: `hardcoded-values` agent now flags all hardcoded locale-specific strings (Italian UI text, error messages, labels, legal disclaimers) as i18n issues needing extraction to a translation system
+- **English-only comments**: `maintainability` agent now flags non-English code comments and JSDoc descriptions
 
 ### Changed — Tiered Prediction Access + Google-Only Auth
 

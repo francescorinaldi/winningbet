@@ -215,7 +215,7 @@ Full report: code-review-report.md
 | `anti-patterns` | God files, deep nesting, callback hell, empty catches, `==` | AST-level patterns |
 | `performance` | N+1 queries, unbounded fetches, memory leaks, missing caching | Data flow analysis |
 | `architecture` | Circular deps, mixed concerns, inconsistent patterns | Module dependency graph |
-| `hardcoded-values` | Magic numbers, hardcoded URLs, config that should be env vars | Literal value scanning |
+| `hardcoded-values` | Magic numbers, hardcoded URLs, config that should be env vars, hardcoded locale strings (i18n) | Literal value scanning + i18n audit |
 | `error-handling` | Missing try/catch, swallowed errors, generic catches, inconsistent responses | Error path analysis |
 | `maintainability` | Long functions, complex expressions, poor naming, missing types | Complexity metrics |
 
@@ -238,7 +238,8 @@ Full report: code-review-report.md
 - You ARE the reviewer. Analyze code directly — do NOT call the Claude API.
 - Every finding MUST include file path, line number, and code evidence.
 - Don't flag things that are intentional design choices (e.g., IIFE pattern in frontend).
-- Respect the project's conventions (Italian UI text, CommonJS in api/, etc.).
+- Respect the project's conventions (CommonJS in api/, IIFE in frontend, etc.).
+- Flag all hardcoded locale-specific strings (Italian UI text, error messages, labels) as i18n issues — the project targets multilanguage support.
 - The report should be actionable — every finding needs a clear fix suggestion.
 - Be thorough but avoid false positives. Quality over quantity.
 - When uncertain about severity, classify conservatively (lower severity).

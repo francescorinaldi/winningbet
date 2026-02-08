@@ -90,7 +90,9 @@ Detect code that is hard to understand, modify, or maintain.
 ## Special Notes
 
 - This is a vanilla JS project — no TypeScript, no framework. Some patterns that would be anti-patterns in React/Vue are standard here.
-- Italian is used for user-facing strings (UI text, error messages, JSDoc descriptions) — this is intentional. Variable and function names are in English. Don't flag Italian string literals or comments as a naming issue.
+- The project targets multilanguage support. Flag hardcoded Italian (or any language) strings in UI text, error messages, and user-facing content as i18n issues (defer to the hardcoded-values agent for severity).
+- Code comments and JSDoc should be in English. Flag non-English comments as a maintainability issue (LOW severity).
+- Variable and function names are in English — this is correct.
 - The IIFE pattern means all functions are "private" by default — JSDoc is less critical for internal functions.
 
 ## Codex Prompt
@@ -99,4 +101,4 @@ Analyze code maintainability in public/dashboard.js and public/script.js: (1) Li
 
 ## Gemini Prompt
 
-Review naming and readability across the codebase: (1) Find single-letter variable names (other than i, j, k in loops or common abbreviations like e for event) — list each with context. (2) Find any function whose name does not clearly describe what it does (misleading names). (3) Check exported functions in api/_lib/*.js — do they all have JSDoc comments? List any without. (4) Find any deeply nested object access (4+ levels like a.b.c.d.e) without optional chaining or null checks. Format each finding as: ### [SEVERITY] Title with File, Category (maintainability), Issue, Evidence, Suggestion.
+Review naming and readability across the codebase: (1) Find single-letter variable names (other than i, j, k in loops or common abbreviations like e for event) — list each with context. (2) Find any function whose name does not clearly describe what it does (misleading names). (3) Check exported functions in api/_lib/*.js — do they all have JSDoc comments? List any without. (4) Find any deeply nested object access (4+ levels like a.b.c.d.e) without optional chaining or null checks. (5) Find any non-English code comments or JSDoc descriptions — all comments should be in English for maintainability. Format each finding as: ### [SEVERITY] Title with File, Category (maintainability), Issue, Evidence, Suggestion.
