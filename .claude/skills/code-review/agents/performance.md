@@ -98,3 +98,11 @@ Detect performance bottlenecks, inefficiencies, and optimization opportunities.
 - The particle system O(n^2) is capped at 80 particles max (6400 comparisons), which is fine for animation. Flag as LOW/INFO.
 - Frontend `fetch` calls can't easily be batched due to different API endpoints. Don't flag these unless truly redundant.
 - Supabase client automatically pools connections, so individual queries aren't as expensive as raw DB calls.
+
+## Codex Prompt
+
+Find performance issues in the api/ directory: (1) Find every for/forEach/while loop that contains an await call to supabase or an external API — these are N+1 patterns. Show the loop and the await inside it. (2) Find every Supabase .select() query that does NOT have a .limit() — these are unbounded fetches. (3) In api/cron-tasks.js, check if supabase.auth.admin.listUsers() is paginated or fetches all users at once. (4) Find any sequential await calls that could run in parallel with Promise.all. Format each finding as: ### [SEVERITY] Title with File, Category (performance), Issue, Evidence, Suggestion.
+
+## Gemini Prompt
+
+Find performance issues in public/script.js and public/dashboard.js: (1) Find every setInterval() call and check if clearInterval() is ever called for it — report uncleaned intervals. (2) Find every addEventListener() call and check if removeEventListener() is ever called — report potential memory leaks. (3) Find any IntersectionObserver or ResizeObserver that is created but never disconnected. (4) Find any O(n^2) patterns — nested loops over the same or related arrays. (5) Check if the same API endpoint is fetched multiple times during page load. Format each finding as: ### [SEVERITY] Title with File, Category (performance), Issue, Evidence, Suggestion.

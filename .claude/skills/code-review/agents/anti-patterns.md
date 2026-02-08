@@ -97,3 +97,11 @@ Detect code smells, anti-patterns, and bad practices that hurt code quality.
 - The IIFE pattern in frontend JS is an intentional design choice, not an anti-pattern. Don't flag it.
 - Some empty catches are intentional for non-critical features (e.g., preference loading). Flag as LOW, not HIGH.
 - `document.body.style.overflow` mutation is intentional for mobile menu — don't flag.
+
+## Codex Prompt
+
+Analyze public/dashboard.js and public/script.js for anti-patterns: (1) Count every function and report which ones exceed 50 lines — list function name, start line, end line, and line count. (2) Find every catch block that is empty or only contains a comment or console.log — list each with file and line number. (3) Find every .then() call that has no .catch() and no await — these are floating promises. (4) Find every place where == is used instead of === (excluding null checks). (5) Count nesting depth — find any code indented more than 4 levels deep. Format each finding as: ### [SEVERITY] Title with File, Category (anti-patterns), Issue, Evidence, Suggestion.
+
+## Gemini Prompt
+
+Check all JavaScript files in api/ and public/ for: (1) Mixed async patterns — functions that use both .then() chains and async/await in the same function body. (2) Promises created with new Promise() that wrap an already-async operation (the explicit promise constructor anti-pattern). (3) Any use of var (should be const or let). (4) Functions with more than 5 parameters. (5) God files — for each .js file, count total lines and number of distinct function definitions. Flag any file over 500 lines. Format each finding as: ### [SEVERITY] Title with File, Category (anti-patterns), Issue, Evidence, Suggestion.

@@ -23,7 +23,7 @@ From `$ARGUMENTS`:
 - No args -> run ALL agents sequentially
 - An agent name (e.g., `security`, `dead-code`) -> run only that agent
 - `--file <path>` -> scope review to a single file or directory
-- `--multi-model` -> after Claude analysis, also run Codex CLI and Gemini CLI, then consolidate
+- `--multi-model` -> for each agent, also invoke Codex CLI and Gemini CLI with agent-specific prompts
 - `--fix` -> after analysis, auto-fix issues where safe to do so (LOW/MEDIUM only)
 - Combine: `security --file api/ --multi-model`
 
@@ -44,51 +44,78 @@ If `--file` is provided, scope all analysis to that path. Otherwise, analyze the
 - `node_modules/`, `.vercel/`, `supabase/migrations/`, `.claude/`
 - `package-lock.json`, `*.min.js`
 
-### 2. Read Agent Prompts
+### 2. Execute Agents in Parallel
 
-For each agent to run, read its prompt file from `.claude/skills/code-review/agents/<name>.md`.
+All agents are independent — they analyze different aspects of the same code. **Launch them in parallel using the Task tool** for maximum speed.
 
-Each agent file contains:
-- What to look for (specific patterns, anti-patterns)
-- How to classify severity
-- Example findings format
+#### Parallel Execution Strategy
 
-### 3. Execute Each Agent
+Use the Task tool to launch multiple subagents simultaneously. Each subagent:
+1. Reads its agent prompt from `.claude/skills/code-review/agents/<name>.md`
+2. Performs the Claude analysis using native tools (Read, Grep, Glob)
+3. If `--multi-model`, also invokes Codex CLI and Gemini CLI (see below)
+4. Returns all findings in the standard format
 
-For EACH agent, perform the analysis described in its prompt file. Work through the codebase systematically:
+**Launch pattern** (all at once in a single message with multiple Task tool calls):
 
-1. Read the agent's `.md` file for instructions
-2. Use Glob to find relevant files
-3. Use Grep to search for specific patterns
-4. Read files that need deeper analysis
-5. Record ALL findings with:
-   - **Severity**: CRITICAL / HIGH / MEDIUM / LOW / INFO
-   - **File**: Exact path and line number(s)
-   - **Issue**: Clear, specific description
-   - **Evidence**: The problematic code snippet
-   - **Suggestion**: How to fix it
-   - **Category**: Which agent found it
-
-### 4. Run External Models (if --multi-model)
-
-If `--multi-model` flag is present:
-
-```bash
-bash .claude/skills/code-review/scripts/run-external-models.sh [scope]
+```
+Task: "code-review: dead-code agent"
+Task: "code-review: duplicates agent"
+Task: "code-review: security agent"
+Task: "code-review: anti-patterns agent"
+Task: "code-review: performance agent"
+Task: "code-review: architecture agent"
+Task: "code-review: hardcoded-values agent"
+Task: "code-review: error-handling agent"
+Task: "code-review: maintainability agent"
 ```
 
-This script:
-- Checks if `codex` and `gemini` CLIs are installed
-- Sends targeted prompts to each model
-- Saves output to temp files
-- The consolidator merges all findings
+Each Task prompt should include:
+- The full agent instructions (from the `.md` file)
+- The scope (which files to analyze)
+- Whether `--multi-model` is active
+- Instructions to return findings in the standard format
 
-Then run the consolidator:
+#### Within Each Agent: Multi-Model Flow
+
+If `--multi-model` is active, each agent subagent should:
+
+**Step 1: Claude analysis** — Perform the analysis using native tools (Read, Grep, Glob).
+
+**Step 2: Codex CLI** — Read the `## Codex Prompt` section from the agent's `.md` file and run:
+
 ```bash
-node .claude/skills/code-review/scripts/consolidate-reports.js
+codex --quiet --approval-mode full-auto "<agent-specific codex prompt>"
 ```
 
-### 5. Auto-Fix (if --fix)
+- `--quiet`: non-interactive, output to stdout
+- `--approval-mode full-auto`: auto-approve file reads
+- First check: `command -v codex` — skip if not installed
+
+**Step 3: Gemini CLI** — Read the `## Gemini Prompt` section from the agent's `.md` file and run:
+
+```bash
+gemini -p "<agent-specific gemini prompt>" --yolo
+```
+
+- `-p`: headless mode (single prompt, exits after response)
+- `--yolo`: auto-approve tool calls
+- First check: `command -v gemini` — skip if not installed
+
+**Note**: Within a single agent, Codex and Gemini can also run in parallel (two Bash calls in the same message), since they're independent.
+
+**Step 4: Merge** — Combine findings from all models for this agent:
+
+1. Parse external model outputs for findings matching: `### [SEVERITY] Title`
+2. Deduplicate: same file + same issue = keep the one with more detail
+3. **Severity upgrade**: 2+ models agree on same issue → bump one level (LOW→MEDIUM, MEDIUM→HIGH), tag `[MULTI-MODEL]`
+4. Unique findings from external models that Claude missed → tag `[codex-only]` or `[gemini-only]`
+
+### 3. Collect Results
+
+After all parallel agents complete, collect their findings into a single list sorted by severity.
+
+### 4. Auto-Fix (if --fix)
 
 If `--fix` flag is present, auto-fix **LOW** and **MEDIUM** issues that are safe to fix:
 - Remove unused variables/imports
@@ -103,7 +130,7 @@ Do NOT auto-fix:
 - Architectural changes
 - Anything that changes behavior
 
-### 6. Generate Report
+### 5. Generate Report
 
 Write the consolidated report to `code-review-report.md`:
 
@@ -117,20 +144,21 @@ Write the consolidated report to `code-review-report.md`:
 
 ## Summary
 
-| Severity | Count |
-|----------|-------|
-| CRITICAL | N     |
-| HIGH     | N     |
-| MEDIUM   | N     |
-| LOW      | N     |
-| INFO     | N     |
-| **Total**| **N** |
+| Severity | Count | Multi-Model Confirmed |
+|----------|-------|-----------------------|
+| CRITICAL | N     | N                     |
+| HIGH     | N     | N                     |
+| MEDIUM   | N     | N                     |
+| LOW      | N     | N                     |
+| INFO     | N     | N                     |
+| **Total**| **N** | **N**                 |
 
 ## Critical Issues
 
 ### [CRITICAL] Issue Title
 - **File**: `path/to/file.js:42`
 - **Category**: security
+- **Models**: Claude, Codex, Gemini (or just Claude)
 - **Issue**: Description of the problem
 - **Evidence**:
   ```js
@@ -156,9 +184,9 @@ Write the consolidated report to `code-review-report.md`:
 ...
 ```
 
-### 7. Display Summary
+### 6. Display Summary
 
-After writing the report, display a formatted summary in the terminal:
+After writing the report, display a formatted summary:
 
 ```
 === CODE REVIEW COMPLETE ===
@@ -167,11 +195,12 @@ Scope: [full project | path]
 Agents: 9/9 | Models: Claude [+ Codex + Gemini]
 
 CRITICAL: N | HIGH: N | MEDIUM: N | LOW: N | INFO: N
+Multi-model confirmed: N
 
 Top issues:
-1. [CRITICAL] security — SQL injection in api/tips.js:42
-2. [HIGH] dead-code — Unused function loadLegacy() in script.js:380
-3. [MEDIUM] duplicates — buildTipCard duplicated in script.js and dashboard.js
+1. [CRITICAL] security — Webhook auth bypass in api/telegram.js:36
+2. [HIGH] performance — N+1 DB queries in api/cron-tasks.js:96
+3. [MEDIUM] duplicates — Mobile menu duplicated across 6 files
 
 Full report: code-review-report.md
 ```
@@ -190,6 +219,20 @@ Full report: code-review-report.md
 | `error-handling` | Missing try/catch, swallowed errors, generic catches, inconsistent responses | Error path analysis |
 | `maintainability` | Long functions, complex expressions, poor naming, missing types | Complexity metrics |
 
+## External CLI Reference
+
+### Codex CLI
+- **Install**: `npm install -g @openai/codex`
+- **Auth**: `export OPENAI_API_KEY=sk-...` or run `codex` once to login with ChatGPT
+- **Non-interactive**: `codex --quiet --approval-mode full-auto "prompt"`
+- **Docs**: https://developers.openai.com/codex/cli/
+
+### Gemini CLI
+- **Install**: `npm install -g @google/gemini-cli`
+- **Auth**: Run `gemini` once to login with Google (free: 1000 req/day)
+- **Headless**: `gemini -p "prompt" --yolo`
+- **Docs**: https://geminicli.com/docs/cli/headless/
+
 ## Important Notes
 
 - You ARE the reviewer. Analyze code directly — do NOT call the Claude API.
@@ -199,3 +242,5 @@ Full report: code-review-report.md
 - The report should be actionable — every finding needs a clear fix suggestion.
 - Be thorough but avoid false positives. Quality over quantity.
 - When uncertain about severity, classify conservatively (lower severity).
+- External CLI calls are read-only — never pass `--write` or mutation flags.
+- If an external CLI fails or times out, log the failure and continue with Claude-only findings.

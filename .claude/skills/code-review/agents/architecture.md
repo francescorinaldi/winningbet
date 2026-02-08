@@ -97,3 +97,11 @@ Detect architectural issues, design inconsistencies, and structural problems.
 - This is a Vercel serverless project — each API file is a standalone function. Some "coupling" is inherent.
 - The frontend uses vanilla JS with no module system — shared code must use `<script>` includes or globals.
 - `api/_lib/leagues.js` is the centralized league config — check if all files use it.
+
+## Codex Prompt
+
+Map the module dependency graph: (1) For every .js file in api/, list all require() calls and what they import. Then check for circular dependencies — does any module A require B which requires A? (2) Compare how different API endpoint files handle authentication — do they all call authenticate(req) the same way, or are there inconsistencies? (3) Compare the response format of every res.status().json() call across all api/*.js files — do they follow a consistent shape for errors and success? List any inconsistencies. Format each finding as: ### [SEVERITY] Title with File, Category (architecture), Issue, Evidence, Suggestion.
+
+## Gemini Prompt
+
+Architectural review: (1) Check if api/_lib/leagues.js is the single source of truth for league configuration. Search every file for hardcoded league slugs (serie-a, champions-league, la-liga, premier-league) that should import from leagues.js instead. (2) Check the data shape that api/tips.js returns versus what public/dashboard.js expects — are there any mismatches in field names or types? (3) Check if the settlement logic (evaluatePrediction, buildActualResult) exists in multiple files or is properly shared. (4) List all shared modules in api/_lib/ and check if any are underutilized (functions exported but only used once). Format each finding as: ### [SEVERITY] Title with File, Category (architecture), Issue, Evidence, Suggestion.

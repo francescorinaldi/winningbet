@@ -85,3 +85,11 @@ Detect copy-pasted code, similar functions, and repeated patterns that should be
 - The IIFE pattern in frontend files means code can't be easily shared via imports. Suggest a shared `<script>` include or bundling strategy.
 - Some duplication between `script.js` (homepage) and `dashboard.js` (auth'd area) may be intentional due to different contexts. Flag but note this.
 - `api/_lib/` exists specifically to avoid duplication in backend. Check if it's used consistently.
+
+## Codex Prompt
+
+Compare public/script.js and public/dashboard.js side by side. List every function that exists in both files with similar logic (same name or same purpose). For each pair, show both implementations and estimate the percentage of shared code. Also search for the tier hierarchy object { free: 0, pro: 1, vip: 2 } or similar tier-level mappings — list every file and line where it appears. Finally, check if any mobile menu toggle/hamburger logic is copy-pasted across HTML files. Format each finding as: ### [SEVERITY] Title with File, Category (duplicates), Issue, Evidence, Suggestion.
+
+## Gemini Prompt
+
+Analyze the api/ directory for repeated patterns: (1) Find all places where league slug arrays or league name mappings are defined inline instead of importing from api/_lib/leagues.js. (2) Find fetch() + try/catch + error response patterns that are repeated across 3 or more serverless function files. (3) Find any Supabase query patterns (.from().select().eq()) that are identical across multiple files and could be extracted to a shared helper. For each finding, show the duplicated code from each location. Format each finding as: ### [SEVERITY] Title with File, Category (duplicates), Issue, Evidence, Suggestion.

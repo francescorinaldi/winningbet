@@ -96,3 +96,11 @@ Detect missing, incomplete, or inconsistent error handling.
 - In this project, many `catch (_err) { /* Silenzioso */ }` blocks are intentional for non-critical UX features (preferences, streaks, notifications). Flag as LOW, not HIGH.
 - Supabase's `.single()` method throws if 0 or 2+ rows match — this can be an issue if called on tables that might have no rows.
 - Vercel serverless functions that throw unhandled errors return 500 automatically — but the error message is generic and unhelpful.
+
+## Codex Prompt
+
+Audit error handling in api/stripe-webhook.js and api/cron-tasks.js: (1) For every Supabase call (supabase.from(...).update/upsert/select/insert), check if the { error } response is destructured and checked. List every unchecked Supabase call with file and line number. (2) In stripe-webhook.js, check each handler function (handleCheckoutCompleted, handleSubscriptionUpdated, handleSubscriptionDeleted, handlePaymentFailed) — if any Supabase operation fails silently, will Stripe retry the webhook or will it think it succeeded? (3) Find every .single() call in the entire codebase — for each, determine if it could throw PGRST116 (no rows found) in a legitimate scenario. Format each finding as: ### [SEVERITY] Title with File, Category (error-handling), Issue, Evidence, Suggestion.
+
+## Gemini Prompt
+
+Audit error handling in public/dashboard.js: (1) Find every catch block — classify each as: empty (swallowed), log-only (console.error but no user feedback), or properly handled (shows UI feedback). List each with line number. (2) Find every async function called without await that has no .catch() — these are floating promises with unhandled rejections. (3) Find every place where .data is accessed from a Supabase response without first checking .error — list each with the specific query. (4) Check if getSession() errors are handled — what happens if Supabase auth is unreachable? Format each finding as: ### [SEVERITY] Title with File, Category (error-handling), Issue, Evidence, Suggestion.

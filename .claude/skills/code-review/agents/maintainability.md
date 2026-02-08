@@ -92,3 +92,11 @@ Detect code that is hard to understand, modify, or maintain.
 - This is a vanilla JS project — no TypeScript, no framework. Some patterns that would be anti-patterns in React/Vue are standard here.
 - Italian variable names mixed with English is intentional for this project. Don't flag.
 - The IIFE pattern means all functions are "private" by default — JSDoc is less critical for internal functions.
+
+## Codex Prompt
+
+Analyze code maintainability in public/dashboard.js and public/script.js: (1) List every function with its line count — flag any over 50 lines. (2) Find functions with 4+ parameters. (3) Find nested ternary expressions (ternary inside ternary). (4) Find boolean expressions with 3+ conditions that are not assigned to a named variable. (5) For each file, count total functions and total lines, then compute the average function length. Which functions are the most complex? Format each finding as: ### [SEVERITY] Title with File, Category (maintainability), Issue, Evidence, Suggestion.
+
+## Gemini Prompt
+
+Review naming and readability across the codebase: (1) Find single-letter variable names (other than i, j, k in loops or common abbreviations like e for event) — list each with context. (2) Find any function whose name does not clearly describe what it does (misleading names). (3) Check exported functions in api/_lib/*.js — do they all have JSDoc comments? List any without. (4) Find any deeply nested object access (4+ levels like a.b.c.d.e) without optional chaining or null checks. Format each finding as: ### [SEVERITY] Title with File, Category (maintainability), Issue, Evidence, Suggestion.

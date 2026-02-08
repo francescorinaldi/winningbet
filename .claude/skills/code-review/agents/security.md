@@ -109,3 +109,11 @@ Detect security vulnerabilities following OWASP Top 10 and Node.js/browser-speci
 - Supabase client with `.eq()`, `.select()` etc. uses parameterized queries internally — these are safe from SQL injection. Only flag raw SQL or `.rpc()` with string concatenation.
 - The project uses Supabase RLS (Row Level Security) as a defense layer. Note this when assessing access control, but don't rely on it as the only protection.
 - `innerHTML` usage with hardcoded strings (not user input) is safe — only flag when user/API data flows into it.
+
+## Codex Prompt
+
+Perform a security audit of the api/ directory. For each serverless function file: (1) Check if req.query and req.body parameters are validated before use — list any unvalidated inputs. (2) Check if authenticate(req) is called on endpoints that access user data — list any unprotected endpoints. (3) Check if Stripe webhook signature verification happens before processing event data. (4) In api/telegram.js, check what happens when TELEGRAM_WEBHOOK_SECRET environment variable is not set. (5) Search all files for hardcoded API keys, tokens, or secrets not read from process.env. (6) Check for innerHTML usage in public/*.js where the content includes data from API responses or user input. Format each finding as: ### [SEVERITY] Title with File, Category (security), Issue, Evidence, Suggestion.
+
+## Gemini Prompt
+
+Security review of this Node.js project: (1) Trace every req.headers.origin and req.headers.referer usage — check if any are used to build redirect URLs without validation. (2) Find all places where environment variables are used with a fallback that could cause a security bypass if the env var is unset (pattern: if (envVar) { check } — what happens in the else branch?). (3) Check Cache-Control headers on all API endpoints — are any authenticated responses cached publicly? (4) List all regex patterns in the codebase and check for ReDoS (catastrophic backtracking) risks. (5) Check if any Supabase .single() calls could be exploited to cause errors that leak information. Format each finding as: ### [SEVERITY] Title with File, Category (security), Issue, Evidence, Suggestion.
