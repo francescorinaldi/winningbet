@@ -4,6 +4,15 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added — Schedine Intelligenti (Smart Betting Slips)
+
+- **`/generate-schedina` Claude Code skill** — AI-powered betting slip generator. Takes today's pending tips and combines them into 2-3 schedine with different risk profiles: Sicura (low risk, high confidence, PRO tier), Equilibrata (balanced, VIP tier), Azzardo (high potential return, VIP tier). Uses modified Kelly Criterion for optimal stake sizing. Budget-aware: total stakes never exceed the user's weekly budget.
+- **`GET /api/schedina`** — New endpoint serving the day's smart betting slips with full tip details. Tier-gated: PRO sees Sicura only, VIP sees all three. Supports `?date=YYYY-MM-DD` and `?status=` filters. 15-minute cache with budget summary.
+- **`schedine` + `schedina_tips` Supabase tables** — New schema with RLS policies matching tier access (migration 009). Fields: name, risk_level, combined_odds, suggested_stake, expected_return, confidence_avg, strategy, status, tier, budget_reference.
+- **User risk profile in `user_preferences`** — Three new fields: `risk_tolerance` (prudente/equilibrato/aggressivo), `weekly_budget` (default 50 EUR), `max_schedine_per_day` (1-5). Fully validated in `PUT /api/user-settings?resource=preferences`.
+- **Schedine auto-settlement in cron** — `cron-tasks.js` settle handler now also settles schedine: won if all tips won, lost if any tip lost, void if all void.
+- **`/generate-tips` → `/generate-schedina` integration** — After generating tips for all leagues, `/generate-tips` automatically invokes `/generate-schedina` to build the day's betting slips from the fresh predictions.
+
 ### Changed — Issue #29: UX Improvements + Odds Accuracy Fix
 
 - **CRITICAL: Real bookmaker odds only** — Tips now use EXCLUSIVELY actual Bet365 odds. If real odds are not available for a prediction type, the tip is skipped entirely (no fallback, no AI estimates, no invented numbers). Added `getAllOdds()` and `findOddsForPrediction()` to `api-football.js`. Removed `odds` field from AI schema — the AI never outputs odds. Prediction engine maps each prediction type to the correct bookmaker market post-generation.

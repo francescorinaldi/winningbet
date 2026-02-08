@@ -5,72 +5,82 @@ Detect code smells, anti-patterns, and bad practices that hurt code quality.
 ## What to Look For
 
 ### 1. God Files / God Functions
+
 - Files longer than 500 lines doing too many unrelated things
 - Functions longer than 50 lines
 - Single file handling multiple concerns (UI + data + business logic)
 - **Method**: Check line counts, count distinct responsibilities
 
 ### 2. Deep Nesting
+
 - More than 3 levels of if/for/while/callback nesting
 - Deeply nested promise chains
 - **Method**: Count indentation levels, look for patterns like `if { if { if {`
 
 ### 3. Callback Hell / Mixed Async Patterns
+
 - Mixing callbacks, `.then()` chains, and `async/await` in the same function
 - Deeply nested `.then()` chains instead of `async/await`
 - Using `.then()` without returning the promise
 
 ### 4. Empty or Swallowed Error Handling
+
 - `catch` blocks that do nothing or only log
 - `catch (_err) { /* Silenzioso */ }` — errors silently swallowed
 - Missing error re-throw or user notification
 - Silent catches are always a code smell. Flag every one.
 
 ### 5. Type Coercion Issues
+
 - Using `==` instead of `===` (except for `null` checks)
 - Implicit type coercion in comparisons
 - Relying on truthy/falsy for specific value checks
 
 ### 6. Variable Mutation Anti-Patterns
+
 - Mutating function arguments
 - Reassigning `const` loop variables (should use `let`)
 - Using `var` instead of `const`/`let`
 - `let` used when `const` would suffice (value never reassigned)
 
 ### 7. Promise Anti-Patterns
+
 - `new Promise()` wrapping an already async operation
 - Floating promises (calling async function without `await` or `.catch()`)
 - `.then(function() { return x; })` instead of just `.then(() => x)`
 
 ### 8. DOM Anti-Patterns (Frontend)
+
 - Excessive DOM queries inside loops
 - Creating DOM elements in a loop without DocumentFragment
 - `document.querySelector` with overly broad selectors
 - Inline event handlers vs delegation
 
 ### 9. Error Throwing Anti-Patterns
+
 - Throwing strings instead of Error objects
 - `throw 'error message'` instead of `throw new Error('...')`
 - Catching Error but not preserving the original error cause
 
 ### 10. Side Effects in Unexpected Places
+
 - Side effects in getter-like functions
 - Async operations in constructors
 - Modifying global state from utility functions
 
 ## Severity Classification
 
-| Pattern | Severity |
-|---------|----------|
-| Floating promise (unhandled rejection) | HIGH |
-| Swallowed error hiding real failures | HIGH |
-| God file (>1000 lines, multiple concerns) | MEDIUM |
-| God function (>50 lines) | MEDIUM |
-| Deep nesting (>4 levels) | MEDIUM |
-| Mixed async patterns in same function | MEDIUM |
-| `==` instead of `===` | LOW |
-| `let` that should be `const` | LOW |
-| Minor style inconsistencies | INFO |
+| Pattern                                   | Severity |
+| ----------------------------------------- | -------- |
+| Floating promise (unhandled rejection)    | HIGH     |
+| Swallowed error hiding real failures      | HIGH     |
+| God file (>1000 lines, multiple concerns) | MEDIUM   |
+| God function (>50 lines)                  | MEDIUM   |
+| Deep nesting (>4 levels)                  | MEDIUM   |
+| Mixed async patterns in same function     | MEDIUM   |
+| `==` instead of `===`                     | LOW      |
+| `let` that should be `const`              | LOW      |
+| Minor style inconsistencies               | INFO     |
 
 ## Finding Format
 

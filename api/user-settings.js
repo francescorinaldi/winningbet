@@ -14,6 +14,7 @@ const { authenticate } = require('./_lib/auth-middleware');
 const { supabase } = require('./_lib/supabase');
 
 const VALID_LEAGUES = ['serie-a', 'champions-league', 'la-liga', 'premier-league'];
+const VALID_RISK_TOLERANCES = ['prudente', 'equilibrato', 'aggressivo'];
 
 module.exports = async function handler(req, res) {
   const { user, error: authError } = await authenticate(req);
@@ -251,6 +252,31 @@ async function handlePreferences(req, res, user) {
       return res.status(400).json({ error: 'notification_results deve essere booleano' });
     }
     updates.notification_results = body.notification_results;
+  }
+
+  if (body.risk_tolerance !== undefined) {
+    if (VALID_RISK_TOLERANCES.indexOf(body.risk_tolerance) === -1) {
+      return res
+        .status(400)
+        .json({ error: 'risk_tolerance non valido. Valori: prudente, equilibrato, aggressivo' });
+    }
+    updates.risk_tolerance = body.risk_tolerance;
+  }
+
+  if (body.weekly_budget !== undefined) {
+    const budget = parseFloat(body.weekly_budget);
+    if (isNaN(budget) || budget < 5 || budget > 10000) {
+      return res.status(400).json({ error: 'weekly_budget deve essere tra 5 e 10000 EUR' });
+    }
+    updates.weekly_budget = budget;
+  }
+
+  if (body.max_schedine_per_day !== undefined) {
+    const maxSchedine = parseInt(body.max_schedine_per_day, 10);
+    if (isNaN(maxSchedine) || maxSchedine < 1 || maxSchedine > 5) {
+      return res.status(400).json({ error: 'max_schedine_per_day deve essere tra 1 e 5' });
+    }
+    updates.max_schedine_per_day = maxSchedine;
   }
 
   const { data, error } = await supabase

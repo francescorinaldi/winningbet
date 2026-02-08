@@ -146,12 +146,12 @@ Only THEN select your prediction. Choose the option with the highest probability
 
 #### 4d. Generate prediction (per match)
 
-| Field        | Rules                                                                                                                                                                                                                                                                                                                                              |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `prediction` | One of the 14 valid types. Choose the SAFEST pick with highest expected accuracy. Avoid exotic picks unless data is overwhelming.                                                                                                                                                                                                                  |
-| `confidence` | 60-95. Reflects statistical reality. Must be justified by specific numbers. Never exceed 85 unless 4+ independent data points align. Never exceed 90 without truly exceptional convergence.                                                                                                                                                        |
+| Field        | Rules                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prediction` | One of the 14 valid types. Choose the SAFEST pick with highest expected accuracy. Avoid exotic picks unless data is overwhelming.                                                                                                                                                                                                                                                                 |
+| `confidence` | 60-95. Reflects statistical reality. Must be justified by specific numbers. Never exceed 85 unless 4+ independent data points align. Never exceed 90 without truly exceptional convergence.                                                                                                                                                                                                       |
 | `odds`       | **MUST use real bookmaker odds** from the fetched data (match.odds). Map your prediction type to the correct market: 1/X/2 → match.odds.home/draw/away, Over/Under → match.odds.overUnder, Goal/No Goal → match.odds.goal/noGoal, 1X/X2 → match.odds.doubleChance. **NEVER invent or estimate odds.** If real odds are not available for a prediction type, DO NOT generate a tip for that match. |
-| `analysis`   | 2-3 sentences IN ITALIAN citing specific numbers (position, form, avg goals, BTTS%, injuries). Must justify the pick.                                                                                                                                                                                                                              |
+| `analysis`   | 2-3 sentences IN ITALIAN citing specific numbers (position, form, avg goals, BTTS%, injuries). Must justify the pick.                                                                                                                                                                                                                                                                             |
 
 **Accuracy-first rules:**
 
@@ -179,6 +179,7 @@ ELSE → "vip"
 ```
 
 **Tier balancing** (always apply after initial assignment):
+
 - Sort predictions by value (confidence × odds) ascending
 - Bottom 25% → free, next 25% → pro, top 50% → vip
 - Combo predictions (containing "+") are always "vip"
@@ -258,6 +259,14 @@ curl -s -X POST "https://api.telegram.org/bot<TOKEN>/sendMessage" \
 ```
 
 Split into separate messages per league if total exceeds 4000 chars.
+
+### 9. Generate Schedine (automatic)
+
+After ALL leagues have been processed and tips inserted, automatically invoke the `/generate-schedina` skill to build the day's smart betting slips from the freshly generated tips.
+
+Pass the `--send` flag to `/generate-schedina` if this run also has `--send`.
+
+This ensures schedine are always in sync with the latest tips.
 
 ## Important Notes
 
