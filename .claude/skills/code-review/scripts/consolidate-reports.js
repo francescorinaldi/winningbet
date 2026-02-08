@@ -163,9 +163,7 @@ function generateReport(findings, metadata) {
 `;
 
   for (const sev of SEVERITY_ORDER) {
-    const confirmed = findings.filter(
-      (f) => f.severity === sev && f.confirmedBy.length > 1,
-    ).length;
+    const confirmed = findings.filter((f) => f.severity === sev && f.confirmedBy.length > 1).length;
     report += `| ${sev} | ${counts[sev]} | ${confirmed} |\n`;
   }
 

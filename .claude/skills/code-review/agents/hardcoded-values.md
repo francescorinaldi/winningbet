@@ -5,23 +5,27 @@ Detect magic numbers, hardcoded strings, and configuration values that should be
 ## What to Look For
 
 ### 1. Magic Numbers
+
 - Numeric literals used directly in logic without named constants
 - Timeouts, limits, thresholds, percentages used inline
 - Including `0`, `1`, `-1`, `100` — flag every numeric literal used in logic and suggest a named constant
 - **Method**: Search for numeric literals in conditions, calculations, and API calls
 
 ### 2. Hardcoded URLs
+
 - API URLs hardcoded instead of using env vars or config
 - CDN URLs or external service endpoints inline
 - Including relative URLs like `/api/tips` — flag them and suggest centralizing API routes in a config
 
 ### 3. Hardcoded Business Rules
+
 - Tier pricing (`€9.99`, `€29.99`) hardcoded in multiple places
 - Confidence ranges, odds ranges defined inline
 - Cache durations as raw numbers
 - Pagination limits hardcoded
 
 ### 4. Hardcoded UI Text (i18n)
+
 - All user-facing strings hardcoded in Italian (or any language) instead of using an i18n system
 - Error messages, labels, button text, tooltips, placeholder text, confirmation dialogs
 - Legal disclaimers (e.g. ADM gambling notice) — even legally required text should go through i18n for multilanguage support
@@ -30,28 +34,30 @@ Detect magic numbers, hardcoded strings, and configuration values that should be
 - **Severity**: MEDIUM for each hardcoded locale-specific string; HIGH if the same string is duplicated in 3+ places
 
 ### 5. Configuration That Should Be Environment Variables
+
 - API rate limits, timeouts
 - Feature flags or toggle values
 - External service configuration
 
 ### 6. Duplicated Literals
+
 - The same string or number appearing in 3+ places
 - **Method**: Search for repeated string/number literals across files
 
 ## Severity Classification
 
-| Pattern | Severity |
-|---------|----------|
-| Hardcoded API key or secret | CRITICAL (→ security agent) |
-| Hardcoded external URL that could change | MEDIUM |
-| Business rule (pricing, limits) hardcoded in 3+ places | MEDIUM |
-| Magic number in complex logic | MEDIUM |
-| Cache duration as raw number | LOW |
-| Obvious constants (HTTP status codes) | INFO |
+| Pattern                                                | Severity                    |
+| ------------------------------------------------------ | --------------------------- |
+| Hardcoded API key or secret                            | CRITICAL (→ security agent) |
+| Hardcoded external URL that could change               | MEDIUM                      |
+| Business rule (pricing, limits) hardcoded in 3+ places | MEDIUM                      |
+| Magic number in complex logic                          | MEDIUM                      |
+| Cache duration as raw number                           | LOW                         |
+| Obvious constants (HTTP status codes)                  | INFO                        |
 
 ## Finding Format
 
-```
+````
 ### [MEDIUM] Magic number for cache duration
 - **File**: `api/fixtures.js:15`
 - **Category**: hardcoded-values
@@ -59,8 +65,10 @@ Detect magic numbers, hardcoded strings, and configuration values that should be
 - **Evidence**:
   ```js
   res.setHeader('Cache-Control', 'public, s-maxage=7200');
-  ```
+````
+
 - **Suggestion**: Define `const CACHE_DURATION_MATCHES = 7200; // 2 hours` at the top of the file or in a shared config
+
 ```
 
 ## Key Areas to Check
@@ -88,3 +96,4 @@ Search all JavaScript files in api/ and public/ for hardcoded values: (1) Find a
 ## Gemini Prompt
 
 Search the codebase for configuration that should be centralized: (1) Find all places where cache TTL durations are set as raw numbers — group them and check if a shared CACHE_DURATIONS config would help. (2) Find all places where tier names (free, pro, vip) are used as string literals in comparisons — should these use a shared TIERS constant? (3) Check public/script.js and public/dashboard.js for hardcoded API endpoint URLs — are they consistent? (4) Find any hardcoded Supabase table names that appear in 3+ files. (5) Find all hardcoded Italian text in HTML files and JavaScript template literals — list every user-facing string that should be extracted to a translation file for i18n/multilanguage support. Format each finding as: ### [SEVERITY] Title with File, Category (hardcoded-values), Issue, Evidence, Suggestion.
+```

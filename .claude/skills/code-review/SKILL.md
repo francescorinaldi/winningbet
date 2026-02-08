@@ -1,7 +1,7 @@
 ---
 name: code-review
 description: Run comprehensive code review agents to detect dead code, duplicates, security issues, anti-patterns, performance problems, architecture smells, hardcoded values, error handling gaps, and maintainability issues. Supports multi-model analysis with Claude, Codex CLI, and Gemini CLI.
-argument-hint: "[agent-name] [--file path] [--multi-model] [--fix]"
+argument-hint: '[agent-name] [--file path] [--multi-model] [--fix]'
 user-invocable: true
 allowed-tools: Bash(*), Read, Glob, Grep, Write, Edit, WebSearch
 ---
@@ -34,6 +34,7 @@ From `$ARGUMENTS`:
 If `--file` is provided, scope all analysis to that path. Otherwise, analyze the full project:
 
 **Files to analyze** (read via Glob):
+
 - `api/**/*.js` — All serverless functions and libraries
 - `public/**/*.js` — All frontend scripts
 - `public/**/*.css` — Stylesheets
@@ -41,6 +42,7 @@ If `--file` is provided, scope all analysis to that path. Otherwise, analyze the
 - `*.js`, `*.mjs` — Root config files
 
 **Files to SKIP**:
+
 - `node_modules/`, `.vercel/`, `supabase/migrations/`, `.claude/`
 - `package-lock.json`, `*.min.js`
 
@@ -51,6 +53,7 @@ All agents are independent — they analyze different aspects of the same code. 
 #### Parallel Execution Strategy
 
 Use the Task tool to launch multiple subagents simultaneously. Each subagent:
+
 1. Reads its agent prompt from `.claude/skills/code-review/agents/<name>.md`
 2. Performs the Claude analysis using native tools (Read, Grep, Glob)
 3. If `--multi-model`, also invokes Codex CLI and Gemini CLI (see below)
@@ -71,6 +74,7 @@ Task: "code-review: maintainability agent"
 ```
 
 Each Task prompt should include:
+
 - The full agent instructions (from the `.md` file)
 - The scope (which files to analyze)
 - Whether `--multi-model` is active
@@ -118,6 +122,7 @@ After all parallel agents complete, collect their findings into a single list so
 ### 4. Auto-Fix (if --fix)
 
 If `--fix` flag is present, auto-fix **LOW** and **MEDIUM** issues that are safe to fix:
+
 - Remove unused variables/imports
 - Replace `==` with `===`
 - Add missing `const` (replace `let` where never reassigned)
@@ -125,6 +130,7 @@ If `--fix` flag is present, auto-fix **LOW** and **MEDIUM** issues that are safe
 - Fix inconsistent naming
 
 Do NOT auto-fix:
+
 - CRITICAL or HIGH severity issues (need human review)
 - Security issues (need careful analysis)
 - Architectural changes
@@ -134,7 +140,7 @@ Do NOT auto-fix:
 
 Write the consolidated report to `code-review-report.md`:
 
-```markdown
+````markdown
 # Code Review Report
 
 **Date**: YYYY-MM-DD
@@ -144,18 +150,19 @@ Write the consolidated report to `code-review-report.md`:
 
 ## Summary
 
-| Severity | Count | Multi-Model Confirmed |
-|----------|-------|-----------------------|
-| CRITICAL | N     | N                     |
-| HIGH     | N     | N                     |
-| MEDIUM   | N     | N                     |
-| LOW      | N     | N                     |
-| INFO     | N     | N                     |
-| **Total**| **N** | **N**                 |
+| Severity  | Count | Multi-Model Confirmed |
+| --------- | ----- | --------------------- |
+| CRITICAL  | N     | N                     |
+| HIGH      | N     | N                     |
+| MEDIUM    | N     | N                     |
+| LOW       | N     | N                     |
+| INFO      | N     | N                     |
+| **Total** | **N** | **N**                 |
 
 ## Critical Issues
 
 ### [CRITICAL] Issue Title
+
 - **File**: `path/to/file.js:42`
 - **Category**: security
 - **Models**: Claude, Codex, Gemini (or just Claude)
@@ -164,24 +171,32 @@ Write the consolidated report to `code-review-report.md`:
   ```js
   // problematic code
   ```
+````
+
 - **Suggestion**: How to fix it
 
 ## High Issues
+
 ...
 
 ## Medium Issues
+
 ...
 
 ## Low Issues
+
 ...
 
 ## Info / Suggestions
+
 ...
 
 ## Auto-Fixed (if --fix)
+
 - [ ] `file.js:10` — Replaced `==` with `===`
 - [ ] `file.js:25` — Removed unused variable `foo`
-...
+      ...
+
 ```
 
 ### 6. Display Summary
@@ -189,6 +204,7 @@ Write the consolidated report to `code-review-report.md`:
 After writing the report, display a formatted summary:
 
 ```
+
 === CODE REVIEW COMPLETE ===
 
 Scope: [full project | path]
@@ -198,11 +214,13 @@ CRITICAL: N | HIGH: N | MEDIUM: N | LOW: N | INFO: N
 Multi-model confirmed: N
 
 Top issues:
+
 1. [CRITICAL] security — Webhook auth bypass in api/telegram.js:36
 2. [HIGH] performance — N+1 DB queries in api/cron-tasks.js:96
 3. [MEDIUM] duplicates — Mobile menu duplicated across 6 files
 
 Full report: code-review-report.md
+
 ```
 
 ## Agent Descriptions
@@ -244,3 +262,4 @@ Full report: code-review-report.md
 - Classify severity based on actual impact, not assumptions about intent.
 - External CLI calls are read-only — never pass `--write` or mutation flags.
 - If an external CLI fails or times out, log the failure and continue with Claude-only findings.
+```
