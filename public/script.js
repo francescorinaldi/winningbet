@@ -1270,11 +1270,23 @@
         return;
       }
 
+      // Homepage: hide tips for matches that have already started
+      // (masks lost/losing predictions during live matches)
+      const now = new Date();
+      const upcomingTips = tips.filter(function (tip) {
+        return new Date(tip.match_date) > now;
+      });
+
+      if (upcomingTips.length === 0) {
+        loadTips();
+        return;
+      }
+
       const container = document.getElementById('tipsGrid');
       container.textContent = '';
 
       // Renderizza i tips dal database
-      tips.forEach(function (tip) {
+      upcomingTips.forEach(function (tip) {
         const match = {
           date: tip.match_date,
           home: tip.home_team,
@@ -1285,7 +1297,7 @@
 
       // Verifica quali tier sono presenti nei tips dal database
       const tiersPresent = new Set();
-      tips.forEach(function (tip) {
+      upcomingTips.forEach(function (tip) {
         tiersPresent.add(tip.tier);
       });
 

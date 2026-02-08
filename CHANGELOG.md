@@ -4,6 +4,20 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Changed — Issue #29: UX Improvements + Odds Accuracy Fix
+
+- **CRITICAL: Real bookmaker odds** — Tips now use actual Bet365 odds for the specific prediction market (Over/Under, Goal/No Goal, 1X2, Double Chance) instead of AI-estimated values. Added `getAllOdds()` and `findOddsForPrediction()` to `api-football.js`. Prediction engine maps each prediction type to the correct bookmaker market and uses real odds. AI estimate used only as fallback when bookmaker odds are unavailable.
+- **Auto-hide started tips** — Homepage now filters out tips for matches that have already kicked off. This automatically masks lost/losing predictions during live matches. Won tips surface later in track record; lost tips disappear silently.
+- **Hero subtitle** — Updated to "Pronostici di calcio basati su dati, algoritmi e analisi tecnico-tattiche. Track record verificato e trasparente."
+- **CTA button** — "INIZIA A VINCERE" now displays in uppercase black text with letter-spacing
+- **PRO plan description** — Updated to emphasize "10+ tips al giorno", "Analisi Intelligenza Artificiale", and "Storico completo risultati"
+- **Tier comparison strip** — PRO detail changed from "Analisi + Storico completo" to "Analisi AI + Storico completo"
+- **Quota Media explanation** — Added explainer text "Media aritmetica delle quote dei tips vinti" below the stat card
+- **Footer tagline** — Enhanced with AI branding: "Pronostici calcio premium powered by AI. Algoritmi proprietari, analisi tecnico-tattiche e dati in tempo reale per darti il vantaggio che fa la differenza."
+- **Language toggle** — Added IT flag toggle button in navbar (UI placeholder for future i18n)
+- **Skill odds mapping** — Updated `/generate-tips` skill to fetch all bet markets and instruct Claude Code to use real bookmaker odds
+- **Extended odds in prompt** — Prediction engine prompt now shows Over/Under, Both Teams Score, and Double Chance odds alongside 1X2
+
 ### Changed — Tiered Prediction Access + Google-Only Auth
 
 - **Auth: Google-only login** — Removed email/password registration and login forms. Auth page now shows only "Accedi con Google" button with terms/privacy links. Simplified `auth.js` and `auth.html`

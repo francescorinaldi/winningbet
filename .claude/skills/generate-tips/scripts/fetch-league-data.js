@@ -100,23 +100,49 @@ async function main() {
     }
   }
 
-  // 4. Odds for each match (parallel, api-football only)
+  // 4. Odds for each match — all markets (parallel, api-football only)
   if (result.matches.length > 0) {
     const oddsResults = await Promise.allSettled(
-      result.matches.map((m) => apiFootball.getOdds(m.id)),
+      result.matches.map((m) => apiFootball.getAllOdds(m.id)),
     );
     result.matches.forEach((match, i) => {
-      if (
-        oddsResults[i].status === 'fulfilled' &&
-        oddsResults[i].value &&
-        oddsResults[i].value.values
-      ) {
-        const v = oddsResults[i].value.values;
-        match.odds = {
-          home: (v[0] && v[0].odd) || null,
-          draw: (v[1] && v[1].odd) || null,
-          away: (v[2] && v[2].odd) || null,
-        };
+      if (oddsResults[i].status === 'fulfilled' && oddsResults[i].value) {
+        const allOdds = oddsResults[i].value;
+        match.odds = {};
+
+        // 1X2
+        if (allOdds.matchWinner) {
+          const h = allOdds.matchWinner.find((v) => v.outcome === 'Home');
+          const d = allOdds.matchWinner.find((v) => v.outcome === 'Draw');
+          const a = allOdds.matchWinner.find((v) => v.outcome === 'Away');
+          match.odds.home = h ? h.odd : null;
+          match.odds.draw = d ? d.odd : null;
+          match.odds.away = a ? a.odd : null;
+        }
+
+        // Over/Under
+        if (allOdds.overUnder) {
+          match.odds.overUnder = {};
+          allOdds.overUnder.forEach((v) => {
+            match.odds.overUnder[v.outcome] = v.odd;
+          });
+        }
+
+        // Both Teams Score (Goal / No Goal)
+        if (allOdds.bothTeamsScore) {
+          const yes = allOdds.bothTeamsScore.find((v) => v.outcome === 'Yes');
+          const no = allOdds.bothTeamsScore.find((v) => v.outcome === 'No');
+          match.odds.goal = yes ? yes.odd : null;
+          match.odds.noGoal = no ? no.odd : null;
+        }
+
+        // Double Chance
+        if (allOdds.doubleChance) {
+          match.odds.doubleChance = {};
+          allOdds.doubleChance.forEach((v) => {
+            match.odds.doubleChance[v.outcome] = v.odd;
+          });
+        }
       }
     });
   }
