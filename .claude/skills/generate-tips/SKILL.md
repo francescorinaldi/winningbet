@@ -168,18 +168,20 @@ Only THEN select your prediction. Choose the option with the highest probability
 
 After all matches in a league are analyzed:
 
+**Target distribution: 25% free, 25% pro, 50% vip.**
+
+Free tips are "teasers" — safe, obvious picks with low reward. The real value is in pro/vip.
+
 ```
-IF confidence >= 80 AND odds <= 1.8 → "free"
-ELSE IF confidence >= 75 AND odds <= 2.5 → "pro"
-ELSE IF odds >= 2.5 OR prediction contains "+" → "vip"
-ELSE IF confidence >= 70 → "pro"
-ELSE → "free"
+IF confidence >= 80 AND odds <= 1.55 → "free"
+ELSE IF confidence >= 75 AND odds <= 1.80 → "pro"
+ELSE → "vip"
 ```
 
-**Tier balancing** (if a league has 3+ tips but any tier has 0):
-
+**Tier balancing** (always apply after initial assignment):
 - Sort predictions by value (confidence × odds) ascending
-- Bottom third → free, middle third → pro, top third → vip
+- Bottom 25% → free, next 25% → pro, top 50% → vip
+- Combo predictions (containing "+") are always "vip"
 
 ### 6. Replace existing tips and insert new ones
 
@@ -245,7 +247,7 @@ Each tip block:
 <corner> <memo> _<analysis>_
 ```
 
-**MarkdownV2 escaping**: Put `\` before these chars: `_ * [ ] ( ) ~ ` > # + - = | { } . !`
+**MarkdownV2 escaping**: Put `\` before these chars: ``_ * [ ] ( ) ~ ` > # + - = | { } . !``
 
 Send via curl:
 

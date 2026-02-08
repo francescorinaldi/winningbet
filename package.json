@@ -22,7 +22,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "env:pull": "vercel env pull .env --environment production --yes"
+    "env:pull": "vercel env pull .env.local --environment production --yes"
   },
   "engines": {
     "node": ">=18.0.0"

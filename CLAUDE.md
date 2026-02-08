@@ -59,7 +59,7 @@ npm run lint          # ESLint on all JS files
 npm run lint:fix      # ESLint with auto-fix
 npm run format        # Format all files with Prettier
 npm run format:check  # Check formatting without modifying
-npm run env:pull      # Sync .env from Vercel production (single source of truth)
+npm run env:pull      # Sync .env.local from Vercel production (single source of truth)
 ```
 
 ### Claude Code Skills (Slash Commands)

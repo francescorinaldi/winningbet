@@ -14,6 +14,11 @@ All notable changes to WinningBet will be documented in this file.
 - **Dashboard: Account moved to settings gear** — Account section removed from tab bar. Added a settings gear icon in the dashboard header that toggles the account panel. Tabs now show only "Tips di Oggi" and "Storico"
 - **CSS: new components** — Added styles for `.tip-card--locked` (desaturated locked state), `.tier-comparison` strip, `.auth-heading`/`.auth-subtitle`/`.auth-footer-text` for Google-only auth, `.dash-settings-btn` with rotation animation
 
+### Fixed — Environment Variables
+
+- **`env:pull` target file** — Changed `npm run env:pull` to write to `.env.local` (was `.env`). Vercel dev prioritizes `.env.local`, so pulling into `.env` caused stale/missing vars locally
+- **Removed duplicate env files** — Deleted `.env` and `.env.production` leftovers; single source of truth is now `.env.local` pulled from Vercel production
+
 ### Changed — Dashboard Tips UX Improvements
 
 - **Tips di Oggi: show started/past matches** — Changed date filter from `>= now()` to `>= startOfToday(UTC)` so matches that already kicked off still appear in the tips grid, displayed with greyed-out styling (`.tip-card--started`) and an "Iniziata" label
