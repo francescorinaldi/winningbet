@@ -106,22 +106,12 @@ async function getRecentResults(leagueSlug, count = 10) {
  * @returns {Promise<Object|null>} Oggetto quote o null se non disponibili
  */
 async function getOdds(fixtureId) {
-  const data = await request('/odds', {
-    fixture: fixtureId,
-    bookmaker: 8, // Bet365 (ID 8)
-  });
-  if (!data || data.length === 0) return null;
-  if (!data[0].bookmakers || data[0].bookmakers.length === 0) return null;
-  const bookmaker = data[0].bookmakers[0];
-  const matchWinner = bookmaker.bets.find((b) => b.id === 1);
-  if (!matchWinner) return null;
+  const allOdds = await getAllOdds(fixtureId);
+  if (!allOdds || !allOdds.matchWinner) return null;
   return {
     fixtureId,
-    bookmaker: bookmaker.name,
-    values: matchWinner.values.map((v) => ({
-      outcome: v.value,
-      odd: v.odd,
-    })),
+    bookmaker: allOdds.bookmaker,
+    values: allOdds.matchWinner,
   };
 }
 
@@ -206,13 +196,17 @@ function findOddsForPrediction(allOdds, prediction) {
     return away ? parseFloat(away.odd) : null;
   }
 
-  // Double Chance: 1X, X2
+  // Double Chance: 1X, X2, 12
   if (pred === '1X' && allOdds.doubleChance) {
     const dc = allOdds.doubleChance.find((v) => v.outcome === 'Home/Draw');
     return dc ? parseFloat(dc.odd) : null;
   }
   if (pred === 'X2' && allOdds.doubleChance) {
     const dc = allOdds.doubleChance.find((v) => v.outcome === 'Draw/Away');
+    return dc ? parseFloat(dc.odd) : null;
+  }
+  if (pred === '12' && allOdds.doubleChance) {
+    const dc = allOdds.doubleChance.find((v) => v.outcome === 'Home/Away');
     return dc ? parseFloat(dc.odd) : null;
   }
 
