@@ -78,18 +78,16 @@ function parseReport(content, source) {
  * @returns {boolean}
  */
 function isDuplicate(a, b) {
-  // Same file, same category = likely duplicate
-  if (a.file && b.file && a.file === b.file && a.category === b.category) {
-    return true;
-  }
+  // Must share the same file to be considered duplicates
+  if (!a.file || !b.file || a.file !== b.file) return false;
 
-  // Similar titles (>60% word overlap)
+  // Same file + same category + similar title (>50% word overlap)
   const wordsA = new Set(a.title.toLowerCase().split(/\s+/));
   const wordsB = new Set(b.title.toLowerCase().split(/\s+/));
   const intersection = [...wordsA].filter((w) => wordsB.has(w));
   const overlap = intersection.length / Math.min(wordsA.size, wordsB.size);
 
-  return overlap > 0.6 && a.file === b.file;
+  return a.category === b.category && overlap > 0.5;
 }
 
 /**
@@ -116,15 +114,15 @@ function mergeFindings(sources) {
       if (isDuplicate(all[i], all[j])) {
         finding.confirmedBy.push(all[j].source);
         used.add(j);
+      }
+    }
 
-        // Upgrade severity if confirmed by multiple models
-        if (finding.confirmedBy.length >= 2) {
-          const currentIdx = SEVERITY_ORDER.indexOf(finding.severity);
-          if (currentIdx > 0) {
-            finding.severity = SEVERITY_ORDER[currentIdx - 1];
-            finding.upgraded = true;
-          }
-        }
+    // Upgrade severity by exactly one level if 2+ models confirm the same issue
+    if (finding.confirmedBy.length >= 2) {
+      const currentIdx = SEVERITY_ORDER.indexOf(finding.severity);
+      if (currentIdx > 0) {
+        finding.severity = SEVERITY_ORDER[currentIdx - 1];
+        finding.upgraded = true;
       }
     }
 
