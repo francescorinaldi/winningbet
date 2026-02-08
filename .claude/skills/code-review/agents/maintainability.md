@@ -90,7 +90,7 @@ Detect code that is hard to understand, modify, or maintain.
 ## Special Notes
 
 - This is a vanilla JS project — no TypeScript, no framework. Some patterns that would be anti-patterns in React/Vue are standard here.
-- Italian variable names mixed with English is intentional for this project. Don't flag.
+- Italian is used for user-facing strings (UI text, error messages, JSDoc descriptions) — this is intentional. Variable and function names are in English. Don't flag Italian string literals or comments as a naming issue.
 - The IIFE pattern means all functions are "private" by default — JSDoc is less critical for internal functions.
 
 ## Codex Prompt
