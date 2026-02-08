@@ -463,7 +463,7 @@
         currentLeague = league;
         updateLeagueLabels();
         loadMatches();
-        loadResults();
+        loadResults().then(loadTrackRecord);
         loadTipsFromAPI();
       });
     });
@@ -1137,6 +1137,37 @@
   // e aggiorna i valori visualizzati nel DOM.
 
   /**
+   * Determines if a lost tip was a "close loss" (lost by a narrow margin).
+   * Used to filter out net losses and only show near-misses in the UI.
+   * @param {Object} tip - Tip object with prediction, status, and result
+   * @returns {boolean} True if the loss was close
+   */
+  function isCloseLoss(tip) {
+    if (tip.status !== 'lost' || !tip.result) return false;
+    const parts = tip.result.split('-').map(function (s) {
+      return parseInt(s.trim(), 10);
+    });
+    if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) return false;
+    const home = parts[0];
+    const away = parts[1];
+    const total = home + away;
+    const diff = Math.abs(home - away);
+    const pred = tip.prediction;
+    if (pred === '1' && home <= away && diff <= 1) return true;
+    if (pred === '2' && away <= home && diff <= 1) return true;
+    if (pred === 'X' && diff === 1) return true;
+    if (pred === '1X' && away > home && diff === 1) return true;
+    if (pred === 'X2' && home > away && diff === 1) return true;
+    if (pred === 'Over 2.5' && total === 2) return true;
+    if (pred === 'Under 2.5' && total === 3) return true;
+    if (pred === 'Over 1.5' && total === 1) return true;
+    if (pred === 'Under 3.5' && total === 4) return true;
+    if (pred === 'Goal' && (home === 0 || away === 0) && total >= 2) return true;
+    if (pred === 'No Goal' && home >= 1 && away >= 1 && (home === 1 || away === 1)) return true;
+    return false;
+  }
+
+  /**
    * Carica le statistiche dal track record API e aggiorna il DOM.
    * Se won+lost===0: mostra stato "in costruzione" (em dash, pending count).
    * Se ci sono dati reali: aggiorna DOM con valori veri + trigger counter animation.
@@ -1144,7 +1175,7 @@
    */
   async function loadTrackRecord() {
     try {
-      const data = await fetchAPI('stats', { type: 'track-record' });
+      const data = await fetchAPI('stats', { type: 'track-record', league: currentLeague });
       if (!data) return;
 
       const won = data.won || 0;
@@ -1210,15 +1241,38 @@
         }
       });
 
-      // Populate recent results with settled tips
+      // Populate recent results with settled tips (won + close losses only)
       if (data.recent && data.recent.length > 0) {
         const container = document.getElementById('resultsList');
         if (container) {
           container.textContent = '';
-          data.recent.forEach(function (tip) {
+          const filtered = data.recent.filter(function (tip) {
+            return tip.status === 'won' || isCloseLoss(tip);
+          });
+          filtered.forEach(function (tip) {
             container.appendChild(buildTipResultItem(tip));
           });
         }
+      }
+
+      // Populate new stat cards
+      const matchesEl = document.getElementById('statMatchesAnalyzed');
+      if (matchesEl && data.matches_analyzed) {
+        matchesEl.setAttribute('data-count', data.matches_analyzed);
+        animateCounter(matchesEl);
+      }
+
+      const dataPointsEl = document.getElementById('statDataPoints');
+      if (dataPointsEl && data.data_points) {
+        dataPointsEl.setAttribute('data-count', data.data_points);
+        animateCounter(dataPointsEl);
+      }
+
+      const roiEl = document.getElementById('statROI');
+      if (roiEl) {
+        const roiVal = Math.round(data.roi || 0);
+        roiEl.setAttribute('data-count', roiVal);
+        animateCounter(roiEl);
       }
     } catch (_err) {
       // Leave em dash placeholders — honest "no data" state
@@ -1499,9 +1553,8 @@
   // Avvia il caricamento dati al ready della pagina
   initLeagueSelector();
   loadMatches();
-  loadResults();
+  loadResults().then(loadTrackRecord);
   loadTipsFromAPI();
-  loadTrackRecord();
   initCookieBanner();
   initLangToggle();
 })();

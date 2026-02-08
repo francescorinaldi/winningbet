@@ -4,6 +4,20 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Changed — Issue #29: Track Record UX + Close Loss Filter
+
+- **Fix race condition** — `loadResults()` and `loadTrackRecord()` both wrote to `#resultsList`. Now chained with `.then()` so track record always overwrites generic results. League switch also re-fetches track record
+- **Track record per lega** — API `?type=track-record` now accepts optional `&league={slug}` parameter. Cache key is per-league. Frontend passes `currentLeague` to the API
+- **Close losses filter** — Lost tips are now hidden from "I Nostri Risultati" unless they were close losses (lost by narrow margin). New `isCloseLoss(tip)` function parses match result and compares against prediction type (e.g. "1" lost with a draw, "Over 2.5" lost with exactly 2 goals)
+- **3 new stat cards** — Track Record section expanded from 3 to 6 stats: added "Partite Analizzate" (distinct match_id count), "Dati Elaborati" (matches × 12 data points per match), and "ROI" (return on investment %). All animated with counter effect
+- **`result` field in recent tips** — API now includes `result` (match score) in track record recent tips for close loss calculation
+- **`matches_analyzed` + `data_points` API fields** — New metrics computed from distinct `match_id` values in settled tips
+- **i18n translations** — Added IT/EN translations for new stat labels: `stats.matches`, `stats.datapoints`, `stats.roi`, `stats.roi.explain`
+
+### Fixed — Duplicate match_id in DB
+
+- **Liverpool vs Man City** had duplicate `match_id = 538030` (same as Man Utd vs Tottenham). Updated to `538031` via Supabase
+
 ### Added — Schedine Intelligenti (Smart Betting Slips)
 
 - **`/generate-schedina` Claude Code skill** — AI-powered betting slip generator. Takes today's pending tips and combines them into 2-3 schedine with different risk profiles: Sicura (low risk, high confidence, PRO tier), Equilibrata (balanced, VIP tier), Azzardo (high potential return, VIP tier). Uses modified Kelly Criterion for optimal stake sizing. Budget-aware: total stakes never exceed the user's weekly budget.

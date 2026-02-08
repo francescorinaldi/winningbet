@@ -6,6 +6,7 @@
  * type=standings    — Classifica completa della lega (cache 6h)
  *                     Param: league={slug} (default: serie-a)
  * type=track-record — Statistiche aggregate dei pronostici (cache 1h)
+ *                     Param: league={slug} (optional, default: all leagues)
  *
  * Provider primario: api-football.com (api-sports.io)
  * Fallback: football-data.org (solo standings)
@@ -68,8 +69,9 @@ async function handleStandings(req, res) {
 
 // ─── Track Record ───────────────────────────────────────────────────────────
 
-async function handleTrackRecord(_req, res) {
-  const CACHE_KEY = 'track_record';
+async function handleTrackRecord(req, res) {
+  const leagueSlug = req.query.league || null;
+  const CACHE_KEY = leagueSlug ? `track_record_${leagueSlug}` : 'track_record';
   const CACHE_TTL = 3600; // 1 ora
 
   const cached = cache.get(CACHE_KEY);
@@ -79,23 +81,35 @@ async function handleTrackRecord(_req, res) {
   }
 
   try {
-    const { data: tips, error } = await supabase
+    let settledQuery = supabase
       .from('tips')
       .select(
-        'id, prediction, odds, confidence, status, tier, match_date, home_team, away_team, created_at',
+        'id, match_id, prediction, odds, confidence, status, tier, match_date, home_team, away_team, result, created_at',
       )
       .in('status', ['won', 'lost', 'void'])
       .order('match_date', { ascending: false });
+
+    if (leagueSlug) {
+      settledQuery = settledQuery.eq('league', leagueSlug);
+    }
+
+    const { data: tips, error } = await settledQuery;
 
     if (error) {
       console.error('Track record query error:', error.message);
       return res.status(500).json({ error: 'Errore nel recupero delle statistiche' });
     }
 
-    const { count: pendingCount } = await supabase
+    let pendingQuery = supabase
       .from('tips')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'pending');
+
+    if (leagueSlug) {
+      pendingQuery = pendingQuery.eq('league', leagueSlug);
+    }
+
+    const { count: pendingCount } = await pendingQuery;
 
     const allTips = tips || [];
     const won = allTips.filter(function (t) {
@@ -144,10 +158,19 @@ async function handleTrackRecord(_req, res) {
           odds: t.odds,
           status: t.status,
           match_date: t.match_date,
+          result: t.result,
         };
       });
 
     const monthly = buildMonthlyBreakdown(allTips);
+
+    // Distinct matches analyzed
+    const matchIds = new Set();
+    allTips.forEach(function (t) {
+      if (t.match_id) matchIds.add(t.match_id);
+    });
+    const matchesAnalyzed = matchIds.size;
+    const dataPoints = matchesAnalyzed * 12;
 
     const result = {
       total_tips: allTips.length + (pendingCount || 0),
@@ -158,6 +181,8 @@ async function handleTrackRecord(_req, res) {
       win_rate: winRate,
       avg_odds: avgOdds,
       roi: roi,
+      matches_analyzed: matchesAnalyzed,
+      data_points: dataPoints,
       recent: recent,
       monthly: monthly,
     };
@@ -226,3 +251,5 @@ function buildMonthlyBreakdown(tips) {
       };
     });
 }
+
+module.exports.buildMonthlyBreakdown = buildMonthlyBreakdown;
