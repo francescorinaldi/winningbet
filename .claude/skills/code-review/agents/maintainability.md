@@ -93,7 +93,7 @@ Detect code that is hard to understand, modify, or maintain.
 - The project targets multilanguage support. Flag hardcoded Italian (or any language) strings in UI text, error messages, and user-facing content as i18n issues (defer to the hardcoded-values agent for severity).
 - Code comments and JSDoc should be in English. Flag non-English comments as a maintainability issue (LOW severity).
 - Variable and function names are in English — this is correct.
-- The IIFE pattern means all functions are "private" by default — JSDoc is less critical for internal functions.
+- The IIFE pattern is an outdated pattern flagged by the anti-patterns agent. JSDoc is still valuable for documenting complex internal functions.
 
 ## Codex Prompt
 

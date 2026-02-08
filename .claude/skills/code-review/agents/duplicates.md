@@ -82,8 +82,8 @@ Detect copy-pasted code, similar functions, and repeated patterns that should be
 
 ## Special Notes
 
-- The IIFE pattern in frontend files means code can't be easily shared via imports. Suggest a shared `<script>` include or bundling strategy.
-- Some duplication between `script.js` (homepage) and `dashboard.js` (auth'd area) may be intentional due to different contexts. Flag but note this.
+- The IIFE pattern in frontend files prevents code sharing via imports — flag this as a root cause and suggest migrating to ES modules or a bundler.
+- Duplication between `script.js` and `dashboard.js` is never intentional — always flag it for consolidation.
 - `api/_lib/` exists specifically to avoid duplication in backend. Check if it's used consistently.
 
 ## Codex Prompt

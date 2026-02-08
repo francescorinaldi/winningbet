@@ -237,7 +237,7 @@ Full report: code-review-report.md
 
 - You ARE the reviewer. Analyze code directly — do NOT call the Claude API.
 - Every finding MUST include file path, line number, and code evidence.
-- Don't flag things that are intentional design choices (e.g., IIFE pattern in frontend).
+- Don't flag things that are intentional design choices (e.g., CommonJS in backend).
 - Respect the project's conventions (CommonJS in api/, IIFE in frontend, etc.).
 - Flag all hardcoded locale-specific strings (Italian UI text, error messages, labels) as i18n issues — the project targets multilanguage support.
 - The report should be actionable — every finding needs a clear fix suggestion.

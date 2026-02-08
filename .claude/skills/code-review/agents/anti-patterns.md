@@ -94,9 +94,9 @@ Detect code smells, anti-patterns, and bad practices that hurt code quality.
 
 ## Special Notes
 
-- The IIFE pattern in frontend JS is an intentional design choice, not an anti-pattern. Don't flag it.
-- Some empty catches are intentional for non-critical features (e.g., preference loading). Flag as LOW, not HIGH.
-- `document.body.style.overflow` mutation is intentional for mobile menu — don't flag.
+- The IIFE pattern in frontend JS is an outdated pattern — flag it as MEDIUM and suggest migrating to ES modules.
+- Empty catches should always be flagged. LOW if it handles a non-critical feature, MEDIUM otherwise.
+- Duplicated patterns (mobile menu, DOM mutations) should always be flagged — defer to the duplicates agent for those.
 
 ## Codex Prompt
 
