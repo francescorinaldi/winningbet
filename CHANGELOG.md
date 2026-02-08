@@ -14,7 +14,12 @@ All notable changes to WinningBet will be documented in this file.
 - **Tier comparison strip** — PRO detail changed from "Analisi + Storico completo" to "Analisi AI + Storico completo"
 - **Quota Media explanation** — Added explainer text "Media aritmetica delle quote dei tips vinti" below the stat card
 - **Footer tagline** — Enhanced with AI branding: "Pronostici calcio premium powered by AI. Algoritmi proprietari, analisi tecnico-tattiche e dati in tempo reale per darti il vantaggio che fa la differenza."
-- **Language toggle** — Added IT flag toggle button in navbar (UI placeholder for future i18n)
+- **Language toggle** — Functional IT/EN toggle in navbar across all pages (index, dashboard, auth). Persists choice in localStorage, sets `html[lang]` attribute, triggers live translations on click
+- **Full i18n system** — Created `public/i18n.js` with IT/EN dictionaries (~160 translation keys). Uses `data-i18n` (textContent) and `data-i18n-html` (innerHTML) attributes on ~70 HTML elements. Covers navbar, hero, tips, tier comparison, pricing cards, FAQ, footer, cookie banner. Exposes `window.t(key)`, `window.applyTranslations()`, `window.getLang()` for dynamic content
+- **Combo prediction odds** — `findOddsForPrediction()` now handles combo bets like "1 + Over 1.5" by multiplying component odds with a 0.92 correlation factor (team winning implies goals scored, so events aren't independent)
+- **Quota Media explainer** — Updated to "Media delle quote reali (Bet365) dei pronostici vinti" for credibility
+- **getOdds() deduplication** — `getOdds()` now delegates to `getAllOdds()` instead of making a separate API call, eliminating duplicate requests
+- **Double Chance 12 mapping** — Added missing "12" (Home/Away) mapping in `findOddsForPrediction()`
 - **Skill odds mapping** — Updated `/generate-tips` skill to fetch all bet markets and instruct Claude Code to use real bookmaker odds
 - **Extended odds in prompt** — Prediction engine prompt now shows Over/Under, Both Teams Score, and Double Chance odds alongside 1X2
 

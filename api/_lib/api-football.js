@@ -230,7 +230,25 @@ function findOddsForPrediction(allOdds, prediction) {
     return no ? parseFloat(no.odd) : null;
   }
 
-  // Combo predictions (e.g. "1 + Over 1.5") — no direct bookmaker mapping
+  // Combo predictions: "1 + Over 1.5", "2 + Over 1.5"
+  // No single bookmaker market exists. Approximate by multiplying component odds
+  // and applying a 0.92 correlation factor (winning team implies goals scored,
+  // so the events aren't independent — raw multiplication overstates the odds).
+  const comboMatch = pred.match(/^([12X])\s*\+\s*(Over|Under)\s+(\d+(?:\.\d+)?)$/i);
+  if (comboMatch) {
+    const resultPred = comboMatch[1]; // "1" or "2"
+    const ouDirection = comboMatch[2]; // "Over" or "Under"
+    const ouThreshold = comboMatch[3]; // "1.5"
+
+    const resultOdds = findOddsForPrediction(allOdds, resultPred);
+    const ouOdds = findOddsForPrediction(allOdds, `${ouDirection} ${ouThreshold}`);
+
+    if (resultOdds && ouOdds) {
+      const CORRELATION_FACTOR = 0.92;
+      return parseFloat((resultOdds * ouOdds * CORRELATION_FACTOR).toFixed(2));
+    }
+  }
+
   return null;
 }
 

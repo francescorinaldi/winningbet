@@ -39,10 +39,14 @@
           <span class="logo-text">WinningBet</span>
         </a>
         <div class="nav-links" id="navLinks">
-          <a href="/#tips">Tips</a>
-          <a href="/#stats">Track Record</a>
-          <a href="/#pricing">Piani</a>
-          <a href="/#faq">FAQ</a>
+          <a href="/#tips" data-i18n="nav.tips">Tips</a>
+          <a href="/#stats" data-i18n="nav.track">Track Record</a>
+          <a href="/#pricing" data-i18n="nav.plans">Piani</a>
+          <a href="/#faq" data-i18n="nav.faq">FAQ</a>
+          <button class="lang-toggle" id="langToggle" title="Cambia lingua">
+            <span class="flag-emoji">&#127470;&#127481;</span>
+            <span class="lang-label">IT</span>
+          </button>
           <a href="#" class="btn btn-outline btn-sm" id="logoutBtn">Esci</a>
         </div>
         <!-- Notification bell -->
@@ -400,6 +404,7 @@
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="supabase-config.js"></script>
+    <script src="i18n.js"></script>
     <script src="dashboard.js"></script>
   </body>
 </html>

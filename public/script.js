@@ -1462,10 +1462,9 @@
   }
 
   // ==========================================
-  // LANGUAGE TOGGLE (placeholder)
+  // LANGUAGE TOGGLE
   // ==========================================
-  // Toggles between IT and EN flag. Stores preference in localStorage.
-  // Full i18n translation not yet implemented — this prepares the UI.
+  // Toggles between IT and EN. Applies translations via i18n.js.
 
   function initLangToggle() {
     const btn = document.getElementById('langToggle');
@@ -1482,6 +1481,10 @@
       btn.querySelector('.flag-emoji').textContent = lang.flag;
       btn.querySelector('.lang-label').textContent = lang.code;
       document.documentElement.setAttribute('lang', lang.code.toLowerCase());
+      // Apply translations to all data-i18n elements
+      if (typeof window.applyTranslations === 'function') {
+        window.applyTranslations();
+      }
     }
 
     render();

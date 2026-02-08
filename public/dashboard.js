@@ -1755,4 +1755,39 @@
     if (days < 7) return days + 'g fa';
     return formatDate(iso);
   }
+
+  // ==========================================
+  // LANGUAGE TOGGLE (shared with homepage)
+  // ==========================================
+
+  function initLangToggle() {
+    const btn = document.getElementById('langToggle');
+    if (!btn) return;
+
+    const langs = [
+      { code: 'IT', flag: '\uD83C\uDDEE\uD83C\uDDF9' },
+      { code: 'EN', flag: '\uD83C\uDDEC\uD83C\uDDE7' },
+    ];
+    let current = localStorage.getItem('lang') === 'EN' ? 1 : 0;
+
+    function render() {
+      const lang = langs[current];
+      btn.querySelector('.flag-emoji').textContent = lang.flag;
+      btn.querySelector('.lang-label').textContent = lang.code;
+      document.documentElement.setAttribute('lang', lang.code.toLowerCase());
+      if (typeof window.applyTranslations === 'function') {
+        window.applyTranslations();
+      }
+    }
+
+    render();
+
+    btn.addEventListener('click', function () {
+      current = current === 0 ? 1 : 0;
+      localStorage.setItem('lang', langs[current].code);
+      render();
+    });
+  }
+
+  initLangToggle();
 })();
