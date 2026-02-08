@@ -44,6 +44,7 @@ public/dashboard.js     → User dashboard logic + Telegram linking
 supabase/migrations/    → Database schema migrations (4 files)
 .claude/skills/         → Claude Code skills (slash commands)
 .claude/skills/generate-tips/ → /generate-tips skill (prediction engine)
+.claude/skills/code-review/  → /code-review skill (multi-agent code analysis)
 eslint.config.mjs       → ESLint flat config
 .prettierrc             → Prettier config
 vercel.json             → Deployment config + caching headers
@@ -70,6 +71,15 @@ npm run env:pull      # Sync .env from Vercel production (single source of truth
 /generate-tips --send               # Generate and send to Telegram
 /generate-tips --delete             # Delete pending tips, then regenerate
 /generate-tips serie-a --send       # Combine flags
+```
+
+```bash
+/code-review                        # Run ALL 9 review agents
+/code-review security               # Run only the security agent
+/code-review --file api/            # Scope to a directory
+/code-review --multi-model          # Also run Codex CLI + Gemini CLI
+/code-review --fix                  # Auto-fix LOW/MEDIUM issues
+/code-review security --file api/ --multi-model  # Combine flags
 ```
 
 Full prediction engine architecture: [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md)

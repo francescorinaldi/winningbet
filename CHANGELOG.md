@@ -4,6 +4,17 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added — `/code-review` Claude Code Skill (Multi-Agent Code Analysis Engine)
+
+- **9 specialized review agents**: dead-code, duplicates, security, anti-patterns, performance, architecture, hardcoded-values, error-handling, maintainability
+- **Multi-model support**: Claude Code (primary) + optional Codex CLI + Gemini CLI via `--multi-model` flag
+- **Flexible scoping**: Run all agents, a single agent, or scope to a specific file/directory with `--file`
+- **Auto-fix**: `--fix` flag auto-fixes LOW/MEDIUM issues (unused imports, `==` → `===`, `let` → `const`)
+- **Report consolidation**: `consolidate-reports.js` merges multi-model findings, deduplicates, and upgrades severity when 2+ models agree
+- **Severity matrix**: CRITICAL/HIGH/MEDIUM/LOW/INFO classification with documented thresholds
+- Skill files: `.claude/skills/code-review/SKILL.md`, 9 agent prompts in `agents/`, scripts in `scripts/`
+- Runs from any Claude Code instance — portable via `.claude/skills/` directory
+
 ### Changed — Tiered Prediction Access + Google-Only Auth
 
 - **Auth: Google-only login** — Removed email/password registration and login forms. Auth page now shows only "Accedi con Google" button with terms/privacy links. Simplified `auth.js` and `auth.html`
