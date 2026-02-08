@@ -3910,3 +3910,50 @@ img {
 .dash-settings-btn.active svg {
   transform: rotate(60deg);
 }
+
+/* ============================================
+   ISSUE #29 — UI Enhancements
+   ============================================ */
+
+/* Hero CTA button — black uppercase text */
+.btn-cta-hero {
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 700;
+  color: #000;
+}
+
+/* Stat card explainer — small text below the label */
+.stat-explainer {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  opacity: 0.7;
+  line-height: 1.4;
+}
+
+/* Language toggle button in navbar */
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.lang-toggle:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.lang-toggle .flag-emoji {
+  font-size: 1.1rem;
+  line-height: 1;
+}

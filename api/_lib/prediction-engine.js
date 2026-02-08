@@ -14,6 +14,7 @@
  */
 
 const Anthropic = require('@anthropic-ai/sdk');
+const { findOddsForPrediction } = require('./api-football');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -83,10 +84,6 @@ const BATCH_PREDICTION_SCHEMA = {
             type: 'integer',
             description: 'Livello di fiducia tra 60 e 95',
           },
-          odds: {
-            type: 'number',
-            description: 'Quota decimale consigliata tra 1.20 e 5.00',
-          },
           analysis: {
             type: 'string',
             description: 'Analisi in italiano di 2-3 frasi con riferimenti a dati specifici',
@@ -96,7 +93,7 @@ const BATCH_PREDICTION_SCHEMA = {
             description: 'Chain-of-thought interna con il processo logico completo',
           },
         },
-        required: ['match_index', 'prediction', 'confidence', 'odds', 'analysis', 'reasoning'],
+        required: ['match_index', 'prediction', 'confidence', 'analysis', 'reasoning'],
         additionalProperties: false,
       },
     },
@@ -279,10 +276,40 @@ function formatMatchBlock(
   recentResults,
   totalTeams,
 ) {
-  const oddsInfo =
-    odds && odds.values && odds.values.length >= 3
-      ? `Quote 1X2: Casa ${odds.values[0].odd}, Pareggio ${odds.values[1].odd}, Trasferta ${odds.values[2].odd}`
-      : 'Quote non disponibili';
+  // Build comprehensive odds context from all available markets
+  let oddsInfo = 'Quote non disponibili';
+  if (odds) {
+    const lines = [];
+    if (odds.matchWinner) {
+      const h = odds.matchWinner.find((v) => v.outcome === 'Home');
+      const d = odds.matchWinner.find((v) => v.outcome === 'Draw');
+      const a = odds.matchWinner.find((v) => v.outcome === 'Away');
+      if (h && d && a) lines.push(`1X2: Casa ${h.odd}, Pareggio ${d.odd}, Trasferta ${a.odd}`);
+    }
+    if (odds.overUnder) {
+      const ou = odds.overUnder
+        .filter((v) => ['Over 2.5', 'Under 2.5', 'Over 1.5', 'Under 3.5'].includes(v.outcome))
+        .map((v) => `${v.outcome} ${v.odd}`)
+        .join(', ');
+      if (ou) lines.push(`O/U: ${ou}`);
+    }
+    if (odds.bothTeamsScore) {
+      const yes = odds.bothTeamsScore.find((v) => v.outcome === 'Yes');
+      const no = odds.bothTeamsScore.find((v) => v.outcome === 'No');
+      if (yes && no) lines.push(`Goal/No Goal: Goal ${yes.odd}, No Goal ${no.odd}`);
+    }
+    if (odds.doubleChance) {
+      const dc = odds.doubleChance.map((v) => `${v.outcome} ${v.odd}`).join(', ');
+      if (dc) lines.push(`Doppia Chance: ${dc}`);
+    }
+    // Legacy fallback for old-style odds object (1X2 only via values array)
+    if (lines.length === 0 && odds.values && odds.values.length >= 3) {
+      lines.push(
+        `1X2: Casa ${odds.values[0].odd}, Pareggio ${odds.values[1].odd}, Trasferta ${odds.values[2].odd}`,
+      );
+    }
+    if (lines.length > 0) oddsInfo = 'QUOTE BOOKMAKER (Bet365):\n' + lines.join('\n');
+  }
 
   const homeRecent = getTeamRecentMatches(match.home, recentResults);
   const awayRecent = getTeamRecentMatches(match.away, recentResults);
@@ -373,7 +400,7 @@ function balanceTiers(predictions) {
  * @param {Array<Object>} params.homeStandings - Classifica casa (opzionale)
  * @param {Array<Object>} params.awayStandings - Classifica trasferta (opzionale)
  * @param {Array<Object>} params.recentResults - Risultati recenti della lega
- * @param {Function} params.getOdds - Funzione per recuperare le quote
+ * @param {Function} params.getAllOdds - Funzione per recuperare tutte le quote (tutti i mercati)
  * @param {string} params.leagueName - Nome della lega
  * @param {string} params.accuracyContext - Storico accuratezza
  * @returns {Promise<Array<Object>>} Array di pronostici con metadati partita
@@ -384,7 +411,7 @@ async function generateBatchPredictions({
   homeStandings,
   awayStandings,
   recentResults,
-  getOdds,
+  getAllOdds,
   leagueName,
   accuracyContext,
 }) {
@@ -403,8 +430,8 @@ async function generateBatchPredictions({
 
   const totalTeams = standings.length;
 
-  // Pre-fetch: quote per tutte le partite in parallelo
-  const oddsResults = await Promise.allSettled(matches.map((m) => getOdds(m.id)));
+  // Pre-fetch: tutte le quote (tutti i mercati) per ogni partita in parallelo
+  const oddsResults = await Promise.allSettled(matches.map((m) => getAllOdds(m.id)));
   const oddsMap = new Map();
   matches.forEach((m, i) => {
     oddsMap.set(m.id, oddsResults[i].status === 'fulfilled' ? oddsResults[i].value : null);
@@ -446,7 +473,7 @@ ${accuracyContext ? `\n${accuracyContext}` : ''}
 
 TIPI DI PRONOSTICO VALIDI: ${PREDICTION_TYPES.join(', ')}
 
-Per ogni partita, la confidence deve essere tra 60 e 95, le odds tra 1.20 e 5.00.`;
+Per ogni partita, la confidence deve essere tra 60 e 95. Le quote verranno prese automaticamente dal bookmaker (Bet365) — NON inserire odds nel risultato.`;
 
   const response = await anthropic.messages.create({
     model: 'claude-opus-4-6',
@@ -470,7 +497,13 @@ Per ogni partita, la confidence deve essere tra 60 e 95, le odds tra 1.20 e 5.00
     if (idx < 0 || idx >= matches.length) continue;
 
     const match = matches[idx];
-    const tier = assignTier(pred);
+
+    // Only use real bookmaker odds — never AI estimates
+    const allOdds = oddsMap.get(match.id);
+    const realOdds = findOddsForPrediction(allOdds, pred.prediction);
+    if (!realOdds) continue; // Skip tip if no real bookmaker odds available
+
+    const tier = assignTier({ ...pred, odds: realOdds });
 
     results.push({
       match_id: String(match.id),
@@ -478,7 +511,7 @@ Per ogni partita, la confidence deve essere tra 60 e 95, le odds tra 1.20 e 5.00
       away_team: match.away,
       match_date: match.date,
       prediction: pred.prediction,
-      odds: parseFloat(Math.min(5.0, Math.max(1.2, pred.odds)).toFixed(2)),
+      odds: realOdds,
       confidence: Math.min(95, Math.max(60, pred.confidence)),
       analysis: pred.analysis,
       tier,

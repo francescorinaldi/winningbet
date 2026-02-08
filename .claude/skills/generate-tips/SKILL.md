@@ -146,12 +146,12 @@ Only THEN select your prediction. Choose the option with the highest probability
 
 #### 4d. Generate prediction (per match)
 
-| Field        | Rules                                                                                                                                                                                       |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `prediction` | One of the 14 valid types. Choose the SAFEST pick with highest expected accuracy. Avoid exotic picks unless data is overwhelming.                                                           |
-| `confidence` | 60-95. Reflects statistical reality. Must be justified by specific numbers. Never exceed 85 unless 4+ independent data points align. Never exceed 90 without truly exceptional convergence. |
-| `odds`       | Fair decimal odds 1.20-5.00. Derived from your assessed probability: odds ≈ 100/confidence.                                                                                                 |
-| `analysis`   | 2-3 sentences IN ITALIAN citing specific numbers (position, form, avg goals, BTTS%, injuries). Must justify the pick.                                                                       |
+| Field        | Rules                                                                                                                                                                                                                                                                                                                                              |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prediction` | One of the 14 valid types. Choose the SAFEST pick with highest expected accuracy. Avoid exotic picks unless data is overwhelming.                                                                                                                                                                                                                  |
+| `confidence` | 60-95. Reflects statistical reality. Must be justified by specific numbers. Never exceed 85 unless 4+ independent data points align. Never exceed 90 without truly exceptional convergence.                                                                                                                                                        |
+| `odds`       | **MUST use real bookmaker odds** from the fetched data (match.odds). Map your prediction type to the correct market: 1/X/2 → match.odds.home/draw/away, Over/Under → match.odds.overUnder, Goal/No Goal → match.odds.goal/noGoal, 1X/X2 → match.odds.doubleChance. **NEVER invent or estimate odds.** If real odds are not available for a prediction type, DO NOT generate a tip for that match. |
+| `analysis`   | 2-3 sentences IN ITALIAN citing specific numbers (position, form, avg goals, BTTS%, injuries). Must justify the pick.                                                                                                                                                                                                                              |
 
 **Accuracy-first rules:**
 

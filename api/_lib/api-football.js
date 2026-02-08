@@ -106,23 +106,150 @@ async function getRecentResults(leagueSlug, count = 10) {
  * @returns {Promise<Object|null>} Oggetto quote o null se non disponibili
  */
 async function getOdds(fixtureId) {
+  const allOdds = await getAllOdds(fixtureId);
+  if (!allOdds || !allOdds.matchWinner) return null;
+  return {
+    fixtureId,
+    bookmaker: allOdds.bookmaker,
+    values: allOdds.matchWinner,
+  };
+}
+
+/**
+ * Recupera tutte le quote pre-match per una partita (tutti i mercati).
+ * Estrae: Match Winner (1X2), Over/Under, Both Teams Score, Double Chance.
+ * @param {number|string} fixtureId - ID della partita
+ * @returns {Promise<Object|null>} Oggetto con quote per mercato o null
+ */
+async function getAllOdds(fixtureId) {
   const data = await request('/odds', {
     fixture: fixtureId,
     bookmaker: 8, // Bet365 (ID 8)
   });
   if (!data || data.length === 0) return null;
   if (!data[0].bookmakers || data[0].bookmakers.length === 0) return null;
+
   const bookmaker = data[0].bookmakers[0];
+  const result = { fixtureId, bookmaker: bookmaker.name };
+
+  // Bet ID 1: Match Winner (1X2)
   const matchWinner = bookmaker.bets.find((b) => b.id === 1);
-  if (!matchWinner) return null;
-  return {
-    fixtureId,
-    bookmaker: bookmaker.name,
-    values: matchWinner.values.map((v) => ({
+  if (matchWinner) {
+    result.matchWinner = matchWinner.values.map((v) => ({
       outcome: v.value,
       odd: v.odd,
-    })),
-  };
+    }));
+  }
+
+  // Bet ID 5: Over/Under Goals
+  const overUnder = bookmaker.bets.find((b) => b.id === 5);
+  if (overUnder) {
+    result.overUnder = overUnder.values.map((v) => ({
+      outcome: v.value,
+      odd: v.odd,
+    }));
+  }
+
+  // Bet ID 8: Both Teams Score (Goal/No Goal)
+  const bts = bookmaker.bets.find((b) => b.id === 8);
+  if (bts) {
+    result.bothTeamsScore = bts.values.map((v) => ({
+      outcome: v.value,
+      odd: v.odd,
+    }));
+  }
+
+  // Bet ID 12: Double Chance (1X, 12, X2)
+  const doubleChance = bookmaker.bets.find((b) => b.id === 12);
+  if (doubleChance) {
+    result.doubleChance = doubleChance.values.map((v) => ({
+      outcome: v.value,
+      odd: v.odd,
+    }));
+  }
+
+  return result;
+}
+
+/**
+ * Cerca la quota bookmaker reale per un tipo di pronostico specifico.
+ * Mappa il testo del pronostico al mercato e outcome corretto.
+ * @param {Object} allOdds - Risultato di getAllOdds()
+ * @param {string} prediction - Testo del pronostico (es. "Over 2.5", "1", "Goal")
+ * @returns {number|null} Quota decimale o null se non trovata
+ */
+function findOddsForPrediction(allOdds, prediction) {
+  if (!allOdds || !prediction) return null;
+  const pred = prediction.trim();
+
+  // Match Winner: 1, X, 2
+  if (pred === '1' && allOdds.matchWinner) {
+    const home = allOdds.matchWinner.find((v) => v.outcome === 'Home');
+    return home ? parseFloat(home.odd) : null;
+  }
+  if (pred === 'X' && allOdds.matchWinner) {
+    const draw = allOdds.matchWinner.find((v) => v.outcome === 'Draw');
+    return draw ? parseFloat(draw.odd) : null;
+  }
+  if (pred === '2' && allOdds.matchWinner) {
+    const away = allOdds.matchWinner.find((v) => v.outcome === 'Away');
+    return away ? parseFloat(away.odd) : null;
+  }
+
+  // Double Chance: 1X, X2, 12
+  if (pred === '1X' && allOdds.doubleChance) {
+    const dc = allOdds.doubleChance.find((v) => v.outcome === 'Home/Draw');
+    return dc ? parseFloat(dc.odd) : null;
+  }
+  if (pred === 'X2' && allOdds.doubleChance) {
+    const dc = allOdds.doubleChance.find((v) => v.outcome === 'Draw/Away');
+    return dc ? parseFloat(dc.odd) : null;
+  }
+  if (pred === '12' && allOdds.doubleChance) {
+    const dc = allOdds.doubleChance.find((v) => v.outcome === 'Home/Away');
+    return dc ? parseFloat(dc.odd) : null;
+  }
+
+  // Over/Under Goals: Over 2.5, Under 2.5, Over 1.5, Under 3.5, etc.
+  const overUnderMatch = pred.match(/^(Over|Under)\s+(\d+(?:\.\d+)?)$/i);
+  if (overUnderMatch && allOdds.overUnder) {
+    const direction = overUnderMatch[1]; // "Over" or "Under"
+    const threshold = overUnderMatch[2]; // "2.5", "1.5", etc.
+    const outcome = `${direction} ${threshold}`;
+    const found = allOdds.overUnder.find((v) => v.outcome.toLowerCase() === outcome.toLowerCase());
+    return found ? parseFloat(found.odd) : null;
+  }
+
+  // Both Teams Score: Goal, No Goal
+  if (pred === 'Goal' && allOdds.bothTeamsScore) {
+    const yes = allOdds.bothTeamsScore.find((v) => v.outcome === 'Yes');
+    return yes ? parseFloat(yes.odd) : null;
+  }
+  if (pred === 'No Goal' && allOdds.bothTeamsScore) {
+    const no = allOdds.bothTeamsScore.find((v) => v.outcome === 'No');
+    return no ? parseFloat(no.odd) : null;
+  }
+
+  // Combo predictions: "1 + Over 1.5", "2 + Over 1.5"
+  // No single bookmaker market exists. Approximate by multiplying component odds
+  // and applying a 0.92 correlation factor (winning team implies goals scored,
+  // so the events aren't independent — raw multiplication overstates the odds).
+  const comboMatch = pred.match(/^([12X])\s*\+\s*(Over|Under)\s+(\d+(?:\.\d+)?)$/i);
+  if (comboMatch) {
+    const resultPred = comboMatch[1]; // "1" or "2"
+    const ouDirection = comboMatch[2]; // "Over" or "Under"
+    const ouThreshold = comboMatch[3]; // "1.5"
+
+    const resultOdds = findOddsForPrediction(allOdds, resultPred);
+    const ouOdds = findOddsForPrediction(allOdds, `${ouDirection} ${ouThreshold}`);
+
+    if (resultOdds && ouOdds) {
+      const CORRELATION_FACTOR = 0.92;
+      return parseFloat((resultOdds * ouOdds * CORRELATION_FACTOR).toFixed(2));
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -289,6 +416,8 @@ module.exports = {
   getUpcomingMatches,
   getRecentResults,
   getOdds,
+  getAllOdds,
+  findOddsForPrediction,
   getStandings,
   getFullStandings,
   getHeadToHead,

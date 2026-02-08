@@ -4,6 +4,25 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Changed — Issue #29: UX Improvements + Odds Accuracy Fix
+
+- **CRITICAL: Real bookmaker odds only** — Tips now use EXCLUSIVELY actual Bet365 odds. If real odds are not available for a prediction type, the tip is skipped entirely (no fallback, no AI estimates, no invented numbers). Added `getAllOdds()` and `findOddsForPrediction()` to `api-football.js`. Removed `odds` field from AI schema — the AI never outputs odds. Prediction engine maps each prediction type to the correct bookmaker market post-generation.
+- **Auto-hide started tips** — Homepage now filters out tips for matches that have already kicked off. This automatically masks lost/losing predictions during live matches. Won tips surface later in track record; lost tips disappear silently.
+- **Hero subtitle** — Updated to "Pronostici di calcio basati su dati, algoritmi e analisi tecnico-tattiche. Track record verificato e trasparente."
+- **CTA button** — "INIZIA A VINCERE" now displays in uppercase black text with letter-spacing
+- **PRO plan description** — Updated to emphasize "10+ tips al giorno", "Analisi Intelligenza Artificiale", and "Storico completo risultati"
+- **Tier comparison strip** — PRO detail changed from "Analisi + Storico completo" to "Analisi AI + Storico completo"
+- **Quota Media explanation** — Added explainer text "Media aritmetica delle quote dei tips vinti" below the stat card
+- **Footer tagline** — Enhanced with AI branding: "Pronostici calcio premium powered by AI. Algoritmi proprietari, analisi tecnico-tattiche e dati in tempo reale per darti il vantaggio che fa la differenza."
+- **Language toggle** — Functional IT/EN toggle in navbar across all pages (index, dashboard, auth). Persists choice in localStorage, sets `html[lang]` attribute, triggers live translations on click
+- **Full i18n system** — Created `public/i18n.js` with IT/EN dictionaries (~160 translation keys). Uses `data-i18n` (textContent) and `data-i18n-html` (innerHTML) attributes on ~70 HTML elements. Covers navbar, hero, tips, tier comparison, pricing cards, FAQ, footer, cookie banner. Exposes `window.t(key)`, `window.applyTranslations()`, `window.getLang()` for dynamic content
+- **Combo prediction odds** — `findOddsForPrediction()` now handles combo bets like "1 + Over 1.5" by multiplying component odds with a 0.92 correlation factor (team winning implies goals scored, so events aren't independent)
+- **Quota Media explainer** — Updated to "Media delle quote reali (Bet365) dei pronostici vinti" for credibility
+- **getOdds() deduplication** — `getOdds()` now delegates to `getAllOdds()` instead of making a separate API call, eliminating duplicate requests
+- **Double Chance 12 mapping** — Added missing "12" (Home/Away) mapping in `findOddsForPrediction()`
+- **Skill odds mapping** — Updated `/generate-tips` skill to fetch all bet markets and instruct Claude Code to use real bookmaker odds
+- **Extended odds in prompt** — Prediction engine prompt now shows Over/Under, Both Teams Score, and Double Chance odds alongside 1X2
+
 ### Added — `/code-review` Claude Code Skill (Multi-Agent Code Analysis Engine)
 
 - **9 specialized review agents**: dead-code, duplicates, security, anti-patterns, performance, architecture, hardcoded-values, error-handling, maintainability

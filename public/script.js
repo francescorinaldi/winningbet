@@ -1270,11 +1270,23 @@
         return;
       }
 
+      // Homepage: hide tips for matches that have already started
+      // (masks lost/losing predictions during live matches)
+      const now = new Date();
+      const upcomingTips = tips.filter(function (tip) {
+        return new Date(tip.match_date) > now;
+      });
+
+      if (upcomingTips.length === 0) {
+        loadTips();
+        return;
+      }
+
       const container = document.getElementById('tipsGrid');
       container.textContent = '';
 
       // Renderizza i tips dal database
-      tips.forEach(function (tip) {
+      upcomingTips.forEach(function (tip) {
         const match = {
           date: tip.match_date,
           home: tip.home_team,
@@ -1285,7 +1297,7 @@
 
       // Verifica quali tier sono presenti nei tips dal database
       const tiersPresent = new Set();
-      tips.forEach(function (tip) {
+      upcomingTips.forEach(function (tip) {
         tiersPresent.add(tip.tier);
       });
 
@@ -1449,6 +1461,41 @@
     });
   }
 
+  // ==========================================
+  // LANGUAGE TOGGLE
+  // ==========================================
+  // Toggles between IT and EN. Applies translations via i18n.js.
+
+  function initLangToggle() {
+    const btn = document.getElementById('langToggle');
+    if (!btn) return;
+
+    const langs = [
+      { code: 'IT', flag: '\uD83C\uDDEE\uD83C\uDDF9' },
+      { code: 'EN', flag: '\uD83C\uDDEC\uD83C\uDDE7' },
+    ];
+    let current = localStorage.getItem('lang') === 'EN' ? 1 : 0;
+
+    function render() {
+      const lang = langs[current];
+      btn.querySelector('.flag-emoji').textContent = lang.flag;
+      btn.querySelector('.lang-label').textContent = lang.code;
+      document.documentElement.setAttribute('lang', lang.code.toLowerCase());
+      // Apply translations to all data-i18n elements
+      if (typeof window.applyTranslations === 'function') {
+        window.applyTranslations();
+      }
+    }
+
+    render();
+
+    btn.addEventListener('click', function () {
+      current = current === 0 ? 1 : 0;
+      localStorage.setItem('lang', langs[current].code);
+      render();
+    });
+  }
+
   // Avvia il caricamento dati al ready della pagina
   initLeagueSelector();
   loadMatches();
@@ -1456,4 +1503,5 @@
   loadTipsFromAPI();
   loadTrackRecord();
   initCookieBanner();
+  initLangToggle();
 })();

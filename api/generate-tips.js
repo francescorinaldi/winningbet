@@ -268,10 +268,10 @@ async function generateForLeague(leagueSlug) {
   // 5. Recupera storico accuratezza
   const accuracyContext = await getAccuracyContext(leagueSlug);
 
-  // 6. Funzione per recuperare le quote di una partita
-  async function getOddsForMatch(fixtureId) {
+  // 6. Funzione per recuperare tutte le quote di una partita (tutti i mercati)
+  async function getAllOddsForMatch(fixtureId) {
     try {
-      return await apiFootball.getOdds(fixtureId);
+      return await apiFootball.getAllOdds(fixtureId);
     } catch (_err) {
       return null;
     }
@@ -284,7 +284,7 @@ async function generateForLeague(leagueSlug) {
     homeStandings: fullStandings.home,
     awayStandings: fullStandings.away,
     recentResults,
-    getOdds: getOddsForMatch,
+    getAllOdds: getAllOddsForMatch,
     leagueName: league.name,
     accuracyContext,
   });
