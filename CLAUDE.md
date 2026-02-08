@@ -42,7 +42,7 @@ public/                 → Static frontend (HTML, JS, CSS)
 public/script.js        → Main landing page logic (IIFE pattern)
 public/auth.js          → Authentication logic (Supabase Auth)
 public/dashboard.js     → User dashboard logic + Telegram linking
-supabase/migrations/    → Database schema migrations (5 files)
+supabase/migrations/    → Database schema migrations (9 files)
 .claude/skills/         → Claude Code skills (slash commands)
 .claude/skills/generate-tips/     → /generate-tips skill (prediction engine)
 .claude/skills/generate-schedina/ → /generate-schedina skill (smart betting slips)

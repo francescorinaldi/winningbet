@@ -10,7 +10,7 @@
       "headers": [{ "key": "Cache-Control", "value": "s-maxage=1800, stale-while-revalidate=900" }]
     },
     {
-      "source": "/api/(generate-tips|cron-tasks|billing|stripe-webhook|tips|telegram|user-settings|user-bets)",
+      "source": "/api/(generate-tips|cron-tasks|billing|stripe-webhook|tips|telegram|user-settings|user-bets|schedina)",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     },
     {
