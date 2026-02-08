@@ -13,7 +13,7 @@ Detect missing, incomplete, or inconsistent error handling.
 - `catch` blocks that do nothing (empty body)
 - `catch` blocks that only `console.error` but don't handle the error
 - Missing error propagation (catch without re-throw or response)
-- Note: Some silent catches are intentional for non-critical features — evaluate context
+- Silent catches are always a code smell — flag every one regardless of context
 
 ### 3. Incomplete Error Responses
 - API endpoints that don't return proper HTTP error codes
@@ -93,9 +93,10 @@ Detect missing, incomplete, or inconsistent error handling.
 
 ## Special Notes
 
-- In this project, many `catch (_err) { /* Silenzioso */ }` blocks are intentional for non-critical UX features (preferences, streaks, notifications). Flag as LOW, not HIGH.
-- Supabase's `.single()` method throws if 0 or 2+ rows match — this can be an issue if called on tables that might have no rows.
-- Vercel serverless functions that throw unhandled errors return 500 automatically — but the error message is generic and unhelpful.
+- Flag everything. No exceptions. Let the developer decide what to keep.
+- Every `catch (_err) { /* Silenzioso */ }` block is a code smell — flag it at proper severity based on the code path it's in.
+- Supabase's `.single()` method throws if 0 or 2+ rows match — flag every usage that doesn't handle this.
+- Vercel serverless functions that throw unhandled errors return generic 500 — flag missing error handling.
 
 ## Codex Prompt
 

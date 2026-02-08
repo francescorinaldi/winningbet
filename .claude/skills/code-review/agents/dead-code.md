@@ -14,7 +14,7 @@ Detect unused, unreachable, or obsolete code that should be removed.
 - Variables declared but never read
 - Variables assigned but the value is never used
 - Parameters that are never referenced in the function body
-- Note: `_` prefixed variables are intentionally unused (ESLint convention) — skip these
+- `_` prefixed variables may be intentionally unused (ESLint convention) — still flag them and note the convention
 
 ### 3. Unused Imports/Requires
 - `require()` calls where the imported value is never used
@@ -72,13 +72,12 @@ Detect unused, unreachable, or obsolete code that should be removed.
 
 ## Special Notes
 
-- `animationId` in script.js is assigned by `requestAnimationFrame` — it's used for potential cancellation even if not explicitly read. Don't flag it.
-- ESLint's `no-unused-vars` with `argsIgnorePattern: '^_'` means `_err`, `_req` are intentionally unused.
-- `module.exports.config` in stripe-webhook.js is read by Vercel, not by application code — don't flag it.
+- Flag everything. No exceptions. Let the developer decide what to keep.
+- For framework-consumed exports (e.g. `module.exports.config` read by Vercel), flag them and note the framework dependency — the developer will decide.
 
 ## Codex Prompt
 
-List every function defined in this project (api/ and public/ directories) that is never called or imported anywhere else in the codebase. For each one, output the function name, file path, line number, and whether it is exported via module.exports. Also list any require() or destructured import where the imported binding is never referenced in the rest of that file. Ignore variables prefixed with underscore (_). Format each finding as: ### [SEVERITY] Title with File, Category (dead-code), Issue, Evidence, Suggestion.
+List every function defined in this project (api/ and public/ directories) that is never called or imported anywhere else in the codebase. For each one, output the function name, file path, line number, and whether it is exported via module.exports. Also list any require() or destructured import where the imported binding is never referenced in the rest of that file. Include variables prefixed with underscore (_) — flag them too. Format each finding as: ### [SEVERITY] Title with File, Category (dead-code), Issue, Evidence, Suggestion.
 
 ## Gemini Prompt
 

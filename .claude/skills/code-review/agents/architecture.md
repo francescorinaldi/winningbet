@@ -94,9 +94,10 @@ Detect architectural issues, design inconsistencies, and structural problems.
 
 ## Special Notes
 
-- This is a Vercel serverless project — each API file is a standalone function. Some "coupling" is inherent.
-- The frontend uses vanilla JS with no module system — shared code must use `<script>` includes or globals.
-- `api/_lib/leagues.js` is the centralized league config — check if all files use it.
+- Flag everything. No exceptions. Let the developer decide what to keep.
+- Flag the lack of a module system in frontend as an architectural issue — suggest ES modules or a bundler.
+- Flag every hardcoded league slug, tier mapping, or config value that isn't imported from a centralized source.
+- Flag serverless function coupling, inconsistent patterns, and missing abstractions.
 
 ## Codex Prompt
 

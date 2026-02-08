@@ -237,11 +237,10 @@ Full report: code-review-report.md
 
 - You ARE the reviewer. Analyze code directly — do NOT call the Claude API.
 - Every finding MUST include file path, line number, and code evidence.
-- Don't flag things that are intentional design choices (e.g., CommonJS in backend).
-- Respect the project's conventions (CommonJS in api/, IIFE in frontend, etc.).
+- Flag everything that deviates from best practices. No exceptions, no "intentional" passes.
 - Flag all hardcoded locale-specific strings (Italian UI text, error messages, labels) as i18n issues — the project targets multilanguage support.
 - The report should be actionable — every finding needs a clear fix suggestion.
-- Be thorough but avoid false positives. Quality over quantity.
-- When uncertain about severity, classify conservatively (lower severity).
+- Be thorough. Flag everything and let the developer decide what to keep.
+- Classify severity based on actual impact, not assumptions about intent.
 - External CLI calls are read-only — never pass `--write` or mutation flags.
 - If an external CLI fails or times out, log the failure and continue with Claude-only findings.

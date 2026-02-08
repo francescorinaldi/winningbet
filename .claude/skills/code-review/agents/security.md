@@ -106,9 +106,10 @@ Detect security vulnerabilities following OWASP Top 10 and Node.js/browser-speci
 
 ## Special Notes
 
-- Supabase client with `.eq()`, `.select()` etc. uses parameterized queries internally — these are safe from SQL injection. Only flag raw SQL or `.rpc()` with string concatenation.
-- The project uses Supabase RLS (Row Level Security) as a defense layer. Note this when assessing access control, but don't rely on it as the only protection.
-- `innerHTML` usage with hardcoded strings (not user input) is safe — only flag when user/API data flows into it.
+- Flag everything. No exceptions. Let the developer decide what to keep.
+- Flag all `innerHTML` usage regardless of source — even hardcoded strings should use safer alternatives like `textContent` or DOM APIs.
+- Flag every endpoint without input validation, every missing auth check, every unverified webhook.
+- Don't assume Supabase RLS or parameterized queries make code safe — flag and note the defense layer, but recommend defense in depth.
 
 ## Codex Prompt
 

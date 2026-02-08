@@ -24,7 +24,7 @@ Detect code smells, anti-patterns, and bad practices that hurt code quality.
 - `catch` blocks that do nothing or only log
 - `catch (_err) { /* Silenzioso */ }` — errors silently swallowed
 - Missing error re-throw or user notification
-- Note: Some silent catches are intentional (non-critical side effects). Flag but consider context.
+- Silent catches are always a code smell. Flag every one.
 
 ### 5. Type Coercion Issues
 - Using `==` instead of `===` (except for `null` checks)
@@ -94,9 +94,10 @@ Detect code smells, anti-patterns, and bad practices that hurt code quality.
 
 ## Special Notes
 
-- The IIFE pattern in frontend JS is an outdated pattern — flag it as MEDIUM and suggest migrating to ES modules.
-- Empty catches should always be flagged. LOW if it handles a non-critical feature, MEDIUM otherwise.
-- Duplicated patterns (mobile menu, DOM mutations) should always be flagged — defer to the duplicates agent for those.
+- Flag everything. No exceptions. Let the developer decide what to keep.
+- The IIFE pattern is an outdated anti-pattern — flag it as MEDIUM and suggest ES modules.
+- Every empty catch is a code smell — flag it.
+- Every DOM mutation, global state change, and duplicated pattern gets flagged.
 
 ## Codex Prompt
 

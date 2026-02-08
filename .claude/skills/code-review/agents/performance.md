@@ -95,9 +95,10 @@ Detect performance bottlenecks, inefficiencies, and optimization opportunities.
 
 ## Special Notes
 
-- The particle system O(n^2) is capped at 80 particles max (6400 comparisons), which is fine for animation. Flag as LOW/INFO.
-- Frontend `fetch` calls can't easily be batched due to different API endpoints. Don't flag these unless truly redundant.
-- Supabase client automatically pools connections, so individual queries aren't as expensive as raw DB calls.
+- Flag everything. No exceptions. Let the developer decide what to keep.
+- Every O(n^2) algorithm gets flagged regardless of dataset size — suggest the optimal approach.
+- Every redundant or sequential fetch gets flagged — suggest batching or parallelization.
+- Every unbounded query gets flagged — suggest adding limits.
 
 ## Codex Prompt
 

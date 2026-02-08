@@ -13,7 +13,7 @@ Detect code that is hard to understand, modify, or maintain.
 
 ### 2. Naming Quality
 - Single-letter variable names outside of loop indices
-- Abbreviated names that aren't obvious (`btn` is fine, `hPL` is not)
+- Abbreviated names (e.g., `btn`, `hPL`, `el`) — flag all abbreviations and suggest full names
 - Misleading names (function name doesn't match what it does)
 - Inconsistent naming conventions within same file
 - **Method**: Scan for short variable names, compare naming patterns
@@ -28,7 +28,7 @@ Detect code that is hard to understand, modify, or maintain.
 - Exported functions without JSDoc comments
 - Complex algorithms without explanatory comments
 - Non-obvious business logic without context
-- Note: Don't flag obvious getter/setter functions — only flag where intent is unclear
+- Flag every exported function without JSDoc — no exceptions
 
 ### 5. Inconsistent Patterns
 - Different coding styles in the same file
@@ -89,11 +89,11 @@ Detect code that is hard to understand, modify, or maintain.
 
 ## Special Notes
 
-- This is a vanilla JS project — no TypeScript, no framework. Some patterns that would be anti-patterns in React/Vue are standard here.
-- The project targets multilanguage support. Flag hardcoded Italian (or any language) strings in UI text, error messages, and user-facing content as i18n issues (defer to the hardcoded-values agent for severity).
-- Code comments and JSDoc should be in English. Flag non-English comments as a maintainability issue (LOW severity).
-- Variable and function names are in English — this is correct.
-- The IIFE pattern is an outdated pattern flagged by the anti-patterns agent. JSDoc is still valuable for documenting complex internal functions.
+- Flag everything. No exceptions. Let the developer decide what to keep.
+- Flag hardcoded Italian (or any language) strings in UI text, error messages, and user-facing content as i18n issues.
+- Code comments and JSDoc should be in English. Flag non-English comments.
+- Flag the IIFE pattern as an outdated approach — suggest ES modules.
+- Flag every function without JSDoc, every abbreviation, every complex expression.
 
 ## Codex Prompt
 

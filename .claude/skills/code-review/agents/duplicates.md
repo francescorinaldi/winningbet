@@ -82,9 +82,9 @@ Detect copy-pasted code, similar functions, and repeated patterns that should be
 
 ## Special Notes
 
-- The IIFE pattern in frontend files prevents code sharing via imports — flag this as a root cause and suggest migrating to ES modules or a bundler.
-- Duplication between `script.js` and `dashboard.js` is never intentional — always flag it for consolidation.
-- `api/_lib/` exists specifically to avoid duplication in backend. Check if it's used consistently.
+- Flag everything. No exceptions. No duplication is ever intentional.
+- The IIFE pattern prevents code sharing — flag it as a root cause.
+- Flag every duplicated function, constant, pattern, and config value across the entire codebase.
 
 ## Codex Prompt
 

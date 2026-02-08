@@ -7,13 +7,13 @@ Detect magic numbers, hardcoded strings, and configuration values that should be
 ### 1. Magic Numbers
 - Numeric literals used directly in logic without named constants
 - Timeouts, limits, thresholds, percentages used inline
-- Exception: `0`, `1`, `-1`, `100` in obvious arithmetic contexts are fine
+- Including `0`, `1`, `-1`, `100` — flag every numeric literal used in logic and suggest a named constant
 - **Method**: Search for numeric literals in conditions, calculations, and API calls
 
 ### 2. Hardcoded URLs
 - API URLs hardcoded instead of using env vars or config
 - CDN URLs or external service endpoints inline
-- Exception: Relative URLs like `/api/tips` are fine (internal routing)
+- Including relative URLs like `/api/tips` — flag them and suggest centralizing API routes in a config
 
 ### 3. Hardcoded Business Rules
 - Tier pricing (`€9.99`, `€29.99`) hardcoded in multiple places
@@ -76,13 +76,14 @@ Detect magic numbers, hardcoded strings, and configuration values that should be
 
 ## Special Notes
 
-- HTTP status codes (200, 400, 401, 404, 405, 500) are universally understood — don't flag these.
-- CSS custom properties already handle design tokens — focus on JS hardcoded values.
-- Constants defined at module level (`const PREDICTIONS = [...]`) are fine — they're named constants.
+- Flag everything. No exceptions. Let the developer decide what to keep.
+- Flag HTTP status codes too — suggest using named constants (e.g., `HTTP_OK`, `HTTP_BAD_REQUEST`).
+- Flag hardcoded values in CSS as well as JS — suggest centralizing all design tokens.
+- Flag module-level constants if the same value appears in multiple files — suggest a shared config.
 
 ## Codex Prompt
 
-Search all JavaScript files in api/ and public/ for hardcoded values: (1) Find all numeric literals used in Cache-Control headers (like s-maxage=7200) — list each with file and line. (2) Find all hardcoded price strings (€, EUR, 9.99, 29.99) — list each location. (3) Find all hardcoded season strings like '2024/25' or '2025/26'. (4) Find all hardcoded array limits or pagination values (numbers used with .limit() or as array slice arguments). (5) Find all hardcoded timeout values (setTimeout, setInterval durations). (6) Find all hardcoded Italian strings in JavaScript — user-facing text like alert messages, error messages, button labels, placeholder text, confirmation dialogs, and legal disclaimers. List each with file and line — these all need i18n. Ignore HTTP status codes (200, 400, 500, etc). Format each finding as: ### [SEVERITY] Title with File, Category (hardcoded-values), Issue, Evidence, Suggestion.
+Search all JavaScript files in api/ and public/ for hardcoded values: (1) Find all numeric literals used in Cache-Control headers (like s-maxage=7200) — list each with file and line. (2) Find all hardcoded price strings (€, EUR, 9.99, 29.99) — list each location. (3) Find all hardcoded season strings like '2024/25' or '2025/26'. (4) Find all hardcoded array limits or pagination values (numbers used with .limit() or as array slice arguments). (5) Find all hardcoded timeout values (setTimeout, setInterval durations). (6) Find all hardcoded Italian strings in JavaScript — user-facing text like alert messages, error messages, button labels, placeholder text, confirmation dialogs, and legal disclaimers. List each with file and line — these all need i18n. (7) Find all HTTP status codes used as raw numbers (200, 400, 401, 404, 500) — suggest named constants. Format each finding as: ### [SEVERITY] Title with File, Category (hardcoded-values), Issue, Evidence, Suggestion.
 
 ## Gemini Prompt
 
