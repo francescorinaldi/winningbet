@@ -12,11 +12,11 @@
  * Chiavi utilizzate nel progetto:
  *   - "matches_{league}"                        → /api/matches       (TTL: 2h)
  *   - "results_{league}"                        → /api/results       (TTL: 1h)
- *   - "odds_{fixtureId}"                        → /api/odds          (TTL: 30min)
+ *   - "odds_{fixtureId}"                        → /api/fixtures?type=odds (TTL: 30min)
  *   - "standings_{league}"                      → /api/standings      (TTL: 6h)
  *   - "tips_{league}_{tier}_{status}_{limit}"   → /api/tips          (TTL: 15min)
  *   - "track_record"                            → /api/track-record  (TTL: 1h)
- *   - "schedine_{date}_{tier}_{status}"          → /api/schedina      (TTL: 15min)
+ *   - "schedine_{date}_{tier}_{status}"          → /api/betting-slips (TTL: 15min)
  */
 const store = new Map();
 

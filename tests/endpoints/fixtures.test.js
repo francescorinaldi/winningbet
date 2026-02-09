@@ -16,6 +16,7 @@ jest.mock('../../api/_lib/supabase', () => ({
 jest.mock('../../api/_lib/api-football', () => ({
   getUpcomingMatches: jest.fn(),
   getRecentResults: jest.fn(),
+  getOdds: jest.fn(),
 }));
 jest.mock('../../api/_lib/football-data', () => ({
   getUpcomingMatches: jest.fn(),
@@ -33,14 +34,11 @@ jest.mock('../../api/cron-tasks', () => ({
   buildActualResult: jest.fn(),
 }));
 
-const { getUpcomingMatches: getUpcomingApiFootball } =
-  require('../../api/_lib/api-football');
-const { getRecentResults: getRecentApiFootball } =
-  require('../../api/_lib/api-football');
-const { getUpcomingMatches: getUpcomingFootballData } =
-  require('../../api/_lib/football-data');
-const { getRecentResults: getRecentFootballData } =
-  require('../../api/_lib/football-data');
+const { getUpcomingMatches: getUpcomingApiFootball } = require('../../api/_lib/api-football');
+const { getRecentResults: getRecentApiFootball } = require('../../api/_lib/api-football');
+const { getUpcomingMatches: getUpcomingFootballData } = require('../../api/_lib/football-data');
+const { getRecentResults: getRecentFootballData } = require('../../api/_lib/football-data');
+const { getOdds } = require('../../api/_lib/api-football');
 const cache = require('../../api/_lib/cache');
 const { resolveLeagueSlug } = require('../../api/_lib/leagues');
 
@@ -69,7 +67,7 @@ describe('GET /api/fixtures', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Parametro type richiesto: matches o results',
+      error: 'Parametro type richiesto: matches, results o odds',
     });
   });
 
@@ -256,10 +254,7 @@ describe('GET /api/fixtures', () => {
 
     await handler(req, res);
 
-    expect(res.setHeader).toHaveBeenCalledWith(
-      'Cache-Control',
-      expect.any(String)
-    );
+    expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', expect.any(String));
   });
 
   test('Caches the result', async () => {
@@ -275,5 +270,69 @@ describe('GET /api/fixtures', () => {
     const cacheKey = cache.set.mock.calls[0][0];
     expect(cacheKey).toContain('matches');
     expect(cacheKey).toContain('serie-a');
+  });
+
+  // ─── type=odds ───────────────────────────────────────────────────────────
+
+  test('type=odds: missing fixture returns 400', async () => {
+    const req = createMockReq({ method: 'GET', query: { type: 'odds' } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Missing "fixture" query parameter' });
+  });
+
+  test('type=odds: returns odds for fixture', async () => {
+    const mockOdds = { fixture_id: '12345', bookmakers: [{ name: 'Bet365' }] };
+    getOdds.mockResolvedValueOnce(mockOdds);
+
+    const req = createMockReq({ method: 'GET', query: { type: 'odds', fixture: '12345' } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(getOdds).toHaveBeenCalledWith('12345');
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(mockOdds);
+  });
+
+  test('type=odds: no odds returns null', async () => {
+    getOdds.mockResolvedValueOnce(null);
+
+    const req = createMockReq({ method: 'GET', query: { type: 'odds', fixture: '12345' } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(null);
+  });
+
+  test('type=odds: API error returns 502', async () => {
+    getOdds.mockRejectedValueOnce(new Error('API unavailable'));
+
+    const req = createMockReq({ method: 'GET', query: { type: 'odds', fixture: '12345' } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Unable to fetch odds' });
+  });
+
+  test('type=odds: cache hit returns cached data', async () => {
+    const cachedOdds = { fixture_id: '12345', bookmakers: [] };
+    cache.get.mockReturnValueOnce(cachedOdds);
+
+    const req = createMockReq({ method: 'GET', query: { type: 'odds', fixture: '12345' } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(getOdds).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(cachedOdds);
   });
 });

@@ -6,11 +6,7 @@
   "outputDirectory": "public",
   "headers": [
     {
-      "source": "/api/odds",
-      "headers": [{ "key": "Cache-Control", "value": "s-maxage=1800, stale-while-revalidate=900" }]
-    },
-    {
-      "source": "/api/(generate-tips|cron-tasks|billing|stripe-webhook|tips|telegram|user-settings|user-bets|schedina)",
+      "source": "/api/(generate-tips|cron-tasks|billing|stripe-webhook|tips|telegram|user-settings|user-bets|betting-slips)",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     },
     {

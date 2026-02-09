@@ -4,6 +4,13 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Changed — Consolidate serverless functions (13 → 12, Vercel Hobby limit fix)
+
+- **Merged `api/odds.js` into `api/fixtures.js`** — Odds now accessed via `GET /api/fixtures?type=odds&fixture={id}` instead of standalone `/api/odds`. Reduces function count by 1
+- **Renamed `api/schedina.js` → `api/betting-slips.js`** — English naming for consistency. Endpoint is now `/api/betting-slips`
+- **Updated `vercel.json`** — Removed standalone `/api/odds` cache header (now handled by fixtures.js internally), renamed `schedina` to `betting-slips` in no-store rules
+- **Tests** — Merged odds tests into `fixtures.test.js`, renamed `schedina.test.js` to `betting-slips.test.js`
+
 ### Added — Ligue 1, Bundesliga, Eredivisie (3 new leagues)
 
 - **`api/_lib/leagues.js`** — Added Ligue 1 (ID 61, FL1), Bundesliga (ID 78, BL1), Eredivisie (ID 88, DED) to central config. Exported `VALID_SLUGS` for DRY imports
