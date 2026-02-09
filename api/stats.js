@@ -70,7 +70,8 @@ async function handleStandings(req, res) {
 // ─── Track Record ───────────────────────────────────────────────────────────
 
 async function handleTrackRecord(req, res) {
-  const leagueSlug = req.query.league || null;
+  const rawLeague = req.query.league;
+  const leagueSlug = rawLeague && rawLeague !== 'all' ? rawLeague : null;
   const CACHE_KEY = leagueSlug ? `track_record_${leagueSlug}` : 'track_record';
   const CACHE_TTL = 3600; // 1 ora
 

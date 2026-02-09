@@ -15,28 +15,27 @@
 (function () {
   'use strict';
 
-  // ==========================================
-  // MOBILE MENU
-  // ==========================================
-  const hamburgerBtn = document.getElementById('hamburger');
-  const navLinksEl = document.getElementById('navLinks');
-  if (hamburgerBtn && navLinksEl) {
-    hamburgerBtn.addEventListener('click', function () {
-      hamburgerBtn.classList.toggle('active');
-      navLinksEl.classList.toggle('open');
-      document.body.style.overflow = navLinksEl.classList.contains('open') ? 'hidden' : '';
-    });
-    navLinksEl.querySelectorAll('a').forEach(function (link) {
-      link.addEventListener('click', function () {
-        hamburgerBtn.classList.remove('active');
-        navLinksEl.classList.remove('open');
-        document.body.style.overflow = '';
-      });
-    });
-  }
+  // Mobile menu delegated to shared.js
+  initMobileMenu();
 
   let session = null;
   let profile = null;
+
+  /**
+   * Fetch helper: adds Authorization header & checks response.ok.
+   * Returns parsed JSON. Throws on HTTP errors or missing session.
+   */
+  async function authFetch(url, options) {
+    if (!session) throw new Error('No session');
+    const opts = options || {};
+    opts.headers = Object.assign(
+      { Authorization: 'Bearer ' + session.access_token },
+      opts.headers || {},
+    );
+    const resp = await fetch(url, opts);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    return resp.json();
+  }
   let allHistory = [];
   let userPrefs = null;
   let userBetsMap = {};
@@ -94,6 +93,9 @@
       .eq('user_id', user.id)
       .single();
 
+    if (result.error && result.error.code !== 'PGRST116') {
+      console.warn('[loadProfile]', result.error.message);
+    }
     profile = result.data;
 
     const meta = user.user_metadata || {};
@@ -110,7 +112,12 @@
         .from('profiles')
         .update({ display_name: authName })
         .eq('user_id', user.id)
-        .then();
+        .then(function (r) {
+          if (r.error) console.warn('[profile-update]', r.error.message);
+        })
+        .catch(function (err) {
+          console.warn('[profile-update]', err.message);
+        });
     }
 
     const tier = (profile && profile.tier) || 'free';
@@ -167,6 +174,10 @@
       .limit(1)
       .single();
 
+    if (subResult.error && subResult.error.code !== 'PGRST116') {
+      console.warn('[subscription]', subResult.error.message);
+    }
+
     if (subResult.data) {
       subStatus.textContent = 'Attivo';
       subStatus.className = 'dash-sub-value dash-sub-value--active';
@@ -201,16 +212,11 @@
     btn.textContent = 'Caricamento...';
 
     try {
-      const response = await fetch('/api/billing', {
+      const data = await authFetch('/api/billing', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + session.access_token,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'checkout', tier: tier }),
       });
-
-      const data = await response.json();
 
       if (data.url) {
         window.location.href = data.url;
@@ -219,7 +225,8 @@
         btn.disabled = false;
         btn.textContent = tier === 'pro' ? 'Passa a PRO' : 'Passa a VIP';
       }
-    } catch (_err) {
+    } catch (err) {
+      console.warn('[checkout]', err.message);
       showAlert('Errore di rete. Riprova.', 'error');
       btn.disabled = false;
       btn.textContent = tier === 'pro' ? 'Passa a PRO' : 'Passa a VIP';
@@ -235,23 +242,19 @@
     btn.textContent = 'Apertura...';
 
     try {
-      const response = await fetch('/api/billing', {
+      const data = await authFetch('/api/billing', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + session.access_token,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'portal' }),
       });
-
-      const data = await response.json();
 
       if (data.url) {
         window.location.href = data.url;
       } else {
         showAlert("Errore nell'apertura del portale. Riprova.", 'error');
       }
-    } catch (_err) {
+    } catch (err) {
+      console.warn('[portal]', err.message);
       showAlert('Errore di rete. Riprova.', 'error');
     } finally {
       btn.disabled = false;
@@ -270,12 +273,9 @@
 
     try {
       const tipLimit = currentLeague === 'all' ? 50 : 20;
-      const response = await fetch(
+      const tips = await authFetch(
         '/api/tips?status=today&limit=' + tipLimit + '&league=' + encodeURIComponent(currentLeague),
-        { headers: { Authorization: 'Bearer ' + session.access_token } },
       );
-
-      const tips = await response.json();
 
       if (!Array.isArray(tips) || tips.length === 0) {
         grid.textContent = '';
@@ -299,7 +299,8 @@
       });
 
       renderTipsGrid(grid, tips);
-    } catch (_err) {
+    } catch (err) {
+      console.warn('[loadTodayTips]', err.message);
       grid.textContent = '';
       emptyState.style.display = '';
       startCountdown();
@@ -592,13 +593,12 @@
    */
   async function loadTeamForm(container, homeTeam, awayTeam, league) {
     try {
-      const response = await fetch(
+      const data = await authFetch(
         '/api/match-insights?type=form&teams=' +
           encodeURIComponent(homeTeam + ',' + awayTeam) +
           '&league=' +
           encodeURIComponent(league),
       );
-      const data = await response.json();
       if (!data || typeof data !== 'object') return;
 
       container.textContent = '';
@@ -628,8 +628,8 @@
         row.appendChild(dots);
         container.appendChild(row);
       });
-    } catch (_err) {
-      // Silenzioso
+    } catch (err) {
+      console.warn('[loadTeamForm]', err.message);
     }
   }
 
@@ -638,7 +638,7 @@
    */
   async function loadH2H(container, homeTeam, awayTeam, league) {
     try {
-      const response = await fetch(
+      const data = await authFetch(
         '/api/match-insights?type=h2h&home=' +
           encodeURIComponent(homeTeam) +
           '&away=' +
@@ -646,7 +646,6 @@
           '&league=' +
           encodeURIComponent(league),
       );
-      const data = await response.json();
       if (!data || data.total === 0) return;
 
       container.textContent = '';
@@ -724,8 +723,8 @@
       stats.appendChild(awayStat);
 
       container.appendChild(stats);
-    } catch (_err) {
-      // Silenzioso
+    } catch (err) {
+      console.warn('[loadH2H]', err.message);
     }
   }
 
@@ -736,17 +735,12 @@
    */
   async function loadHistory() {
     try {
-      const hdrs = { Authorization: 'Bearer ' + session.access_token };
       let results = [];
 
       const statuses = ['won', 'lost', 'void', 'pending'];
       const leagueParam = '&league=' + encodeURIComponent(currentLeague);
       const promises = statuses.map(function (s) {
-        return fetch('/api/tips?status=' + s + '&limit=50' + leagueParam, {
-          headers: hdrs,
-        }).then(function (r) {
-          return r.json();
-        });
+        return authFetch('/api/tips?status=' + s + '&limit=50' + leagueParam);
       });
 
       const responses = await Promise.all(promises);
@@ -771,7 +765,8 @@
 
       renderHistory('all');
       loadDashboardChart();
-    } catch (_err) {
+    } catch (err) {
+      console.warn('[loadHistory]', err.message);
       document.getElementById('dashHistoryEmpty').style.display = '';
     }
   }
@@ -935,8 +930,8 @@
         );
         chartObs.observe(bars[0]);
       }
-    } catch (_err) {
-      // Silenzioso
+    } catch (err) {
+      console.warn('[loadDashboardChart]', err.message);
     }
   }
 
@@ -1142,10 +1137,16 @@
       if (currentHeight >= 60) {
         ptr.classList.add('active');
         // Reload data
-        Promise.all([loadTodayTips(), loadHistory()]).then(function () {
-          ptr.classList.remove('active');
-          ptr.style.height = '0';
-        });
+        Promise.all([loadTodayTips(), loadHistory()])
+          .then(function () {
+            ptr.classList.remove('active');
+            ptr.style.height = '0';
+          })
+          .catch(function (err) {
+            console.warn('[pull-to-refresh]', err.message);
+            ptr.classList.remove('active');
+            ptr.style.height = '0';
+          });
       } else {
         ptr.style.height = '0';
       }
@@ -1159,14 +1160,10 @@
 
     try {
       // POST to register today's visit
-      const postRes = await fetch('/api/user-settings?resource=activity', {
+      const data = await authFetch('/api/user-settings?resource=activity', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + session.access_token,
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
-      const data = await postRes.json();
 
       const streakDisplay = document.getElementById('streakDisplay');
       const streakCount = document.getElementById('streakCount');
@@ -1181,8 +1178,8 @@
       if (data.is_new_day && data.current_streak > 1) {
         showStreakCelebration(data.current_streak);
       }
-    } catch (_err) {
-      // Silenzioso
+    } catch (err) {
+      console.warn('[loadActivity]', err.message);
     }
   }
 
@@ -1205,10 +1202,7 @@
     if (!session) return;
 
     try {
-      const response = await fetch('/api/user-settings?resource=notifications&limit=20', {
-        headers: { Authorization: 'Bearer ' + session.access_token },
-      });
-      const data = await response.json();
+      const data = await authFetch('/api/user-settings?resource=notifications&limit=20');
 
       const countEl = document.getElementById('notifCount');
       if (countEl && data.unread_count > 0) {
@@ -1219,8 +1213,8 @@
       }
 
       renderNotificationList(data.notifications || []);
-    } catch (_err) {
-      // Silenzioso
+    } catch (err) {
+      console.warn('[loadNotifications]', err.message);
     }
   }
 
@@ -1308,34 +1302,28 @@
   async function markNotificationRead(id) {
     if (!session) return;
     try {
-      await fetch('/api/user-settings?resource=notifications', {
+      await authFetch('/api/user-settings?resource=notifications', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + session.access_token,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: id }),
       });
       loadNotifications();
-    } catch (_err) {
-      // Silenzioso
+    } catch (err) {
+      console.warn('[markNotificationRead]', err.message);
     }
   }
 
   async function markAllNotificationsRead() {
     if (!session) return;
     try {
-      await fetch('/api/user-settings?resource=notifications', {
+      await authFetch('/api/user-settings?resource=notifications', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + session.access_token,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ markAll: true }),
       });
       loadNotifications();
-    } catch (_err) {
-      // Silenzioso
+    } catch (err) {
+      console.warn('[markAllNotificationsRead]', err.message);
     }
   }
 
@@ -1345,10 +1333,7 @@
     if (!session) return;
 
     try {
-      const response = await fetch('/api/user-settings?resource=preferences', {
-        headers: { Authorization: 'Bearer ' + session.access_token },
-      });
-      userPrefs = await response.json();
+      userPrefs = await authFetch('/api/user-settings?resource=preferences');
 
       // Render favorite team chips
       renderTeamChips();
@@ -1358,8 +1343,8 @@
       const resultToggle = document.getElementById('prefNotifResults');
       if (tipToggle) tipToggle.checked = userPrefs.notification_tips !== false;
       if (resultToggle) resultToggle.checked = userPrefs.notification_results !== false;
-    } catch (_err) {
-      // Silenzioso
+    } catch (err) {
+      console.warn('[loadPreferences]', err.message);
     }
   }
 
@@ -1392,16 +1377,14 @@
   async function saveFavoriteTeams(teams) {
     if (!session) return;
     try {
-      await fetch('/api/user-settings?resource=preferences', {
+      await authFetch('/api/user-settings?resource=preferences', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + session.access_token,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ favorite_teams: teams }),
       });
       showPrefSaveStatus('Salvato!');
-    } catch (_err) {
+    } catch (err) {
+      console.warn('[saveFavoriteTeams]', err.message);
       showPrefSaveStatus('Errore');
     }
   }
@@ -1509,12 +1492,9 @@
 
     function saveToggle() {
       if (!session) return;
-      fetch('/api/user-settings?resource=preferences', {
+      authFetch('/api/user-settings?resource=preferences', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + session.access_token,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           notification_tips: tipToggle ? tipToggle.checked : true,
           notification_results: resultToggle ? resultToggle.checked : true,
@@ -1523,7 +1503,8 @@
         .then(function () {
           showPrefSaveStatus('Salvato!');
         })
-        .catch(function () {
+        .catch(function (err) {
+          console.warn('[saveToggle]', err.message);
           showPrefSaveStatus('Errore');
         });
     }
@@ -1548,18 +1529,15 @@
     if (!session) return;
 
     try {
-      const response = await fetch('/api/user-bets', {
-        headers: { Authorization: 'Bearer ' + session.access_token },
-      });
-      const bets = await response.json();
+      const bets = await authFetch('/api/user-bets');
       userBetsMap = {};
       if (Array.isArray(bets)) {
         bets.forEach(function (bet) {
           userBetsMap[bet.tip_id] = bet;
         });
       }
-    } catch (_err) {
-      // Silenzioso
+    } catch (err) {
+      console.warn('[loadUserBets]', err.message);
     }
   }
 
@@ -1571,30 +1549,23 @@
     try {
       if (isFollowed) {
         // Unfollow
-        await fetch('/api/user-bets?tipId=' + tipId, {
-          method: 'DELETE',
-          headers: { Authorization: 'Bearer ' + session.access_token },
-        });
+        await authFetch('/api/user-bets?tipId=' + tipId, { method: 'DELETE' });
         delete userBetsMap[tipId];
         btn.classList.remove('followed');
         btn.textContent = '\u2606 Segui';
       } else {
         // Follow
-        const response = await fetch('/api/user-bets', {
+        const bet = await authFetch('/api/user-bets', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer ' + session.access_token,
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tip_id: tipId, followed: true }),
         });
-        const bet = await response.json();
         userBetsMap[tipId] = bet;
         btn.classList.add('followed');
         btn.textContent = '\u2605 Seguito';
       }
-    } catch (_err) {
-      // Silenzioso
+    } catch (err) {
+      console.warn('[toggleFollowTip]', err.message);
     }
   }
 
@@ -1646,6 +1617,10 @@
       .eq('user_id', session.user.id)
       .single();
 
+    if (result.error && result.error.code !== 'PGRST116') {
+      console.warn('[loadTelegramStatus]', result.error.message);
+    }
+
     const telegramId = result.data && result.data.telegram_user_id;
 
     if (telegramId) {
@@ -1667,17 +1642,12 @@
     linkBtn.textContent = 'Caricamento...';
 
     try {
-      const response = await fetch('/api/telegram', {
+      const data = await authFetch('/api/telegram', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + session.access_token,
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
 
-      const data = await response.json();
-
-      if (data.status === 'already_linked') {
+      if (data.already_linked) {
         showAlert('Il tuo account Telegram \u00E8 gi\u00E0 collegato.', 'success');
         loadTelegramStatus();
         return;
@@ -1690,7 +1660,8 @@
       } else {
         showAlert('Errore nella generazione del link. Riprova.', 'error');
       }
-    } catch (_err) {
+    } catch (err) {
+      console.warn('[handleLinkTelegram]', err.message);
       showAlert('Errore di rete. Riprova.', 'error');
     } finally {
       linkBtn.disabled = false;
@@ -1703,24 +1674,33 @@
     const maxAttempts = 20;
 
     const interval = setInterval(async function () {
-      attempts++;
+      try {
+        attempts++;
 
-      const result = await SupabaseConfig.client
-        .from('profiles')
-        .select('telegram_user_id')
-        .eq('user_id', session.user.id)
-        .single();
+        const result = await SupabaseConfig.client
+          .from('profiles')
+          .select('telegram_user_id')
+          .eq('user_id', session.user.id)
+          .single();
 
-      const telegramId = result.data && result.data.telegram_user_id;
+        if (result.error && result.error.code !== 'PGRST116') {
+          console.warn('[pollTelegramLink]', result.error.message);
+        }
 
-      if (telegramId) {
-        clearInterval(interval);
-        showAlert('Account Telegram collegato con successo!', 'success');
-        loadTelegramStatus();
-        return;
-      }
+        const telegramId = result.data && result.data.telegram_user_id;
 
-      if (attempts >= maxAttempts) {
+        if (telegramId) {
+          clearInterval(interval);
+          showAlert('Account Telegram collegato con successo!', 'success');
+          loadTelegramStatus();
+          return;
+        }
+
+        if (attempts >= maxAttempts) {
+          clearInterval(interval);
+        }
+      } catch (err) {
+        console.warn('[pollTelegramLink]', err.message);
         clearInterval(interval);
       }
     }, 3000);
@@ -1759,38 +1739,6 @@
     return formatDate(iso);
   }
 
-  // ==========================================
-  // LANGUAGE TOGGLE (shared with homepage)
-  // ==========================================
-
-  function initLangToggle() {
-    const btn = document.getElementById('langToggle');
-    if (!btn) return;
-
-    const langs = [
-      { code: 'IT', flag: '\uD83C\uDDEE\uD83C\uDDF9' },
-      { code: 'EN', flag: '\uD83C\uDDEC\uD83C\uDDE7' },
-    ];
-    let current = localStorage.getItem('lang') === 'EN' ? 1 : 0;
-
-    function render() {
-      const lang = langs[current];
-      btn.querySelector('.flag-emoji').textContent = lang.flag;
-      btn.querySelector('.lang-label').textContent = lang.code;
-      document.documentElement.setAttribute('lang', lang.code.toLowerCase());
-      if (typeof window.applyTranslations === 'function') {
-        window.applyTranslations();
-      }
-    }
-
-    render();
-
-    btn.addEventListener('click', function () {
-      current = current === 0 ? 1 : 0;
-      localStorage.setItem('lang', langs[current].code);
-      render();
-    });
-  }
-
+  // Language toggle delegated to shared.js
   initLangToggle();
 })();

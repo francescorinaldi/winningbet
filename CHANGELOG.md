@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed — Track record "Tutte le Leghe" shows global stats
+
+- **`api/stats.js`** — `handleTrackRecord()` now treats `league=all` as "no filter" (previously matched zero tips because no tip has `league='all'`)
+
 ### Changed — Consolidate serverless functions (13 → 12, Vercel Hobby limit fix)
 
 - **Merged `api/odds.js` into `api/fixtures.js`** — Odds now accessed via `GET /api/fixtures?type=odds&fixture={id}` instead of standalone `/api/odds`. Reduces function count by 1
