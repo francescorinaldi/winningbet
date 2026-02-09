@@ -4,6 +4,55 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed — Code Review: 75 issues (4 CRITICAL, 20 HIGH, 32 MEDIUM, 16 LOW)
+
+Full code review via `/fr3-code-review` (9 agents). This batch addresses all CRITICAL/HIGH and impactful MEDIUM issues.
+
+**New files:**
+
+- **`public/shared.js`** — Shared frontend utilities extracted from all 3 pages: `initMobileMenu()`, `initParticles(options)`, `initLangToggle()`, `LEAGUE_NAMES_MAP`
+- **`api/_lib/prediction-utils.js`** — `evaluatePrediction()` and `buildActualResult()` extracted from cron-tasks.js, shared by fixtures.js
+
+**CRITICAL fixes:**
+
+- **C-01**: `authFetch()` helper in dashboard.js — centralized `response.ok` check + Authorization header (was ignoring HTTP errors)
+- **C-02**: `.single()` PGRST116 handling — no-row results now return null instead of throwing (loadProfile, updateSubscriptionUI, loadTelegramStatus, pollTelegramLink)
+- **C-03**: Fire-and-forget `settlePendingTips()` in fixtures.js now has `.catch()` (was swallowing errors silently)
+- **C-04**: Supabase error checking in `sendEmailDigest()` — profiles/listUsers queries now check for errors before using data
+
+**HIGH fixes:**
+
+- **H-01**: Telegram linking response check — `data.status === 'already_linked'` changed to `data.already_linked` (backend returns `{ already_linked: true }`)
+- **H-02, H-04**: Batch tip updates in cron-tasks.js and fixtures.js — grouped by (status, result) for bulk `.in()` instead of N+1 individual updates
+- **H-03**: `settleSchedule()` rewritten with single join query `schedine → schedina_tips → tips` instead of 3N queries
+- **H-05**: Email sending parallelized with `Promise.allSettled()` in batches of 10 (was sequential)
+- **H-06**: `listUsers()` now includes `{ perPage: 1000 }` (was unbounded)
+- **H-07**: `evaluatePrediction`/`buildActualResult` extracted to shared module (fixtures.js no longer requires cron-tasks.js)
+- **H-08**: Removed fake `callHandler` req/res pattern in generate-tips.js — now calls `handleSettle`/`handleSend` directly
+- **H-09, H-10, H-12**: `initMobileMenu()`, `initParticles()`, `initLangToggle()` deduplicated into shared.js
+- **H-11**: Merged `buildTipCard()` and `buildTipCardFromAPI()` into single polymorphic function
+- **H-13**: League names consolidated — single `LEAGUE_NAMES_MAP` (frontend) and `LEAGUES` import (backend)
+- **H-14..H-17**: Fixed floating promises — profile update, pull-to-refresh, setInterval, saveToggle all have proper `.catch()`/`try-catch`
+- **H-18**: Telegram invite failures logged with `[CRITICAL]` prefix for monitoring
+- **H-19**: Tier pricing moved to `TIER_PRICES` config object (was hardcoded in 4 places)
+- **H-20**: Italian UI strings moved to `UI_TEXT` config object (was hardcoded in 10+ places)
+
+**MEDIUM fixes:**
+
+- **M-07**: Auth header duplication eliminated (20 fetch calls → single `authFetch()`)
+- **M-27**: 10 silent `// Silenzioso` catch blocks replaced with `console.warn('[context]', err.message)`
+
+### Added — Frontend integration for backend-only features
+
+- **Schedine (Betting Slips) tab** — New "Schedine" tab in dashboard showing daily smart betting slips with budget summary bar, date navigation, risk-level cards (Sicura/Equilibrata/Azzardo), combined odds, suggested stake, expected return, confidence bar, strategy text, and expandable tips list. Tier-gated: free users see upgrade prompt, PRO/VIP see data
+- **Risk Profile settings** — New section in dashboard Preferences card with risk_tolerance dropdown (prudente/equilibrato/aggressivo), weekly_budget number input (5-10000 EUR), max_schedine_per_day selector (1-5). Auto-saves via PUT /api/user-settings?resource=preferences
+- **User Bet Tracking** — Added stake input and notes textarea to tip card expansion section. Saves via PUT /api/user-bets
+- **Activity Stats** — Dashboard header now displays total_visits and longest_streak alongside existing streak display
+
+### Fixed — Stats section flashing on hash navigation
+
+- **`public/script.js`** — Elements navigated to via URL hash (e.g. `/#stats`) no longer flash. Root cause: JS added `.reveal` class (opacity:0) after HTML rendered elements visible, then IntersectionObserver re-showed them. Fix: detect hash navigation and apply both `.reveal` and `.visible` simultaneously for elements already in viewport
+
 ### Fixed — Track record "Tutte le Leghe" shows global stats
 
 - **`api/stats.js`** — `handleTrackRecord()` now treats `league=all` as "no filter" (previously matched zero tips because no tip has `league='all'`)

@@ -41,10 +41,12 @@ WHERE status = 'pending'
 ```
 
 Then check if there are matches coming up. Use **WebSearch**:
+
 - Query: `"football matches today tomorrow schedule Serie A Premier League La Liga Champions League"`
 - Look for matches in the next 24-48 hours
 
 Decision logic:
+
 - If **future_tips < 5** AND there are upcoming matches → set `NEEDS_GENERATE = true`
 - If **future_tips >= 5** → already have enough tips, set `NEEDS_GENERATE = false`
 - If **no upcoming matches** in the next 48h → set `NEEDS_GENERATE = false`
@@ -54,6 +56,7 @@ Report: "N future tips exist. Upcoming matches found: yes/no"
 ### Step 3: Execute settlement (if needed)
 
 If `NEEDS_SETTLE = true`:
+
 - Report: "Avvio settlement..."
 - Invoke the `/fr3-settle-tips` skill using the Skill tool
 - Wait for completion
@@ -61,6 +64,7 @@ If `NEEDS_SETTLE = true`:
 ### Step 4: Execute generation (if needed)
 
 If `NEEDS_GENERATE = true`:
+
 - Report: "Avvio generazione tips..."
 - Invoke the `/fr3-generate-tips --delete --send` skill using the Skill tool (delete old pending + send to Telegram)
 - Wait for completion
@@ -68,12 +72,14 @@ If `NEEDS_GENERATE = true`:
 ### Step 5: Summary
 
 If neither settlement nor generation was needed:
+
 ```
 === DAILY CHECK COMPLETE ===
 No work needed today. Tips pending: N, upcoming matches: none in 48h.
 ```
 
 If work was done:
+
 ```
 === DAILY RUN COMPLETE ===
 Settlement: [done/skipped] (N tips settled)

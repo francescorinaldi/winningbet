@@ -301,9 +301,7 @@ describe('GET /api/user-settings?resource=notifications', () => {
       enumerable: false,
     });
 
-    supabase.from
-      .mockReturnValueOnce(mockNotifChain)
-      .mockReturnValueOnce(mockCountChain);
+    supabase.from.mockReturnValueOnce(mockNotifChain).mockReturnValueOnce(mockCountChain);
 
     const req = createMockReq({
       method: 'GET',

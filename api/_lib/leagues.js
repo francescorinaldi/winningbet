@@ -89,4 +89,4 @@ function resolveLeagueSlug(slug) {
   return slug;
 }
 
-module.exports = { getLeague, resolveLeagueSlug, VALID_SLUGS };
+module.exports = { LEAGUES, getLeague, resolveLeagueSlug, VALID_SLUGS };

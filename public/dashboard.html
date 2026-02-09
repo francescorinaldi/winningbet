@@ -98,6 +98,17 @@
             <p class="dash-subtitle">Ecco i tuoi pronostici e le tue statistiche.</p>
           </div>
           <div class="dash-header-right">
+            <!-- Activity stats -->
+            <div class="dash-activity-stats" id="activityStats" style="display: none">
+              <div class="activity-stat" title="Visite totali">
+                <span class="activity-stat-icon">&#128200;</span>
+                <span class="activity-stat-value" id="totalVisits">0</span>
+              </div>
+              <div class="activity-stat" title="Record serie consecutiva">
+                <span class="activity-stat-icon">&#127942;</span>
+                <span class="activity-stat-value" id="longestStreak">0</span>
+              </div>
+            </div>
             <!-- Streak display -->
             <div class="dash-streak" id="streakDisplay" style="display: none">
               <span class="streak-flame">&#128293;</span>
@@ -150,6 +161,7 @@
         <!-- Tab navigation -->
         <div class="dash-tabs">
           <button class="dash-tab active" data-tab="tips">Tips di Oggi</button>
+          <button class="dash-tab" data-tab="schedine">Schedine</button>
           <button class="dash-tab" data-tab="history">Storico</button>
         </div>
 
@@ -184,6 +196,84 @@
               <span class="countdown-label">Prossimi pronostici tra:</span>
               <span class="countdown-value" id="countdownValue">--:--</span>
             </div>
+          </div>
+        </section>
+
+        <!-- TAB: Schedine (Betting Slips) -->
+        <section class="dash-panel" id="panelSchedule" style="display: none">
+          <!-- Budget summary bar -->
+          <div class="schedine-budget-bar" id="schedineBudgetBar" style="display: none">
+            <div class="budget-stat">
+              <span class="budget-stat-label">Budget</span>
+              <span class="budget-stat-value" id="budgetTotal">&mdash;</span>
+            </div>
+            <div class="budget-stat">
+              <span class="budget-stat-label">Investito</span>
+              <span class="budget-stat-value budget-stat-value--stake" id="budgetStake"
+                >&mdash;</span
+              >
+            </div>
+            <div class="budget-stat">
+              <span class="budget-stat-label">Riserva</span>
+              <span class="budget-stat-value budget-stat-value--reserve" id="budgetReserve"
+                >&mdash;</span
+              >
+            </div>
+          </div>
+          <!-- Date picker -->
+          <div class="schedine-date-row">
+            <button class="schedine-date-nav" id="schedinePrev" aria-label="Giorno precedente">
+              &larr;
+            </button>
+            <span class="schedine-date-label" id="schedineDateLabel">Oggi</span>
+            <button class="schedine-date-nav" id="schedineNext" aria-label="Giorno successivo">
+              &rarr;
+            </button>
+          </div>
+          <!-- Schedine cards -->
+          <div class="schedine-grid" id="schedineGrid">
+            <div class="tips-loading">
+              <span class="loading-spinner"></span>
+              <span>Caricamento schedine...</span>
+            </div>
+          </div>
+          <!-- Empty state -->
+          <div class="schedine-empty" id="schedineEmpty" style="display: none">
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <rect x="2" y="3" width="20" height="18" rx="2" />
+              <path d="M8 7h8M8 11h5M8 15h8" />
+            </svg>
+            <p>Nessuna schedina disponibile per questa data.</p>
+            <p class="schedine-empty-sub">
+              Le schedine vengono generate dopo i pronostici giornalieri.
+            </p>
+          </div>
+          <!-- Tier upgrade prompt for free users -->
+          <div class="schedine-upgrade" id="schedineUpgrade" style="display: none">
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0110 0v4" />
+            </svg>
+            <h3>Schedine Intelligenti</h3>
+            <p>
+              Le schedine intelligenti con stake ottimizzati sono disponibili per abbonati PRO e
+              VIP.
+            </p>
+            <button class="btn btn-gold btn-sm" id="schedineUpgradeBtn">Passa a PRO</button>
           </div>
         </section>
 
@@ -365,6 +455,43 @@
                   ></div>
                 </div>
                 <div class="team-chips" id="teamChips"></div>
+              </div>
+              <!-- Risk Profile -->
+              <div class="pref-section">
+                <label class="pref-label">Profilo di Rischio</label>
+                <div class="pref-field-row">
+                  <span class="pref-field-label">Tolleranza rischio</span>
+                  <select class="pref-select" id="prefRiskTolerance">
+                    <option value="prudente">Prudente</option>
+                    <option value="equilibrato" selected>Equilibrato</option>
+                    <option value="aggressivo">Aggressivo</option>
+                  </select>
+                </div>
+                <div class="pref-field-row">
+                  <span class="pref-field-label">Budget settimanale</span>
+                  <div class="pref-input-group">
+                    <input
+                      type="number"
+                      class="pref-input"
+                      id="prefWeeklyBudget"
+                      min="5"
+                      max="10000"
+                      step="5"
+                      value="50"
+                    />
+                    <span class="pref-input-suffix">&euro;</span>
+                  </div>
+                </div>
+                <div class="pref-field-row">
+                  <span class="pref-field-label">Max schedine/giorno</span>
+                  <select class="pref-select" id="prefMaxSchedine">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                  </select>
+                </div>
               </div>
               <!-- Notification toggles -->
               <div class="pref-section">

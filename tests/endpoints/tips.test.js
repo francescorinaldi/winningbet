@@ -95,9 +95,7 @@ describe('GET /api/tips', () => {
       error: null,
     });
 
-    const mockTips = [
-      { id: '1', tier_required: 'pro', status: 'pending' },
-    ];
+    const mockTips = [{ id: '1', tier_required: 'pro', status: 'pending' }];
     const chain = mockChain({ data: mockTips, error: null });
 
     const req = createMockReq({ method: 'GET' });

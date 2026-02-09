@@ -166,9 +166,7 @@ describe('POST /api/billing', () => {
 
   it('should return 500 when stripe checkout fails', async () => {
     stripe.customers.create.mockResolvedValue({ id: 'cus_new' });
-    stripe.checkout.sessions.create.mockRejectedValue(
-      new Error('Stripe error'),
-    );
+    stripe.checkout.sessions.create.mockRejectedValue(new Error('Stripe error'));
 
     const req = createMockReq({
       method: 'POST',
@@ -253,9 +251,7 @@ describe('POST /api/billing', () => {
       profile: { tier: 'pro', stripe_customer_id: 'cus_existing' },
       error: null,
     });
-    stripe.billingPortal.sessions.create.mockRejectedValue(
-      new Error('Portal error'),
-    );
+    stripe.billingPortal.sessions.create.mockRejectedValue(new Error('Portal error'));
 
     const req = createMockReq({
       method: 'POST',

@@ -22,8 +22,9 @@ Premium multi-league betting predictions platform (Serie A, Champions League, La
 
 ```
 api/                    → Vercel serverless functions (12 endpoints)
-api/_lib/               → Shared backend utilities (10 modules)
+api/_lib/               → Shared backend utilities (11 modules)
 api/_lib/leagues.js     → Centralized league configuration (IDs, codes, seasons)
+api/_lib/prediction-utils.js → Shared prediction evaluation (evaluatePrediction, buildActualResult)
 api/_lib/telegram.js    → Telegram Bot API client (send tips, invite, kick, DM)
 api/billing.js          → Stripe billing (checkout + portal)
 api/cron-tasks.js       → Cron tasks (settle tips + schedine + send)
@@ -38,6 +39,7 @@ api/tips.js             → Tip listing (filtered by league)
 api/user-bets.js        → Follow/unfollow tips
 api/user-settings.js    → Activity + notifications + preferences + risk profile
 public/                 → Static frontend (HTML, JS, CSS)
+public/shared.js        → Shared frontend utilities (mobile menu, particles, lang toggle, league names)
 public/script.js        → Main landing page logic (IIFE pattern)
 public/auth.js          → Authentication logic (Supabase Auth)
 public/dashboard.js     → User dashboard logic + Telegram linking

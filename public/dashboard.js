@@ -12,11 +12,21 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
+/* global initMobileMenu, initLangToggle, LEAGUE_NAMES_MAP */
+
 (function () {
   'use strict';
 
   // Mobile menu delegated to shared.js
   initMobileMenu();
+
+  // ─── CONFIG ───────────────────────────────────────────
+  const TIER_PRICES = { pro: '\u20AC9.99/mese', vip: '\u20AC29.99/mese' };
+  const UI_TEXT = {
+    networkError: 'Errore di rete. Riprova.',
+    loading: 'Caricamento...',
+    upgradeTo: { pro: 'Passa a PRO', vip: 'Passa a VIP' },
+  };
 
   let session = null;
   let profile = null;
@@ -44,6 +54,8 @@
 
   // ─── INIT ───────────────────────────────────────────────
 
+  let schedineDate = new Date().toISOString().split('T')[0];
+
   document.addEventListener('DOMContentLoaded', function () {
     checkAuth();
     setupTabs();
@@ -56,6 +68,8 @@
     setupTeamSearch();
     setupPreferenceToggles();
     setupSettingsToggle();
+    setupSchedineDateNav();
+    setupRiskProfileInputs();
   });
 
   /**
@@ -77,6 +91,7 @@
     loadNotifications();
     loadPreferences();
     loadUserBets();
+    loadSchedule();
   }
 
   // ─── PROFILE ────────────────────────────────────────────
@@ -153,7 +168,7 @@
       subTier.textContent = 'Free';
       subStatus.textContent = 'Gratuito';
       upgradeBtn.style.display = '';
-      upgradeBtn.textContent = 'Passa a PRO';
+      upgradeBtn.textContent = UI_TEXT.upgradeTo.pro;
       upgradeBtn.onclick = function () {
         startCheckout('pro');
       };
@@ -162,8 +177,7 @@
       return;
     }
 
-    subTier.textContent =
-      tier === 'pro' ? 'PRO \u2014 \u20AC9.99/mese' : 'VIP \u2014 \u20AC29.99/mese';
+    subTier.textContent = tier.toUpperCase() + ' \u2014 ' + TIER_PRICES[tier];
 
     const subResult = await SupabaseConfig.client
       .from('subscriptions')
@@ -188,7 +202,7 @@
     }
 
     if (tier === 'pro') {
-      upgradeBtn.textContent = 'Passa a VIP';
+      upgradeBtn.textContent = UI_TEXT.upgradeTo.vip;
       upgradeBtn.style.display = '';
       upgradeBtn.onclick = function () {
         startCheckout('vip');
@@ -209,7 +223,7 @@
   async function startCheckout(tier) {
     const btn = document.getElementById('upgradeBtn');
     btn.disabled = true;
-    btn.textContent = 'Caricamento...';
+    btn.textContent = UI_TEXT.loading;
 
     try {
       const data = await authFetch('/api/billing', {
@@ -223,13 +237,13 @@
       } else {
         showAlert('Errore nella creazione del pagamento. Riprova.', 'error');
         btn.disabled = false;
-        btn.textContent = tier === 'pro' ? 'Passa a PRO' : 'Passa a VIP';
+        btn.textContent = UI_TEXT.upgradeTo[tier];
       }
     } catch (err) {
       console.warn('[checkout]', err.message);
-      showAlert('Errore di rete. Riprova.', 'error');
+      showAlert(UI_TEXT.networkError, 'error');
       btn.disabled = false;
-      btn.textContent = tier === 'pro' ? 'Passa a PRO' : 'Passa a VIP';
+      btn.textContent = UI_TEXT.upgradeTo[tier];
     }
   }
 
@@ -255,7 +269,7 @@
       }
     } catch (err) {
       console.warn('[portal]', err.message);
-      showAlert('Errore di rete. Riprova.', 'error');
+      showAlert(UI_TEXT.networkError, 'error');
     } finally {
       btn.disabled = false;
       btn.textContent = 'Gestisci Abbonamento';
@@ -332,16 +346,6 @@
     );
 
     const now = new Date();
-    // League display names for 'all' view
-    const leagueNames = {
-      'serie-a': 'Serie A',
-      'champions-league': 'UCL',
-      'la-liga': 'La Liga',
-      'premier-league': 'PL',
-      'ligue-1': 'Ligue 1',
-      bundesliga: 'Bundesliga',
-      eredivisie: 'Eredivisie',
-    };
 
     tips.forEach(function (tip) {
       const matchStarted = new Date(tip.match_date) < now;
@@ -395,7 +399,8 @@
       if (currentLeague === 'all' && tip.league) {
         const leagueBadge = document.createElement('span');
         leagueBadge.className = 'tip-league-badge';
-        leagueBadge.textContent = leagueNames[tip.league] || tip.league;
+        const leagueInfo = LEAGUE_NAMES_MAP[tip.league];
+        leagueBadge.textContent = leagueInfo ? leagueInfo.short : tip.league;
         header.appendChild(leagueBadge);
       }
 
@@ -544,6 +549,9 @@
         toggleFollowTip(tip.id, followBtn);
       });
       detailsInner.appendChild(followBtn);
+
+      // Bet tracking (stake + notes)
+      buildBetTrackingUI(detailsInner, tip.id);
 
       details.appendChild(detailsInner);
       card.appendChild(details);
@@ -952,8 +960,16 @@
 
         const target = tab.getAttribute('data-tab');
         document.getElementById('panelTips').style.display = target === 'tips' ? '' : 'none';
+        document.getElementById('panelSchedule').style.display =
+          target === 'schedine' ? '' : 'none';
         document.getElementById('panelHistory').style.display = target === 'history' ? '' : 'none';
         document.getElementById('panelAccount').style.display = 'none';
+
+        // Show/hide league selector (not relevant for schedine)
+        const leagueSelector = document.getElementById('dashLeagueSelector');
+        if (leagueSelector) {
+          leagueSelector.style.display = target === 'schedine' ? 'none' : '';
+        }
       });
     });
   }
@@ -968,6 +984,7 @@
     settingsBtn.addEventListener('click', function () {
       const panelAccount = document.getElementById('panelAccount');
       const panelTips = document.getElementById('panelTips');
+      const panelSchedule = document.getElementById('panelSchedule');
       const panelHistory = document.getElementById('panelHistory');
       const isAccountVisible = panelAccount.style.display !== 'none';
 
@@ -979,10 +996,12 @@
         const activeTab = document.querySelector('.dash-tab.active');
         const activePanel = activeTab ? activeTab.getAttribute('data-tab') : 'tips';
         panelTips.style.display = activePanel === 'tips' ? '' : 'none';
+        panelSchedule.style.display = activePanel === 'schedine' ? '' : 'none';
         panelHistory.style.display = activePanel === 'history' ? '' : 'none';
       } else {
         // Apri account, nascondi gli altri pannelli
         panelTips.style.display = 'none';
+        panelSchedule.style.display = 'none';
         panelHistory.style.display = 'none';
         panelAccount.style.display = '';
         settingsBtn.classList.add('active');
@@ -1178,6 +1197,18 @@
       if (data.is_new_day && data.current_streak > 1) {
         showStreakCelebration(data.current_streak);
       }
+
+      // Activity stats display
+      const activityStats = document.getElementById('activityStats');
+      const totalVisitsEl = document.getElementById('totalVisits');
+      const longestStreakEl = document.getElementById('longestStreak');
+      if (activityStats && totalVisitsEl && longestStreakEl) {
+        if (data.total_visits || data.longest_streak) {
+          activityStats.style.display = '';
+          totalVisitsEl.textContent = data.total_visits || 0;
+          longestStreakEl.textContent = data.longest_streak || 0;
+        }
+      }
     } catch (err) {
       console.warn('[loadActivity]', err.message);
     }
@@ -1343,6 +1374,15 @@
       const resultToggle = document.getElementById('prefNotifResults');
       if (tipToggle) tipToggle.checked = userPrefs.notification_tips !== false;
       if (resultToggle) resultToggle.checked = userPrefs.notification_results !== false;
+
+      // Set risk profile fields
+      const riskSelect = document.getElementById('prefRiskTolerance');
+      const budgetInput = document.getElementById('prefWeeklyBudget');
+      const maxSchedine = document.getElementById('prefMaxSchedine');
+      if (riskSelect && userPrefs.risk_tolerance) riskSelect.value = userPrefs.risk_tolerance;
+      if (budgetInput && userPrefs.weekly_budget) budgetInput.value = userPrefs.weekly_budget;
+      if (maxSchedine && userPrefs.max_schedine_per_day)
+        maxSchedine.value = userPrefs.max_schedine_per_day;
     } catch (err) {
       console.warn('[loadPreferences]', err.message);
     }
@@ -1569,6 +1609,437 @@
     }
   }
 
+  // ─── SCHEDINE (BETTING SLIPS) ─────────────────────────
+
+  function showGridLoading(grid) {
+    grid.textContent = '';
+    const loader = document.createElement('div');
+    loader.className = 'tips-loading';
+    const spinner = document.createElement('span');
+    spinner.className = 'loading-spinner';
+    loader.appendChild(spinner);
+    const text = document.createElement('span');
+    text.textContent = 'Caricamento schedine...';
+    loader.appendChild(text);
+    grid.appendChild(loader);
+  }
+
+  async function loadSchedule() {
+    const grid = document.getElementById('schedineGrid');
+    const empty = document.getElementById('schedineEmpty');
+    const upgrade = document.getElementById('schedineUpgrade');
+    const budgetBar = document.getElementById('schedineBudgetBar');
+
+    if (!grid) return;
+
+    const tier = (profile && profile.tier) || 'free';
+
+    if (tier === 'free') {
+      grid.textContent = '';
+      empty.style.display = 'none';
+      budgetBar.style.display = 'none';
+      upgrade.style.display = '';
+      const upgradeBtn = document.getElementById('schedineUpgradeBtn');
+      if (upgradeBtn) {
+        upgradeBtn.onclick = function () {
+          startCheckout('pro');
+        };
+      }
+      return;
+    }
+
+    showGridLoading(grid);
+    empty.style.display = 'none';
+    upgrade.style.display = 'none';
+
+    try {
+      const data = await authFetch('/api/betting-slips?date=' + encodeURIComponent(schedineDate));
+
+      if (!data.schedine || data.schedine.length === 0) {
+        grid.textContent = '';
+        empty.style.display = '';
+        budgetBar.style.display = 'none';
+        return;
+      }
+
+      if (data.budget_summary) {
+        budgetBar.style.display = '';
+        document.getElementById('budgetTotal').textContent = data.budget_summary.budget + ' \u20AC';
+        document.getElementById('budgetStake').textContent =
+          data.budget_summary.total_stake + ' \u20AC';
+        document.getElementById('budgetReserve').textContent =
+          data.budget_summary.reserve + ' \u20AC';
+      }
+
+      renderSchedule(grid, data.schedine);
+    } catch (err) {
+      console.warn('[loadSchedule]', err.message);
+      grid.textContent = '';
+
+      if (err.message === 'HTTP 403') {
+        upgrade.style.display = '';
+        budgetBar.style.display = 'none';
+      } else {
+        empty.style.display = '';
+        budgetBar.style.display = 'none';
+      }
+    }
+  }
+
+  function renderSchedule(container, schedine) {
+    container.textContent = '';
+
+    const riskMap = { 1: 'sicura', 2: 'equilibrata', 3: 'azzardo' };
+    const riskLabels = { 1: 'Sicura', 2: 'Equilibrata', 3: 'Azzardo' };
+    const statusLabels = {
+      pending: 'In Corso',
+      won: 'Vinta',
+      lost: 'Persa',
+      void: 'Annullata',
+    };
+
+    schedine.forEach(function (s) {
+      const riskClass = riskMap[s.risk_level] || 'equilibrata';
+      const card = document.createElement('div');
+      card.className = 'schedina-card schedina-card--' + riskClass;
+
+      // Header
+      const header = document.createElement('div');
+      header.className = 'schedina-header';
+
+      const riskBadge = document.createElement('span');
+      riskBadge.className = 'schedina-risk-badge schedina-risk-badge--' + riskClass;
+      riskBadge.textContent = riskLabels[s.risk_level] || s.name;
+      header.appendChild(riskBadge);
+
+      if (s.status && s.status !== 'pending') {
+        const statusBadge = document.createElement('span');
+        statusBadge.className = 'schedina-status-badge schedina-status-badge--' + s.status;
+        statusBadge.textContent = statusLabels[s.status] || s.status;
+        header.appendChild(statusBadge);
+      }
+
+      card.appendChild(header);
+
+      // Name
+      const nameEl = document.createElement('div');
+      nameEl.className = 'schedina-name';
+      nameEl.textContent = s.name || 'Schedina ' + (riskLabels[s.risk_level] || '');
+      card.appendChild(nameEl);
+
+      // Stats row
+      const stats = document.createElement('div');
+      stats.className = 'schedina-stats';
+
+      const oddsEl = document.createElement('div');
+      oddsEl.className = 'schedina-stat';
+      const oddsLabel = document.createElement('span');
+      oddsLabel.className = 'schedina-stat-label';
+      oddsLabel.textContent = 'Quota';
+      oddsEl.appendChild(oddsLabel);
+      const oddsVal = document.createElement('span');
+      oddsVal.className = 'schedina-stat-value';
+      oddsVal.textContent = parseFloat(s.combined_odds || 0).toFixed(2);
+      oddsEl.appendChild(oddsVal);
+      stats.appendChild(oddsEl);
+
+      const stakeEl = document.createElement('div');
+      stakeEl.className = 'schedina-stat';
+      const stakeLabel = document.createElement('span');
+      stakeLabel.className = 'schedina-stat-label';
+      stakeLabel.textContent = 'Puntata';
+      stakeEl.appendChild(stakeLabel);
+      const stakeVal = document.createElement('span');
+      stakeVal.className = 'schedina-stat-value';
+      stakeVal.textContent = parseFloat(s.suggested_stake || 0).toFixed(2) + ' \u20AC';
+      stakeEl.appendChild(stakeVal);
+      stats.appendChild(stakeEl);
+
+      const returnEl = document.createElement('div');
+      returnEl.className = 'schedina-stat';
+      const returnLabel = document.createElement('span');
+      returnLabel.className = 'schedina-stat-label';
+      returnLabel.textContent = 'Potenziale';
+      returnEl.appendChild(returnLabel);
+      const returnVal = document.createElement('span');
+      returnVal.className = 'schedina-stat-value schedina-stat-value--highlight';
+      returnVal.textContent = parseFloat(s.expected_return || 0).toFixed(2) + ' \u20AC';
+      returnEl.appendChild(returnVal);
+      stats.appendChild(returnEl);
+
+      card.appendChild(stats);
+
+      // Confidence bar
+      if (s.confidence_avg) {
+        const confBar = document.createElement('div');
+        confBar.className = 'schedina-confidence';
+
+        const confLabel = document.createElement('span');
+        confLabel.className = 'schedina-confidence-label';
+        confLabel.textContent = 'Fiducia media';
+        confBar.appendChild(confLabel);
+
+        const barOuter = document.createElement('div');
+        barOuter.className = 'confidence-bar';
+        const barFill = document.createElement('div');
+        barFill.className = 'confidence-fill';
+        barOuter.appendChild(barFill);
+        confBar.appendChild(barOuter);
+
+        const confValue = document.createElement('span');
+        confValue.className = 'confidence-value';
+        confValue.textContent = Math.round(s.confidence_avg) + '%';
+        confBar.appendChild(confValue);
+
+        card.appendChild(confBar);
+
+        requestAnimationFrame(function () {
+          barFill.style.width = Math.round(s.confidence_avg) + '%';
+        });
+      }
+
+      // Strategy
+      if (s.strategy) {
+        const strategy = document.createElement('div');
+        strategy.className = 'schedina-strategy';
+        strategy.textContent = s.strategy;
+        card.appendChild(strategy);
+      }
+
+      // Expandable tips list
+      const details = document.createElement('div');
+      details.className = 'schedina-details';
+
+      if (s.tips && s.tips.length > 0) {
+        const tipsList = document.createElement('div');
+        tipsList.className = 'schedina-tips-list';
+
+        s.tips.forEach(function (tip, idx) {
+          const tipItem = document.createElement('div');
+          tipItem.className = 'schedina-tip-item';
+
+          const num = document.createElement('span');
+          num.className = 'schedina-tip-num';
+          num.textContent = tip.position || idx + 1;
+          tipItem.appendChild(num);
+
+          const tipInfo = document.createElement('div');
+          tipInfo.className = 'schedina-tip-info';
+
+          const tipMatch = document.createElement('div');
+          tipMatch.className = 'schedina-tip-match';
+          tipMatch.textContent = tip.home_team + ' vs ' + tip.away_team;
+          tipInfo.appendChild(tipMatch);
+
+          const tipMeta = document.createElement('div');
+          tipMeta.className = 'schedina-tip-meta';
+          tipMeta.textContent = tip.prediction + ' @ ' + parseFloat(tip.odds || 0).toFixed(2);
+          if (tip.league) {
+            const leagueTag = document.createElement('span');
+            leagueTag.className = 'schedina-tip-league';
+            leagueTag.textContent = tip.league;
+            tipMeta.appendChild(leagueTag);
+          }
+          tipInfo.appendChild(tipMeta);
+
+          tipItem.appendChild(tipInfo);
+
+          if (tip.confidence) {
+            const tipConf = document.createElement('span');
+            tipConf.className = 'schedina-tip-conf';
+            tipConf.textContent = tip.confidence + '%';
+            tipItem.appendChild(tipConf);
+          }
+
+          tipsList.appendChild(tipItem);
+        });
+
+        details.appendChild(tipsList);
+      }
+
+      card.appendChild(details);
+
+      // Expand button
+      const expandBtn = document.createElement('button');
+      expandBtn.className = 'schedina-expand-btn';
+      expandBtn.textContent = 'Vedi pronostici \u25BC';
+      expandBtn.addEventListener('click', function () {
+        const isOpen = details.classList.contains('open');
+        if (isOpen) {
+          details.classList.remove('open');
+          expandBtn.classList.remove('expanded');
+        } else {
+          details.classList.add('open');
+          expandBtn.classList.add('expanded');
+        }
+      });
+      card.appendChild(expandBtn);
+
+      container.appendChild(card);
+    });
+  }
+
+  function setupSchedineDateNav() {
+    const prevBtn = document.getElementById('schedinePrev');
+    const nextBtn = document.getElementById('schedineNext');
+    const label = document.getElementById('schedineDateLabel');
+    if (!prevBtn || !nextBtn || !label) return;
+
+    updateSchedineDateLabel(label);
+
+    prevBtn.addEventListener('click', function () {
+      const d = new Date(schedineDate + 'T12:00:00');
+      d.setDate(d.getDate() - 1);
+      schedineDate = d.toISOString().split('T')[0];
+      updateSchedineDateLabel(label);
+      loadSchedule();
+    });
+
+    nextBtn.addEventListener('click', function () {
+      const d = new Date(schedineDate + 'T12:00:00');
+      d.setDate(d.getDate() + 1);
+      schedineDate = d.toISOString().split('T')[0];
+      updateSchedineDateLabel(label);
+      loadSchedule();
+    });
+  }
+
+  function updateSchedineDateLabel(label) {
+    const today = new Date().toISOString().split('T')[0];
+    if (schedineDate === today) {
+      label.textContent = 'Oggi';
+    } else {
+      const d = new Date(schedineDate + 'T12:00:00');
+      label.textContent = d.toLocaleDateString('it-IT', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      });
+    }
+  }
+
+  // ─── RISK PROFILE ─────────────────────────────────────
+
+  function setupRiskProfileInputs() {
+    const riskSelect = document.getElementById('prefRiskTolerance');
+    const budgetInput = document.getElementById('prefWeeklyBudget');
+    const maxSchedine = document.getElementById('prefMaxSchedine');
+    let debounceTimer = null;
+
+    function saveRiskProfile(field, value) {
+      if (!session) return;
+      const body = {};
+      body[field] = value;
+      authFetch('/api/user-settings?resource=preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+        .then(function () {
+          showPrefSaveStatus('Salvato!');
+        })
+        .catch(function (err) {
+          console.warn('[saveRiskProfile]', err.message);
+          showPrefSaveStatus('Errore');
+        });
+    }
+
+    if (riskSelect) {
+      riskSelect.addEventListener('change', function () {
+        saveRiskProfile('risk_tolerance', riskSelect.value);
+      });
+    }
+
+    if (budgetInput) {
+      budgetInput.addEventListener('input', function () {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function () {
+          const val = parseInt(budgetInput.value, 10);
+          if (val >= 5 && val <= 10000) {
+            saveRiskProfile('weekly_budget', val);
+          }
+        }, 800);
+      });
+    }
+
+    if (maxSchedine) {
+      maxSchedine.addEventListener('change', function () {
+        saveRiskProfile('max_schedine_per_day', parseInt(maxSchedine.value, 10));
+      });
+    }
+  }
+
+  // ─── BET TRACKING ─────────────────────────────────────
+
+  function buildBetTrackingUI(container, tipId) {
+    const existingBet = userBetsMap[tipId];
+    const section = document.createElement('div');
+    section.className = 'bet-tracking-section';
+
+    const stakeInput = document.createElement('input');
+    stakeInput.type = 'number';
+    stakeInput.className = 'bet-stake-input';
+    stakeInput.placeholder = 'Puntata (\u20AC)';
+    stakeInput.min = '0';
+    stakeInput.step = '0.5';
+    if (existingBet && existingBet.stake) stakeInput.value = existingBet.stake;
+
+    const notesInput = document.createElement('textarea');
+    notesInput.className = 'bet-notes-input';
+    notesInput.placeholder = 'Note personali...';
+    notesInput.rows = 2;
+    if (existingBet && existingBet.notes) notesInput.value = existingBet.notes;
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'bet-save-btn';
+    saveBtn.textContent = 'Salva';
+    saveBtn.addEventListener('click', function () {
+      saveBetTracking(tipId, stakeInput.value, notesInput.value, saveBtn);
+    });
+
+    section.appendChild(stakeInput);
+    section.appendChild(notesInput);
+    section.appendChild(saveBtn);
+    container.appendChild(section);
+  }
+
+  async function saveBetTracking(tipId, stake, notes, btn) {
+    if (!session) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Salvataggio...';
+
+    try {
+      const body = { tip_id: tipId };
+      if (stake) body.stake = parseFloat(stake);
+      if (notes) body.notes = notes;
+
+      await authFetch('/api/user-bets', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (userBetsMap[tipId]) {
+        if (stake) userBetsMap[tipId].stake = parseFloat(stake);
+        if (notes) userBetsMap[tipId].notes = notes;
+      }
+
+      btn.textContent = 'Salvato!';
+      setTimeout(function () {
+        btn.disabled = false;
+        btn.textContent = 'Salva';
+      }, 1500);
+    } catch (err) {
+      console.warn('[saveBetTracking]', err.message);
+      btn.textContent = 'Errore';
+      setTimeout(function () {
+        btn.disabled = false;
+        btn.textContent = 'Salva';
+      }, 1500);
+    }
+  }
+
   // ─── LOGOUT ─────────────────────────────────────────────
 
   function setupLogout() {
@@ -1639,7 +2110,7 @@
   async function handleLinkTelegram() {
     const linkBtn = document.getElementById('linkTelegramBtn');
     linkBtn.disabled = true;
-    linkBtn.textContent = 'Caricamento...';
+    linkBtn.textContent = UI_TEXT.loading;
 
     try {
       const data = await authFetch('/api/telegram', {
@@ -1662,7 +2133,7 @@
       }
     } catch (err) {
       console.warn('[handleLinkTelegram]', err.message);
-      showAlert('Errore di rete. Riprova.', 'error');
+      showAlert(UI_TEXT.networkError, 'error');
     } finally {
       linkBtn.disabled = false;
       linkBtn.textContent = 'Collega Telegram';

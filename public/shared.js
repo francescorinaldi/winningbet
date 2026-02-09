@@ -10,27 +10,26 @@
  */
 
 /* exported initMobileMenu, initParticles, initLangToggle, LEAGUE_NAMES_MAP */
+/* eslint no-var: "off" */
 
 // ==========================================
 // LEAGUE NAMES (shared between pages)
 // ==========================================
 
-// eslint-disable-next-line no-unused-vars
 var LEAGUE_NAMES_MAP = {
-  'serie-a': 'Serie A',
-  'champions-league': 'Champions League',
-  'la-liga': 'La Liga',
-  'premier-league': 'Premier League',
-  'ligue-1': 'Ligue 1',
-  bundesliga: 'Bundesliga',
-  eredivisie: 'Eredivisie',
+  'serie-a': { full: 'Serie A', short: 'Serie A' },
+  'champions-league': { full: 'Champions League', short: 'UCL' },
+  'la-liga': { full: 'La Liga', short: 'La Liga' },
+  'premier-league': { full: 'Premier League', short: 'PL' },
+  'ligue-1': { full: 'Ligue 1', short: 'Ligue 1' },
+  bundesliga: { full: 'Bundesliga', short: 'Bundesliga' },
+  eredivisie: { full: 'Eredivisie', short: 'Eredivisie' },
 };
 
 // ==========================================
 // MOBILE MENU
 // ==========================================
 
-// eslint-disable-next-line no-unused-vars
 function initMobileMenu() {
   var hamburger = document.getElementById('hamburger');
   var navLinks = document.getElementById('navLinks');
@@ -63,7 +62,6 @@ function initMobileMenu() {
  * @param {number} [options.densityDivisor=15] — Divisore per la densita' (larghezza / divisor)
  * @param {boolean} [options.connections=true] — Disegna linee tra particelle vicine
  */
-// eslint-disable-next-line no-unused-vars
 function initParticles(options) {
   var canvas = document.getElementById('particles');
   if (!canvas) return;
@@ -157,7 +155,6 @@ function initParticles(options) {
 // LANGUAGE TOGGLE
 // ==========================================
 
-// eslint-disable-next-line no-unused-vars
 function initLangToggle() {
   var btn = document.getElementById('langToggle');
   if (!btn) return;

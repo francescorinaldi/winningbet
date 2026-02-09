@@ -12,9 +12,7 @@ const {
 
 // Mock leagues module
 jest.mock('../../api/_lib/leagues', () => ({
-  getLeague: jest
-    .fn()
-    .mockReturnValue({ footballDataCode: 'SA', season: 2025, name: 'Serie A' }),
+  getLeague: jest.fn().mockReturnValue({ footballDataCode: 'SA', season: 2025, name: 'Serie A' }),
 }));
 
 describe('football-data', () => {

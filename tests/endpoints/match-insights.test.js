@@ -57,9 +57,7 @@ describe('GET /api/match-insights', () => {
 
   it('should return H2H data for type=h2h with valid parameters', async () => {
     const mockH2HData = {
-      fixtures: [
-        { id: 1, teams: { home: { name: 'Inter' }, away: { name: 'Milan' } } },
-      ],
+      fixtures: [{ id: 1, teams: { home: { name: 'Inter' }, away: { name: 'Milan' } } }],
     };
     getHeadToHead.mockResolvedValue(mockH2HData);
 
@@ -95,9 +93,7 @@ describe('GET /api/match-insights', () => {
 
   it('should return cached H2H data when available', async () => {
     const cachedData = {
-      fixtures: [
-        { id: 2, teams: { home: { name: 'Juventus' }, away: { name: 'Roma' } } },
-      ],
+      fixtures: [{ id: 2, teams: { home: { name: 'Juventus' }, away: { name: 'Roma' } } }],
     };
     cache.get.mockReturnValueOnce(cachedData);
 

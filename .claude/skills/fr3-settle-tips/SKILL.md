@@ -19,6 +19,7 @@ You ARE the settlement engine. Do NOT call paid football APIs — use WebSearch 
 ## Parse Arguments
 
 From `$ARGUMENTS`:
+
 - No args → settle all pending tips with past match dates
 - `--dry-run` → show what would change but don't update the database
 
@@ -41,6 +42,7 @@ If no pending tips with past match dates → report "Nessun tip da aggiornare" a
 For each pending tip (or group of tips from the same day/league):
 
 Use **WebSearch** to find the actual match result:
+
 - Query: `"<home_team> vs <away_team> score result <date>"`
 - Extract the final score (e.g., "2-1")
 
@@ -51,22 +53,22 @@ If the score cannot be found reliably → skip that tip and report it.
 
 Apply settlement logic based on the prediction type and the real score:
 
-| Prediction | Won if... |
-|------------|-----------|
-| `1` | home goals > away goals |
-| `X` | home goals = away goals |
-| `2` | away goals > home goals |
-| `1X` | home goals >= away goals |
-| `X2` | away goals >= home goals |
-| `12` | home goals != away goals |
-| `Over 2.5` | total goals > 2.5 |
-| `Under 2.5` | total goals < 2.5 |
-| `Over 1.5` | total goals > 1.5 |
-| `Under 3.5` | total goals < 3.5 |
-| `Goal` | both teams scored (home > 0 AND away > 0) |
-| `No Goal` | at least one team scored 0 |
-| `1 + Over 1.5` | home win AND total goals > 1.5 |
-| `2 + Over 1.5` | away win AND total goals > 1.5 |
+| Prediction     | Won if...                                 |
+| -------------- | ----------------------------------------- |
+| `1`            | home goals > away goals                   |
+| `X`            | home goals = away goals                   |
+| `2`            | away goals > home goals                   |
+| `1X`           | home goals >= away goals                  |
+| `X2`           | away goals >= home goals                  |
+| `12`           | home goals != away goals                  |
+| `Over 2.5`     | total goals > 2.5                         |
+| `Under 2.5`    | total goals < 2.5                         |
+| `Over 1.5`     | total goals > 1.5                         |
+| `Under 3.5`    | total goals < 3.5                         |
+| `Goal`         | both teams scored (home > 0 AND away > 0) |
+| `No Goal`      | at least one team scored 0                |
+| `1 + Over 1.5` | home win AND total goals > 1.5            |
+| `2 + Over 1.5` | away win AND total goals > 1.5            |
 
 ### 4. Update database
 

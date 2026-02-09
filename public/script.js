@@ -13,6 +13,8 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
+/* global initParticles, initMobileMenu, initLangToggle, LEAGUE_NAMES_MAP */
+
 (function () {
   'use strict';
 
@@ -106,10 +108,25 @@
   };
 
   // Reveal elements — aggiunge .reveal a card, stat, pricing, ecc.
+  // Fix: if navigating via hash (e.g. /#stats), elements already in viewport
+  // get .reveal + .visible simultaneously to prevent flash.
   const revealElements = document.querySelectorAll(
     '.tip-card, .stat-card, .pricing-card, .faq-item, .telegram-card, .recent-results',
   );
-  revealElements.forEach((el) => el.classList.add('reveal'));
+
+  const hasHash = window.location.hash.length > 1;
+
+  revealElements.forEach(function (el) {
+    if (hasHash) {
+      const rect = el.getBoundingClientRect();
+      const inViewport = rect.top < window.innerHeight && rect.bottom > 0;
+      if (inViewport) {
+        el.classList.add('reveal', 'visible');
+        return;
+      }
+    }
+    el.classList.add('reveal');
+  });
 
   const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
@@ -120,7 +137,11 @@
     });
   }, observerOptions);
 
-  revealElements.forEach((el) => revealObserver.observe(el));
+  revealElements.forEach(function (el) {
+    if (!el.classList.contains('visible')) {
+      revealObserver.observe(el);
+    }
+  });
 
   // Counter triggers — attiva animateCounter al primo scroll su [data-count]
   const counterElements = document.querySelectorAll('[data-count]');
@@ -294,16 +315,11 @@
 
   let currentLeague = 'serie-a';
 
-  const LEAGUE_NAMES = {
-    all: { label: 'Tutte le Leghe', season: '2025/26' },
-    'serie-a': { label: 'Serie A', season: '2025/26' },
-    'champions-league': { label: 'Champions League', season: '2025/26' },
-    'la-liga': { label: 'La Liga', season: '2025/26' },
-    'premier-league': { label: 'Premier League', season: '2025/26' },
-    'ligue-1': { label: 'Ligue 1', season: '2025/26' },
-    bundesliga: { label: 'Bundesliga', season: '2025/26' },
-    eredivisie: { label: 'Eredivisie', season: '2025/26' },
-  };
+  // Build LEAGUE_NAMES from shared LEAGUE_NAMES_MAP (add season + 'all' entry)
+  const LEAGUE_NAMES = { all: { label: 'Tutte le Leghe', season: '2025/26' } };
+  Object.keys(LEAGUE_NAMES_MAP).forEach(function (slug) {
+    LEAGUE_NAMES[slug] = { label: LEAGUE_NAMES_MAP[slug].full, season: '2025/26' };
+  });
 
   const ALL_LEAGUE_SLUGS = [
     'serie-a',
@@ -673,19 +689,24 @@
   /**
    * Costruisce una tip card per un singolo pronostico.
    *
+   * Modalita':
+   *   - Con tip (API): usa dati reali dal database (prediction, odds, analysis, confidence)
+   *   - Senza tip (random): genera dati sample per demo/fallback
+   *
    * La visibilita' del contenuto dipende dal tier dell'utente (homepageUserTier):
    * - canAccessTier = true: tutto visibile (pronostico, quota, analisi)
    * - canAccessTier = false: card grayed out con overlay di blocco e proposta upgrade/login
    * - I tips FREE sono sempre visibili a tutti
    *
-   * @param {Object} match - Dati partita da /api/matches
-   * @param {string} match.date - Data ISO della partita
-   * @param {string} match.home - Nome squadra di casa
-   * @param {string} match.away - Nome squadra ospite
-   * @param {string} tier - Tier della card: "free", "pro", o "vip"
+   * @param {Object} match - Dati partita { date, home, away }
+   * @param {string|Object} tierOrTip - Tier string ('free','pro','vip') for random mode, or tip object from API
    * @returns {HTMLElement} Elemento .tip-card completo
    */
-  function buildTipCard(match, tier) {
+  function buildTipCard(match, tierOrTip) {
+    const isApiTip = typeof tierOrTip === 'object' && tierOrTip !== null;
+    const tier = isApiTip ? tierOrTip.tier : tierOrTip;
+    const tip = isApiTip ? tierOrTip : null;
+
     const hasAccess = canAccessTier(homepageUserTier, tier);
     const isVip = tier === 'vip';
     let cardClass = 'tip-card';
@@ -702,8 +723,7 @@
 
     // Header: badge tier + data partita
     const header = createEl('div', 'tip-card-header');
-    const badgeClass = 'tip-badge tip-badge--' + tier;
-    header.appendChild(createEl('span', badgeClass, tier.toUpperCase()));
+    header.appendChild(createEl('span', 'tip-badge tip-badge--' + tier, tier.toUpperCase()));
     header.appendChild(createEl('span', 'tip-date', formatMatchDate(match.date)));
     card.appendChild(header);
 
@@ -723,23 +743,30 @@
     card.appendChild(tipMatch);
 
     // Pronostico e quota (nascosti se non si ha accesso)
-    const prediction = createEl('div', 'tip-prediction');
+    const predictionEl = createEl('div', 'tip-prediction');
     const pick = createEl('div', 'tip-pick');
     pick.appendChild(createEl('span', 'pick-label', 'Pronostico'));
-    const pickVal = createEl('span', !hasAccess ? 'pick-value tip-value--hidden' : 'pick-value');
-    pickVal.textContent = !hasAccess ? '\u2605 \u2605 \u2605' : randomFrom(PREDICTIONS);
-    pick.appendChild(pickVal);
-    prediction.appendChild(pick);
+    const pickClass = !hasAccess ? 'pick-value tip-value--hidden' : 'pick-value';
+    let pickText;
+    if (!hasAccess) pickText = '\u2605 \u2605 \u2605';
+    else if (tip) pickText = tip.prediction || '\u2014';
+    else pickText = randomFrom(PREDICTIONS);
+    pick.appendChild(createEl('span', pickClass, pickText));
+    predictionEl.appendChild(pick);
+
     const odds = createEl('div', 'tip-odds');
     odds.appendChild(createEl('span', 'odds-label', 'Quota'));
-    const oddsVal = createEl('span', !hasAccess ? 'odds-value tip-value--hidden' : 'odds-value');
-    oddsVal.textContent = !hasAccess ? '?.??' : randomOdd();
-    odds.appendChild(oddsVal);
-    prediction.appendChild(odds);
-    card.appendChild(prediction);
+    const oddsClass = !hasAccess ? 'odds-value tip-value--hidden' : 'odds-value';
+    let oddsText;
+    if (!hasAccess) oddsText = '?.??';
+    else if (tip) oddsText = tip.odds ? parseFloat(tip.odds).toFixed(2) : '\u2014';
+    else oddsText = randomOdd();
+    odds.appendChild(createEl('span', oddsClass, oddsText));
+    predictionEl.appendChild(odds);
+    card.appendChild(predictionEl);
 
     // Barra di confidence con animazione
-    const conf = randomConfidence();
+    const conf = tip ? tip.confidence || 70 : randomConfidence();
     const confDiv = createEl('div', 'tip-confidence');
     confDiv.appendChild(createEl('span', 'confidence-label', 'Confidence'));
     const confBar = createEl('div', 'confidence-bar');
@@ -754,11 +781,12 @@
     card.appendChild(confDiv);
 
     // Analisi: visibile se ha accesso, altrimenti overlay con benefit + CTA
-    if (hasAccess) {
+    const analysisText = tip ? tip.analysis : randomFrom(ANALYSES);
+    if (hasAccess && analysisText) {
       const analysis = createEl('div', 'tip-analysis');
-      analysis.appendChild(createEl('p', null, randomFrom(ANALYSES)));
+      analysis.appendChild(createEl('p', null, analysisText));
       card.appendChild(analysis);
-    } else {
+    } else if (!hasAccess) {
       const locked = createEl('div', 'tip-analysis tip-analysis--locked');
       locked.appendChild(buildLockedOverlay(tier, homepageUserTier));
       card.appendChild(locked);
@@ -1216,7 +1244,7 @@
           home: tip.home_team,
           away: tip.away_team,
         };
-        container.appendChild(buildTipCardFromAPI(match, tip));
+        container.appendChild(buildTipCard(match, tip));
       });
 
       // Verifica quali tier sono presenti nei tips dal database
@@ -1261,96 +1289,6 @@
       // Fallback: genera tips client-side
       loadTips();
     }
-  }
-
-  /**
-   * Costruisce una tip card da dati API (pronostico reale dal database).
-   * La visibilita' dipende dal tier dell'utente (homepageUserTier).
-   * @param {Object} match - Dati partita
-   * @param {Object} tip - Dati pronostico dal database
-   * @returns {HTMLElement} Elemento .tip-card
-   */
-  function buildTipCardFromAPI(match, tip) {
-    const hasAccess = canAccessTier(homepageUserTier, tip.tier);
-    const isVip = tip.tier === 'vip';
-    let cardClass = 'tip-card';
-    if (tip.tier === 'pro') cardClass += ' tip-card--pro';
-    if (isVip) cardClass += ' tip-card--vip';
-    if (!hasAccess) cardClass += ' tip-card--locked';
-
-    const card = createEl('div', cardClass);
-    card.setAttribute('data-tier', tip.tier);
-
-    if (tip.tier === 'pro') card.appendChild(createEl('div', 'tip-card-glow'));
-    if (isVip) card.appendChild(createEl('div', 'tip-card-glow tip-card-glow--gold'));
-
-    // Header
-    const header = createEl('div', 'tip-card-header');
-    header.appendChild(
-      createEl('span', 'tip-badge tip-badge--' + tip.tier, tip.tier.toUpperCase()),
-    );
-    header.appendChild(createEl('span', 'tip-date', formatMatchDate(match.date)));
-    card.appendChild(header);
-
-    // Squadre
-    const tipMatch = createEl('div', 'tip-match');
-    const homeTeam = createEl('div', 'tip-team');
-    homeTeam.appendChild(createEl('div', 'team-logo', teamAbbr(match.home)));
-    homeTeam.appendChild(createEl('span', null, match.home));
-    tipMatch.appendChild(homeTeam);
-    const versus = createEl('div', 'tip-versus');
-    versus.appendChild(createEl('span', 'vs-text', 'VS'));
-    tipMatch.appendChild(versus);
-    const awayTeam = createEl('div', 'tip-team');
-    awayTeam.appendChild(createEl('div', 'team-logo', teamAbbr(match.away)));
-    awayTeam.appendChild(createEl('span', null, match.away));
-    tipMatch.appendChild(awayTeam);
-    card.appendChild(tipMatch);
-
-    // Pronostico e quota (nascosti se non si ha accesso)
-    const prediction = createEl('div', 'tip-prediction');
-    const pick = createEl('div', 'tip-pick');
-    pick.appendChild(createEl('span', 'pick-label', 'Pronostico'));
-    const pickClass = !hasAccess ? 'pick-value tip-value--hidden' : 'pick-value';
-    const pickText = hasAccess ? tip.prediction || '\u2014' : '\u2605 \u2605 \u2605';
-    pick.appendChild(createEl('span', pickClass, pickText));
-    prediction.appendChild(pick);
-
-    const odds = createEl('div', 'tip-odds');
-    odds.appendChild(createEl('span', 'odds-label', 'Quota'));
-    const oddsClass = !hasAccess ? 'odds-value tip-value--hidden' : 'odds-value';
-    const oddsText = hasAccess ? (tip.odds ? parseFloat(tip.odds).toFixed(2) : '\u2014') : '?.??';
-    odds.appendChild(createEl('span', oddsClass, oddsText));
-    prediction.appendChild(odds);
-    card.appendChild(prediction);
-
-    // Confidence
-    const conf = tip.confidence || 70;
-    const confDiv = createEl('div', 'tip-confidence');
-    confDiv.appendChild(createEl('span', 'confidence-label', 'Confidence'));
-    const confBar = createEl('div', 'confidence-bar');
-    const confFill = createEl(
-      'div',
-      isVip ? 'confidence-fill confidence-fill--gold' : 'confidence-fill',
-    );
-    confFill.setAttribute('data-confidence', conf);
-    confBar.appendChild(confFill);
-    confDiv.appendChild(confBar);
-    confDiv.appendChild(createEl('span', 'confidence-value', conf + '%'));
-    card.appendChild(confDiv);
-
-    // Analisi: visibile se ha accesso, overlay con benefit se bloccata
-    if (hasAccess && tip.analysis) {
-      const analysis = createEl('div', 'tip-analysis');
-      analysis.appendChild(createEl('p', null, tip.analysis));
-      card.appendChild(analysis);
-    } else if (!hasAccess) {
-      const locked = createEl('div', 'tip-analysis tip-analysis--locked');
-      locked.appendChild(buildLockedOverlay(tip.tier, homepageUserTier));
-      card.appendChild(locked);
-    }
-
-    return card;
   }
 
   // ==========================================

@@ -3957,3 +3957,680 @@ img {
   font-size: 1.1rem;
   line-height: 1;
 }
+
+/* ============================================
+   SCHEDINE (Betting Slips) Tab
+   ============================================ */
+
+/* Budget summary bar */
+.schedine-budget-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 28px;
+  margin-bottom: 24px;
+}
+
+.budget-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.budget-stat-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.budget-stat-value {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.budget-stat-value--stake {
+  color: var(--text-primary);
+}
+
+.budget-stat-value--reserve {
+  color: var(--green);
+}
+
+/* Date picker row */
+.schedine-date-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.schedine-date-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.schedine-date-nav:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(212, 168, 83, 0.05);
+}
+
+.schedine-date-label {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 120px;
+  text-align: center;
+}
+
+/* Schedine grid */
+.schedine-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+/* Individual schedina card */
+.schedina-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.schedina-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow);
+}
+
+/* Risk-level specific borders */
+.schedina-card--sicura {
+  border-color: rgba(46, 204, 113, 0.2);
+}
+
+.schedina-card--sicura .schedina-risk-badge {
+  background: rgba(46, 204, 113, 0.1);
+  color: var(--green);
+  border: 1px solid rgba(46, 204, 113, 0.2);
+}
+
+.schedina-card--equilibrata {
+  border-color: rgba(212, 168, 83, 0.2);
+}
+
+.schedina-card--equilibrata .schedina-risk-badge {
+  background: rgba(212, 168, 83, 0.1);
+  color: var(--gold);
+  border: 1px solid var(--border-gold);
+}
+
+.schedina-card--azzardo {
+  border-color: rgba(231, 76, 60, 0.2);
+}
+
+.schedina-card--azzardo .schedina-risk-badge {
+  background: rgba(231, 76, 60, 0.1);
+  color: var(--red);
+  border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+/* Schedina header */
+.schedina-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.schedina-risk-badge {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 4px;
+}
+
+.schedina-status-badge {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.schedina-status-badge--pending {
+  color: var(--gold);
+  background: rgba(212, 168, 83, 0.1);
+}
+
+.schedina-status-badge--won {
+  color: var(--green);
+  background: rgba(46, 204, 113, 0.1);
+}
+
+.schedina-status-badge--lost {
+  color: var(--red);
+  background: rgba(231, 76, 60, 0.1);
+}
+
+/* Schedina stats row (odds, stake, return) */
+.schedina-stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.schedina-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.schedina-stat-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.schedina-stat-value {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.schedina-stat-value--odds {
+  color: var(--gold);
+}
+
+.schedina-stat-value--return {
+  color: var(--green);
+}
+
+/* Confidence avg */
+.schedina-confidence {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.schedina-confidence .confidence-bar {
+  flex: 1;
+}
+
+.schedina-confidence .confidence-value {
+  min-width: 36px;
+  text-align: right;
+}
+
+/* Strategy text */
+.schedina-strategy {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  border-left: 2px solid var(--gold);
+}
+
+/* Tips list within schedina */
+.schedina-tips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.schedina-tip-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  transition: background 0.2s ease;
+}
+
+.schedina-tip-item:hover {
+  background: var(--bg-card-hover);
+}
+
+.schedina-tip-num {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gold);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(212, 168, 83, 0.1);
+}
+
+.schedina-tip-match {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedina-tip-pick {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.schedina-tip-odds {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--gold);
+  flex-shrink: 0;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Schedina expand button */
+.schedina-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  padding: 10px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  margin-top: 12px;
+}
+
+.schedina-expand-btn:hover {
+  color: var(--gold);
+}
+
+.schedina-expand-btn .chevron {
+  display: inline-block;
+  transition: transform 0.3s ease;
+  font-size: 0.7rem;
+}
+
+.schedina-expand-btn.expanded .chevron {
+  transform: rotate(180deg);
+}
+
+.schedina-details {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+}
+
+.schedina-details.open {
+  max-height: 800px;
+}
+
+.schedina-details-inner {
+  padding: 16px 0 4px;
+}
+
+/* Empty + upgrade states */
+.schedine-empty,
+.schedine-upgrade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.schedine-empty svg,
+.schedine-upgrade svg {
+  opacity: 0.4;
+}
+
+.schedine-empty p,
+.schedine-upgrade p {
+  font-size: 0.95rem;
+  max-width: 400px;
+}
+
+.schedine-empty-sub {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.schedine-upgrade h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ============================================
+   RISK PROFILE — Preferences Inputs
+   ============================================ */
+
+.pref-field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.pref-field-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.pref-select {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+  min-width: 140px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%238a8a9a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.pref-select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.1);
+}
+
+.pref-input-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pref-input {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s ease;
+  width: 100px;
+  text-align: right;
+}
+
+.pref-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.1);
+}
+
+.pref-input-suffix {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* ============================================
+   STAKE & NOTES — Tip Card Expansion
+   ============================================ */
+
+.bet-tracking-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.bet-tracking-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bet-tracking-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  min-width: 50px;
+}
+
+.bet-stake-input {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  outline: none;
+  width: 80px;
+  text-align: right;
+  transition: border-color 0.2s ease;
+}
+
+.bet-stake-input:focus {
+  border-color: var(--gold);
+}
+
+.bet-notes-input {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  padding: 8px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  outline: none;
+  resize: vertical;
+  min-height: 36px;
+  max-height: 80px;
+  width: 100%;
+  transition: border-color 0.2s ease;
+}
+
+.bet-notes-input:focus {
+  border-color: var(--gold);
+}
+
+.bet-save-btn {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  background: rgba(212, 168, 83, 0.1);
+  border: 1px solid rgba(212, 168, 83, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--gold);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.bet-save-btn:hover {
+  background: rgba(212, 168, 83, 0.2);
+}
+
+/* P&L summary badge in header */
+.dash-pnl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+}
+
+.dash-pnl--positive {
+  color: var(--green);
+  border-color: rgba(46, 204, 113, 0.3);
+  background: rgba(46, 204, 113, 0.05);
+}
+
+.dash-pnl--negative {
+  color: var(--red);
+  border-color: rgba(231, 76, 60, 0.3);
+  background: rgba(231, 76, 60, 0.05);
+}
+
+/* ============================================
+   ACTIVITY STATS — Dashboard Header
+   ============================================ */
+
+.dash-activity-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.activity-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+
+.activity-stat-icon {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.activity-stat-value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+/* ============================================
+   Responsive — New Features
+   ============================================ */
+
+@media (max-width: 768px) {
+  .schedine-budget-bar {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px 20px;
+  }
+
+  .schedine-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .schedina-stats {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .schedina-stat {
+    min-width: calc(33% - 8px);
+  }
+
+  .pref-field-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .pref-select,
+  .pref-input {
+    width: 100%;
+  }
+
+  .pref-input-group {
+    width: 100%;
+  }
+
+  .pref-input-group .pref-input {
+    flex: 1;
+  }
+
+  .dash-activity-stats {
+    gap: 6px;
+  }
+
+  .activity-stat {
+    padding: 3px 8px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .schedine-date-row {
+    gap: 12px;
+  }
+
+  .budget-stat-value {
+    font-size: 1.1rem;
+  }
+}

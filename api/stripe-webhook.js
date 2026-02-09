@@ -271,7 +271,13 @@ async function manageTelegramAccess(userId, action) {
     }
   } catch (err) {
     // Non-fatal: non bloccare il webhook per errori Telegram
-    console.error('Telegram access management error:', err.message);
+    // [CRITICAL] prefix for monitoring/alerting — failed invites need manual retry
+    console.error(
+      '[CRITICAL] Telegram access management failed:',
+      'user=' + userId,
+      'action=' + action,
+      'error=' + err.message,
+    );
   }
 }
 

@@ -83,12 +83,10 @@ describe('POST /api/telegram', () => {
       select: jest.fn().mockReturnThis(),
       update: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      single: jest
-        .fn()
-        .mockResolvedValue({
-          data: { user_id: 'u1', telegram_link_token: 'valid_token', telegram_user_id: null },
-          error: null,
-        }),
+      single: jest.fn().mockResolvedValue({
+        data: { user_id: 'u1', telegram_link_token: 'valid_token', telegram_user_id: null },
+        error: null,
+      }),
       then: jest.fn((r) => r({ data: null, error: null })),
     };
     supabase.from.mockReturnValue(mockChain);
@@ -128,12 +126,10 @@ describe('POST /api/telegram', () => {
     const mockChain = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      single: jest
-        .fn()
-        .mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116' },
-        }),
+      single: jest.fn().mockResolvedValue({
+        data: null,
+        error: { code: 'PGRST116' },
+      }),
     };
     supabase.from.mockReturnValue(mockChain);
 
@@ -193,16 +189,14 @@ describe('POST /api/telegram', () => {
       select: jest.fn().mockReturnThis(),
       update: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      single: jest
-        .fn()
-        .mockResolvedValue({
-          data: {
-            user_id: 'u1',
-            telegram_link_token: 'valid_token',
-            telegram_user_id: '123456',
-          },
-          error: null,
-        }),
+      single: jest.fn().mockResolvedValue({
+        data: {
+          user_id: 'u1',
+          telegram_link_token: 'valid_token',
+          telegram_user_id: '123456',
+        },
+        error: null,
+      }),
       then: jest.fn((r) => r({ data: null, error: null })),
     };
     supabase.from.mockReturnValue(mockChain);
@@ -306,9 +300,7 @@ describe('POST /api/telegram', () => {
       eq: jest.fn().mockResolvedValue({ data: null, error: null }),
     };
 
-    supabase.from
-      .mockReturnValueOnce(mockSelectChain)
-      .mockReturnValueOnce(mockUpdateChain);
+    supabase.from.mockReturnValueOnce(mockSelectChain).mockReturnValueOnce(mockUpdateChain);
 
     const req = createMockReq({
       method: 'POST',
@@ -391,9 +383,7 @@ describe('POST /api/telegram', () => {
       eq: jest.fn().mockResolvedValue({ data: null, error: { message: 'Update failed' } }),
     };
 
-    supabase.from
-      .mockReturnValueOnce(mockSelectChain)
-      .mockReturnValueOnce(mockUpdateChain);
+    supabase.from.mockReturnValueOnce(mockSelectChain).mockReturnValueOnce(mockUpdateChain);
 
     const req = createMockReq({
       method: 'POST',

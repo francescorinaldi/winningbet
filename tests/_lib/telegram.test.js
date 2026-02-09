@@ -281,8 +281,7 @@ describe('telegram module', () => {
   describe('createPrivateInviteLink', () => {
     it('should call createChatInviteLink with member_limit 1', async () => {
       global.fetch = jest.fn().mockResolvedValue({
-        json: () =>
-          Promise.resolve({ ok: true, result: { invite_link: 'https://t.me/+test123' } }),
+        json: () => Promise.resolve({ ok: true, result: { invite_link: 'https://t.me/+test123' } }),
       });
 
       await telegram.createPrivateInviteLink('Test User');
@@ -303,8 +302,7 @@ describe('telegram module', () => {
 
     it('should return invite_link from response', async () => {
       global.fetch = jest.fn().mockResolvedValue({
-        json: () =>
-          Promise.resolve({ ok: true, result: { invite_link: 'https://t.me/+test456' } }),
+        json: () => Promise.resolve({ ok: true, result: { invite_link: 'https://t.me/+test456' } }),
       });
 
       const link = await telegram.createPrivateInviteLink('Test User');

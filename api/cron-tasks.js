@@ -18,6 +18,7 @@ const footballData = require('./_lib/football-data');
 const telegram = require('./_lib/telegram');
 const { sendEmail, buildDailyDigest } = require('./_lib/email');
 const { verifyCronSecret, hasAccess } = require('./_lib/auth-middleware');
+const { evaluatePrediction, buildActualResult } = require('./_lib/prediction-utils');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -92,7 +93,10 @@ async function handleSettle(_req, res) {
         resultsMap.set(String(r.id), r);
       });
 
-      // Confronta e chiudi ogni tip di questa lega
+      // Confronta e prepara aggiornamenti per ogni tip di questa lega
+      const tipUpdates = [];
+      const outcomeUpserts = [];
+
       for (const tip of tips) {
         const result = resultsMap.get(tip.match_id);
 
@@ -105,27 +109,8 @@ async function handleSettle(_req, res) {
         const score = result.goalsHome + '-' + result.goalsAway;
         const status = evaluatePrediction(tip.prediction, result, totalGoals);
 
-        const { error: updateError } = await supabase
-          .from('tips')
-          .update({ status: status, result: score })
-          .eq('id', tip.id);
-
-        if (updateError) {
-          console.error(`Failed to update tip ${tip.id}:`, updateError.message);
-          continue;
-        }
-
-        const { error: upsertError } = await supabase.from('tip_outcomes').upsert(
-          {
-            tip_id: tip.id,
-            actual_result: actualResult,
-          },
-          { onConflict: 'tip_id' },
-        );
-
-        if (upsertError) {
-          console.error(`Failed to upsert outcome for tip ${tip.id}:`, upsertError.message);
-        }
+        tipUpdates.push({ id: tip.id, status: status, result: score });
+        outcomeUpserts.push({ tip_id: tip.id, actual_result: actualResult });
 
         settledResults.push({
           match: tip.home_team + ' vs ' + tip.away_team,
@@ -134,6 +119,37 @@ async function handleSettle(_req, res) {
           actual: actualResult,
           status: status,
         });
+      }
+
+      // Batch tip updates grouped by (status, result) — avoids N+1
+      const updateGroups = {};
+      tipUpdates.forEach(function (u) {
+        const key = u.status + '|' + u.result;
+        if (!updateGroups[key]) updateGroups[key] = [];
+        updateGroups[key].push(u.id);
+      });
+
+      for (const [key, ids] of Object.entries(updateGroups)) {
+        const [status, result] = key.split('|');
+        const { error: updateError } = await supabase
+          .from('tips')
+          .update({ status: status, result: result })
+          .in('id', ids);
+
+        if (updateError) {
+          console.error('Failed to batch update tips:', updateError.message);
+        }
+      }
+
+      // Bulk upsert tip outcomes in a single call
+      if (outcomeUpserts.length > 0) {
+        const { error: upsertError } = await supabase
+          .from('tip_outcomes')
+          .upsert(outcomeUpserts, { onConflict: 'tip_id' });
+
+        if (upsertError) {
+          console.error('Failed to batch upsert outcomes:', upsertError.message);
+        }
       }
     }
 
@@ -162,35 +178,27 @@ async function handleSettle(_req, res) {
  * Resta pending se ci sono ancora tips non chiusi.
  */
 async function settleSchedule() {
-  let settled = 0;
+  // Single join query: schedine → schedina_tips → tips (avoids N+1)
+  const { data: schedine, error: schedineError } = await supabase
+    .from('schedine')
+    .select('id, schedina_tips(tip_id, tips(status))')
+    .eq('status', 'pending');
 
-  // Get all pending schedine
-  const schedineResult = await supabase.from('schedine').select('id').eq('status', 'pending');
-
-  if (schedineResult.error || !schedineResult.data || schedineResult.data.length === 0) {
+  if (schedineError || !schedine || schedine.length === 0) {
     return 0;
   }
 
-  for (const schedina of schedineResult.data) {
-    // Get all tip statuses for this schedina
-    const linksResult = await supabase
-      .from('schedina_tips')
-      .select('tip_id')
-      .eq('schedina_id', schedina.id);
+  // Determine new status for each schedina in memory
+  const statusGroups = {}; // { newStatus: [schedina_ids] }
 
-    if (linksResult.error || !linksResult.data || linksResult.data.length === 0) continue;
+  for (const schedina of schedine) {
+    const tipLinks = schedina.schedina_tips || [];
+    if (tipLinks.length === 0) continue;
 
-    const tipIds = linksResult.data.map(function (l) {
-      return l.tip_id;
+    const statuses = tipLinks.map(function (link) {
+      return link.tips ? link.tips.status : 'pending';
     });
 
-    const tipsResult = await supabase.from('tips').select('status').in('id', tipIds);
-
-    if (tipsResult.error || !tipsResult.data) continue;
-
-    const statuses = tipsResult.data.map(function (t) {
-      return t.status;
-    });
     const hasPending = statuses.indexOf('pending') !== -1;
     const hasLost = statuses.indexOf('lost') !== -1;
     const allWon = statuses.every(function (s) {
@@ -217,12 +225,24 @@ async function settleSchedule() {
     }
 
     if (newStatus) {
-      const updateResult = await supabase
-        .from('schedine')
-        .update({ status: newStatus })
-        .eq('id', schedina.id);
+      if (!statusGroups[newStatus]) statusGroups[newStatus] = [];
+      statusGroups[newStatus].push(schedina.id);
+    }
+  }
 
-      if (!updateResult.error) settled++;
+  // Batch update schedine grouped by new status
+  let settled = 0;
+
+  for (const [status, ids] of Object.entries(statusGroups)) {
+    const { error: updateError } = await supabase
+      .from('schedine')
+      .update({ status: status })
+      .in('id', ids);
+
+    if (!updateError) {
+      settled += ids.length;
+    } else {
+      console.error('Failed to batch update schedine to ' + status + ':', updateError.message);
     }
   }
 
@@ -292,17 +312,28 @@ async function sendEmailDigest(tips) {
   const userIds = subscribers.map(function (s) {
     return s.user_id;
   });
-  const { data: profiles } = await supabase
+  const { data: profiles, error: profilesError } = await supabase
     .from('profiles')
     .select('user_id, tier')
     .in('user_id', userIds);
+
+  if (profilesError) {
+    console.error('[sendEmailDigest] profiles query error:', profilesError.message);
+  }
 
   const profileMap = new Map();
   (profiles || []).forEach(function (p) {
     profileMap.set(p.user_id, p);
   });
 
-  const { data: authUsers } = await supabase.auth.admin.listUsers();
+  const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers({
+    perPage: 1000,
+  });
+
+  if (authError) {
+    console.error('[sendEmailDigest] listUsers error:', authError.message);
+    return { sent: 0, failed: 0 };
+  }
 
   const emailMap = new Map();
   if (authUsers && authUsers.users) {
@@ -311,9 +342,8 @@ async function sendEmailDigest(tips) {
     });
   }
 
-  let sent = 0;
-  let failed = 0;
-
+  // Build email tasks (filter out users without email or tips)
+  const emailTasks = [];
   for (const sub of subscribers) {
     const email = emailMap.get(sub.user_id);
     const userProfile = profileMap.get(sub.user_id);
@@ -328,83 +358,45 @@ async function sendEmailDigest(tips) {
     if (accessibleTips.length === 0) continue;
 
     const digest = buildDailyDigest(accessibleTips);
+    emailTasks.push({ email, digest });
+  }
 
-    try {
-      const success = await sendEmail({
-        to: email,
-        subject: digest.subject,
-        html: digest.html,
-        text: digest.text,
-      });
+  // Send in parallel batches of 10
+  let sent = 0;
+  let failed = 0;
+  const BATCH_SIZE = 10;
 
-      if (success) sent++;
-      else failed++;
-    } catch (_err) {
-      failed++;
-    }
+  for (let i = 0; i < emailTasks.length; i += BATCH_SIZE) {
+    const batch = emailTasks.slice(i, i + BATCH_SIZE);
+    const results = await Promise.allSettled(
+      batch.map(function (task) {
+        return sendEmail({
+          to: task.email,
+          subject: task.digest.subject,
+          html: task.digest.html,
+          text: task.digest.text,
+        });
+      }),
+    );
+
+    results.forEach(function (result) {
+      if (result.status === 'fulfilled' && result.value) {
+        sent++;
+      } else {
+        if (result.status === 'rejected') {
+          console.warn('[sendEmailDigest] email failed:', result.reason.message);
+        }
+        failed++;
+      }
+    });
   }
 
   return { sent: sent, failed: failed };
 }
 
-function buildActualResult(result) {
-  const score = result.goalsHome + '-' + result.goalsAway;
-  const totalGoals = result.goalsHome + result.goalsAway;
-  const parts = [score];
-
-  if (result.goalsHome > result.goalsAway) parts.push('1');
-  else if (result.goalsHome === result.goalsAway) parts.push('X');
-  else parts.push('2');
-
-  parts.push(totalGoals > 2 ? 'O2.5' : 'U2.5');
-  parts.push(totalGoals > 1 ? 'O1.5' : 'U1.5');
-  parts.push(result.goalsHome > 0 && result.goalsAway > 0 ? 'Goal' : 'NoGoal');
-
-  return parts.join(', ');
-}
-
-function evaluatePrediction(prediction, result, totalGoals) {
-  const homeWin = result.goalsHome > result.goalsAway;
-  const draw = result.goalsHome === result.goalsAway;
-  const awayWin = result.goalsAway > result.goalsHome;
-  const bothScored = result.goalsHome > 0 && result.goalsAway > 0;
-
-  switch (prediction) {
-    case '1':
-      return homeWin ? 'won' : 'lost';
-    case 'X':
-      return draw ? 'won' : 'lost';
-    case '2':
-      return awayWin ? 'won' : 'lost';
-    case '1X':
-      return homeWin || draw ? 'won' : 'lost';
-    case 'X2':
-      return draw || awayWin ? 'won' : 'lost';
-    case '12':
-      return homeWin || awayWin ? 'won' : 'lost';
-    case 'Over 2.5':
-      return totalGoals > 2 ? 'won' : 'lost';
-    case 'Under 2.5':
-      return totalGoals < 3 ? 'won' : 'lost';
-    case 'Over 1.5':
-      return totalGoals > 1 ? 'won' : 'lost';
-    case 'Under 3.5':
-      return totalGoals < 4 ? 'won' : 'lost';
-    case 'Goal':
-      return bothScored ? 'won' : 'lost';
-    case 'No Goal':
-      return !bothScored ? 'won' : 'lost';
-    case '1 + Over 1.5':
-      return homeWin && totalGoals > 1 ? 'won' : 'lost';
-    case '2 + Over 1.5':
-      return awayWin && totalGoals > 1 ? 'won' : 'lost';
-    default:
-      return 'void';
-  }
-}
-
-// Named exports for direct require by generate-tips.js and fixtures.js
+// Named exports for direct require by generate-tips.js
 module.exports.handleSettle = handleSettle;
 module.exports.handleSend = handleSend;
+// Re-export for backward compatibility (generate-tips.js uses callHandler on this module)
 module.exports.evaluatePrediction = evaluatePrediction;
 module.exports.buildActualResult = buildActualResult;

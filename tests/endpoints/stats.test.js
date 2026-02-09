@@ -20,10 +20,8 @@ jest.mock('../../api/_lib/leagues', () => ({
 }));
 
 const { supabase } = require('../../api/_lib/supabase');
-const { getStandings: getStandingsApiFootball } =
-  require('../../api/_lib/api-football');
-const { getStandings: getStandingsFootballData } =
-  require('../../api/_lib/football-data');
+const { getStandings: getStandingsApiFootball } = require('../../api/_lib/api-football');
+const { getStandings: getStandingsFootballData } = require('../../api/_lib/football-data');
 const cache = require('../../api/_lib/cache');
 const { resolveLeagueSlug } = require('../../api/_lib/leagues');
 

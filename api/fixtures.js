@@ -18,7 +18,7 @@ const apiFootball = require('./_lib/api-football');
 const footballData = require('./_lib/football-data');
 const { resolveLeagueSlug } = require('./_lib/leagues');
 const { supabase } = require('./_lib/supabase');
-const { evaluatePrediction, buildActualResult } = require('./cron-tasks');
+const { evaluatePrediction, buildActualResult } = require('./_lib/prediction-utils');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -89,7 +89,9 @@ async function handleResults(req, res) {
     const results = await apiFootball.getRecentResults(leagueSlug, 10);
     cache.set(cacheKey, results, CACHE_TTL);
     // Fire-and-forget: settle pending tips using fresh results
-    settlePendingTips(results, leagueSlug);
+    settlePendingTips(results, leagueSlug).catch(function (err) {
+      console.error('[settle] fire-and-forget error:', err.message);
+    });
     res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=1800');
     return res.status(200).json(results);
   } catch (primaryErr) {
@@ -98,7 +100,9 @@ async function handleResults(req, res) {
       const results = await footballData.getRecentResults(leagueSlug, 10);
       cache.set(cacheKey, results, CACHE_TTL);
       // Fire-and-forget: settle pending tips using fresh results
-      settlePendingTips(results, leagueSlug);
+      settlePendingTips(results, leagueSlug).catch(function (err) {
+        console.error('[settle] fire-and-forget error:', err.message);
+      });
       res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=1800');
       return res.status(200).json(results);
     } catch (fallbackErr) {
@@ -164,7 +168,9 @@ async function settlePendingTips(results, leagueSlug) {
       resultsMap.set(String(r.id), r);
     });
 
-    let settled = 0;
+    // Collect all updates first (avoid N+1 individual queries)
+    const tipUpdates = [];
+    const outcomeUpserts = [];
 
     for (const tip of pendingTips) {
       const result = resultsMap.get(tip.match_id);
@@ -175,28 +181,37 @@ async function settlePendingTips(results, leagueSlug) {
       const score = result.goalsHome + '-' + result.goalsAway;
       const status = evaluatePrediction(tip.prediction, result, totalGoals);
 
-      // Idempotent: WHERE status='pending' ensures no double-update
-      const { error: updateError } = await supabase
+      tipUpdates.push({ id: tip.id, status: status, result: score });
+      outcomeUpserts.push({ tip_id: tip.id, actual_result: actualResult });
+    }
+
+    if (tipUpdates.length === 0) return;
+
+    // Batch tip updates grouped by (status, result) — idempotent via status='pending' guard
+    const updateGroups = {};
+    tipUpdates.forEach(function (u) {
+      const key = u.status + '|' + u.result;
+      if (!updateGroups[key]) updateGroups[key] = [];
+      updateGroups[key].push(u.id);
+    });
+
+    const batchOps = Object.entries(updateGroups).map(function (entry) {
+      const parts = entry[0].split('|');
+      return supabase
         .from('tips')
-        .update({ status: status, result: score })
-        .eq('id', tip.id)
+        .update({ status: parts[0], result: parts[1] })
+        .in('id', entry[1])
         .eq('status', 'pending');
+    });
 
-      if (updateError) {
-        console.error(`[settle] Failed to update tip ${tip.id}:`, updateError.message);
-        continue;
-      }
-
-      await supabase
-        .from('tip_outcomes')
-        .upsert({ tip_id: tip.id, actual_result: actualResult }, { onConflict: 'tip_id' });
-
-      settled++;
+    // Bulk upsert outcomes in single call
+    if (outcomeUpserts.length > 0) {
+      batchOps.push(supabase.from('tip_outcomes').upsert(outcomeUpserts, { onConflict: 'tip_id' }));
     }
 
-    if (settled > 0) {
-      console.log(`[settle] Settled ${settled} tips for ${leagueSlug} opportunistically`);
-    }
+    await Promise.allSettled(batchOps);
+
+    console.log(`[settle] Settled ${tipUpdates.length} tips for ${leagueSlug} opportunistically`);
   } catch (err) {
     // Silent: settlement errors must never affect the main response
     console.error('[settle] Opportunistic settlement error:', err.message);

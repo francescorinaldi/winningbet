@@ -111,9 +111,7 @@ describe('POST /api/stripe-webhook', () => {
       eq: jest.fn().mockResolvedValue({ data: null, error: null }),
     };
 
-    supabase.from
-      .mockReturnValueOnce(mockUpsertChain)
-      .mockReturnValueOnce(mockUpdateChain);
+    supabase.from.mockReturnValueOnce(mockUpsertChain).mockReturnValueOnce(mockUpdateChain);
 
     const req = createStreamReq(JSON.stringify(event));
     const res = createMockRes();
@@ -333,10 +331,7 @@ describe('POST /api/stripe-webhook', () => {
 
     await handler(req, res);
 
-    expect(consoleLogSpy).toHaveBeenCalledWith(
-      'Unhandled webhook event:',
-      'unknown.event.type',
-    );
+    expect(consoleLogSpy).toHaveBeenCalledWith('Unhandled webhook event:', 'unknown.event.type');
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ received: true });
 
@@ -447,12 +442,10 @@ describe('POST /api/stripe-webhook', () => {
     const mockProfileChain = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      single: jest
-        .fn()
-        .mockResolvedValue({
-          data: { telegram_user_id: 'tg_123', tier: 'free' },
-          error: null,
-        }),
+      single: jest.fn().mockResolvedValue({
+        data: { telegram_user_id: 'tg_123', tier: 'free' },
+        error: null,
+      }),
     };
 
     const mockSelectChain = {
@@ -479,10 +472,7 @@ describe('POST /api/stripe-webhook', () => {
     await handler(req, res);
 
     expect(removeFromPrivateChannel).toHaveBeenCalledWith('tg_123');
-    expect(sendDirectMessage).toHaveBeenCalledWith(
-      'tg_123',
-      expect.stringContaining("e' scaduto"),
-    );
+    expect(sendDirectMessage).toHaveBeenCalledWith('tg_123', expect.stringContaining("e' scaduto"));
     expect(res.status).toHaveBeenCalledWith(200);
   });
 

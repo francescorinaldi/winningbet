@@ -1,3 +1,5 @@
+/* global initMobileMenu, initParticles, initLangToggle */
+
 /**
  * WinningBet — Auth Page Logic
  *

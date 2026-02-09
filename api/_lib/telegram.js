@@ -10,6 +10,8 @@
  *   TELEGRAM_PRIVATE_CHANNEL_ID — Chat ID canale privato (tips pro/vip)
  */
 
+const { LEAGUES } = require('./leagues');
+
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const PUBLIC_CHANNEL = process.env.TELEGRAM_PUBLIC_CHANNEL_ID;
 const PRIVATE_CHANNEL = process.env.TELEGRAM_PRIVATE_CHANNEL_ID;
@@ -71,15 +73,11 @@ const LEAGUE_FLAGS = {
   eredivisie: '\uD83C\uDDF3\uD83C\uDDF1',
 };
 
-const LEAGUE_NAMES = {
-  'serie-a': 'SERIE A',
-  'champions-league': 'CHAMPIONS LEAGUE',
-  'la-liga': 'LA LIGA',
-  'premier-league': 'PREMIER LEAGUE',
-  'ligue-1': 'LIGUE 1',
-  bundesliga: 'BUNDESLIGA',
-  eredivisie: 'EREDIVISIE',
-};
+// Derived from centralized leagues config (uppercase for Telegram formatting)
+const LEAGUE_NAMES = {};
+for (const slug of Object.keys(LEAGUES)) {
+  LEAGUE_NAMES[slug] = LEAGUES[slug].name.toUpperCase();
+}
 
 /**
  * Formatta la data odierna in italiano.

@@ -48,48 +48,30 @@ module.exports = async function handler(req, res) {
 
 // ─── Cron Handler (GET) ─────────────────────────────────────────────────────
 
-function callHandler(handler, method, query) {
-  return new Promise(function (resolve, reject) {
-    const fakeReq = {
-      method: method,
-      headers: { authorization: 'Bearer ' + process.env.CRON_SECRET },
-      query: query || {},
-      body: {},
-    };
-
-    let statusCode = 200;
-    const fakeRes = {
-      status: function (code) {
-        statusCode = code;
-        return fakeRes;
-      },
-      json: function (data) {
-        if (statusCode >= 200 && statusCode < 300) {
-          resolve(data);
-        } else {
-          reject(new Error(JSON.stringify(data)));
-        }
-      },
-    };
-
-    Promise.resolve(handler(fakeReq, fakeRes)).catch(reject);
-  });
-}
-
 async function handleCron(req, res) {
   const { authorized, error: cronError } = verifyCronSecret(req);
   if (!authorized) {
     return res.status(401).json({ error: cronError });
   }
 
-  const cronTasks = require('./cron-tasks');
+  const { handleSettle, handleSend } = require('./cron-tasks');
 
   const results = { settle: null, generate: [], send: null };
 
   try {
-    // Step 1 — Settle
+    // Step 1 — Settle (call handler function directly, no fake req/res)
     try {
-      results.settle = await callHandler(cronTasks, 'POST', { task: 'settle' });
+      const settleResult = { data: null };
+      const settleRes = {
+        status: function () {
+          return settleRes;
+        },
+        json: function (data) {
+          settleResult.data = data;
+        },
+      };
+      await handleSettle(req, settleRes);
+      results.settle = settleResult.data;
     } catch (err) {
       console.error('Cron daily — settle error:', err.message);
       results.settle = { error: err.message };
@@ -106,9 +88,19 @@ async function handleCron(req, res) {
       }
     }
 
-    // Step 3 — Send
+    // Step 3 — Send (call handler function directly)
     try {
-      results.send = await callHandler(cronTasks, 'POST', { task: 'send' });
+      const sendResult = { data: null };
+      const sendRes = {
+        status: function () {
+          return sendRes;
+        },
+        json: function (data) {
+          sendResult.data = data;
+        },
+      };
+      await handleSend(req, sendRes);
+      results.send = sendResult.data;
     } catch (err) {
       console.error('Cron daily — send error:', err.message);
       results.send = { error: err.message };
@@ -142,7 +134,8 @@ async function getAccuracyContext(leagueSlug) {
     }
 
     return formatAccuracyData(data, leagueSlug);
-  } catch (_err) {
+  } catch (err) {
+    console.warn('[getAccuracyContext] RPC failed, using fallback:', err.message);
     return await getAccuracyContextFallback(leagueSlug);
   }
 }
@@ -180,7 +173,8 @@ async function getAccuracyContextFallback(leagueSlug) {
       })),
       leagueSlug,
     );
-  } catch (_err) {
+  } catch (err) {
+    console.warn('[getAccuracyContextFallback]', err.message);
     return '';
   }
 }
