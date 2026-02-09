@@ -17,130 +17,9 @@
   'use strict';
 
   // ==========================================
-  // PARTICLE SYSTEM
+  // PARTICLE SYSTEM (delegated to shared.js)
   // ==========================================
-  // Sfondo animato con particelle fluttuanti e linee
-  // di connessione tra particelle vicine. Renderizzato
-  // su un <canvas> fixed (id="particles") che copre
-  // l'intera viewport. Il numero di particelle si adatta
-  // alla larghezza dello schermo (max 80).
-
-  const canvas = document.getElementById('particles');
-  const ctx = canvas.getContext('2d');
-  let particles = [];
-  let animationId;
-
-  /**
-   * Ridimensiona il canvas alla dimensione della viewport.
-   * Chiamata all'init e su window resize.
-   */
-  function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-
-  /**
-   * Singola particella del sistema.
-   * Ogni particella ha posizione, velocita', dimensione e opacita'
-   * casuali. Il 30% delle particelle e' color gold, il resto bianco.
-   */
-  class Particle {
-    constructor() {
-      this.reset();
-    }
-
-    /** Inizializza/resetta le proprieta' con valori casuali. */
-    reset() {
-      this.x = Math.random() * canvas.width;
-      this.y = Math.random() * canvas.height;
-      this.size = Math.random() * 1.5 + 0.5;
-      this.speedX = (Math.random() - 0.5) * 0.3;
-      this.speedY = (Math.random() - 0.5) * 0.3;
-      this.opacity = Math.random() * 0.4 + 0.1;
-      this.gold = Math.random() > 0.7;
-    }
-
-    /** Aggiorna la posizione. Inverte la direzione ai bordi del canvas. */
-    update() {
-      this.x += this.speedX;
-      this.y += this.speedY;
-
-      if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-      if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-    }
-
-    /** Disegna la particella come cerchio sul canvas context. */
-    draw() {
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-      if (this.gold) {
-        ctx.fillStyle = `rgba(212, 168, 83, ${this.opacity})`;
-      } else {
-        ctx.fillStyle = `rgba(240, 240, 245, ${this.opacity * 0.5})`;
-      }
-      ctx.fill();
-    }
-  }
-
-  /**
-   * Crea l'array di particelle iniziale.
-   * Il conteggio scala con la larghezza della finestra (1 ogni 15px, max 80).
-   */
-  function initParticles() {
-    resizeCanvas();
-    const count = Math.min(80, Math.floor(window.innerWidth / 15));
-    particles = [];
-    for (let i = 0; i < count; i++) {
-      particles.push(new Particle());
-    }
-  }
-
-  /**
-   * Disegna linee semi-trasparenti tra coppie di particelle
-   * distanti meno di 120px. L'opacita' della linea decresce
-   * con la distanza (effetto rete/constellation).
-   */
-  function drawConnections() {
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < 120) {
-          const opacity = (1 - dist / 120) * 0.08;
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = `rgba(212, 168, 83, ${opacity})`;
-          ctx.lineWidth = 0.5;
-          ctx.stroke();
-        }
-      }
-    }
-  }
-
-  /**
-   * Loop principale di animazione. Pulisce il canvas,
-   * aggiorna e disegna ogni particella, poi disegna le connessioni.
-   * Usa requestAnimationFrame per ~60fps.
-   */
-  function animateParticles() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach((p) => {
-      p.update();
-      p.draw();
-    });
-    drawConnections();
-    animationId = requestAnimationFrame(animateParticles);
-  }
-
-  window.addEventListener('resize', () => {
-    resizeCanvas();
-  });
-
-  initParticles();
-  animateParticles();
+  initParticles({ maxParticles: 80, densityDivisor: 15, connections: true });
 
   // ==========================================
   // NAVBAR SCROLL EFFECT
@@ -166,29 +45,9 @@
   window.addEventListener('scroll', handleNavScroll, { passive: true });
 
   // ==========================================
-  // MOBILE MENU
+  // MOBILE MENU (delegated to shared.js)
   // ==========================================
-  // Toggle del menu hamburger su mobile. Quando aperto,
-  // blocca lo scroll del body (overflow: hidden) e mostra
-  // un overlay fullscreen con i link di navigazione.
-
-  const hamburger = document.getElementById('hamburger');
-  const navLinks = document.getElementById('navLinks');
-
-  hamburger.addEventListener('click', () => {
-    hamburger.classList.toggle('active');
-    navLinks.classList.toggle('open');
-    document.body.style.overflow = navLinks.classList.contains('open') ? 'hidden' : '';
-  });
-
-  // Chiude il menu quando si clicca un link
-  navLinks.querySelectorAll('a').forEach((link) => {
-    link.addEventListener('click', () => {
-      hamburger.classList.remove('active');
-      navLinks.classList.remove('open');
-      document.body.style.overflow = '';
-    });
-  });
+  initMobileMenu();
 
   // ==========================================
   // COUNTER ANIMATION
@@ -1526,40 +1385,7 @@
     });
   }
 
-  // ==========================================
-  // LANGUAGE TOGGLE
-  // ==========================================
-  // Toggles between IT and EN. Applies translations via i18n.js.
-
-  function initLangToggle() {
-    const btn = document.getElementById('langToggle');
-    if (!btn) return;
-
-    const langs = [
-      { code: 'IT', flag: '\uD83C\uDDEE\uD83C\uDDF9' },
-      { code: 'EN', flag: '\uD83C\uDDEC\uD83C\uDDE7' },
-    ];
-    let current = localStorage.getItem('lang') === 'EN' ? 1 : 0;
-
-    function render() {
-      const lang = langs[current];
-      btn.querySelector('.flag-emoji').textContent = lang.flag;
-      btn.querySelector('.lang-label').textContent = lang.code;
-      document.documentElement.setAttribute('lang', lang.code.toLowerCase());
-      // Apply translations to all data-i18n elements
-      if (typeof window.applyTranslations === 'function') {
-        window.applyTranslations();
-      }
-    }
-
-    render();
-
-    btn.addEventListener('click', function () {
-      current = current === 0 ? 1 : 0;
-      localStorage.setItem('lang', langs[current].code);
-      render();
-    });
-  }
+  // Language toggle delegated to shared.js (initLangToggle)
 
   // Avvia il caricamento dati al ready della pagina
   initLeagueSelector();
