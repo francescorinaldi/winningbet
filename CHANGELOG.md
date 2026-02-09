@@ -4,6 +4,17 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added — Comprehensive Jest Test Suite (350 tests)
+
+- **Jest test framework** — Added `jest` (v30.2.0) with `jest.config.js`, `tests/setup.js` (env vars + console suppression), `tests/__helpers__/mock-req-res.js` (Vercel req/res mock factory)
+- **8 library unit test files** — `leagues.test.js`, `cache.test.js`, `auth-middleware.test.js`, `api-football.test.js`, `football-data.test.js`, `prediction-engine.test.js`, `email.test.js`, `telegram.test.js`
+- **13 endpoint integration test files** — `tips.test.js`, `stats.test.js`, `fixtures.test.js`, `odds.test.js`, `match-insights.test.js`, `billing.test.js`, `stripe-webhook.test.js`, `telegram.test.js`, `cron-tasks.test.js`, `user-bets.test.js`, `user-settings.test.js`, `generate-tips.test.js`, `schedina.test.js`
+- **1 CLI script test** — `fetch-league-data.test.js`
+- **npm scripts** — `test`, `test:watch`, `test:coverage`
+- **ESLint config** — Added Jest globals block for `tests/**/*.js`
+- **Source testability exports** — `prediction-engine.js` exports `assignTier`, `balanceTiers`, `computeDerivedStats`, `getTeamRecentMatches`, `formatRecentResults`; `stats.js` exports `buildMonthlyBreakdown`
+- **75%+ line coverage** across all API endpoints and library modules
+
 ### Changed — Issue #29: Track Record UX + Close Loss Filter
 
 - **Fix race condition** — `loadResults()` and `loadTrackRecord()` both wrote to `#resultsList`. Now chained with `.then()` so track record always overwrites generic results. League switch also re-fetches track record
