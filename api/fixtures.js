@@ -1,15 +1,16 @@
 /**
- * GET /api/fixtures?type=matches|results&league={slug}
+ * GET /api/fixtures?type=matches|results|odds&league={slug}
  *
- * Endpoint unificato per partite e risultati.
+ * Endpoint unificato per partite, risultati e quote.
  *
  * type=matches — Prossime 10 partite (cache 2h)
  * type=results — Ultimi 10 risultati (cache 1h)
+ * type=odds    — Quote per una partita (cache 30min, richiede &fixture={id})
  *
  * Default league: serie-a se omesso.
  *
  * Provider primario: api-football.com (api-sports.io)
- * Fallback: football-data.org
+ * Fallback: football-data.org (no odds)
  */
 
 const cache = require('./_lib/cache');
@@ -32,8 +33,11 @@ module.exports = async function handler(req, res) {
   if (type === 'results') {
     return handleResults(req, res);
   }
+  if (type === 'odds') {
+    return handleOdds(req, res);
+  }
 
-  return res.status(400).json({ error: 'Parametro type richiesto: matches o results' });
+  return res.status(400).json({ error: 'Parametro type richiesto: matches, results o odds' });
 };
 
 // ─── Matches ────────────────────────────────────────────────────────────────
@@ -101,6 +105,37 @@ async function handleResults(req, res) {
       console.error('football-data.org results failed:', fallbackErr.message);
       return res.status(502).json({ error: 'Unable to fetch results from any source' });
     }
+  }
+}
+
+// ─── Odds ──────────────────────────────────────────────────────────────────
+
+async function handleOdds(req, res) {
+  const fixtureId = req.query.fixture;
+  if (!fixtureId) {
+    return res.status(400).json({ error: 'Missing "fixture" query parameter' });
+  }
+
+  const cacheKey = `odds_${fixtureId}`;
+  const ODDS_CACHE_TTL = 1800; // 30 minuti
+
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=900');
+    return res.status(200).json(cached);
+  }
+
+  try {
+    const odds = await apiFootball.getOdds(fixtureId);
+    if (!odds) {
+      return res.status(200).json(null);
+    }
+    cache.set(cacheKey, odds, ODDS_CACHE_TTL);
+    res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=900');
+    return res.status(200).json(odds);
+  } catch (err) {
+    console.error('API-Football odds failed:', err.message);
+    return res.status(502).json({ error: 'Unable to fetch odds' });
   }
 }
 

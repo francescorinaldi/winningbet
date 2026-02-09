@@ -1,4 +1,4 @@
-const handler = require('../../api/schedina');
+const handler = require('../../api/betting-slips');
 const { createMockReq, createMockRes } = require('../__helpers__/mock-req-res');
 
 jest.mock('../../api/_lib/supabase', () => ({
