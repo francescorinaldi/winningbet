@@ -541,4 +541,12 @@ function createDefaultStanding(name) {
   };
 }
 
-module.exports = { generateBatchPredictions, researchLeagueContext };
+module.exports = {
+  generateBatchPredictions,
+  researchLeagueContext,
+  assignTier,
+  balanceTiers,
+  computeDerivedStats,
+  getTeamRecentMatches,
+  formatRecentResults,
+};

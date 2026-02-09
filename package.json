@@ -22,7 +22,10 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "env:pull": "vercel env pull .env.local --environment production --yes"
+    "env:pull": "vercel env pull .env.local --environment production --yes",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -30,6 +33,7 @@
   "devDependencies": {
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
+    "jest": "^30.2.0",
     "prettier": "^3.8.1"
   },
   "dependencies": {
