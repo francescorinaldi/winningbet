@@ -1066,6 +1066,65 @@
   }
 
   /**
+   * Resets all track record UI elements to their default "no data" state (em dash).
+   * Called before populating with new league data to prevent stale values
+   * from the previous league persisting in the DOM.
+   */
+  function resetTrackRecordUI() {
+    // Hero section
+    const heroWinRate = findHeroStat('Win Rate');
+    if (heroWinRate) {
+      heroWinRate.setAttribute('data-count', '0');
+      heroWinRate.textContent = '\u2014';
+    }
+
+    const heroWL = document.getElementById('heroWinLoss');
+    if (heroWL) heroWL.textContent = '\u2014';
+
+    const heroTips = findHeroStat('Tips Inviati');
+    if (heroTips) {
+      heroTips.setAttribute('data-count', '0');
+      heroTips.textContent = '\u2014';
+    }
+
+    // Stat cards
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach(function (card) {
+      const label = card.querySelector('.stat-label');
+      const value = card.querySelector('.stat-value');
+      if (!label || !value) return;
+
+      if (label.textContent === 'Win Rate') {
+        value.setAttribute('data-count', '0');
+        value.textContent = '\u2014';
+      } else if (label.textContent === 'Vinti - Persi') {
+        value.textContent = '\u2014';
+      } else if (label.textContent === 'Quota Media') {
+        value.textContent = '\u2014';
+      }
+    });
+
+    // Individual stat elements
+    const matchesEl = document.getElementById('statMatchesAnalyzed');
+    if (matchesEl) {
+      matchesEl.setAttribute('data-count', '0');
+      matchesEl.textContent = '\u2014';
+    }
+
+    const dataPointsEl = document.getElementById('statDataPoints');
+    if (dataPointsEl) {
+      dataPointsEl.setAttribute('data-count', '0');
+      dataPointsEl.textContent = '\u2014';
+    }
+
+    const roiEl = document.getElementById('statROI');
+    if (roiEl) {
+      roiEl.setAttribute('data-count', '0');
+      roiEl.textContent = '\u2014';
+    }
+  }
+
+  /**
    * Carica le statistiche dal track record API e aggiorna il DOM.
    * Se won+lost===0: mostra stato "in costruzione" (em dash, pending count).
    * Se ci sono dati reali: aggiorna DOM con valori veri + trigger counter animation.
@@ -1074,7 +1133,13 @@
   async function loadTrackRecord() {
     try {
       const data = await fetchAPI('stats', { type: 'track-record', league: currentLeague });
-      if (!data) return;
+      if (!data) {
+        resetTrackRecordUI();
+        return;
+      }
+
+      // Reset stale values from previous league before populating
+      resetTrackRecordUI();
 
       const won = data.won || 0;
       const lost = data.lost || 0;
@@ -1173,7 +1238,7 @@
         animateCounter(roiEl);
       }
     } catch (_err) {
-      // Leave em dash placeholders — honest "no data" state
+      resetTrackRecordUI();
     }
   }
 

@@ -1,6 +1,6 @@
 ---
 name: fr3-generate-betting-slips
-description: Generate smart betting slips (schedine) from today's pending tips. Combines tips into 2-3 schedine with different risk levels (Sicura, Equilibrata, Azzardo), calculates optimal stakes using Kelly Criterion, and stores in Supabase. Called automatically by /fr3-generate-tips or standalone.
+description: Generate smart betting slips (schedine) from the current week's pending tips. Combines tips into 2-3 schedine with different risk levels (Sicura, Equilibrata, Azzardo), calculates optimal stakes using Kelly Criterion, and stores in Supabase. Schedine are grouped per week (Mon-Sun). Called automatically by /fr3-generate-tips or standalone.
 argument-hint: [--budget N] [--send]
 user-invocable: true
 allowed-tools: Bash(*), Read, mcp__plugin_supabase_supabase__execute_sql
@@ -32,20 +32,24 @@ From `$ARGUMENTS`:
 
 ## Procedure
 
-### 1. Fetch today's pending tips
+### 1. Fetch this week's pending tips
+
+Schedine are grouped **per week** (Monday to Sunday, ISO week).
 
 ```sql
 SELECT id, match_id, home_team, away_team, match_date, prediction, odds, confidence, analysis, tier, league
 FROM tips
 WHERE status = 'pending'
-  AND match_date >= CURRENT_DATE
-  AND match_date < CURRENT_DATE + INTERVAL '1 day'
+  AND match_date >= date_trunc('week', CURRENT_DATE)
+  AND match_date < date_trunc('week', CURRENT_DATE) + INTERVAL '7 days'
 ORDER BY confidence DESC;
 ```
 
+(`date_trunc('week', ...)` returns the Monday of the current ISO week)
+
 Use Supabase MCP `execute_sql` with project_id `xqrxfnovlukbbuvhbavj`.
 
-If fewer than 3 tips are available, output a message and stop — not enough data for meaningful schedine.
+If fewer than 3 tips are available for this week, output a message and stop — not enough data for meaningful schedine.
 
 ### 2. Fetch track record for calibration
 
@@ -63,17 +67,19 @@ WHERE status IN ('won', 'lost')
 
 Use this to calibrate: if historical win rate at confidence X is lower than X%, adjust expectations downward.
 
-### 3. Delete existing schedine for today
+### 3. Delete existing schedine for this week
 
 ```sql
 DELETE FROM schedina_tips
 WHERE schedina_id IN (
-  SELECT id FROM schedine WHERE match_date = CURRENT_DATE
+  SELECT id FROM schedine
+  WHERE match_date = date_trunc('week', CURRENT_DATE)::date
 );
-DELETE FROM schedine WHERE match_date = CURRENT_DATE;
+DELETE FROM schedine
+WHERE match_date = date_trunc('week', CURRENT_DATE)::date;
 ```
 
-Always regenerate — fresh tips = fresh schedine.
+Always regenerate — fresh tips = fresh schedine. The `match_date` stores the Monday of the week as the week identifier.
 
 ### 4. Build schedine — The Strategy
 
@@ -157,7 +163,7 @@ If the sum exceeds the budget, reduce proportionally starting from Azzardo.
 | `confidence_avg`   | Average confidence of all tips in the schedina                                              |
 | `strategy`         | 2-3 sentences IN ITALIAN explaining the strategy logic. Reference specific tips/odds/stats. |
 | `status`           | "pending"                                                                                   |
-| `match_date`       | Today's date (CURRENT_DATE)                                                                 |
+| `match_date`       | Monday of the current week: `date_trunc('week', CURRENT_DATE)::date`                        |
 | `tier`             | "pro" for Sicura, "vip" for Equilibrata and Azzardo                                         |
 | `budget_reference` | The budget used for calculation                                                             |
 
@@ -168,9 +174,9 @@ First insert the schedine:
 ```sql
 INSERT INTO schedine (name, risk_level, combined_odds, suggested_stake, expected_return, confidence_avg, strategy, status, match_date, tier, budget_reference)
 VALUES
-  ('Sicura', 'low', <odds>, <stake>, <return>, <conf>, '<strategy>', 'pending', CURRENT_DATE, 'pro', <budget>),
-  ('Equilibrata', 'medium', <odds>, <stake>, <return>, <conf>, '<strategy>', 'pending', CURRENT_DATE, 'vip', <budget>),
-  ('Azzardo', 'high', <odds>, <stake>, <return>, <conf>, '<strategy>', 'pending', CURRENT_DATE, 'vip', <budget>)
+  ('Sicura', 'low', <odds>, <stake>, <return>, <conf>, '<strategy>', 'pending', date_trunc('week', CURRENT_DATE)::date, 'pro', <budget>),
+  ('Equilibrata', 'medium', <odds>, <stake>, <return>, <conf>, '<strategy>', 'pending', date_trunc('week', CURRENT_DATE)::date, 'vip', <budget>),
+  ('Azzardo', 'high', <odds>, <stake>, <return>, <conf>, '<strategy>', 'pending', date_trunc('week', CURRENT_DATE)::date, 'vip', <budget>)
 RETURNING id, name;
 ```
 
@@ -191,7 +197,7 @@ VALUES
 Display a formatted summary:
 
 ```
-=== SCHEDINE DEL GIORNO ===
+=== SCHEDINE DELLA SETTIMANA ===
 
 SICURA (PRO) — Quota <combined_odds> — Puntata <stake> EUR
   1. Home vs Away — Prediction @ odds (confidence%)
@@ -229,7 +235,7 @@ Format in MarkdownV2. Send ONE message with all schedine.
 Message structure:
 
 ```
-<cards> *SCHEDINE DEL GIORNO*
+<cards> *SCHEDINE DELLA SETTIMANA*
 <moneybag> Budget: <budget> EUR
 
 <shield> *SICURA* — Quota <combined_odds>
@@ -269,7 +275,7 @@ Adapt the budget distribution accordingly when fewer schedine are generated.
 ## Important Notes
 
 - You ARE the strategist. Do NOT call the Claude/Anthropic API. Your analysis IS the strategy.
-- **Always regenerate** — Delete today's existing schedine before creating new ones.
+- **Always regenerate** — Delete this week's existing schedine before creating new ones.
 - Combined odds = product of individual odds (multiply, don't add).
 - **Budget is sacred** — Total suggested stakes must NEVER exceed the budget.
 - **Correlation matters** — Tips from the same match are highly correlated; never combine them.

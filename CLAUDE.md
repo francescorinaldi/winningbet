@@ -31,7 +31,7 @@ api/cron-tasks.js       → Cron tasks (settle tips + schedine + send)
 api/fixtures.js         → Matches + results + odds (by league)
 api/generate-tips.js    → Cron orchestrator + single-league generation
 api/match-insights.js   → H2H + team form
-api/betting-slips.js    → Smart betting slips (schedine del giorno)
+api/betting-slips.js    → Smart betting slips (schedine della settimana)
 api/stats.js            → Standings + track record
 api/stripe-webhook.js   → Stripe webhook handler
 api/telegram.js         → Telegram webhook + account linking
@@ -48,7 +48,7 @@ supabase/migrations/    → Database schema migrations (9 files)
 .claude/skills/fr3-generate-tips/      → /fr3-generate-tips (prediction engine)
 .claude/skills/fr3-generate-betting-slips/ → /fr3-generate-betting-slips (smart betting slips)
 .claude/skills/fr3-settle-tips/        → /fr3-settle-tips (settlement engine)
-.claude/skills/fr3-daily-tips/         → /fr3-daily-tips (daily orchestrator)
+.claude/skills/fr3-update-winning-bets/ → /fr3-update-winning-bets (master pipeline orchestrator)
 ~/.claude/skills/fr3-code-review/      → /fr3-code-review (global, multi-agent code analysis)
 eslint.config.mjs       → ESLint flat config
 .prettierrc             → Prettier config
@@ -83,7 +83,7 @@ All custom skills use the `fr3-` prefix for easy identification.
 ```
 
 ```bash
-/fr3-generate-betting-slips             # Generate schedine from today's tips (default 50 EUR budget)
+/fr3-generate-betting-slips             # Generate schedine from this week's tips (default 50 EUR budget)
 /fr3-generate-betting-slips --budget 100 # Generate with custom budget
 /fr3-generate-betting-slips --send      # Generate and send to Telegram
 ```
@@ -94,7 +94,11 @@ All custom skills use the `fr3-` prefix for easy identification.
 ```
 
 ```bash
-/fr3-daily-tips                         # Smart orchestrator: settle + generate if needed
+/fr3-update-winning-bets                # Master pipeline: settle + generate + schedine (auto)
+/fr3-update-winning-bets --force        # Force all phases regardless of checks
+/fr3-update-winning-bets --no-send      # Run pipeline without sending to Telegram
+/fr3-update-winning-bets --dry-run      # Preview what would happen without executing
+/fr3-update-winning-bets --skip-settle  # Skip settlement phase
 ```
 
 **Code Review (global — works in any repo):**

@@ -4,6 +4,23 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **`/fr3-update-winning-bets` — Master pipeline orchestrator** — Replaces `/fr3-daily-tips` with a smarter 4-phase pipeline: Settle → Generate → Schedine → Summary. Supports flags: `--force`, `--dry-run`, `--no-send`, `--skip-settle`, `--skip-generate`, `--skip-schedine`. Uses 2-hour buffer for in-progress match detection.
+
+### Changed
+
+- **Schedine grouping: per-week instead of per-day** — `/fr3-generate-betting-slips` now groups tips by ISO week (Mon-Sun) instead of single calendar day. `schedine.match_date` stores the Monday of the week. Queries, deletion, and insertion all use `date_trunc('week', CURRENT_DATE)`.
+- **Dashboard schedine: weekly navigation** — Date picker navigates by week (arrows skip 7 days). Label shows week range (e.g., "9 feb - 15 feb") with "Questa settimana" for the current week. API computes Monday of the week from any date param.
+
+### Removed
+
+- **`/fr3-daily-tips`** — Replaced by `/fr3-update-winning-bets` which adds schedine gap detection, in-progress match awareness, force/dry-run modes, and per-week schedine.
+
+### Fixed
+
+- **Homepage league switch: stale track record stats** — Win Rate, W-L, Quota Media, ROI and other stat elements were not resetting when switching to a league with no settled tips. Added `resetTrackRecordUI()` that clears all stat DOM elements to default "no data" state before populating with new league data.
+
 ### Fixed — Code Review: 75 issues (4 CRITICAL, 20 HIGH, 32 MEDIUM, 16 LOW)
 
 Full code review via `/fr3-code-review` (9 agents). This batch addresses all CRITICAL/HIGH and impactful MEDIUM issues.

@@ -1,7 +1,9 @@
 /**
  * GET /api/betting-slips?date={YYYY-MM-DD}
  *
- * Restituisce le schedine del giorno con i tips associati.
+ * Restituisce le schedine della settimana con i tips associati.
+ * Le schedine sono raggruppate per settimana (Lun-Dom, ISO week).
+ * Il campo match_date della schedina contiene il lunedì della settimana.
  *
  * Comportamento:
  *   - Senza auth: 401
@@ -11,7 +13,9 @@
  *     - vip: tutte le schedine (Sicura + Equilibrata + Azzardo)
  *
  * Query parameters:
- *   date (optional) — Data in formato YYYY-MM-DD (default: oggi)
+ *   date (optional) — Any date within the desired week (YYYY-MM-DD). The API
+ *                      computes the Monday of that week and returns schedine for it.
+ *                      Default: current week.
  *   status (optional) — 'pending', 'won', 'lost', 'void' (default: tutti)
  *
  * Risposta 200:
@@ -49,14 +53,19 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // Parse date parameter
+  // Parse date parameter and compute Monday of that week (ISO week: Mon=1)
   const dateParam = req.query.date;
-  let targetDate;
+  let refDate;
   if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
-    targetDate = dateParam;
+    refDate = new Date(dateParam + 'T12:00:00Z');
   } else {
-    targetDate = new Date().toISOString().split('T')[0];
+    refDate = new Date();
   }
+  const dayOfWeek = refDate.getUTCDay(); // 0=Sun, 1=Mon, ...
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(refDate);
+  monday.setUTCDate(refDate.getUTCDate() + mondayOffset);
+  const targetDate = monday.toISOString().split('T')[0];
 
   const statusFilter = req.query.status;
   const validStatuses = ['pending', 'won', 'lost', 'void'];

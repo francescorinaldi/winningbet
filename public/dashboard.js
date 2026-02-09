@@ -54,7 +54,15 @@
 
   // ─── INIT ───────────────────────────────────────────────
 
-  let schedineDate = new Date().toISOString().split('T')[0];
+  // Compute Monday of the current ISO week for schedine navigation
+  let schedineDate = (function () {
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun, 1=Mon
+    const offset = day === 0 ? -6 : 1 - day;
+    const mon = new Date(now);
+    mon.setDate(now.getDate() + offset);
+    return mon.toISOString().split('T')[0];
+  })();
 
   document.addEventListener('DOMContentLoaded', function () {
     checkAuth();
@@ -1889,7 +1897,7 @@
 
     prevBtn.addEventListener('click', function () {
       const d = new Date(schedineDate + 'T12:00:00');
-      d.setDate(d.getDate() - 1);
+      d.setDate(d.getDate() - 7);
       schedineDate = d.toISOString().split('T')[0];
       updateSchedineDateLabel(label);
       loadSchedule();
@@ -1897,24 +1905,35 @@
 
     nextBtn.addEventListener('click', function () {
       const d = new Date(schedineDate + 'T12:00:00');
-      d.setDate(d.getDate() + 1);
+      d.setDate(d.getDate() + 7);
       schedineDate = d.toISOString().split('T')[0];
       updateSchedineDateLabel(label);
       loadSchedule();
     });
   }
 
+  function getCurrentWeekMonday() {
+    const now = new Date();
+    const day = now.getDay();
+    const offset = day === 0 ? -6 : 1 - day;
+    const mon = new Date(now);
+    mon.setDate(now.getDate() + offset);
+    return mon.toISOString().split('T')[0];
+  }
+
   function updateSchedineDateLabel(label) {
-    const today = new Date().toISOString().split('T')[0];
-    if (schedineDate === today) {
-      label.textContent = 'Oggi';
+    const currentMonday = getCurrentWeekMonday();
+    const mon = new Date(schedineDate + 'T12:00:00');
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+
+    const monStr = mon.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+    const sunStr = sun.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+
+    if (schedineDate === currentMonday) {
+      label.textContent = 'Questa settimana (' + monStr + ' - ' + sunStr + ')';
     } else {
-      const d = new Date(schedineDate + 'T12:00:00');
-      label.textContent = d.toLocaleDateString('it-IT', {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short',
-      });
+      label.textContent = monStr + ' - ' + sunStr;
     }
   }
 
