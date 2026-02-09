@@ -1,5 +1,5 @@
 ---
-name: generate-tips
+name: fr3-generate-tips
 description: Generate football betting predictions for upcoming matches. Fetches live data from football APIs, researches injuries/news via web search, analyzes each match individually as a professional football analyst, and stores predictions in Supabase. Use when user asks to generate tips, predictions, or pronostici.
 argument-hint: [league-slug] [--send] [--delete]
 user-invocable: true
@@ -51,7 +51,7 @@ Use Supabase MCP `execute_sql` with project_id `xqrxfnovlukbbuvhbavj`.
 Run the fetch script:
 
 ```bash
-node .claude/skills/generate-tips/scripts/fetch-league-data.js <league-slug>
+node .claude/skills/fr3-generate-tips/scripts/fetch-league-data.js <league-slug>
 ```
 
 This outputs JSON with: `matches` (upcoming fixtures with odds), `standings` (total/home/away tables), `recentResults` (last 30 matches).
@@ -260,11 +260,11 @@ curl -s -X POST "https://api.telegram.org/bot<TOKEN>/sendMessage" \
 
 Split into separate messages per league if total exceeds 4000 chars.
 
-### 9. Generate Schedine (automatic)
+### 9. Generate Betting Slips (automatic)
 
-After ALL leagues have been processed and tips inserted, automatically invoke the `/generate-schedina` skill to build the day's smart betting slips from the freshly generated tips.
+After ALL leagues have been processed and tips inserted, automatically invoke the `/fr3-generate-betting-slips` skill to build the day's smart betting slips from the freshly generated tips.
 
-Pass the `--send` flag to `/generate-schedina` if this run also has `--send`.
+Pass the `--send` flag to `/fr3-generate-betting-slips` if this run also has `--send`.
 
 This ensures schedine are always in sync with the latest tips.
 

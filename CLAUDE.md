@@ -9,7 +9,7 @@ Premium multi-league betting predictions platform (Serie A, Champions League, La
 - **Frontend**: HTML5, CSS3 (custom properties), Vanilla JS (ES6+ IIFE pattern)
 - **Backend**: Node.js Vercel Serverless Functions
 - **Database**: Supabase (PostgreSQL + Auth + RLS)
-- **AI**: Claude Code skill `/generate-tips` (primary), Anthropic Claude API (legacy serverless) — see [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md)
+- **AI**: Claude Code skill `/fr3-generate-tips` (primary), Anthropic Claude API (legacy serverless) — see [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md)
 - **Payments**: Stripe (subscriptions, webhooks, customer portal)
 - **APIs**: api-football.com (primary), football-data.org (fallback)
 - **Notifications**: Telegram Bot API, SendGrid (email)
@@ -43,10 +43,12 @@ public/script.js        → Main landing page logic (IIFE pattern)
 public/auth.js          → Authentication logic (Supabase Auth)
 public/dashboard.js     → User dashboard logic + Telegram linking
 supabase/migrations/    → Database schema migrations (9 files)
-.claude/skills/         → Claude Code skills (slash commands)
-.claude/skills/generate-tips/     → /generate-tips skill (prediction engine)
-.claude/skills/generate-schedina/ → /generate-schedina skill (smart betting slips)
-.claude/skills/code-review/       → /code-review skill (multi-agent code analysis)
+.claude/skills/                        → Claude Code skills (project-specific)
+.claude/skills/fr3-generate-tips/      → /fr3-generate-tips (prediction engine)
+.claude/skills/fr3-generate-betting-slips/ → /fr3-generate-betting-slips (smart betting slips)
+.claude/skills/fr3-settle-tips/        → /fr3-settle-tips (settlement engine)
+.claude/skills/fr3-daily-tips/         → /fr3-daily-tips (daily orchestrator)
+~/.claude/skills/fr3-code-review/      → /fr3-code-review (global, multi-agent code analysis)
 eslint.config.mjs       → ESLint flat config
 .prettierrc             → Prettier config
 vercel.json             → Deployment config + caching headers
@@ -67,27 +69,42 @@ npm run env:pull      # Sync .env.local from Vercel production (single source of
 
 ### Claude Code Skills (Slash Commands)
 
+All custom skills use the `fr3-` prefix for easy identification.
+
+**Prediction & Betting (project-specific):**
+
 ```bash
-/generate-tips                      # Generate tips for ALL leagues
-/generate-tips serie-a              # Generate for one league only
-/generate-tips --send               # Generate and send to Telegram
-/generate-tips --delete             # Delete pending tips, then regenerate
-/generate-tips serie-a --send       # Combine flags
+/fr3-generate-tips                      # Generate tips for ALL leagues
+/fr3-generate-tips serie-a              # Generate for one league only
+/fr3-generate-tips --send               # Generate and send to Telegram
+/fr3-generate-tips --delete             # Delete pending tips, then regenerate
+/fr3-generate-tips serie-a --send       # Combine flags
 ```
 
 ```bash
-/generate-schedina                  # Generate schedine from today's tips (default 50 EUR budget)
-/generate-schedina --budget 100     # Generate with custom budget
-/generate-schedina --send           # Generate and send to Telegram
+/fr3-generate-betting-slips             # Generate schedine from today's tips (default 50 EUR budget)
+/fr3-generate-betting-slips --budget 100 # Generate with custom budget
+/fr3-generate-betting-slips --send      # Generate and send to Telegram
 ```
 
 ```bash
-/code-review                        # Run ALL 9 review agents
-/code-review security               # Run only the security agent
-/code-review --file api/            # Scope to a directory
-/code-review --multi-model          # Also run Codex CLI + Gemini CLI
-/code-review --fix                  # Auto-fix LOW/MEDIUM issues
-/code-review security --file api/ --multi-model  # Combine flags
+/fr3-settle-tips                        # Settle all pending tips with past match dates
+/fr3-settle-tips --dry-run              # Preview without updating database
+```
+
+```bash
+/fr3-daily-tips                         # Smart orchestrator: settle + generate if needed
+```
+
+**Code Review (global — works in any repo):**
+
+```bash
+/fr3-code-review                        # Run ALL 9 review agents
+/fr3-code-review security               # Run only the security agent
+/fr3-code-review --file api/            # Scope to a directory
+/fr3-code-review --multi-model          # Also run Codex CLI + Gemini CLI
+/fr3-code-review --fix                  # Auto-fix LOW/MEDIUM issues
+/fr3-code-review security --file api/ --multi-model  # Combine flags
 ```
 
 Full prediction engine architecture: [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md)
@@ -146,7 +163,7 @@ Valid slugs: `serie-a`, `champions-league`, `la-liga`, `premier-league`, `ligue-
 - Never commit `.env` files
 - All API keys go through serverless functions (never expose to client)
 - Cache-Control headers set in vercel.json for API routes
-- **Prefer Claude Code over Claude API** — If something can be done directly by Claude Code (analysis, prediction, data processing, research), do NOT call the Claude/Anthropic API for it. Claude Code IS Claude — use your own capabilities instead of paying for API calls. The `/generate-tips` skill exists for this reason: Claude Code is the prediction engine, not a wrapper around the API.
+- **Prefer Claude Code over Claude API** — If something can be done directly by Claude Code (analysis, prediction, data processing, research), do NOT call the Claude/Anthropic API for it. Claude Code IS Claude — use your own capabilities instead of paying for API calls. The `/fr3-generate-tips` skill exists for this reason: Claude Code is the prediction engine, not a wrapper around the API.
 - **No autonomous API spending** — Never call Claude API, external paid APIs, or any cost-incurring service autonomously. If a check or verification can be done together with the user (e.g. querying Supabase, checking track record data, testing endpoints), always do it collaboratively instead of burning API credits
 
 ---

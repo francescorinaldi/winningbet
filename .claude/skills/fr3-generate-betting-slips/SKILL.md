@@ -1,6 +1,6 @@
 ---
-name: generate-schedina
-description: Generate smart betting slips (schedine) from today's pending tips. Combines tips into 2-3 schedine with different risk levels (Sicura, Equilibrata, Azzardo), calculates optimal stakes using Kelly Criterion, and stores in Supabase. Called automatically by /generate-tips or standalone.
+name: fr3-generate-betting-slips
+description: Generate smart betting slips (schedine) from today's pending tips. Combines tips into 2-3 schedine with different risk levels (Sicura, Equilibrata, Azzardo), calculates optimal stakes using Kelly Criterion, and stores in Supabase. Called automatically by /fr3-generate-tips or standalone.
 argument-hint: [--budget N] [--send]
 user-invocable: true
 allowed-tools: Bash(*), Read, mcp__plugin_supabase_supabase__execute_sql
@@ -252,7 +252,7 @@ Message structure:
 
 **MarkdownV2 escaping**: Put `\` before: ``_ * [ ] ( ) ~ ` > # + - = | { } . !``
 
-Send via curl (same as generate-tips).
+Send via curl (same as fr3-generate-tips).
 
 ## Conditional Schedine
 
