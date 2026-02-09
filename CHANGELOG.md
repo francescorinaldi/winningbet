@@ -4,6 +4,19 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added — Ligue 1, Bundesliga, Eredivisie (3 new leagues)
+
+- **`api/_lib/leagues.js`** — Added Ligue 1 (ID 61, FL1), Bundesliga (ID 78, BL1), Eredivisie (ID 88, DED) to central config. Exported `VALID_SLUGS` for DRY imports
+- **`api/generate-tips.js`** — Replaced hardcoded `LEAGUE_SLUGS` array with imported `VALID_SLUGS` from leagues.js
+- **`api/user-settings.js`** — Replaced hardcoded `VALID_LEAGUES` array with imported `VALID_SLUGS` from leagues.js
+- **`api/_lib/telegram.js`** — Added flags (FR, DE, NL) and names (LIGUE 1, BUNDESLIGA, EREDIVISIE) for Telegram digest formatting
+- **Frontend league selectors** — Added 3 new league buttons to `index.html` and `dashboard.html`
+- **`public/script.js`** — Added 3 new entries to `LEAGUE_NAMES` and `ALL_LEAGUE_SLUGS`
+- **`public/dashboard.js`** — Added 3 new entries to `leagueNames` display map
+- **`/generate-tips` skill** — Updated to support all 7 leagues with new slug mappings and flags
+- **Tests** — Added 7 new test cases (3 getLeague, 3 resolveLeagueSlug, 1 VALID_SLUGS export), updated error regex and invalid slug tests
+- **Documentation** — Updated CLAUDE.md, PREDICTION-ENGINE.md supported leagues table
+
 ### Added — Comprehensive Jest Test Suite (350 tests)
 
 - **Jest test framework** — Added `jest` (v30.2.0) with `jest.config.js`, `tests/setup.js` (env vars + console suppression), `tests/__helpers__/mock-req-res.js` (Vercel req/res mock factory)

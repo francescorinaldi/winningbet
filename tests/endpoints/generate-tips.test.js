@@ -33,6 +33,15 @@ jest.mock('../../api/_lib/auth-middleware', () => ({
 jest.mock('../../api/_lib/leagues', () => ({
   resolveLeagueSlug: jest.fn((s) => s || 'serie-a'),
   getLeague: jest.fn().mockReturnValue({ name: 'Serie A', apiFootballId: 135, season: 2025 }),
+  VALID_SLUGS: [
+    'serie-a',
+    'champions-league',
+    'la-liga',
+    'premier-league',
+    'ligue-1',
+    'bundesliga',
+    'eredivisie',
+  ],
 }));
 
 const { supabase } = require('../../api/_lib/supabase');
@@ -216,9 +225,7 @@ describe('POST /api/generate-tips', () => {
   });
 
   test('All matches already have tips returns generated: 0', async () => {
-    const mockMatches = [
-      { id: 1, home: 'Inter', away: 'Milan', date: '2026-02-10T20:00:00Z' },
-    ];
+    const mockMatches = [{ id: 1, home: 'Inter', away: 'Milan', date: '2026-02-10T20:00:00Z' }];
 
     apiFootball.getUpcomingMatches.mockResolvedValue(mockMatches);
     apiFootball.getFullStandings.mockResolvedValue({

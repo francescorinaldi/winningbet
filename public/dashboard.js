@@ -337,6 +337,9 @@
       'champions-league': 'UCL',
       'la-liga': 'La Liga',
       'premier-league': 'PL',
+      'ligue-1': 'Ligue 1',
+      bundesliga: 'Bundesliga',
+      eredivisie: 'Eredivisie',
     };
 
     tips.forEach(function (tip) {

@@ -57,6 +57,9 @@ Configured in [`api/_lib/leagues.js`](api/_lib/leagues.js):
 | `champions-league` | Champions League | 2               | CL                 | 2025   |
 | `la-liga`          | La Liga          | 140             | PD                 | 2025   |
 | `premier-league`   | Premier League   | 39              | PL                 | 2025   |
+| `ligue-1`          | Ligue 1          | 61              | FL1                | 2025   |
+| `bundesliga`       | Bundesliga       | 78              | BL1                | 2025   |
+| `eredivisie`       | Eredivisie       | 88              | DED                | 2025   |
 
 Default league: `serie-a` (via `resolveLeagueSlug()` at [`leagues.js:64`](api/_lib/leagues.js)).
 

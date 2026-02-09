@@ -66,6 +66,9 @@ const LEAGUE_FLAGS = {
   'la-liga': '\uD83C\uDDEA\uD83C\uDDF8',
   'premier-league':
     '\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F',
+  'ligue-1': '\uD83C\uDDEB\uD83C\uDDF7',
+  bundesliga: '\uD83C\uDDE9\uD83C\uDDEA',
+  eredivisie: '\uD83C\uDDF3\uD83C\uDDF1',
 };
 
 const LEAGUE_NAMES = {
@@ -73,6 +76,9 @@ const LEAGUE_NAMES = {
   'champions-league': 'CHAMPIONS LEAGUE',
   'la-liga': 'LA LIGA',
   'premier-league': 'PREMIER LEAGUE',
+  'ligue-1': 'LIGUE 1',
+  bundesliga: 'BUNDESLIGA',
+  eredivisie: 'EREDIVISIE',
 };
 
 /**

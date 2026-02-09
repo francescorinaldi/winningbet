@@ -36,6 +36,27 @@ const LEAGUES = {
     name: 'Premier League',
     nameShort: 'PL',
   },
+  'ligue-1': {
+    apiFootballId: 61,
+    footballDataCode: 'FL1',
+    season: 2025,
+    name: 'Ligue 1',
+    nameShort: 'Ligue 1',
+  },
+  bundesliga: {
+    apiFootballId: 78,
+    footballDataCode: 'BL1',
+    season: 2025,
+    name: 'Bundesliga',
+    nameShort: 'Bundesliga',
+  },
+  eredivisie: {
+    apiFootballId: 88,
+    footballDataCode: 'DED',
+    season: 2025,
+    name: 'Eredivisie',
+    nameShort: 'Eredivisie',
+  },
 };
 
 const VALID_SLUGS = Object.keys(LEAGUES);
@@ -68,4 +89,4 @@ function resolveLeagueSlug(slug) {
   return slug;
 }
 
-module.exports = { getLeague, resolveLeagueSlug };
+module.exports = { getLeague, resolveLeagueSlug, VALID_SLUGS };
