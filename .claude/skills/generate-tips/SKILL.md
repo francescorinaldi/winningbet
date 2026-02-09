@@ -18,7 +18,7 @@ Analyze football data like a professional analyst with 15+ years of experience i
 ## Configuration
 
 - **Supabase project_id**: `xqrxfnovlukbbuvhbavj`
-- **Leagues**: serie-a, champions-league, la-liga, premier-league
+- **Leagues**: serie-a, champions-league, la-liga, premier-league, ligue-1, bundesliga, eredivisie
 - **Valid predictions**: 1, X, 2, 1X, X2, 12, Over 2.5, Under 2.5, Over 1.5, Under 3.5, Goal, No Goal, 1 + Over 1.5, 2 + Over 1.5
 - **Confidence range**: 60–95 (strict, never optimistic)
 - **Odds range**: 1.20–5.00
@@ -27,12 +27,12 @@ Analyze football data like a professional analyst with 15+ years of experience i
 
 From `$ARGUMENTS`:
 
-- No args → all 4 leagues
+- No args → all 7 leagues
 - A league slug (e.g., `serie-a`) or name (e.g., "Serie A", "Premier League") → that league only
 - `--send` → send to Telegram after generating
 - `--delete` → delete ALL existing pending tips first (not just for targeted leagues)
 
-Map common names: "Serie A" → serie-a, "Champions League"/"UCL" → champions-league, "La Liga" → la-liga, "Premier League"/"PL" → premier-league
+Map common names: "Serie A" → serie-a, "Champions League"/"UCL" → champions-league, "La Liga" → la-liga, "Premier League"/"PL" → premier-league, "Ligue 1" → ligue-1, "Bundesliga" → bundesliga, "Eredivisie" → eredivisie
 
 ## Procedure
 
@@ -217,7 +217,7 @@ Display a formatted summary after all leagues:
 Total: N tips | Free: N | Pro: N | VIP: N
 ```
 
-Flags: serie-a = IT, champions-league = trophy, la-liga = ES, premier-league = EN
+Flags: serie-a = IT, champions-league = trophy, la-liga = ES, premier-league = EN, ligue-1 = FR, bundesliga = DE, eredivisie = NL
 
 ### 8. Send to Telegram (if --send flag or user requests)
 

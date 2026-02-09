@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Premium multi-league betting predictions platform (Serie A, Champions League, La Liga, Premier League). Vanilla JS frontend + Vercel serverless backend.
+Premium multi-league betting predictions platform (Serie A, Champions League, La Liga, Premier League, Ligue 1, Bundesliga, Eredivisie). Vanilla JS frontend + Vercel serverless backend.
 
 ## Tech Stack
 
@@ -95,7 +95,7 @@ Full prediction engine architecture: [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md
 ## API Endpoints
 
 All data endpoints accept an optional `?league={slug}` parameter (default: `serie-a`).
-Valid slugs: `serie-a`, `champions-league`, `la-liga`, `premier-league`.
+Valid slugs: `serie-a`, `champions-league`, `la-liga`, `premier-league`, `ligue-1`, `bundesliga`, `eredivisie`.
 
 - `POST /api/billing` — Body: `{ action: "checkout", tier }` or `{ action: "portal" }`
 - `POST /api/cron-tasks?task=settle|send` — Settle tips or send tips (CRON_SECRET auth)

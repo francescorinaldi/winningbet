@@ -1,10 +1,10 @@
 /**
  * Test suite for api/_lib/leagues.js
  *
- * Tests getLeague() and resolveLeagueSlug() functions.
+ * Tests getLeague(), resolveLeagueSlug(), and VALID_SLUGS export.
  */
 
-const { getLeague, resolveLeagueSlug } = require('../../api/_lib/leagues');
+const { getLeague, resolveLeagueSlug, VALID_SLUGS } = require('../../api/_lib/leagues');
 
 describe('getLeague', () => {
   test('returns Serie A configuration for "serie-a" slug', () => {
@@ -51,12 +51,47 @@ describe('getLeague', () => {
     });
   });
 
+  test('returns Ligue 1 configuration for "ligue-1" slug', () => {
+    const league = getLeague('ligue-1');
+    expect(league).toEqual({
+      apiFootballId: 61,
+      footballDataCode: 'FL1',
+      season: 2025,
+      name: 'Ligue 1',
+      nameShort: 'Ligue 1',
+    });
+  });
+
+  test('returns Bundesliga configuration for "bundesliga" slug', () => {
+    const league = getLeague('bundesliga');
+    expect(league).toEqual({
+      apiFootballId: 78,
+      footballDataCode: 'BL1',
+      season: 2025,
+      name: 'Bundesliga',
+      nameShort: 'Bundesliga',
+    });
+  });
+
+  test('returns Eredivisie configuration for "eredivisie" slug', () => {
+    const league = getLeague('eredivisie');
+    expect(league).toEqual({
+      apiFootballId: 88,
+      footballDataCode: 'DED',
+      season: 2025,
+      name: 'Eredivisie',
+      nameShort: 'Eredivisie',
+    });
+  });
+
   test('throws error for invalid slug', () => {
     expect(() => getLeague('invalid-league')).toThrow('Lega non valida');
   });
 
   test('throws error message containing valid slugs', () => {
-    expect(() => getLeague('bundesliga')).toThrow(/serie-a.*champions-league.*la-liga.*premier-league/);
+    expect(() => getLeague('mls')).toThrow(
+      /serie-a.*champions-league.*la-liga.*premier-league.*ligue-1.*bundesliga.*eredivisie/,
+    );
   });
 
   test('throws error for null slug', () => {
@@ -85,6 +120,18 @@ describe('resolveLeagueSlug', () => {
     expect(resolveLeagueSlug('premier-league')).toBe('premier-league');
   });
 
+  test('returns valid slug as-is for "ligue-1"', () => {
+    expect(resolveLeagueSlug('ligue-1')).toBe('ligue-1');
+  });
+
+  test('returns valid slug as-is for "bundesliga"', () => {
+    expect(resolveLeagueSlug('bundesliga')).toBe('bundesliga');
+  });
+
+  test('returns valid slug as-is for "eredivisie"', () => {
+    expect(resolveLeagueSlug('eredivisie')).toBe('eredivisie');
+  });
+
   test('returns "serie-a" for null slug', () => {
     expect(resolveLeagueSlug(null)).toBe('serie-a');
   });
@@ -98,6 +145,20 @@ describe('resolveLeagueSlug', () => {
   });
 
   test('returns "serie-a" for invalid slug', () => {
-    expect(resolveLeagueSlug('bundesliga')).toBe('serie-a');
+    expect(resolveLeagueSlug('mls')).toBe('serie-a');
+  });
+});
+
+describe('VALID_SLUGS', () => {
+  test('exports all 7 league slugs', () => {
+    expect(VALID_SLUGS).toEqual([
+      'serie-a',
+      'champions-league',
+      'la-liga',
+      'premier-league',
+      'ligue-1',
+      'bundesliga',
+      'eredivisie',
+    ]);
   });
 });

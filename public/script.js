@@ -441,9 +441,20 @@
     'champions-league': { label: 'Champions League', season: '2025/26' },
     'la-liga': { label: 'La Liga', season: '2025/26' },
     'premier-league': { label: 'Premier League', season: '2025/26' },
+    'ligue-1': { label: 'Ligue 1', season: '2025/26' },
+    bundesliga: { label: 'Bundesliga', season: '2025/26' },
+    eredivisie: { label: 'Eredivisie', season: '2025/26' },
   };
 
-  const ALL_LEAGUE_SLUGS = ['serie-a', 'champions-league', 'la-liga', 'premier-league'];
+  const ALL_LEAGUE_SLUGS = [
+    'serie-a',
+    'champions-league',
+    'la-liga',
+    'premier-league',
+    'ligue-1',
+    'bundesliga',
+    'eredivisie',
+  ];
 
   function initLeagueSelector() {
     const selector = document.getElementById('leagueSelector');

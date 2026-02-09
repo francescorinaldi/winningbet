@@ -12,8 +12,7 @@
 
 const { authenticate } = require('./_lib/auth-middleware');
 const { supabase } = require('./_lib/supabase');
-
-const VALID_LEAGUES = ['serie-a', 'champions-league', 'la-liga', 'premier-league'];
+const { VALID_SLUGS: VALID_LEAGUES } = require('./_lib/leagues');
 const VALID_RISK_TOLERANCES = ['prudente', 'equilibrato', 'aggressivo'];
 
 module.exports = async function handler(req, res) {

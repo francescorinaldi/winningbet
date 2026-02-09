@@ -14,10 +14,8 @@ const { supabase } = require('./_lib/supabase');
 const apiFootball = require('./_lib/api-football');
 const footballData = require('./_lib/football-data');
 const { generateBatchPredictions } = require('./_lib/prediction-engine');
-const { resolveLeagueSlug, getLeague } = require('./_lib/leagues');
+const { resolveLeagueSlug, getLeague, VALID_SLUGS: LEAGUE_SLUGS } = require('./_lib/leagues');
 const { verifyCronSecret } = require('./_lib/auth-middleware');
-
-const LEAGUE_SLUGS = ['serie-a', 'champions-league', 'la-liga', 'premier-league'];
 
 module.exports = async function handler(req, res) {
   if (req.method === 'GET') {
