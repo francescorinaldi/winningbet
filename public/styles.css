@@ -3958,6 +3958,10 @@ img {
   line-height: 1;
 }
 
+.lang-toggle .lang-label {
+  display: none;
+}
+
 /* ============================================
    SCHEDINE (Betting Slips) Tab
    ============================================ */

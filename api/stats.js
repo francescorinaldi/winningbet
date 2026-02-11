@@ -171,7 +171,7 @@ async function handleTrackRecord(req, res) {
       if (t.match_id) matchIds.add(t.match_id);
     });
     const matchesAnalyzed = matchIds.size;
-    const dataPoints = matchesAnalyzed * 12;
+    const dataPoints = matchesAnalyzed * 147;
 
     const result = {
       total_tips: allTips.length + (pendingCount || 0),

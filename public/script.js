@@ -313,7 +313,7 @@
   // ==========================================
   // Gestisce la selezione della lega e il reload dei dati.
 
-  let currentLeague = 'serie-a';
+  let currentLeague = 'all';
 
   // Build LEAGUE_NAMES from shared LEAGUE_NAMES_MAP (add season + 'all' entry)
   const LEAGUE_NAMES = { all: { label: 'Tutte le Leghe', season: '2025/26' } };
@@ -1035,37 +1035,6 @@
   // e aggiorna i valori visualizzati nel DOM.
 
   /**
-   * Determines if a lost tip was a "close loss" (lost by a narrow margin).
-   * Used to filter out net losses and only show near-misses in the UI.
-   * @param {Object} tip - Tip object with prediction, status, and result
-   * @returns {boolean} True if the loss was close
-   */
-  function isCloseLoss(tip) {
-    if (tip.status !== 'lost' || !tip.result) return false;
-    const parts = tip.result.split('-').map(function (s) {
-      return parseInt(s.trim(), 10);
-    });
-    if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) return false;
-    const home = parts[0];
-    const away = parts[1];
-    const total = home + away;
-    const diff = Math.abs(home - away);
-    const pred = tip.prediction;
-    if (pred === '1' && home <= away && diff <= 1) return true;
-    if (pred === '2' && away <= home && diff <= 1) return true;
-    if (pred === 'X' && diff === 1) return true;
-    if (pred === '1X' && away > home && diff === 1) return true;
-    if (pred === 'X2' && home > away && diff === 1) return true;
-    if (pred === 'Over 2.5' && total === 2) return true;
-    if (pred === 'Under 2.5' && total === 3) return true;
-    if (pred === 'Over 1.5' && total === 1) return true;
-    if (pred === 'Under 3.5' && total === 4) return true;
-    if (pred === 'Goal' && (home === 0 || away === 0) && total >= 2) return true;
-    if (pred === 'No Goal' && home >= 1 && away >= 1 && (home === 1 || away === 1)) return true;
-    return false;
-  }
-
-  /**
    * Resets all track record UI elements to their default "no data" state (em dash).
    * Called before populating with new league data to prevent stale values
    * from the previous league persisting in the DOM.
@@ -1210,7 +1179,7 @@
         if (container) {
           container.textContent = '';
           const filtered = data.recent.filter(function (tip) {
-            return tip.status === 'won' || isCloseLoss(tip);
+            return tip.status === 'won';
           });
           filtered.forEach(function (tip) {
             container.appendChild(buildTipResultItem(tip));

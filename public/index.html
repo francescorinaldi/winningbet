@@ -69,7 +69,7 @@
           <a href="#faq" data-i18n="nav.faq">FAQ</a>
           <button class="lang-toggle" id="langToggle" title="Cambia lingua">
             <span class="flag-emoji">&#127470;&#127481;</span>
-            <span class="lang-label">IT</span>
+            <span class="lang-label" aria-hidden="true"></span>
           </button>
           <a href="/auth.html" class="btn btn-outline btn-sm" id="navAuthBtn" data-i18n="nav.signin"
             >Accedi</a
@@ -154,13 +154,13 @@
     </section>
 
     <!-- 3b. LEAGUE SELECTOR
-         Tab bar per selezionare la lega. Default: Serie A.
+         Tab bar per selezionare la lega. Default: Tutte (Global).
          Gestito da script.js (initLeagueSelector). -->
     <section class="league-selector-section">
       <div class="container">
         <div class="league-selector" id="leagueSelector">
-          <button class="league-btn" data-league="all" data-i18n="league.all">Tutte</button>
-          <button class="league-btn active" data-league="serie-a">Serie A</button>
+          <button class="league-btn active" data-league="all" data-i18n="league.all">Tutte</button>
+          <button class="league-btn" data-league="serie-a">Serie A</button>
           <button class="league-btn" data-league="champions-league">UCL</button>
           <button class="league-btn" data-league="la-liga">La Liga</button>
           <button class="league-btn" data-league="premier-league">PL</button>
@@ -236,7 +236,7 @@
           </div>
           <div class="tier-comparison-card tier-comparison-card--pro">
             <span class="tier-comparison-badge tier-comparison-badge--pro">PRO</span>
-            <span class="tier-comparison-value" data-i18n="tier.pro.value">10+ tips/giorno</span>
+            <span class="tier-comparison-value" data-i18n="tier.pro.value">1-5 tips/giorno</span>
             <span class="tier-comparison-detail" data-i18n="tier.pro.detail"
               >Analisi AI + Storico completo</span
             >
@@ -501,7 +501,7 @@
             <ul class="pricing-features">
               <li class="feature-included">
                 <span class="feature-check">&#10003;</span>
-                <span data-i18n="pricing.pro.f1">10+ tips al giorno</span>
+                <span data-i18n="pricing.pro.f1">1-5 tips al giorno in base al calendario sportivo</span>
               </li>
               <li class="feature-included">
                 <span class="feature-check">&#10003;</span>
