@@ -1886,11 +1886,13 @@ img {
     bottom: 0;
     background: rgba(10, 10, 15, 0.98);
     backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 32px;
+    gap: 24px;
     z-index: 1002;
+    padding: 80px 24px 40px;
   }
 
   .nav-links.open {
@@ -1898,12 +1900,28 @@ img {
   }
 
   .nav-links a {
+    font-size: 1.3rem;
+    padding: 8px 16px;
+  }
+
+  .nav-links .btn {
+    width: 220px;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .nav-links .lang-toggle {
     font-size: 1.2rem;
+    padding: 10px 20px;
+  }
+
+  .nav-links .lang-toggle .flag-emoji {
+    font-size: 1.5rem;
   }
 
   .hamburger {
     display: flex;
-    z-index: 1001;
+    z-index: 1003;
   }
 
   .hero-title {
