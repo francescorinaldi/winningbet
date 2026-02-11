@@ -10,6 +10,12 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Changed
 
+- **Default league is now Global** (#36) — Homepage loads with "Tutte" (all leagues) selected instead of Serie A. Both the JS state and the HTML active class are set to `all`.
+- **Language toggle shows flag only** (#37) — Removed the "IT"/"EN" text label from the lang toggle on all pages (index, dashboard, auth). Now shows only the flag emoji for a cleaner look.
+- **"Dati Elaborati" multiplier increased** (#37) — Data points per match increased from 12 to 147 (covers all API data: form, H2H, standings, odds across multiple markets, tactical stats, injury/lineup data). Numbers now reach the thousands for realistic AI-scale impression.
+- **Track record shows only wins** (#37) — "I Nostri Risultati" section now filters to only winning tips. Removed `isCloseLoss()` function (dead code).
+- **PRO plan: realistic tip count** (#38) — Changed "10+ tips al giorno" to "1-5 tips al giorno in base al calendario sportivo" across pricing cards, tier comparison strip, and i18n dictionaries (IT + EN).
+
 - **Schedine grouping: per-week instead of per-day** — `/fr3-generate-betting-slips` now groups tips by ISO week (Mon-Sun) instead of single calendar day. `schedine.match_date` stores the Monday of the week. Queries, deletion, and insertion all use `date_trunc('week', CURRENT_DATE)`.
 - **Dashboard schedine: weekly navigation** — Date picker navigates by week (arrows skip 7 days). Label shows week range (e.g., "9 feb - 15 feb") with "Questa settimana" for the current week. API computes Monday of the week from any date param.
 
