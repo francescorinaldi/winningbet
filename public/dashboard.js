@@ -92,7 +92,7 @@
       return;
     }
 
-    loadProfile();
+    await loadProfile();
     loadTodayTips();
     loadHistory();
     loadActivity();
