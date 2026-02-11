@@ -1890,7 +1890,7 @@ img {
     align-items: center;
     justify-content: center;
     gap: 32px;
-    z-index: 999;
+    z-index: 1002;
   }
 
   .nav-links.open {

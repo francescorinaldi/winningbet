@@ -25,6 +25,7 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Fixed
 
+- **Mobile hamburger menu broken** — Three issues: (1) z-index inversion — `.nav-links` overlay (999) was behind `.navbar` (1000), making links unreachable; fixed to 1002. (2) No click-outside-to-close — tapping the overlay background now closes the menu. (3) Extracted `closeMenu()` helper for cleaner event handling.
 - **VIP user has no access to Schedina Intelligente** (#40) — Race condition in `dashboard.js`: `loadSchedule()` ran before `loadProfile()` completed, so `profile` was still `null` → tier defaulted to `'free'` → showed upgrade prompt. Fix: `await loadProfile()` before calling `loadSchedule()`.
 - **Homepage league switch: stale track record stats** — Win Rate, W-L, Quota Media, ROI and other stat elements were not resetting when switching to a league with no settled tips. Added `resetTrackRecordUI()` that clears all stat DOM elements to default "no data" state before populating with new league data.
 

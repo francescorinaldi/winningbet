@@ -35,18 +35,27 @@ function initMobileMenu() {
   var navLinks = document.getElementById('navLinks');
   if (!hamburger || !navLinks) return;
 
-  hamburger.addEventListener('click', function () {
+  function closeMenu() {
+    hamburger.classList.remove('active');
+    navLinks.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  hamburger.addEventListener('click', function (e) {
+    e.stopPropagation();
     hamburger.classList.toggle('active');
     navLinks.classList.toggle('open');
     document.body.style.overflow = navLinks.classList.contains('open') ? 'hidden' : '';
   });
 
+  // Close menu when clicking any link or button inside nav (except lang-toggle which stays open)
   navLinks.querySelectorAll('a').forEach(function (link) {
-    link.addEventListener('click', function () {
-      hamburger.classList.remove('active');
-      navLinks.classList.remove('open');
-      document.body.style.overflow = '';
-    });
+    link.addEventListener('click', closeMenu);
+  });
+
+  // Close menu when tapping the overlay background (not the nav items themselves)
+  navLinks.addEventListener('click', function (e) {
+    if (e.target === navLinks) closeMenu();
   });
 }
 
