@@ -25,6 +25,7 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Fixed
 
+- **VIP user has no access to Schedina Intelligente** (#40) — Race condition in `dashboard.js`: `loadSchedule()` ran before `loadProfile()` completed, so `profile` was still `null` → tier defaulted to `'free'` → showed upgrade prompt. Fix: `await loadProfile()` before calling `loadSchedule()`.
 - **Homepage league switch: stale track record stats** — Win Rate, W-L, Quota Media, ROI and other stat elements were not resetting when switching to a league with no settled tips. Added `resetTrackRecordUI()` that clears all stat DOM elements to default "no data" state before populating with new league data.
 
 ### Fixed — Code Review: 75 issues (4 CRITICAL, 20 HIGH, 32 MEDIUM, 16 LOW)
