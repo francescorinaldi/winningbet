@@ -4,6 +4,12 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **Bookmaker Consigliati section** — New dedicated section between FAQ and Footer showcasing 5 ADM-licensed bookmakers (bet365, Snai, Sisal, Goldbet, Betflag) with direct links to their official Italian domains, responsive grid layout (5→3→2→1 columns), and ADM license badges
+- **Clickable bookmaker links in FAQ** — FAQ answer about recommended bookmakers now includes clickable links to each bookmaker's website (uses `data-i18n-html` for HTML rendering)
+- **i18n translations for bookmaker section** — Full Italian and English translation keys for the new bookmaker section (`bookmakers.tag`, `bookmakers.title`, `bookmakers.desc`, `bookmakers.adm`, `bookmakers.cta`, `bookmakers.disclaimer`)
+
 ### Changed
 
 - **Copilot setup steps workflow** — Updated `copilot-setup-steps.yml` triggers: added `push` and `pull_request` (scoped to workflow file path) for CI validation, moved `permissions` to job level per GitHub best practices

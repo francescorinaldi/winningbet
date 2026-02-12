@@ -156,14 +156,22 @@
         "L'abbonamento e' mensile e si rinnova automaticamente. Puoi cancellare in qualsiasi momento dalla tua area personale. Con il piano PRO hai accesso a tutti i tips giornalieri e le analisi. Con il piano VIP, oltre a tutto cio', ricevi tips esclusivi ad alta quota e accesso al canale Telegram privato.",
       'faq.q4': 'Che bookmaker consigliate?',
       'faq.a4':
-        "Consigliamo esclusivamente bookmaker con licenza ADM (ex AAMS) per operare in totale legalita' in Italia. Tra i principali: bet365, Snai, Sisal, Goldbet e Betflag. Registrandoti tramite i nostri link potrai ottenere bonus di benvenuto esclusivi.",
+        'Consigliamo esclusivamente bookmaker con licenza ADM (ex AAMS) per operare in totale legalita\' in Italia. Tra i principali: <a href="https://www.bet365.it/" target="_blank" rel="noopener noreferrer">bet365</a>, <a href="https://www.snai.it/" target="_blank" rel="noopener noreferrer">Snai</a>, <a href="https://www.sisal.it/" target="_blank" rel="noopener noreferrer">Sisal</a>, <a href="https://www.goldbet.it/" target="_blank" rel="noopener noreferrer">Goldbet</a> e <a href="https://www.betflag.it/" target="_blank" rel="noopener noreferrer">Betflag</a>. Registrandoti tramite i nostri link potrai ottenere bonus di benvenuto esclusivi.',
       'faq.q5': 'Quanto dovrei puntare su ogni tip?',
       'faq.a5':
         'Raccomandiamo di non superare mai il 2-5% del proprio bankroll per singola scommessa. I membri VIP ricevono consigli personalizzati sul bankroll management basati sul proprio budget e profilo di rischio.',
 
+      // Bookmaker
+      'bookmakers.tag': 'BOOKMAKER',
+      'bookmakers.title': 'Bookmaker <span class="text-gradient">Consigliati</span>',
+      'bookmakers.desc':
+        "Solo operatori con licenza ADM per scommettere in sicurezza e legalita' in Italia.",
+      'bookmakers.adm': 'Licenza ADM',
+      'bookmakers.cta': 'Visita il Sito',
+      'bookmakers.disclaimer':
+        '18+ | Gioca responsabilmente. I link ai bookmaker presenti su questo sito sono verso operatori con regolare licenza ADM.',
+
       // Footer
-      'footer.desc':
-        'Pronostici calcio premium powered by AI. Algoritmi proprietari, analisi tecnico-tattiche e dati in tempo reale per darti il vantaggio che fa la differenza.',
       'footer.nav': 'Navigazione',
       'footer.nav.tips': 'Tips del Giorno',
       'footer.nav.track': 'Track Record',
@@ -330,10 +338,19 @@
         'The subscription is monthly and renews automatically. You can cancel at any time from your account. The PRO plan gives you access to all daily tips and analysis. With the VIP plan, you also receive exclusive high-odds tips and access to the private Telegram channel.',
       'faq.q4': 'Which bookmakers do you recommend?',
       'faq.a4':
-        'We exclusively recommend bookmakers licensed by ADM (formerly AAMS) for legal operation in Italy. Top picks include bet365, Snai, Sisal, Goldbet and Betflag. By signing up through our links, you can access exclusive welcome bonuses.',
+        'We exclusively recommend bookmakers licensed by ADM (formerly AAMS) for legal operation in Italy. Top picks include <a href="https://www.bet365.it/" target="_blank" rel="noopener noreferrer">bet365</a>, <a href="https://www.snai.it/" target="_blank" rel="noopener noreferrer">Snai</a>, <a href="https://www.sisal.it/" target="_blank" rel="noopener noreferrer">Sisal</a>, <a href="https://www.goldbet.it/" target="_blank" rel="noopener noreferrer">Goldbet</a> and <a href="https://www.betflag.it/" target="_blank" rel="noopener noreferrer">Betflag</a>. By signing up through our links, you can access exclusive welcome bonuses.',
       'faq.q5': 'How much should I stake on each tip?',
       'faq.a5':
         'We recommend never exceeding 2-5% of your bankroll per single bet. VIP members receive personalized bankroll management advice based on their budget and risk profile.',
+
+      // Bookmaker
+      'bookmakers.tag': 'BOOKMAKERS',
+      'bookmakers.title': 'Recommended <span class="text-gradient">Bookmakers</span>',
+      'bookmakers.desc': 'Only ADM-licensed operators for safe and legal betting in Italy.',
+      'bookmakers.adm': 'ADM Licensed',
+      'bookmakers.cta': 'Visit Site',
+      'bookmakers.disclaimer':
+        '18+ | Please gamble responsibly. Bookmaker links on this site are to operators with a valid ADM license.',
 
       // Footer
       'footer.desc':

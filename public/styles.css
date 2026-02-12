@@ -1639,6 +1639,86 @@ img {
   line-height: 1.7;
 }
 
+.faq-answer a {
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.faq-answer a:hover {
+  color: var(--gold-light);
+}
+
+/* ============================================
+   BOOKMAKER CONSIGLIATI
+   ============================================ */
+.bookmakers-section {
+  position: relative;
+  z-index: 2;
+  padding: 100px 0;
+  background: var(--bg-primary);
+}
+
+.bookmakers-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+  max-width: 900px;
+  margin: 0 auto 40px;
+}
+
+.bookmaker-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px 16px;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bookmaker-card:hover {
+  border-color: var(--border-gold);
+  box-shadow: var(--shadow-gold);
+  transform: translateY(-4px);
+}
+
+.bookmaker-name {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bookmaker-adm {
+  font-size: 0.7rem;
+  color: var(--green);
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  background: var(--green-glow);
+  border-radius: 100px;
+}
+
+.bookmaker-cta {
+  margin-top: auto;
+  width: 100%;
+}
+
+.bookmakers-disclaimer {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
 /* ============================================
    FOOTER
    ============================================ */
@@ -1845,6 +1925,7 @@ img {
    <= 1024px (Tablet)
    - Pricing grid: da 3 colonne a 1 colonna centrata
    - Stats grid: da 4 colonne a 2x2
+   - Bookmaker grid: da 5 colonne a 3
    - PRO card perde il transform:scale(1.05)
 
    <= 768px (Mobile)
@@ -1853,11 +1934,13 @@ img {
    - CTA hero: da riga a colonna
    - Tips/footer grid: single column
    - Result item: wrap con match name su riga intera
+   - Bookmaker grid: da 3 colonne a 2
 
    <= 480px (Small mobile)
    - Hero stats: da orizzontale a verticale
    - Filter buttons: wrap su piu' righe
    - Footer: single column, copyright centrato
+   - Bookmaker grid: da 2 colonne a 1
    ============================================ */
 @media (max-width: 1024px) {
   .pricing-grid {
@@ -1873,6 +1956,9 @@ img {
   }
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .bookmakers-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -1975,6 +2061,10 @@ img {
   .chart {
     height: 150px;
   }
+
+  .bookmakers-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 480px) {
@@ -1994,6 +2084,12 @@ img {
 
   .telegram-card {
     padding: 40px 24px;
+  }
+
+  .bookmakers-grid {
+    grid-template-columns: 1fr;
+    max-width: 280px;
+    margin: 0 auto 40px;
   }
 
   .footer-grid {

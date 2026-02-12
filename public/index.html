@@ -501,7 +501,9 @@
             <ul class="pricing-features">
               <li class="feature-included">
                 <span class="feature-check">&#10003;</span>
-                <span data-i18n="pricing.pro.f1">1-5 tips al giorno in base al calendario sportivo</span>
+                <span data-i18n="pricing.pro.f1"
+                  >1-5 tips al giorno in base al calendario sportivo</span
+                >
               </li>
               <li class="feature-included">
                 <span class="feature-check">&#10003;</span>
@@ -684,10 +686,20 @@
               <span class="faq-icon">+</span>
             </button>
             <div class="faq-answer">
-              <p data-i18n="faq.a4">
+              <p data-i18n-html="faq.a4">
                 Consigliamo esclusivamente bookmaker con licenza ADM (ex AAMS) per operare in totale
-                legalita' in Italia. Tra i principali: bet365, Snai, Sisal, Goldbet e Betflag.
-                Registrandoti tramite i nostri link potrai ottenere bonus di benvenuto esclusivi.
+                legalita' in Italia. Tra i principali:
+                <a href="https://www.bet365.it/" target="_blank" rel="noopener noreferrer">bet365</a
+                >,
+                <a href="https://www.snai.it/" target="_blank" rel="noopener noreferrer">Snai</a>,
+                <a href="https://www.sisal.it/" target="_blank" rel="noopener noreferrer">Sisal</a>,
+                <a href="https://www.goldbet.it/" target="_blank" rel="noopener noreferrer"
+                  >Goldbet</a
+                >
+                e
+                <a href="https://www.betflag.it/" target="_blank" rel="noopener noreferrer"
+                  >Betflag</a
+                >. Registrandoti tramite i nostri link potrai ottenere bonus di benvenuto esclusivi.
               </p>
             </div>
           </div>
@@ -708,7 +720,97 @@
       </div>
     </section>
 
-    <!-- 10. FOOTER
+    <!-- 10. BOOKMAKER CONSIGLIATI
+         Sezione dedicata ai bookmaker ADM consigliati con link diretti.
+         Grid responsive: 5 colonne desktop, 2-3 tablet, 1 mobile.
+         Ogni card contiene nome, badge ADM e CTA con link al sito ufficiale. -->
+    <section class="bookmakers-section" id="bookmakers">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag" data-i18n="bookmakers.tag">BOOKMAKER</span>
+          <h2 class="section-title" data-i18n-html="bookmakers.title">
+            Bookmaker <span class="text-gradient">Consigliati</span>
+          </h2>
+          <p class="section-desc" data-i18n="bookmakers.desc">
+            Solo operatori con licenza ADM per scommettere in sicurezza e legalita' in Italia.
+          </p>
+        </div>
+
+        <div class="bookmakers-grid">
+          <a
+            href="https://www.bet365.it/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="bookmaker-card"
+          >
+            <span class="bookmaker-name">bet365</span>
+            <span class="bookmaker-adm" data-i18n="bookmakers.adm">Licenza ADM</span>
+            <span class="bookmaker-cta btn btn-gold btn-sm" data-i18n="bookmakers.cta"
+              >Visita il Sito</span
+            >
+          </a>
+
+          <a
+            href="https://www.snai.it/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="bookmaker-card"
+          >
+            <span class="bookmaker-name">Snai</span>
+            <span class="bookmaker-adm" data-i18n="bookmakers.adm">Licenza ADM</span>
+            <span class="bookmaker-cta btn btn-gold btn-sm" data-i18n="bookmakers.cta"
+              >Visita il Sito</span
+            >
+          </a>
+
+          <a
+            href="https://www.sisal.it/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="bookmaker-card"
+          >
+            <span class="bookmaker-name">Sisal</span>
+            <span class="bookmaker-adm" data-i18n="bookmakers.adm">Licenza ADM</span>
+            <span class="bookmaker-cta btn btn-gold btn-sm" data-i18n="bookmakers.cta"
+              >Visita il Sito</span
+            >
+          </a>
+
+          <a
+            href="https://www.goldbet.it/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="bookmaker-card"
+          >
+            <span class="bookmaker-name">Goldbet</span>
+            <span class="bookmaker-adm" data-i18n="bookmakers.adm">Licenza ADM</span>
+            <span class="bookmaker-cta btn btn-gold btn-sm" data-i18n="bookmakers.cta"
+              >Visita il Sito</span
+            >
+          </a>
+
+          <a
+            href="https://www.betflag.it/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="bookmaker-card"
+          >
+            <span class="bookmaker-name">Betflag</span>
+            <span class="bookmaker-adm" data-i18n="bookmakers.adm">Licenza ADM</span>
+            <span class="bookmaker-cta btn btn-gold btn-sm" data-i18n="bookmakers.cta"
+              >Visita il Sito</span
+            >
+          </a>
+        </div>
+
+        <p class="bookmakers-disclaimer" data-i18n="bookmakers.disclaimer">
+          18+ | Gioca responsabilmente. I link ai bookmaker presenti su questo sito sono verso
+          operatori con regolare licenza ADM.
+        </p>
+      </div>
+    </section>
+
+    <!-- 11. FOOTER
          Contiene: brand, link navigazione, link legali, social.
          .footer-disclaimer: disclaimer gambling responsabile con numero verde.
          .footer-age: badge 18+ e riferimento ADM per compliance italiana. -->
