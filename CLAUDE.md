@@ -54,6 +54,30 @@ eslint.config.mjs       → ESLint flat config
 .prettierrc             → Prettier config
 vercel.json             → Deployment config + caching headers
 CHANGELOG.md            → All changes (always update)
+.github/copilot-instructions.md  → Repo-wide Copilot instructions
+.github/instructions/            → File-type-specific Copilot instructions (JS, CSS, SQL)
+.github/workflows/copilot-setup-steps.yml → Copilot coding agent environment setup
+.github/agents/                  → 5 Copilot custom agents (PM, Dev, Planner, Implementer, Reviewer)
+```
+
+## Copilot Agent Team
+
+Five custom agents using the "teammates" paradigm — peer-to-peer communication, no hub-and-spoke bottleneck.
+
+| Agent | Role | Entry Point |
+|-------|------|-------------|
+| **PM** | Project Manager — triages issues, orchestrates team | GitHub issues |
+| **WinningBet-Dev** | Fleet Orchestrator — parallel dispatch, local dev | VS Code |
+| **Planner** | Research & architecture — read-only investigation | Invoked by PM/Dev |
+| **Implementer** | Code & build — writes code, runs verification | Invoked by Planner |
+| **Reviewer** | Quality & conventions — drives fixes directly | Invoked by Implementer |
+
+Communication pattern:
+```
+PM / WinningBet-Dev → kicks off first teammate
+Planner ↔ Reviewer (validate plans)
+Implementer ↔ Planner (ask questions)
+Implementer ↔ Reviewer (request checks, iterate fixes)
 ```
 
 ## Key Commands

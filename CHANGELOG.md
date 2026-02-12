@@ -6,6 +6,17 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Added
 
+- **GitHub Copilot Agent Team** — 5-agent "teammates" system for GitHub Copilot coding agent and VS Code custom agents:
+  - `PM` — Project Manager, triages GitHub issues, orchestrates the team
+  - `WinningBet-Dev` — Fleet Orchestrator for interactive VS Code development
+  - `Planner` — Research & architecture specialist (read-only)
+  - `Implementer` — Code & build specialist with verification
+  - `Reviewer` — Quality & conventions enforcer that drives fixes
+  - Peer-to-peer communication — no hub-and-spoke bottleneck
+- **`.github/copilot-instructions.md`** — Repo-wide Copilot instructions adapted from CLAUDE.md
+- **`.github/instructions/`** — File-type-specific instructions (JavaScript, CSS, SQL) with `applyTo` globs
+- **`.github/workflows/copilot-setup-steps.yml`** — Environment setup for GitHub Copilot coding agent
+
 - **`/fr3-update-winning-bets` — Master pipeline orchestrator** — Replaces `/fr3-daily-tips` with a smarter 4-phase pipeline: Settle → Generate → Schedine → Summary. Supports flags: `--force`, `--dry-run`, `--no-send`, `--skip-settle`, `--skip-generate`, `--skip-schedine`. Uses 2-hour buffer for in-progress match detection.
 
 ### Changed
