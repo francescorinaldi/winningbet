@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- **Copilot setup steps workflow** — Updated `copilot-setup-steps.yml` triggers: added `push` and `pull_request` (scoped to workflow file path) for CI validation, moved `permissions` to job level per GitHub best practices
+
 ### Added
 
 - **GitHub Copilot Agent Team** — 5-agent "teammates" system for GitHub Copilot coding agent and VS Code custom agents:
