@@ -202,8 +202,8 @@
       'nav.mytips': 'My Tips',
 
       // Hero
-      'hero.title1': "Don't bet.",
-      'hero.title2': 'Invest.',
+      'hero.title1': "Don't gamble.",
+      'hero.title2': 'Just Invest.',
       'hero.subtitle':
         'Football predictions powered by data, algorithms and tactical analysis.<br>Verified and transparent track record.',
       'hero.winrate': 'Win Rate',
@@ -265,11 +265,11 @@
       'stats.winrate': 'Win Rate',
       'stats.winloss': 'Won - Lost',
       'stats.avgodds': 'Avg Odds',
-      'stats.avgodds.explain': 'Average of real odds (Bet365) from winning predictions',
+      'stats.avgodds.explain': 'Average odds (Bet365) across winning predictions',
       'stats.matches': 'Matches Analyzed',
       'stats.datapoints': 'Data Points',
       'stats.roi': 'ROI',
-      'stats.roi.explain': 'Return on investment calculated across all settled tips',
+      'stats.roi.explain': 'Return on investment across all settled tips',
       'stats.results.title': 'Our Results',
       'stats.results.loading': 'Loading results...',
       'stats.results.empty': 'No results available',
@@ -321,16 +321,16 @@
       'faq.title': 'Frequently Asked <span class="text-gradient">Questions</span>',
       'faq.q1': 'How do your predictions work?',
       'faq.a1':
-        'Our predictions are based on a mix of advanced statistical analysis, team form study, tactical analysis and market odds monitoring. Each tip is validated by a proprietary model that evaluates the expected value of the bet against the odds offered by bookmakers.',
+        'Our predictions are based on a mix of advanced statistical analysis, team form analysis, tactical breakdowns and market odds monitoring. Each tip is validated by a proprietary model that evaluates the expected value of the bet against the odds offered by bookmakers.',
       'faq.q2': 'Can I really make money from betting?',
       'faq.a2':
-        'Sports betting always involves risk. We provide data-driven analysis and predictions, but no result is guaranteed. Our track record shows positive ROI over the long term, but it is essential to bet responsibly and only with money you can afford to lose.',
+        "Sports betting always involves risk. We provide data-driven analysis and predictions, but no result is guaranteed. Our track record shows positive ROI over the long term, but it's essential to bet responsibly and only with money you can afford to lose.",
       'faq.q3': 'How does the subscription work?',
       'faq.a3':
         'The subscription is monthly and renews automatically. You can cancel at any time from your account. The PRO plan gives you access to all daily tips and analysis. With the VIP plan, you also receive exclusive high-odds tips and access to the private Telegram channel.',
       'faq.q4': 'Which bookmakers do you recommend?',
       'faq.a4':
-        'We exclusively recommend bookmakers licensed by ADM (formerly AAMS) for legal operation in Italy. Among the main ones: bet365, Snai, Sisal, Goldbet and Betflag. By signing up through our links you can get exclusive welcome bonuses.',
+        'We exclusively recommend bookmakers licensed by ADM (formerly AAMS) for legal operation in Italy. Top picks include bet365, Snai, Sisal, Goldbet and Betflag. By signing up through our links, you can access exclusive welcome bonuses.',
       'faq.q5': 'How much should I stake on each tip?',
       'faq.a5':
         'We recommend never exceeding 2-5% of your bankroll per single bet. VIP members receive personalized bankroll management advice based on their budget and risk profile.',
@@ -356,7 +356,7 @@
 
       // Cookie banner
       'cookie.text':
-        'We use technical cookies for the operation of the site. For more information see our',
+        'We use technical cookies to keep the site running. For more information, see our',
       'cookie.link': 'Cookie Policy',
       'cookie.reject': 'Reject',
       'cookie.accept': 'Accept',

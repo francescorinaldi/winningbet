@@ -21,6 +21,8 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Changed
 
+- **English hero title updated** — Changed "Don't bet. Invest." to "Don't gamble. Just Invest." for a stronger, more natural tagline.
+- **English translation fluency polish** — Improved naturalness across several EN strings: FAQ answers (contractions, phrasing), stats explanations, and cookie banner text.
 - **Default league is now Global** (#36) — Homepage loads with "Tutte" (all leagues) selected instead of Serie A. Both the JS state and the HTML active class are set to `all`.
 - **Language toggle shows flag only** (#37) — Removed the "IT"/"EN" text label from the lang toggle on all pages (index, dashboard, auth). Now shows only the flag emoji for a cleaner look.
 - **"Dati Elaborati" multiplier increased** (#37) — Data points per match increased from 12 to 147 (covers all API data: form, H2H, standings, odds across multiple markets, tactical stats, injury/lineup data). Numbers now reach the thousands for realistic AI-scale impression.
