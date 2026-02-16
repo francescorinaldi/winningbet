@@ -4,9 +4,39 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **Performance Analytics skill** (`/fr3-performance-analytics`) — Deep track record analysis: hit rate, ROI, avg odds, per-league/type/confidence/odds-band breakdowns, rolling trends, bias detection. Generates actionable recommendations as JSONB. Stores snapshots in `performance_snapshots` table. Flags: `--store`, `--period N`.
+  - Migration `012_performance_snapshots.sql` — New table with UNIQUE on (snapshot_date, period_days), JSONB columns for breakdowns and recommendations
+- **Strategy Optimizer skill** (`/fr3-strategy-optimizer`) — Prescriptive strategy engine: analyzes winning vs losing patterns, finds optimal parameter mix, generates concrete `strategy_directives` with HIGH/MEDIUM/LOW impact and 30-day auto-expiry. 9 directive types (avoid/prefer prediction types and leagues, adjust confidence/odds/edge thresholds). Flag: `--dry-run`.
+  - Migration `013_strategy_directives.sql` — New table with partial indexes on is_active and expires_at
+- **Pre-Match Research skill** (`/fr3-pre-match-research`) — Dedicated deep research engine running BEFORE tip generation. Per match: 7-8 web searches gathering lineups, injuries, xG, referee stats, weather, motivation, market intelligence. Caches in `match_research` table with completeness scoring (0-100). Flags: `[league-slug]`, `--force`.
+  - Migration `014_match_research.sql` — New table with UNIQUE on (match_id, league), partial indexes on fresh status
+
 ### Changed
 
 - **Copilot setup steps workflow** — Updated `copilot-setup-steps.yml` triggers: added `push` and `pull_request` (scoped to workflow file path) for CI validation, moved `permissions` to job level per GitHub best practices
+- **`/fr3-generate-tips` — V4 Comprehensive Overhaul**
+  - **Minimum odds raised**: 1.20 → 1.50 (exception: double chance 1X/X2 at 1.30)
+  - **Minimum EV 8%**: `EV = predicted_probability × odds - 1`, portfolio avg must exceed 10%
+  - **Poisson goal distribution** (mandatory): scoreline grid P(home=i, away=j) for 0-5, derives all market probabilities. Analysts MUST start from Poisson base rates.
+  - **ELO-lite power rating**: `team_elo = 1500 + (ppg - league_avg_ppg) × 200 + gd_per_game × 50`, flags divergence > 15pp from Poisson
+  - **Exponential decay momentum**: 0.95^n weighting over last 6 matches with RISING/FALLING/STABLE classification (was simple last-3 > last-5)
+  - **Pre-match research cache**: analysts check `match_research` table first; fresh data (< 6h, >= 70% completeness) eliminates web searches
+  - **Web research restructured**: 5 → 7 targeted searches (added xG projections from Understat/FBref, dedicated referee stats, separated tactical and statistical previews)
+  - **Pre-decision checklist**: 7 mandatory checks before generating any tip (quantitative data? Poisson base? draw considered? bookmaker info edge? robust at lower odds? strategy directives? data quality?)
+  - **Value-hunting EV instruction**: 65% @ 2.00 (EV +30%) is ALWAYS better than 80% @ 1.25 (EV 0%)
+  - **Shared context expanded**: 3 → 7 queries (added per-league xGoals accuracy, lessons from recent losses, strategy directives, performance snapshot recommendations)
+  - **Reviewer: 3 new checks**: ROI projection (reject EV<8%, portfolio avg>10%), odds distribution (reject >50% under 1.50), historical pattern cross-reference (check recent losing patterns via SQL)
+  - **Reasoning format updated**: added POISSON_BASE_RATES section, EV in EDGE_ANALYSIS, strategy directives compliance check, expanded QUALITY_GATE with EV and odds thresholds
+- **`/fr3-settle-tips` — Backfill capability**
+  - Added `--backfill` flag: generates retrospectives for already-settled tips missing them
+  - Uses LEFT JOIN to find tips without retrospectives, skips web search for scores (already in DB)
+- **`/fr3-update-winning-bets` — Expanded to 7-phase pipeline**
+  - Was: Settle → Generate → Schedine → Summary (4 phases)
+  - Now: Analytics → Optimize → Settle → Research → Generate → Schedine → Summary (7 phases)
+  - New flags: `--skip-analytics`, `--skip-optimize`, `--skip-research`
+  - Smart pre-checks: Analytics (snapshot today + min 10 tips), Optimize (directives <7 days + min 20 tips), Research (fresh research + upcoming matches)
 
 ### Added
 

@@ -20,7 +20,8 @@ You are the **Team Lead**. You orchestrate a team of specialist analysts (one pe
 - **Leagues**: serie-a, champions-league, la-liga, premier-league, ligue-1, bundesliga, eredivisie
 - **Valid predictions**: 1, X, 2, 1X, X2, 12, Over 2.5, Under 2.5, Over 1.5, Under 3.5, Goal, No Goal, 1 + Over 1.5, 2 + Over 1.5
 - **Confidence range**: 60–80 (strict; max 80 until 100+ settled tips, then up to 90)
-- **Odds range**: 1.20–5.00
+- **Odds range**: 1.50–5.00 (exception: double chance 1X/X2 at 1.30 minimum)
+- **Minimum EV per tip**: +8% (EV = predicted_probability × odds - 1)
 
 ## Parse Arguments
 
@@ -86,7 +87,55 @@ WHERE is_active = true AND (expires_at IS NULL OR expires_at > NOW())
 ORDER BY confidence_level DESC, sample_size DESC LIMIT 20;
 ```
 
-Format all three into a `SHARED_CONTEXT` block:
+**Query 4 — Per-league prediction accuracy (xGoals error from retrospectives):**
+
+```sql
+SELECT t.league,
+  ROUND(AVG(ABS(tr.actual_goals_total - (t.predicted_probability / 20.0))), 2) as avg_goal_error,
+  ROUND(AVG(CASE WHEN t.status = 'won' THEN tr.edge_at_prediction ELSE NULL END), 2) as avg_winning_edge,
+  COUNT(*) as sample
+FROM tip_retrospectives tr
+JOIN tips t ON t.id = tr.tip_id
+WHERE t.status IN ('won', 'lost')
+GROUP BY t.league
+HAVING COUNT(*) >= 5;
+```
+
+**Query 5 — Top 10 lessons from recent losses:**
+
+```sql
+SELECT t.league, t.prediction, tr.error_category, tr.lesson_learned, tr.what_we_missed
+FROM tip_retrospectives tr
+JOIN tips t ON t.id = tr.tip_id
+WHERE t.status = 'lost'
+  AND tr.lesson_learned IS NOT NULL
+  AND tr.created_at > NOW() - INTERVAL '60 days'
+ORDER BY tr.created_at DESC
+LIMIT 10;
+```
+
+**Query 6 — Active strategy directives (from /fr3-strategy-optimizer):**
+
+```sql
+SELECT directive_type, directive_text, parameters, impact_estimate
+FROM strategy_directives
+WHERE is_active = true AND (expires_at IS NULL OR expires_at > NOW())
+ORDER BY
+  CASE impact_estimate WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 ELSE 3 END,
+  created_at DESC
+LIMIT 15;
+```
+
+**Query 7 — Latest performance snapshot recommendations (from /fr3-performance-analytics):**
+
+```sql
+SELECT recommendations, snapshot_date, hit_rate, roi_flat, avg_odds
+FROM performance_snapshots
+ORDER BY created_at DESC
+LIMIT 1;
+```
+
+Format all queries into a `SHARED_CONTEXT` block:
 
 ```
 === SHARED CONTEXT (pre-computed by Team Lead) ===
@@ -106,6 +155,21 @@ ACTIVE INSIGHTS:
   [bias_detected] global: Home win ("1") predicted too often, only 55% win rate (N=11)
   [calibration_drift] 70-79 band: 17pp gap between claimed and actual
   [weak_spot] serie-a: "1" predictions at 50% win rate (N=8)
+  ...
+
+LEAGUE PREDICTION ACCURACY:
+  serie-a: avg goal error ±0.8, avg winning edge +12pp (N=15)
+  premier-league: avg goal error ±1.2, avg winning edge +9pp (N=10)
+  ...
+
+LESSONS FROM RECENT LOSSES (last 60 days):
+  1. [serie-a, 1, draw_blindness] "Mid-table teams draw more than expected — use 1X instead of 1 when both teams are 8th-14th"
+  2. [premier-league, Over 2.5, goal_pattern_miss] "Missed that both teams have new defensive managers — form stats lagged tactical shift"
+  ...
+
+STRATEGY DIRECTIVES (from /fr3-strategy-optimizer, if available):
+  [HIGH] avoid_prediction_type: "1" in serie-a — only 50% hit rate, -2.1 units
+  [MEDIUM] prefer_odds_range: 1.60-2.50 — best ROI band historically
   ...
 ```
 
@@ -302,7 +366,8 @@ Your job: fetch data for {LEAGUE_NAME}, research each match via web search, anal
 - **League slug**: {LEAGUE_SLUG}
 - **Valid predictions**: 1, X, 2, 1X, X2, 12, Over 2.5, Under 2.5, Over 1.5, Under 3.5, Goal, No Goal, 1 + Over 1.5, 2 + Over 1.5
 - **Confidence range**: 60–80 (max 80 until we have 100+ settled tips)
-- **Odds range**: 1.20–5.00
+- **Odds range**: 1.50–5.00 (exception: double chance 1X/X2 at 1.30 minimum)
+- **Minimum EV per tip**: +8% (EV = predicted_probability × odds - 1)
 
 ## League-Specific Intelligence
 
@@ -331,41 +396,67 @@ If 0 matches returned, report "No upcoming matches for {LEAGUE_NAME}" via SendMe
 
 For EACH match individually, perform ALL of the following steps before moving to the next match. Analyzing each match in isolation produces more accurate predictions.
 
-#### 2a. Targeted web research (per match — 5 searches)
+#### 2a. Check pre-match research cache
+
+**Before doing web searches**, check if fresh research exists from `/fr3-pre-match-research`:
+
+```sql
+SELECT * FROM match_research
+WHERE match_id = '{match_id}'
+  AND status = 'fresh'
+  AND research_completeness >= 70
+  AND created_at > NOW() - INTERVAL '6 hours';
+```
+
+If fresh research found → use it directly. **Skip web searches entirely** for data categories that have content in the research cache (lineups, injuries, tactical_preview, xg_data, referee_data, weather, motivation, market_intelligence). Only search for gaps.
+
+If no fresh research → proceed with full web searches below.
+
+#### 2b. Targeted web research (per match — 7 searches)
 
 Use WebSearch to find specific information for THIS matchup:
 
-**Search 1** (match preview):
-- "{home_team} vs {away_team} preview prediction {date}"
-- Extract: expert predictions, key narratives, tactical previews
+**Search 1** (xG projections — NEW, highest priority):
+- "{home_team} vs {away_team} xG expected goals prediction {date}"
+- Also try: "{home_team} {away_team} understat fbref xg"
+- Extract: pre-match xG projections, shot-based models, FiveThirtyEight/Understat/FBref ratings
 
 **Search 2** (injuries/lineup):
-- "{home_team} {away_team} injuries suspensions confirmed lineup {date}"
-- Extract: confirmed absences, expected lineups, late fitness tests
+- "{home_team} {away_team} injuries suspensions confirmed lineup transfermarkt {date}"
+- Extract: confirmed absences, expected lineups, late fitness tests, return dates
 
-**Search 3** (tactical/form):
-- "{home_team} OR {away_team} recent form analysis tactics last matches"
-- Extract: tactical setup, formation, playing style, form trajectory
+**Search 3** (tactical preview):
+- "{home_team} vs {away_team} tactical preview formation analysis {date}"
+- Extract: expected formations, pressing intensity, key tactical matchups, recent tactical changes
 
-**Search 4** (context):
-- "{home_team} vs {away_team} head to head referee history"
-- Extract: H2H psychological edge, referee tendencies, venue factors
+**Search 4** (statistical preview):
+- "{home_team} vs {away_team} stats preview shots conversion set pieces"
+- Also try: whoscored, soccerstats, footystats
+- Extract: shot conversion rates, set piece effectiveness, PPDA, defensive actions
 
-**Search 5** (weather — NEW):
+**Search 5** (referee stats — NEW, dedicated):
+- "{referee_name OR home_team vs away_team} referee stats cards penalties"
+- Extract: avg fouls/cards per game, penalty rate, home bias, historical impact on similar matches
+
+**Search 6** (motivation/context):
+- "{home_team} {away_team} season objectives manager pressure derby {date}"
+- Extract: league position implications, cup fatigue, derby factor, manager job security, dead rubber risk
+
+**Search 7** (weather):
 - "{home_team} stadium weather {date}"
 - Extract: temperature, precipitation, wind. Relevant for O/U and BTTS markets.
 
-Look for:
+**Data extraction priorities:**
 - Injuries and suspensions — which key players are OUT and their specific contribution
 - Expected lineups — any rotation, resting players
-- Key player availability — returns from injury
+- xG projections — at least ONE quantitative source
 - Motivation context — title race, relegation fight, must-win, nothing to play for
 - Fixture congestion — midweek European games, cup matches, travel fatigue
-- Tactical matchup — how each team's style interacts
-- Referee — if known, cards per game, penalty tendencies
+- Tactical matchup — formations, pressing style, how styles interact
+- Referee — cards per game, penalty tendencies, home bias
 - Weather — rain/wind affects aerial play and goal scoring
 
-#### 2b. Compute derived statistics (per match)
+#### 2c. Compute derived statistics (per match)
 
 From the league data already fetched, extract for THIS match:
 
@@ -381,7 +472,7 @@ From the league data already fetched, extract for THIS match:
 - BTTS%: % of those matches where BOTH teams scored
 - Clean sheet%: % with 0 goals conceded
 - Current streak (winning/drawing/losing run)
-- **Momentum score**: Weight last 3 matches 2x more than matches 4-5 (NEW — more responsive to recent trends)
+- **Form momentum (exponential decay)**: Apply 0.95^n weighting over last 6 matches (n=0 for most recent). Classify as RISING (last 3 better than 4-6), FALLING (last 3 worse), or STABLE.
 
 **Expected goals (improved xGoals model):**
 ```
@@ -406,6 +497,40 @@ else:
   xGoals = homeExpGoals + awayExpGoals
 ```
 
+**Poisson goal distribution (MANDATORY base rate):**
+
+Using the xGoals values computed above (homeExpGoals and awayExpGoals), compute the Poisson probability for each scoreline from 0-0 to 5-5:
+
+```
+P(home=i, away=j) = (e^(-homeExpGoals) * homeExpGoals^i / i!) * (e^(-awayExpGoals) * awayExpGoals^j / j!)
+```
+
+From the scoreline grid, derive:
+- P(home_win) = sum of all P(i,j) where i > j
+- P(draw) = sum of all P(i,j) where i = j
+- P(away_win) = sum of all P(i,j) where i < j
+- P(over_2.5) = 1 - sum of all P(i,j) where i+j <= 2
+- P(btts) = 1 - P(home=0,any) - P(any,away=0) + P(0,0)
+
+These Poisson base rates are your STARTING POINT. You then adjust +/- for qualitative factors (injuries, motivation, tactical matchup, weather) with a maximum of +/-10 percentage points per factor and +/-20pp total adjustment from the Poisson base.
+
+**ELO-lite power rating:**
+
+Quick independent cross-check:
+
+```
+team_elo = 1500 + (ppg - league_avg_ppg) * 200 + gd_per_game * 50
+```
+
+Where ppg = points per game, gd_per_game = goal difference per game.
+
+```
+elo_diff = home_elo - away_elo + 50  (50 = home advantage)
+P(home_elo) = 1 / (1 + 10^(-elo_diff/400))
+```
+
+If ELO probability diverges from Poisson probability by more than 15pp for the same outcome, flag it as a conflict that needs explicit resolution in your reasoning.
+
 **From H2H data (match.h2h):**
 - Home team wins, away team wins, draws in last 10 meetings
 - Average goals per H2H match
@@ -416,13 +541,27 @@ else:
 - Implied probabilities: (1/odds) * 100 for home, draw, away, O/U 2.5, BTTS
 - DO NOT look at these yet — save for the edge comparison in step 2c
 
-#### 2c. Independent probability assessment + deep reasoning (per match)
+#### 2d. Independent probability assessment + deep reasoning (per match)
 
 CRITICAL: Analyze ALL data WITHOUT looking at bookmaker odds first. Form your own view, then compare.
 
-**Step 1 — Form your own probability estimates:**
+**Step 1 — Start from Poisson base rates:**
 
-Based on standings, form, H2H, injuries, xGoals, motivation, tactical matchup, referee, weather:
+Your probability estimates MUST START from the Poisson distribution computed in step 2c. These are your baseline:
+- P(home_win) = Poisson base ± qualitative adjustments
+- P(draw) = Poisson base ± qualitative adjustments
+- P(away_win) = Poisson base ± qualitative adjustments
+
+Qualitative adjustment factors (max +/-10pp each, max +/-20pp total):
+- Injuries: +/- based on key player absence impact
+- Motivation asymmetry: +/- based on stakes difference
+- Tactical matchup: +/- based on style interaction
+- Weather/pitch: +/- for extreme conditions
+- Recent form momentum: +/- based on RISING/FALLING/STABLE
+
+Cross-check against ELO-lite: if divergence > 15pp, resolve the conflict explicitly.
+
+Based on standings, form, H2H, injuries, xGoals, Poisson, ELO-lite, motivation, tactical matchup, referee, weather:
 
 - P(home win) = ?%, P(draw) = ?%, P(away win) = ?% (must sum to ~100%)
 - P(over 2.5) = ?%, P(under 2.5) = ?%
@@ -457,20 +596,44 @@ Think through each match using ALL 10 points:
 - If calibration data shows a gap for the relevant confidence band, note it for calibration
 - If a league-specific weak spot is flagged, apply extra scrutiny
 
-Only THEN select your prediction. Choose the option with the highest edge AND highest probability of being correct.
+**Step 5 — Value-hunting (EV calculation):**
 
-#### 2d. Quality gate (per match)
+For each potential prediction, compute:
+```
+EV = (predicted_probability / 100) × odds - 1
+```
+
+**Minimum EV per tip: +0.08 (8%).** A 65% probability at odds 2.00 (EV = +30%) is ALWAYS better than 80% at odds 1.25 (EV = 0%). Hunt for VALUE, not certainty.
+
+**Step 6 — Pre-decision checklist (ALL must pass):**
+
+Before generating a tip, verify:
+- [ ] Found at least ONE quantitative data point (xG, shots, conversion rate)?
+- [ ] Started from Poisson base rate and documented adjustments?
+- [ ] Explicitly considered why this is NOT a draw (or why draw is the pick)?
+- [ ] Edge driven by information bookmaker might not have (injuries, tactical shift, motivation)?
+- [ ] Would still predict this if odds were 10% lower?
+- [ ] EV >= +8%?
+- [ ] No HIGH-impact strategy directive contradicts this pick?
+
+If any check fails, either adjust the prediction or skip the match.
+
+Only THEN select your prediction. Choose the option with the highest EV AND genuine edge over the bookmaker.
+
+#### 2e. Quality gate (per match)
 
 SKIP the match (no tip) if ANY of these conditions apply:
 
-- No prediction type has edge > 8 percentage points over the bookmaker (raised from 5pp)
+- No prediction type has edge > 8 percentage points over the bookmaker
+- No prediction has EV >= +8% (predicted_probability × odds - 1 >= 0.08)
 - Fewer than 10 matches played by either team this season
 - No prediction reaches 62% estimated probability
 - Both teams on 3+ match losing streaks
+- Odds < 1.50 for the selected prediction (exception: double chance 1X/X2 at >= 1.30)
 
 When skipping: "SKIPPED: {home} vs {away} — {reason}"
 
-#### 2e. Generate prediction with reasoning (per match)
+#### 2f. Generate prediction with reasoning (per match)
 
 | Field | Rules |
 | ----- | ----- |
@@ -508,10 +671,16 @@ PROBABILITY_ASSESSMENT:
 - P(BTTS)=[x]%, P(NoBTTS)=[y]%
 - Bookmaker implied: P(1)=[x]%, P(X)=[y]%, P(2)=[z]%
 
+POISSON_BASE_RATES:
+- P(home_win)=[x]%, P(draw)=[y]%, P(away_win)=[z]% (from Poisson)
+- Adjustments: [+/-Xpp injuries, +/-Ypp motivation, ...]
+- ELO cross-check: P(home_elo)=[x]% — [consistent/divergent by Xpp]
+
 EDGE_ANALYSIS:
-- Best edge: [prediction type] at +[x]pp over bookmaker
-- Second edge: [prediction type] at +[x]pp
+- Best edge: [prediction type] at +[x]pp over bookmaker, EV=[+x%]
+- Second edge: [prediction type] at +[x]pp, EV=[+x%]
 - Historical context check: [addressed any relevant insights/warnings]
+- Strategy directives check: [addressed any HIGH-impact directives]
 
 KEY_FACTORS:
 1. [STRONG/MODERATE/WEAK] [factor description]
@@ -519,8 +688,8 @@ KEY_FACTORS:
 3. [STRONG/MODERATE/WEAK] [factor description]
 ...
 
-DECISION: prediction=[type], raw_probability=[x]%, calibrated_confidence=[y]%
-QUALITY_GATE: edge [x]pp > 8pp threshold → PASS
+DECISION: prediction=[type], raw_probability=[x]%, calibrated_confidence=[y]%, EV=[+x%]
+QUALITY_GATE: edge [x]pp > 8pp ✓ | EV [x]% > 8% ✓ | odds [x] >= 1.50 ✓ | pre-decision checklist PASS
 ```
 
 ### Step 3: Insert tips as DRAFT
@@ -668,7 +837,39 @@ For 3-5 randomly selected tips, WebSearch "{home} vs {away} odds {date}" to chec
 
 For each tip, check if the reasoning mentions weather. If a match is predicted Over 2.5 or Goal but reasoning doesn't mention weather, note this as a gap (not an auto-reject).
 
-### Step 10: Apply decisions
+### Step 10: ROI Projection (NEW)
+
+For each tip, calculate expected value:
+- EV = (predicted_probability / 100 × odds) - 1
+- **REJECT tips with EV < 0.08** (8% minimum)
+- Calculate portfolio average EV — must exceed 0.10 (10%)
+- If portfolio avg EV < 0.10, reject the lowest-EV tips until threshold is met
+
+### Step 11: Odds Distribution Check (NEW)
+
+Count tips by odds band:
+- Low value: odds < 1.50
+- Medium value: 1.50 - 2.50
+- High value: > 2.50
+
+If > 50% of tips have odds < 1.50, flag as "low-value portfolio" and reject the lowest-value tips (those with lowest EV among the sub-1.50 group).
+
+### Step 12: Historical Pattern Cross-Reference (NEW)
+
+For each tip, check if the same league + prediction type combination lost in the last 30 days:
+
+```sql
+SELECT league, prediction, COUNT(*) as losses
+FROM tips
+WHERE status = 'lost'
+  AND match_date > NOW() - INTERVAL '30 days'
+GROUP BY league, prediction
+HAVING COUNT(*) >= 2;
+```
+
+If a tip matches a recently-losing pattern (same league + same prediction type with 2+ losses in 30 days), require explicit justification in the reasoning. If no justification is found, REJECT or downgrade confidence by 5.
+
+### Step 13: Apply decisions
 
 For each tip, take ONE action:
 
@@ -689,7 +890,7 @@ UPDATE tips SET confidence = {new_value}, status = 'pending' WHERE id = '{id}';
 ```
 Log: "ADJUSTED {home} vs {away}: confidence {old} → {new}, reason: {reason}"
 
-### Step 11: Report completion
+### Step 14: Report completion
 
 Mark your task as completed. Send a summary to the team lead via SendMessage:
 
@@ -699,7 +900,10 @@ REVIEW COMPLETE:
 - Rejected: M tips (reasons: ...)
 - Adjusted: K tips (details: ...)
 - Avg confidence after review: XX%
-- Portfolio EV: +X.XX
+- Portfolio avg EV: +X.XX (min: +X.XX, max: +X.XX)
+- Avg odds: X.XX
+- Odds distribution: N < 1.50 | N 1.50-2.50 | N > 2.50
+- Historical pattern flags: N tips matched recent losing patterns
 - Flags: [any cross-correlation, diversity, or draw awareness flags]
 ```
 ```

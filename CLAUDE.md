@@ -43,11 +43,14 @@ public/shared.js        → Shared frontend utilities (mobile menu, particles, l
 public/script.js        → Main landing page logic (IIFE pattern)
 public/auth.js          → Authentication logic (Supabase Auth)
 public/dashboard.js     → User dashboard logic + Telegram linking
-supabase/migrations/    → Database schema migrations (10 files)
+supabase/migrations/    → Database schema migrations (14 files)
 .claude/skills/                        → Claude Code skills (project-specific)
 .claude/skills/fr3-generate-tips/      → /fr3-generate-tips (prediction engine)
 .claude/skills/fr3-generate-betting-slips/ → /fr3-generate-betting-slips (smart betting slips)
 .claude/skills/fr3-settle-tips/        → /fr3-settle-tips (settlement engine)
+.claude/skills/fr3-performance-analytics/ → /fr3-performance-analytics (track record analysis)
+.claude/skills/fr3-strategy-optimizer/ → /fr3-strategy-optimizer (prescriptive strategy engine)
+.claude/skills/fr3-pre-match-research/ → /fr3-pre-match-research (deep research engine)
 .claude/skills/fr3-update-winning-bets/ → /fr3-update-winning-bets (master pipeline orchestrator)
 ~/.claude/skills/fr3-code-review/      → /fr3-code-review (global, multi-agent code analysis)
 eslint.config.mjs       → ESLint flat config
@@ -115,14 +118,37 @@ All custom skills use the `fr3-` prefix for easy identification.
 ```bash
 /fr3-settle-tips                        # Settle all pending tips with past match dates
 /fr3-settle-tips --dry-run              # Preview without updating database
+/fr3-settle-tips --backfill             # Generate retrospectives for already-settled tips
 ```
 
 ```bash
-/fr3-update-winning-bets                # Master pipeline: settle + generate + schedine (auto)
+/fr3-performance-analytics              # Deep track record analysis (terminal report)
+/fr3-performance-analytics --store      # Analyze and store snapshot in Supabase
+/fr3-performance-analytics --period 30  # Analyze last 30 days (default: 90)
+```
+
+```bash
+/fr3-strategy-optimizer                 # Generate strategy directives from patterns
+/fr3-strategy-optimizer --dry-run       # Preview directives without storing
+```
+
+```bash
+/fr3-pre-match-research                 # Research all leagues with matches in next 48h
+/fr3-pre-match-research serie-a         # Research one league only
+/fr3-pre-match-research --force         # Re-research even if fresh data exists
+```
+
+```bash
+/fr3-update-winning-bets                # Master pipeline: analytics → optimize → settle → research → generate → schedine (auto)
 /fr3-update-winning-bets --force        # Force all phases regardless of checks
 /fr3-update-winning-bets --no-send      # Run pipeline without sending to Telegram
 /fr3-update-winning-bets --dry-run      # Preview what would happen without executing
 /fr3-update-winning-bets --skip-settle  # Skip settlement phase
+/fr3-update-winning-bets --skip-generate # Skip tip generation phase
+/fr3-update-winning-bets --skip-schedine # Skip betting slips phase
+/fr3-update-winning-bets --skip-analytics # Skip performance analytics phase
+/fr3-update-winning-bets --skip-optimize  # Skip strategy optimization phase
+/fr3-update-winning-bets --skip-research  # Skip pre-match research phase
 ```
 
 **Code Review (global — works in any repo):**

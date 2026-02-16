@@ -1,7 +1,7 @@
 ---
 name: fr3-settle-tips
 description: Settle pending tips by searching real match results online. Updates tip status (won/lost/void) and scores in Supabase. Generates post-mortem retrospectives for each settled tip and detects aggregate patterns. Use when user asks to settle, update results, verify tips, or check finished matches.
-argument-hint: [--dry-run]
+argument-hint: [--dry-run] [--backfill]
 user-invocable: true
 allowed-tools: WebSearch, mcp__plugin_supabase_supabase__execute_sql
 ---
@@ -22,8 +22,39 @@ From `$ARGUMENTS`:
 
 - No args → settle all pending tips with past match dates
 - `--dry-run` → show what would change but don't update the database
+- `--backfill` → generate retrospectives for already-settled tips that have no `tip_retrospectives` row (skip steps 1-4, jump to 4b)
 
 ## Procedure
+
+### 0. Backfill mode (only if --backfill flag)
+
+If `--backfill` is passed, skip steps 1-4 entirely. Instead:
+
+**Fetch already-settled tips WITHOUT retrospectives:**
+
+```sql
+SELECT t.id, t.home_team, t.away_team, t.prediction, t.odds, t.confidence,
+       t.match_date, t.league, t.reasoning, t.predicted_probability,
+       t.status, t.result
+FROM tips t
+LEFT JOIN tip_retrospectives tr ON tr.tip_id = t.id
+WHERE t.status IN ('won', 'lost')
+  AND t.result IS NOT NULL
+  AND tr.id IS NULL
+ORDER BY t.match_date ASC;
+```
+
+If 0 rows → report "All settled tips already have retrospectives — nothing to backfill." and stop.
+
+For each tip, the score is already known from `t.result` (e.g., "2-1"). **Do NOT search the web for scores** — they're already in the database.
+
+Parse the `result` field to extract `homeGoals` and `awayGoals` (split on "-"), then jump directly to **Step 4b** (per-tip post-mortem) for each tip, using the existing `status` (won/lost) and `result`.
+
+After all retrospectives are generated, proceed to **Step 4c** (aggregate pattern detection) and **Step 5** (summary).
+
+The summary should note: "BACKFILL MODE: Generated N retrospectives for previously-settled tips."
+
+---
 
 ### 1. Fetch all pending tips
 
