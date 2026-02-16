@@ -3,11 +3,16 @@
 
 CREATE TABLE IF NOT EXISTS strategy_directives (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    directive_type TEXT NOT NULL,
+    directive_type TEXT NOT NULL CHECK (directive_type IN (
+        'avoid_prediction_type', 'prefer_prediction_type',
+        'avoid_league', 'prefer_league',
+        'adjust_confidence_band', 'adjust_odds_range',
+        'adjust_edge_threshold', 'general_strategy'
+    )),
     directive_text TEXT NOT NULL,
     parameters JSONB,
     evidence JSONB NOT NULL DEFAULT '{}'::jsonb,
-    impact_estimate TEXT CHECK (impact_estimate IN ('HIGH', 'MEDIUM', 'LOW')),
+    impact_estimate TEXT NOT NULL CHECK (impact_estimate IN ('HIGH', 'MEDIUM', 'LOW')),
     is_active BOOLEAN NOT NULL DEFAULT true,
     applied_at TIMESTAMPTZ,
     expires_at TIMESTAMPTZ DEFAULT now() + INTERVAL '30 days',
@@ -15,10 +20,10 @@ CREATE TABLE IF NOT EXISTS strategy_directives (
 );
 
 -- Indexes
-CREATE INDEX idx_strategy_directives_active ON strategy_directives (is_active) WHERE is_active = true;
-CREATE INDEX idx_strategy_directives_type ON strategy_directives (directive_type);
-CREATE INDEX idx_strategy_directives_impact ON strategy_directives (impact_estimate);
-CREATE INDEX idx_strategy_directives_expires ON strategy_directives (expires_at) WHERE is_active = true;
+-- Only partial index on is_active needed — directive_type (8 values) and impact_estimate
+-- (3 values) are too low-cardinality to benefit from standalone indexes on a small table.
+CREATE INDEX IF NOT EXISTS idx_strategy_directives_active ON strategy_directives (is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_strategy_directives_expires ON strategy_directives (expires_at) WHERE is_active = true;
 
 -- RLS
 ALTER TABLE strategy_directives ENABLE ROW LEVEL SECURITY;

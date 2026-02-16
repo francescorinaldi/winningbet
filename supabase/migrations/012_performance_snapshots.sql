@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS performance_snapshots (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     snapshot_date DATE NOT NULL,
-    period_days INTEGER NOT NULL,
+    period_days INTEGER NOT NULL CHECK (period_days > 0),
     total_tips INTEGER NOT NULL,
     won INTEGER NOT NULL,
     lost INTEGER NOT NULL,
@@ -17,11 +17,12 @@ CREATE TABLE IF NOT EXISTS performance_snapshots (
     odds_band_breakdown JSONB NOT NULL DEFAULT '[]'::jsonb,
     recommendations JSONB NOT NULL DEFAULT '[]'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT check_won_lost CHECK (won + lost <= total_tips),
     CONSTRAINT unique_snapshot UNIQUE (snapshot_date, period_days)
 );
 
 -- Indexes
-CREATE INDEX idx_performance_snapshots_date ON performance_snapshots (snapshot_date DESC);
+CREATE INDEX IF NOT EXISTS idx_performance_snapshots_date ON performance_snapshots (snapshot_date DESC);
 
 -- RLS
 ALTER TABLE performance_snapshots ENABLE ROW LEVEL SECURITY;

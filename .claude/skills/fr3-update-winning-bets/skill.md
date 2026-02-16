@@ -57,6 +57,23 @@ Order matters: Analytics → Optimize → Settle → (Research ‖ wait) → Gen
 Settle BEFORE generating (settlement updates the track record used for calibration).
 Analytics and Optimize BEFORE generate (they feed shared context into analysts).
 
+**Phase failure handling:** If a phase fails (skill error, timeout, unexpected output):
+- Log the failure: "Phase N: FAILED — {error details}"
+- Record `PHASE_RESULT = "FAILED: {reason}"`
+- **Continue to the next phase** — phases are independent enough that one failure should not block the entire pipeline
+- Exception: if Phase 2 (Settle) fails, still proceed to Generate but note that calibration data may be stale
+- Include all failures prominently in the Phase 6 summary
+
+## Pre-flight: Settled tip count (shared by Phase 0 and Phase 1)
+
+Run this ONCE before Phase 0 — reuse the result for both phases:
+
+```sql
+SELECT COUNT(*) as settled FROM tips WHERE status IN ('won', 'lost');
+```
+
+Store result as `SETTLED_COUNT`.
+
 ## Phase 0: Analytics
 
 ### Pre-check
@@ -67,14 +84,8 @@ WHERE snapshot_date = CURRENT_DATE AND period_days = 90
 LIMIT 1;
 ```
 
-Also check if we have enough data:
-
-```sql
-SELECT COUNT(*) as settled FROM tips WHERE status IN ('won', 'lost');
-```
-
 - If **snapshot exists today** AND NOT `--force` → `RUN_ANALYTICS = false`
-- If **settled < 10** AND NOT `--force` → `RUN_ANALYTICS = false`
+- If **SETTLED_COUNT < 10** AND NOT `--force` → `RUN_ANALYTICS = false`
 - Otherwise → `RUN_ANALYTICS = true`
 
 If `--skip-analytics` → skip entirely, report "Phase 0: SKIPPED (--skip-analytics)"
@@ -102,14 +113,8 @@ FROM strategy_directives
 WHERE is_active = true AND expires_at > NOW();
 ```
 
-Also:
-
-```sql
-SELECT COUNT(*) as settled FROM tips WHERE status IN ('won', 'lost');
-```
-
 - If **active_directives >= 3** AND **newest_directive > NOW() - INTERVAL '7 days'** AND NOT `--force` → `RUN_OPTIMIZE = false`
-- If **settled < 20** AND NOT `--force` → `RUN_OPTIMIZE = false`
+- If **SETTLED_COUNT < 20** AND NOT `--force` → `RUN_OPTIMIZE = false`
 - Otherwise → `RUN_OPTIMIZE = true`
 
 If `--skip-optimize` → skip entirely, report "Phase 1: SKIPPED (--skip-optimize)"
@@ -347,9 +352,10 @@ No changes were made.
 
 - **Exit fast when nothing to do** — Pre-checks use only Supabase queries and one WebSearch. If no work is needed, stop immediately. Minimal token usage on quiet days.
 - **Phase ordering**: Analytics → Optimize → Settle → Research → Generate → Schedine. Analytics and Optimize feed data into Generate. Settle must complete before Generate (updates track record).
+- **Pre-flight settled count** — queried once, reused by Phase 0 (threshold: 10) and Phase 1 (threshold: 20)
 - **Smart skip logic**:
-  - Analytics: skip if snapshot exists from today, or < 10 settled tips
-  - Optimize: skip if active directives < 7 days old, or < 20 settled tips
+  - Analytics: skip if snapshot exists from today, or SETTLED_COUNT < 10
+  - Optimize: skip if active directives < 7 days old, or SETTLED_COUNT < 20
   - Research: skip if no matches in next 48h, or fresh research already exists
   - Generate: skip if 5+ future tips exist and no new matches
   - Schedine: skip if already built this week

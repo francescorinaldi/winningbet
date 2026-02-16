@@ -220,7 +220,6 @@ DO UPDATE SET
   research_completeness = EXCLUDED.research_completeness,
   data_sources = EXCLUDED.data_sources,
   status = 'fresh',
-  created_at = NOW(),
   expires_at = NOW() + INTERVAL '24 hours';
 ```
 

@@ -269,8 +269,7 @@ DO UPDATE SET
   prediction_type_breakdown = EXCLUDED.prediction_type_breakdown,
   confidence_calibration = EXCLUDED.confidence_calibration,
   odds_band_breakdown = EXCLUDED.odds_band_breakdown,
-  recommendations = EXCLUDED.recommendations,
-  created_at = NOW();
+  recommendations = EXCLUDED.recommendations;
 ```
 
 ## Important Notes

@@ -18,18 +18,18 @@ CREATE TABLE IF NOT EXISTS match_research (
     market_intelligence JSONB,
     research_completeness INTEGER NOT NULL CHECK (research_completeness BETWEEN 0 AND 100),
     data_sources TEXT[],
-    status TEXT NOT NULL DEFAULT 'fresh',
+    status TEXT NOT NULL DEFAULT 'fresh' CHECK (status IN ('fresh', 'stale')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     expires_at TIMESTAMPTZ NOT NULL DEFAULT now() + INTERVAL '24 hours',
     CONSTRAINT match_research_unique UNIQUE (match_id, league)
 );
 
 -- Indexes
-CREATE INDEX idx_match_research_match_id ON match_research (match_id);
-CREATE INDEX idx_match_research_league ON match_research (league);
-CREATE INDEX idx_match_research_status ON match_research (status) WHERE status = 'fresh';
-CREATE INDEX idx_match_research_date ON match_research (match_date DESC);
-CREATE INDEX idx_match_research_expires ON match_research (expires_at) WHERE status = 'fresh';
+-- Note: match_id standalone index omitted — the UNIQUE on (match_id, league) already
+-- covers match_id lookups via the composite index's leading column.
+CREATE INDEX IF NOT EXISTS idx_match_research_league ON match_research (league);
+CREATE INDEX IF NOT EXISTS idx_match_research_status ON match_research (status) WHERE status = 'fresh';
+CREATE INDEX IF NOT EXISTS idx_match_research_date ON match_research (match_date DESC);
 
 -- RLS
 ALTER TABLE match_research ENABLE ROW LEVEL SECURITY;

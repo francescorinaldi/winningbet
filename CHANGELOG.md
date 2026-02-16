@@ -8,7 +8,7 @@ All notable changes to WinningBet will be documented in this file.
 
 - **Performance Analytics skill** (`/fr3-performance-analytics`) — Deep track record analysis: hit rate, ROI, avg odds, per-league/type/confidence/odds-band breakdowns, rolling trends, bias detection. Generates actionable recommendations as JSONB. Stores snapshots in `performance_snapshots` table. Flags: `--store`, `--period N`.
   - Migration `012_performance_snapshots.sql` — New table with UNIQUE on (snapshot_date, period_days), JSONB columns for breakdowns and recommendations
-- **Strategy Optimizer skill** (`/fr3-strategy-optimizer`) — Prescriptive strategy engine: analyzes winning vs losing patterns, finds optimal parameter mix, generates concrete `strategy_directives` with HIGH/MEDIUM/LOW impact and 30-day auto-expiry. 9 directive types (avoid/prefer prediction types and leagues, adjust confidence/odds/edge thresholds). Flag: `--dry-run`.
+- **Strategy Optimizer skill** (`/fr3-strategy-optimizer`) — Prescriptive strategy engine: analyzes winning vs losing patterns, finds optimal parameter mix, generates concrete `strategy_directives` with HIGH/MEDIUM/LOW impact and 30-day auto-expiry. 8 directive types (avoid/prefer prediction types and leagues, adjust confidence/odds/edge thresholds). Flag: `--dry-run`.
   - Migration `013_strategy_directives.sql` — New table with partial indexes on is_active and expires_at
 - **Pre-Match Research skill** (`/fr3-pre-match-research`) — Dedicated deep research engine running BEFORE tip generation. Per match: 7-8 web searches gathering lineups, injuries, xG, referee stats, weather, motivation, market intelligence. Caches in `match_research` table with completeness scoring (0-100). Flags: `[league-slug]`, `--force`.
   - Migration `014_match_research.sql` — New table with UNIQUE on (match_id, league), partial indexes on fresh status
@@ -37,9 +37,6 @@ All notable changes to WinningBet will be documented in this file.
   - Now: Analytics → Optimize → Settle → Research → Generate → Schedine → Summary (7 phases)
   - New flags: `--skip-analytics`, `--skip-optimize`, `--skip-research`
   - Smart pre-checks: Analytics (snapshot today + min 10 tips), Optimize (directives <7 days + min 20 tips), Research (fresh research + upcoming matches)
-
-### Added
-
 - **Agent Team Architecture for Tip Generation** — `/fr3-generate-tips` now uses Claude Code Agent Teams to parallelize league analysis. See [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md) for full architecture.
   - **7 parallel analyst teammates** — One specialist per league (serie-a, champions-league, la-liga, premier-league, ligue-1, bundesliga, eredivisie), all running simultaneously. Wall-clock time drops from ~30min to ~12min.
   - **Reviewer teammate** — Senior quality reviewer validates ALL tips before they go live. Runs 8 checks: cross-league correlation, confidence inflation, edge consistency (8pp min), draw awareness (15% floor), prediction type diversity, portfolio EV, stale odds spot check, weather impact.

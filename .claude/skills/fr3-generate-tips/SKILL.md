@@ -46,7 +46,7 @@ Use Supabase MCP `execute_sql` with project_id `xqrxfnovlukbbuvhbavj`.
 
 ### 2. Pre-compute shared context (Team Lead does this ONCE)
 
-Run all three calibration queries to build a `SHARED_CONTEXT` block that will be injected into every analyst's prompt.
+Run all seven calibration queries to build a `SHARED_CONTEXT` block that will be injected into every analyst's prompt.
 
 **Query 1 — Per-prediction-type accuracy (GLOBAL, not per-league):**
 
@@ -480,7 +480,7 @@ homeAttack  = home team's HOME goals scored per game
 homeDefense = home team's HOME goals conceded per game
 awayAttack  = away team's AWAY goals scored per game
 awayDefense = away team's AWAY goals conceded per game
-leagueAvg = total goals across all standings / total games played
+leagueAvg = total goals across all standings / total games played  (if 0 games, use 2.5)
 
 homeRecentGF = home team's GF in last 5 / 5
 homeRecentGA = home team's GA in last 5 / 5
@@ -499,7 +499,7 @@ else:
 
 **Poisson goal distribution (MANDATORY base rate):**
 
-Using the xGoals values computed above (homeExpGoals and awayExpGoals), compute the Poisson probability for each scoreline from 0-0 to 5-5:
+Using the xGoals values computed above (homeExpGoals and awayExpGoals), compute the Poisson probability for each scoreline from 0-0 to 5-5. If either homeExpGoals or awayExpGoals is 0 (no data), use 1.0 as a fallback:
 
 ```
 P(home=i, away=j) = (e^(-homeExpGoals) * homeExpGoals^i / i!) * (e^(-awayExpGoals) * awayExpGoals^j / j!)
@@ -539,7 +539,7 @@ If ELO probability diverges from Poisson probability by more than 15pp for the s
 
 **From bookmaker odds (if available):**
 - Implied probabilities: (1/odds) * 100 for home, draw, away, O/U 2.5, BTTS
-- DO NOT look at these yet — save for the edge comparison in step 2c
+- DO NOT look at these yet — save for the edge comparison in step 2d
 
 #### 2d. Independent probability assessment + deep reasoning (per match)
 
@@ -822,10 +822,7 @@ If > 40% of tips are the same prediction type (e.g., all "1X"), flag lack of div
 
 ### Step 7: Portfolio expected value check
 
-For each tip, calculate expected value:
-- EV = (predicted_probability/100 * odds) - 1
-- If EV < 0.05 for any tip, flag as low value
-- Total portfolio EV should be positive
+Quick sanity check: compute `EV = (predicted_probability/100 * odds) - 1` for each tip. Total portfolio EV should be positive. Per-tip EV enforcement (minimum 8%, portfolio avg 10%) happens in Step 10.
 
 ### Step 8: Stale odds check (SPOT CHECK — pick 3-5 random tips)
 

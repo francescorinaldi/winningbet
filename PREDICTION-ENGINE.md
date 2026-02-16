@@ -43,7 +43,7 @@ WinningBet has two independent prediction engines. The Claude Code skill is the 
 | **Entry point**    | `/generate-tips` slash command                                                             | `POST /api/generate-tips`                                 |
 | **AI model**       | Claude Code itself (zero API cost)                                                         | Opus 4.6 via Anthropic API                                |
 | **Analysis style** | Decoupled per-match with web research                                                      | Batched per-league in one API call                        |
-| **Data fetch**     | [`fetch-league-data.js`](.claude/skills/generate-tips/scripts/fetch-league-data.js) script | [`generate-tips.js:218-311`](api/generate-tips.js) inline |
+| **Data fetch**     | [`fetch-league-data.js`](.claude/skills/fr3-generate-tips/scripts/fetch-league-data.js) script | [`generate-tips.js:218-311`](api/generate-tips.js) inline |
 | **Storage**        | Supabase MCP `execute_sql`                                                                 | Supabase JS client                                        |
 | **Invocation**     | Manual via Claude Code CLI                                                                 | Manual (`POST /api/generate-tips`), cron removed          |
 | **Web research**   | Pre-match research cache + 7 targeted WebSearches per match                                | Haiku 4.5 + web_search tool per league (up to 3 searches) |
@@ -87,7 +87,7 @@ All data fetching follows a primary → fallback pattern. If the primary API fai
 
 **Odds prefetch (serverless):** All match odds fetched concurrently via `Promise.allSettled` before the Opus call ([`prediction-engine.js:401-407`](api/_lib/prediction-engine.js)).
 
-**Odds prefetch (skill):** Fetched in parallel inside [`fetch-league-data.js:104-118`](.claude/skills/generate-tips/scripts/fetch-league-data.js).
+**Odds prefetch (skill):** Fetched in parallel inside [`fetch-league-data.js:104-118`](.claude/skills/fr3-generate-tips/scripts/fetch-league-data.js).
 
 ---
 
@@ -598,7 +598,7 @@ Defined in [`013_strategy_directives.sql`](supabase/migrations/013_strategy_dire
 | `expires_at`      | TIMESTAMPTZ | DEFAULT now() + 30 days                      |
 | `created_at`      | TIMESTAMPTZ | NOT NULL, DEFAULT now()                      |
 
-**Indexes:** partial on `is_active`, `directive_type`, `impact_estimate`, partial on `expires_at` WHERE active
+**Indexes:** partial on `is_active` WHERE true, partial on `expires_at` WHERE active
 
 ### `match_research` Table
 
@@ -627,7 +627,7 @@ Defined in [`014_match_research.sql`](supabase/migrations/014_match_research.sql
 | `expires_at`             | TIMESTAMPTZ | NOT NULL, DEFAULT now() + 24 hours            |
 
 **Constraint:** UNIQUE on `(match_id, league)`
-**Indexes:** `match_id`, `league`, partial on `status='fresh'`, `match_date DESC`, partial on `expires_at` WHERE fresh
+**Indexes:** `league`, partial on `status='fresh'`, `match_date DESC` (note: `match_id` standalone index omitted -- the UNIQUE composite index covers it)
 
 ### RLS Policies
 
@@ -794,7 +794,7 @@ NEXT CYCLE: Analytics → Optimize → Research → Generate → Settle → ...
 2. **Detect miscalibration**: if claimed average > actual win rate by 10+ percentage points
 3. **Calculate calibration factor**: `actual_win_rate / band_midpoint`
 4. **Apply during generation**: `adjusted_confidence = raw_probability × calibration_factor`
-5. **Clamp**: [60, 85] until 100+ settled tips exist, then [60, 95]
+5. **Clamp**: [60, 80] until 100+ settled tips exist, then [60, 90]
 
 ### Quality Gate Criteria
 
@@ -806,6 +806,8 @@ Skip a match (no tip generated) if ANY condition applies:
 | Either team has < 10 matches played this season | Insufficient data for reliable analysis |
 | No prediction reaches 62% estimated probability | Too uncertain — all outcomes roughly equally likely |
 | Both teams on 3+ match losing streaks | Chaotic, unpredictable conditions |
+| No prediction has EV >= +8% | Negative or near-zero expected value — mathematically unprofitable |
+| Odds < 1.50 for selected prediction (exception: 1X/X2 at >= 1.30) | Low-value odds yield insufficient return for the risk taken |
 
 ### Tip Reasoning Format
 
@@ -986,7 +988,7 @@ Team Lead: Tier rebalancing across all leagues
 | 17 | Performance analytics → recommendations | Shared context | Data-driven guardrails |
 | 18 | Stale odds detection | Reviewer step 8 | Catches line movement |
 | 19 | Draw awareness enforcement | Reviewer step 5 | Counters home-win bias |
-| 20 | Portfolio EV optimization | Reviewer step 7 | Better overall returns |
+| 20 | Portfolio EV sanity check | Reviewer step 7 (detail in step 10) | Better overall returns |
 
 ---
 
@@ -1117,23 +1119,11 @@ Phase 6: SUMMARY     → Final report                           (always runs)
 
 ### Skill Engine V4 — Comprehensive Analytics + Strategy + Research (Current Primary)
 
-Full-stack prediction improvement: 3 new skills (performance analytics, strategy optimizer, pre-match research), enhanced analyst pipeline, expanded reviewer checks. Key additions:
-
-- **Poisson goal distribution** (mandatory base rate) — scoreline grid for all market probabilities
-- **ELO-lite power rating** — independent cross-check, flags divergence > 15pp
-- **Minimum odds 1.50** (was 1.20) + **minimum EV 8%** — eliminates low-value portfolio
-- **7 targeted web searches** (was 5) — xG projections, dedicated referee stats, separated tactical/statistical
-- **Pre-match research cache** — `match_research` table, analysts skip redundant searches
-- **Exponential decay momentum** (0.95^n) — RISING/FALLING/STABLE trend classification
-- **Pre-decision checklist** — 7 mandatory checks before generating any tip
-- **Strategy directives** — machine-readable rules from `/fr3-strategy-optimizer` constrain analysts
-- **Performance analytics** — track record snapshots with recommendations feed shared context
-- **Reviewer: 3 new checks** — ROI projection (EV<8% reject), odds distribution (>50% under 1.50 reject), historical pattern cross-reference
-- **Shared context: 7 queries** (was 3) — added xGoals accuracy, lessons from losses, strategy directives, performance recommendations
-- **Settle-tips backfill** — `--backfill` flag generates retrospectives for already-settled tips
-- **7-phase pipeline** — Analytics → Optimize → Settle → Research → Generate → Schedine → Summary (was 4 phases)
+Full-stack prediction improvement: 3 new skills (performance analytics, strategy optimizer, pre-match research), enhanced analyst pipeline with Poisson base rates and ELO-lite cross-checks, expanded reviewer checks (ROI projection, odds distribution, historical pattern cross-reference), 7-phase pipeline orchestrator. See [CHANGELOG.md](CHANGELOG.md) for detailed change list.
 
 ### Skill Engine V3 — Agent Team + Reviewer
+
+Agent Team architecture: parallel league analysis (7 analyst teammates) + reviewer validation layer. Draft → Pending workflow ensures no tip reaches users without review. 5 web searches per match, 8pp edge threshold, confidence max 80, league-specific tuning per analyst, draw probability floor of 20%, momentum scoring, cross-league correlation detection, stale odds checks, portfolio EV optimization.
 
 ### V2.1 — Batched (Current Serverless)
 
