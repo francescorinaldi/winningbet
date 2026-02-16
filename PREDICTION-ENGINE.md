@@ -5,7 +5,7 @@ Unified reference for WinningBet's AI prediction engine. All operational, statis
 **Related files:**
 
 - [`CLAUDE.md`](CLAUDE.md) — Project guide (links here for AI details)
-- [`.claude/skills/generate-tips/SKILL.md`](.claude/skills/generate-tips/SKILL.md) — Operational procedure for the Claude Code skill
+- [`.claude/skills/fr3-generate-tips/SKILL.md`](.claude/skills/fr3-generate-tips/SKILL.md) — Operational procedure for the Claude Code skill
 - [`CHANGELOG.md`](CHANGELOG.md) — Version history (links here for algorithm details)
 
 ---
@@ -25,7 +25,8 @@ Unified reference for WinningBet's AI prediction engine. All operational, statis
 11. [Distribution — Telegram & Email](#11-distribution--telegram--email)
 12. [Tip Lifecycle](#12-tip-lifecycle)
 13. [Retrospective Learning System](#13-retrospective-learning-system)
-14. [Version History](#14-version-history)
+14. [Agent Team Architecture](#14-agent-team-architecture)
+15. [Version History](#15-version-history)
 
 ---
 
@@ -88,11 +89,11 @@ All data fetching follows a primary → fallback pattern. If the primary API fai
 
 ## 4. Pipeline — Claude Code Skill (Primary)
 
-Full procedure defined in [`SKILL.md`](.claude/skills/generate-tips/SKILL.md). The skill processes leagues sequentially, but each match within a league is analyzed individually.
+Full procedure defined in [`SKILL.md`](.claude/skills/fr3-generate-tips/SKILL.md). Uses an **Agent Team** to process leagues in parallel: one analyst teammate per league + a reviewer teammate for cross-validation. See [Agent Team Architecture](#14-agent-team-architecture) for full details.
 
 ### Phase 1: Parse Arguments
 
-From `$ARGUMENTS`: no args = all 4 leagues; a slug or name = that league only; `--send` = send to Telegram; `--delete` = delete all pending tips first.
+From `$ARGUMENTS`: no args = all 7 leagues; a slug or name = that league only; `--send` = send to Telegram; `--delete` = delete all pending tips first.
 
 ### Phase 2: Delete Existing Tips (if `--delete`)
 
@@ -100,75 +101,56 @@ From `$ARGUMENTS`: no args = all 4 leagues; a slug or name = that league only; `
 DELETE FROM tips WHERE status = 'pending';
 ```
 
-### Phase 3: Fetch Football Data
+### Phase 3: Pre-compute Shared Context (Team Lead)
 
-Runs [`fetch-league-data.js`](.claude/skills/generate-tips/scripts/fetch-league-data.js) per league. Outputs JSON with: `matches` (upcoming fixtures + odds + H2H data), `standings` (total/home/away), `recentResults` (last 30).
+Three calibration queries run ONCE by the Team Lead and shared with all analysts:
 
-### Phase 4: Historical Calibration (THREE queries)
-
-Three queries build a `HISTORICAL CONTEXT` block:
-
-1. **Per-prediction-type accuracy** — win rate by prediction type (e.g., "1" at 55%)
+1. **Per-prediction-type accuracy** — win rate by prediction type (GLOBAL, not per-league)
 2. **Confidence calibration curve** — claimed vs actual win rate per confidence band (60-69, 70-79, 80-95)
 3. **Active retrospective insights** — patterns from `prediction_insights` table (biases, weak spots, calibration drift)
 
-This context is mandatory — it must be consulted during every match analysis.
+This context is mandatory — injected into every analyst's prompt.
 
-### Phase 5: Web Research (per match — 4 searches)
+### Phase 4: Parallel League Analysis (Agent Team)
 
-Four targeted WebSearch calls per match:
+7 analyst teammates are spawned simultaneously, one per league. Each analyst:
 
-1. `"<home> vs <away> preview prediction <date>"` — expert previews
-2. `"<home> <away> injuries suspensions confirmed lineup <date>"` — absences
-3. `"<home> OR <away> recent form analysis tactics"` — tactical setup
-4. `"<home> vs <away> head to head referee history"` — H2H and referee
+1. **Fetches football data** via [`fetch-league-data.js`](.claude/skills/fr3-generate-tips/scripts/fetch-league-data.js)
+2. **Web research** per match — 5 searches (preview, injuries, tactics, H2H/referee, weather)
+3. **Computes derived statistics** — xGoals model, momentum scoring, zone classification
+4. **Independent probability assessment** — forms estimates BEFORE looking at bookmaker odds
+5. **10-point reasoning framework** per match
+6. **Quality gate** — skips matches with < 8pp edge (raised from 5pp)
+7. **Inserts tips as `draft`** — provisional status, awaiting reviewer approval
 
-Extracts: injuries, expected lineups, motivation, fixture congestion, tactical matchup, referee tendencies.
+Each analyst receives league-specific tuning hints (e.g., Serie A: higher draw rate, Bundesliga: high-scoring league, Premier League: lower confidence ceilings).
 
-### Phase 6: Compute Derived Statistics (per match)
+### Phase 5: Reviewer Validation (Sequential)
 
-From already-fetched data, extracts per-team stats. See [Statistical Model](#6-statistical-model) below. Includes improved xGoals model with H2H adjustment.
+After all analysts complete, a reviewer teammate validates all draft tips:
 
-### Phase 7: Independent Probability Assessment + Deep Reasoning (per match)
+1. **Cross-league correlation check** — flags correlated outcomes
+2. **Confidence inflation check** — flags if avg confidence > 72%
+3. **Edge consistency check** — rejects tips with < 8pp edge
+4. **Draw awareness check** — flags if < 15% of tips are draw-inclusive
+5. **Prediction type diversity** — flags if > 40% same type
+6. **Portfolio expected value** — ensures positive total EV
+7. **Stale odds spot check** — web search 3-5 random tips for line movement
+8. **Weather impact check** — verifies weather considered in reasoning
 
-**Critical change**: Form probability estimates BEFORE looking at bookmaker odds, then compare for edge detection.
+Actions: APPROVE (draft → pending), REJECT (delete), ADJUST (modify confidence + promote).
 
-Ten-point analysis framework:
+### Phase 6: Post-Review Cleanup & Tier Rebalancing
 
-1. Stronger team overall? (position, points, form)
-2. Context-specific performance? (home AT HOME, away AWAY)
-3. Goal patterns (xGoals model, O/U trends, BTTS trends)
-4. Key absences impact (specific players, their contribution)
-5. Motivation asymmetry (title, CL, relegation, mid-table)
-6. H2H patterns (actual data from fetch, not assumptions)
-7. Form trajectory (last 3 weighted > last 5)
-8. Tactical matchup (formation, style interaction)
-9. External factors (referee, weather, congestion, derby intensity)
-10. Probability assessment (explicit P(1), P(X), P(2), P(O2.5), P(BTTS) → compare to odds for edge)
+Team Lead cleans up remaining drafts, then rebalances tiers globally:
+- Combo predictions ("+") → always "vip"
+- Bottom 25% by value → "free"
+- Next 25% → "pro"
+- Top 50% → "vip"
 
-### Phase 7b: Quality Gate (per match)
+### Phase 7: Summary, Distribution & Betting Slips
 
-**SKIP the match** if:
-- No prediction has edge > 5pp over bookmaker
-- Either team has < 10 matches played
-- No prediction reaches 62% estimated probability
-- Both teams on 3+ match losing streaks
-
-Quality over quantity — 5-8 high-edge tips better than 10 mediocre ones.
-
-### Phase 8: Generate Prediction with Reasoning (per match)
-
-Outputs: `prediction` (one of 14 types), `confidence` (60-85, calibrated), `odds` (1.20-5.00), `analysis` (2-3 sentences in Italian), `predicted_probability` (raw estimate), `reasoning` (structured chain-of-thought).
-
-**Confidence calibration**: raw probability adjusted by empirical calibration curve, clamped to [60, 85] until 100+ settled tips.
-
-### Phase 9: Tier Assignment & Database Insert
-
-Assigns tiers (see [Tier Assignment](#9-tier-assignment--balancing)), then replaces existing pending tips for the same matches and inserts fresh ones (including `reasoning` and `predicted_probability` columns) via Supabase MCP.
-
-### Phase 10: Summary & Distribution
-
-Displays formatted summary with edge values and skip reasons. If `--send` flag, sends to Telegram (see [Distribution](#11-distribution--telegram--email)).
+Displays summary with reviewer report (approved/rejected/adjusted counts). If `--send`, sends to Telegram and auto-invokes `/fr3-generate-betting-slips`.
 
 ---
 
@@ -287,7 +269,7 @@ Uses attack/defense ratings relative to league average, weighted by recency and 
 
 - Implied probabilities: `(1 / odds) × 100` for home, draw, away (normalized by overround)
 - **Edge detection**: analyst forms independent probability estimates first, then compares against bookmaker implied probabilities
-- **Edge threshold**: minimum +5 percentage points over bookmaker required to generate a tip
+- **Edge threshold**: minimum +8 percentage points over bookmaker required to generate a tip (raised from 5pp)
 - **Independent assessment**: probabilities formed WITHOUT looking at odds first, then compared
 
 ---
@@ -341,16 +323,20 @@ Fields: `match_index` (int), `prediction` (enum of 14 types), `confidence` (int 
 
 ### Claude Code Skill Engine (Primary)
 
-No API model — Claude Code itself is the analyst. Configuration in [`SKILL.md`](.claude/skills/generate-tips/SKILL.md):
+No API model — Claude Code itself is the analyst. Now uses **Agent Team** architecture (parallel analysts + reviewer). Configuration in [`SKILL.md`](.claude/skills/fr3-generate-tips/SKILL.md):
 
-- **Confidence range**: 60-85 (strict; max 85 until 100+ settled tips, then up to 95)
+- **Architecture**: Agent Team — 1 Team Lead + 7 analyst teammates (parallel) + 1 reviewer teammate (sequential)
+- **Confidence range**: 60-80 (strict; max 80 until 100+ settled tips, then up to 90)
 - **Odds range**: 1.20-5.00
 - **Analysis language**: Italian
 - **Accuracy-first rules**: 10 calibration rules (edge-first thinking, draw awareness, respect insights)
-- **Quality gate**: skip matches with < 5pp edge, < 62% probability, < 10 matches played, or dual losing streaks
+- **Quality gate**: skip matches with < 8pp edge, < 62% probability, < 10 matches played, or dual losing streaks
+- **Draft → Pending workflow**: analysts insert as `draft`, reviewer promotes to `pending` or rejects
 - **Reasoning persistence**: full structured reasoning stored in `tips.reasoning` column
 - **Predicted probability**: raw analyst estimate stored in `tips.predicted_probability` for retrospective comparison
 - **Confidence calibration**: empirical curve from historical data adjusts raw probability
+- **League-specific tuning**: each analyst receives contextual hints (e.g., Serie A draw rates, Bundesliga scoring patterns)
+- **5 web searches per match**: preview, injuries, tactics, H2H/referee, weather (up from 4)
 
 ---
 
@@ -420,7 +406,7 @@ Triggered when a league has 3+ tips but any tier has 0 members:
 
 ### `tips` Table
 
-Defined in [`001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql) + [`002_add_league_column.sql`](supabase/migrations/002_add_league_column.sql) + [`010_retrospective_system.sql`](supabase/migrations/010_retrospective_system.sql):
+Defined in [`001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql) + [`002_add_league_column.sql`](supabase/migrations/002_add_league_column.sql) + [`010_retrospective_system.sql`](supabase/migrations/010_retrospective_system.sql) + [`011_draft_status.sql`](supabase/migrations/011_draft_status.sql):
 
 | Column                  | Type         | Constraints                                                      |
 | ----------------------- | ------------ | ---------------------------------------------------------------- |
@@ -434,7 +420,7 @@ Defined in [`001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql
 | `confidence`            | INTEGER      | CHECK 0-100                                                      |
 | `analysis`              | TEXT         | —                                                                |
 | `tier`                  | TEXT         | NOT NULL, DEFAULT 'free', CHECK IN (free, pro, vip)              |
-| `status`                | TEXT         | NOT NULL, DEFAULT 'pending', CHECK IN (pending, won, lost, void) |
+| `status`                | TEXT         | NOT NULL, DEFAULT 'pending', CHECK IN (pending, won, lost, void, draft) |
 | `league`                | TEXT         | NOT NULL, DEFAULT 'serie-a'                                      |
 | `reasoning`             | TEXT         | Structured chain-of-thought analysis (added in 010)              |
 | `predicted_probability` | NUMERIC(5,2) | Raw analyst probability estimate (added in 010)                  |
@@ -444,6 +430,7 @@ Defined in [`001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql
 
 - `idx_tips_match_date` — DESC on `match_date`
 - `idx_tips_status` — on `status`
+- `idx_tips_status_draft` — partial on `status` WHERE `status = 'draft'` (fast draft queries during review)
 - `idx_tips_tier` — on `tier`
 - `idx_tips_match_id` — on `match_id`
 - `idx_tips_league` — on `league`
@@ -543,9 +530,11 @@ Implemented in [`api/_lib/email.js`](api/_lib/email.js) via SendGrid. The `handl
 ## 12. Tip Lifecycle
 
 ```
-pending → won    (prediction correct)
-pending → lost   (prediction incorrect)
-pending → void   (unrecognized prediction type / match cancelled)
+draft   → pending  (approved by reviewer during Agent Team generation)
+draft   → deleted  (rejected by reviewer or orphaned — cleaned up)
+pending → won      (prediction correct)
+pending → lost     (prediction incorrect)
+pending → void     (unrecognized prediction type / match cancelled)
 ```
 
 ### Settlement Process
@@ -643,7 +632,7 @@ Skip a match (no tip generated) if ANY condition applies:
 
 | Condition | Rationale |
 | --- | --- |
-| No prediction has edge > 5pp over bookmaker | No value — bookmaker is equally or more accurate |
+| No prediction has edge > 8pp over bookmaker | No value — bookmaker is equally or more accurate (raised from 5pp) |
 | Either team has < 10 matches played this season | Insufficient data for reliable analysis |
 | No prediction reaches 62% estimated probability | Too uncertain — all outcomes roughly equally likely |
 | Both teams on 3+ match losing streaks | Chaotic, unpredictable conditions |
@@ -708,7 +697,111 @@ GROUP BY prediction HAVING COUNT(*) >= 3;
 
 ---
 
-## 14. Version History
+## 14. Agent Team Architecture
+
+The primary prediction engine uses Claude Code Agent Teams to parallelize league analysis and add a quality review layer.
+
+### Architecture Diagram
+
+```
+/fr3-generate-tips (Team Lead)
+  ├── Pre-compute shared context (calibration + insights)     (30 sec)
+  ├── Create team + tasks + spawn teammates                    (10 sec)
+  │
+  ├── [PARALLEL] 7 League Analyst teammates
+  │   ├── analyst-serie-a         ─┐
+  │   ├── analyst-champions-league │
+  │   ├── analyst-la-liga          │  All run simultaneously
+  │   ├── analyst-premier-league   │  Each: fetch → 5 web searches/match
+  │   ├── analyst-ligue-1          │       → 10-point analysis → insert as DRAFT
+  │   ├── analyst-bundesliga       │
+  │   └── analyst-eredivisie      ─┘   (~5 min wall-clock)
+  │
+  ├── [SEQUENTIAL] Reviewer teammate                           (2-3 min)
+  │   ├── Read all draft tips
+  │   ├── Cross-league correlation check
+  │   ├── Confidence calibration check
+  │   ├── Portfolio diversity check
+  │   ├── Edge validity check
+  │   ├── Stale odds spot check
+  │   └── Promote approved → 'pending', delete rejected
+  │
+  ├── Team Lead: cleanup drafts, tier rebalance, summary       (1 min)
+  ├── Telegram send                                            (30 sec)
+  └── Auto-invoke /fr3-generate-betting-slips                  (2 min)
+Total: ~10-12 minutes (vs 25-35 before with sequential processing)
+```
+
+### Analyst Specialization per League
+
+Each analyst receives league-specific tuning hints that reflect the statistical characteristics of their league:
+
+| League | Key Tuning | Impact |
+| --- | --- | --- |
+| Serie A | Higher draw rate (~27%), defensive football | More draw predictions |
+| Champions League | Group vs knockout dynamics, travel fatigue | Context-aware staging |
+| La Liga | Top-heavy (Real/Barca/Atletico), defensive away | Cautious upset tipping |
+| Premier League | Most competitive, lower confidence ceilings | Conservative predictions |
+| Ligue 1 | PSG dominance skews stats, physical league | Exclude PSG from averages |
+| Bundesliga | Highest scoring (~3.1 GPG), strong home advantage | Favor Over markets |
+| Eredivisie | Very high scoring, volatile smaller clubs | Strong Over/home bias |
+
+### Reviewer Validation Rules
+
+The reviewer runs 8 checks on all draft tips before promoting them to pending:
+
+| # | Check | Action |
+| --- | --- | --- |
+| 1 | Cross-league correlation (3+ correlated tips) | Flag, don't auto-reject |
+| 2 | Confidence inflation (avg > 72%) | Adjust downward |
+| 3 | Edge consistency (< 8pp) | Reject |
+| 4 | Draw awareness (< 15% draw-inclusive) | Flag home-win bias |
+| 5 | Prediction type diversity (> 40% same type) | Flag |
+| 6 | Portfolio expected value (EV < 0.05) | Flag low value |
+| 7 | Stale odds (> 15% movement, spot check) | Consider rejecting |
+| 8 | Weather impact (missing from reasoning) | Note gap |
+
+### Draft → Pending Workflow
+
+```
+Analyst inserts tip with status = 'draft'
+     │
+     ▼
+Reviewer reads all draft tips
+     │
+     ├── APPROVE → UPDATE status = 'pending'
+     ├── ADJUST  → UPDATE confidence + status = 'pending'
+     └── REJECT  → DELETE FROM tips
+     │
+     ▼
+Team Lead: DELETE FROM tips WHERE status = 'draft' (cleanup orphans)
+Team Lead: Tier rebalancing across all leagues
+```
+
+### Accuracy Improvements (Embedded in Team)
+
+| # | Improvement | Location | Impact |
+| --- | --- | --- | --- |
+| 1 | League-specific tuning hints | Analyst prompt | Counters generic analysis |
+| 2 | 5th web search: weather | Analyst step 2a | Affects O/U and BTTS |
+| 3 | Fixture congestion check | Analyst reasoning point 9 | Fatigue detection |
+| 4 | Edge threshold raised to 8pp | Analyst quality gate | Fewer, higher-quality tips |
+| 5 | Draw probability floor of 20% | Analyst probability assessment | Counters draw blindness |
+| 6 | Momentum scoring (last 3 > last 5) | Analyst form analysis | More responsive to trends |
+| 7 | Conservative confidence (max 80) | Analyst calibration | Until accuracy is proven |
+| 8 | Cross-league correlation detection | Reviewer step 2 | Portfolio risk reduction |
+| 9 | Stale odds detection | Reviewer step 8 | Catches line movement |
+| 10 | Draw awareness enforcement | Reviewer step 5 | Counters home-win bias |
+| 11 | Portfolio EV optimization | Reviewer step 7 | Better overall returns |
+| 12 | Confidence ceiling enforcement | Reviewer step 3 | Prevents overconfidence |
+
+---
+
+## 15. Version History
+
+### Skill Engine V3 — Agent Team + Reviewer (Current Primary)
+
+Agent Team architecture: parallel league analysis (7 analyst teammates) + reviewer validation layer. Draft → Pending workflow ensures no tip reaches users without review. Accuracy improvements: edge threshold raised to 8pp, confidence max lowered to 80, 5th web search for weather, league-specific tuning per analyst, draw probability floor of 20%, momentum scoring, cross-league correlation detection, stale odds checks, portfolio EV optimization.
 
 ### V2.1 — Batched (Current Serverless)
 
@@ -722,7 +815,7 @@ Two-phase pipeline: Haiku 4.5 research + Opus 4.6 prediction. Structured output 
 
 Single Haiku call per match. Regex-based JSON parsing. Fixed tier rotation. No web research. No accuracy feedback.
 
-### Skill Engine V2 — Retrospective Learning (Current Primary)
+### Skill Engine V2 — Retrospective Learning
 
 Retrospective learning system: reasoning persistence, post-mortem analysis, aggregate pattern detection, confidence calibration, quality gate. Improved xGoals model (Dixon-Coles lite with H2H adjustment). Independent probability assessment before comparing to bookmaker odds. 10-point reasoning framework. Edge-first betting (5pp minimum). H2H data fetched automatically per match.
 

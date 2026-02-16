@@ -10,6 +10,22 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Added
 
+- **Agent Team Architecture for Tip Generation** — `/fr3-generate-tips` now uses Claude Code Agent Teams to parallelize league analysis. See [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md) for full architecture.
+  - **7 parallel analyst teammates** — One specialist per league (serie-a, champions-league, la-liga, premier-league, ligue-1, bundesliga, eredivisie), all running simultaneously. Wall-clock time drops from ~30min to ~12min.
+  - **Reviewer teammate** — Senior quality reviewer validates ALL tips before they go live. Runs 8 checks: cross-league correlation, confidence inflation, edge consistency (8pp min), draw awareness (15% floor), prediction type diversity, portfolio EV, stale odds spot check, weather impact.
+  - **Draft → Pending workflow** — Analysts insert tips as `draft`, reviewer promotes to `pending` (approved), adjusts confidence, or deletes (rejected). No tip reaches users without review.
+  - **`tips.status` CHECK constraint** — Added `draft` to allowed values (`pending`, `won`, `lost`, `void`, `draft`). Migration `011_draft_status.sql`.
+  - **Partial index `idx_tips_status_draft`** — Fast queries during review phase.
+  - **League-specific tuning** — Each analyst receives contextual intelligence: Serie A (high draw rate), Champions League (group vs knockout), La Liga (top-heavy), Premier League (unpredictable), Ligue 1 (PSG skew), Bundesliga (high-scoring), Eredivisie (volatile).
+- **Accuracy improvements embedded in Agent Team**:
+  - 5th web search per match: weather conditions (affects O/U and BTTS)
+  - Draw probability floor of 20% (counters draw blindness — our biggest error category)
+  - Momentum scoring: last 3 matches weighted 2x more than matches 4-5
+  - Fixture congestion check in external factors (point 9 of 10-point framework)
+  - Cross-league correlation detection (reviewer checks for correlated outcomes)
+  - Stale odds detection via live web search spot checks
+  - Portfolio expected value optimization
+
 - **Retrospective Learning System** — Closed-loop feedback that learns from past predictions and feeds insights into future generation. See [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md) for full architecture.
   - **`tips.reasoning` column** — Stores structured chain-of-thought analysis (data summary, probability assessment, edge analysis, key factors, decision rationale) for retrospective comparison
   - **`tips.predicted_probability` column** — Raw analyst probability estimate, compared against bookmaker implied probability to measure edge
@@ -23,9 +39,17 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Changed
 
-- **`/fr3-generate-tips` — Major accuracy overhaul**
+- **`/fr3-generate-tips` — Rewritten as Agent Team Orchestrator**
+  - Now uses Claude Code Agent Teams: Team Lead orchestrates 7 parallel analyst teammates + 1 sequential reviewer
+  - Edge threshold raised from 5pp to 8pp — fewer but higher-quality tips
+  - Confidence max lowered from 85 to 80 — conservative until accuracy is proven
+  - Web research increased from 4 to 5 searches per match (added weather search)
+  - Calibration queries are now GLOBAL (not per-league) and pre-computed once by Team Lead, shared with all analysts
+  - Tips inserted as `draft` by analysts, promoted to `pending` by reviewer (was direct `pending` insert)
+  - Tier rebalancing is now global across all leagues (was per-league)
+  - Added `allowed-tools`: Task, TeamCreate, TeamDelete, TaskCreate, TaskList, TaskGet, TaskUpdate, SendMessage
   - Historical calibration now runs 3 queries instead of 1: per-type accuracy + confidence calibration curve + active retrospective insights
-  - Web research increased from 2 to 4 searches per match (preview, injuries, tactics, H2H/referee)
+  - Web research increased from 2 to 4 to 5 searches per match (preview, injuries, tactics, H2H/referee, weather)
   - xGoals model upgraded to "Dixon-Coles lite": context-specific attack/defense ratings relative to league average, 60/40 blend of context stats and recent form, H2H adjustment for 5+ meetings
   - 10-point reasoning framework (was 8) — adds tactical matchup, external factors, explicit probability assessment
   - Independent probability assessment: form own estimates BEFORE looking at bookmaker odds, then compare for edge
@@ -40,7 +64,9 @@ All notable changes to WinningBet will be documented in this file.
   - For lost tips: WebSearches match reports to identify what actually happened vs what we predicted
   - Aggregate pattern detection: runs 4 diagnostic queries, generates `prediction_insights` entries
   - Summary now includes error categories and retrospective insights section
-- **`/fr3-update-winning-bets` — Retrospective awareness**
+- **`/fr3-update-winning-bets` — Agent Team awareness**
+  - Phase 2 description updated: "generate fresh tips via Agent Team (parallel analysts + reviewer)"
+  - Phase 4 summary includes Agent Team stats (analysts completed/failed, reviewer approved/rejected/adjusted)
   - Phase 1 description updated: "settle + generate retrospectives"
   - Phase 4 summary includes retrospective stats (N retrospectives, N active insights)
 

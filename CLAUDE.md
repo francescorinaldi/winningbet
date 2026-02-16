@@ -9,7 +9,7 @@ Premium multi-league betting predictions platform (Serie A, Champions League, La
 - **Frontend**: HTML5, CSS3 (custom properties), Vanilla JS (ES6+ IIFE pattern)
 - **Backend**: Node.js Vercel Serverless Functions
 - **Database**: Supabase (PostgreSQL + Auth + RLS)
-- **AI**: Claude Code skill `/fr3-generate-tips` (primary, with retrospective learning), Anthropic Claude API (legacy serverless) — see [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md)
+- **AI**: Claude Code skill `/fr3-generate-tips` (primary, Agent Team with parallel analysts + reviewer + retrospective learning), Anthropic Claude API (legacy serverless) — see [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md)
 - **Payments**: Stripe (subscriptions, webhooks, customer portal)
 - **APIs**: api-football.com (primary), football-data.org (fallback)
 - **Notifications**: Telegram Bot API, SendGrid (email)
