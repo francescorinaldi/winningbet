@@ -10,6 +10,40 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Added
 
+- **Retrospective Learning System** — Closed-loop feedback that learns from past predictions and feeds insights into future generation. See [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md) for full architecture.
+  - **`tips.reasoning` column** — Stores structured chain-of-thought analysis (data summary, probability assessment, edge analysis, key factors, decision rationale) for retrospective comparison
+  - **`tips.predicted_probability` column** — Raw analyst probability estimate, compared against bookmaker implied probability to measure edge
+  - **`tip_retrospectives` table** — One row per settled tip with post-mortem analysis: actual result, edge measurement, error classification (12 categories), lesson learned
+  - **`prediction_insights` table** — Aggregate patterns detected from retrospectives: biases, calibration drift, weak/strong spots. Auto-expires after 60 days
+  - **Migration `010_retrospective_system.sql`** — New columns + 2 new tables + indexes + RLS policies
+- **H2H data auto-fetch** — `fetch-league-data.js` now fetches head-to-head data for each match in parallel using `apiFootball.getHeadToHead()`. Data available as `match.h2h` in the generation skill
+- **Quality gate** — Matches are SKIPPED (no tip generated) if: no edge > 5pp over bookmaker, < 10 matches played, no prediction reaches 62% probability, or both teams on 3+ losing streaks. Quality over quantity.
+- **Aggregate pattern detection** — Settlement now runs 4 diagnostic queries to detect: dominant error categories, confidence miscalibration, prediction type performance trends, and league-specific weak/strong spots. Patterns auto-generate `prediction_insights` entries.
+- **Error category taxonomy** — 12 error categories for classifying lost tips: draw_blindness, overconfidence, form_reversal, injury_impact, h2h_ignored, motivation_miss, tactical_shift, goal_pattern_miss, referee_factor, underdog_upset, other
+
+### Changed
+
+- **`/fr3-generate-tips` — Major accuracy overhaul**
+  - Historical calibration now runs 3 queries instead of 1: per-type accuracy + confidence calibration curve + active retrospective insights
+  - Web research increased from 2 to 4 searches per match (preview, injuries, tactics, H2H/referee)
+  - xGoals model upgraded to "Dixon-Coles lite": context-specific attack/defense ratings relative to league average, 60/40 blend of context stats and recent form, H2H adjustment for 5+ meetings
+  - 10-point reasoning framework (was 8) — adds tactical matchup, external factors, explicit probability assessment
+  - Independent probability assessment: form own estimates BEFORE looking at bookmaker odds, then compare for edge
+  - Confidence calibration: raw probability adjusted by empirical curve, clamped to [60, 85] until 100+ settled tips
+  - Confidence cap reduced from 95 to 85 (until sufficient track record)
+  - Edge-first rule: minimum +5pp over bookmaker implied probability required
+  - INSERT now includes `reasoning` and `predicted_probability` columns
+  - Summary now shows edge values and skip reasons
+- **`/fr3-settle-tips` — Retrospective analysis engine**
+  - Now fetches `reasoning` and `predicted_probability` from tips for retrospective comparison
+  - Per-tip post-mortem: classifies errors, writes lessons learned, inserts into `tip_retrospectives`
+  - For lost tips: WebSearches match reports to identify what actually happened vs what we predicted
+  - Aggregate pattern detection: runs 4 diagnostic queries, generates `prediction_insights` entries
+  - Summary now includes error categories and retrospective insights section
+- **`/fr3-update-winning-bets` — Retrospective awareness**
+  - Phase 1 description updated: "settle + generate retrospectives"
+  - Phase 4 summary includes retrospective stats (N retrospectives, N active insights)
+
 - **GitHub Copilot Agent Team** — 5-agent "teammates" system for GitHub Copilot coding agent and VS Code custom agents:
   - `PM` — Project Manager, triages GitHub issues, orchestrates the team
   - `WinningBet-Dev` — Fleet Orchestrator for interactive VS Code development

@@ -13,14 +13,14 @@ allowed-tools: Bash(*), WebSearch, Read, mcp__plugin_supabase_supabase__execute_
 You ARE the prediction engine. You do NOT call the Claude API — you analyze the data yourself.
 Analyze football data like a professional analyst with 15+ years of experience in statistical analysis, recent form, home/away trends, and goal patterns.
 
-**Goal: accuracy as close to 100% as possible.** Every prediction must be backed by overwhelming data.
+**Goal: accuracy as close to 100% as possible.** Every prediction must be backed by overwhelming data. Only bet where you have a genuine edge over the bookmaker.
 
 ## Configuration
 
 - **Supabase project_id**: `xqrxfnovlukbbuvhbavj`
 - **Leagues**: serie-a, champions-league, la-liga, premier-league, ligue-1, bundesliga, eredivisie
 - **Valid predictions**: 1, X, 2, 1X, X2, 12, Over 2.5, Under 2.5, Over 1.5, Under 3.5, Goal, No Goal, 1 + Over 1.5, 2 + Over 1.5
-- **Confidence range**: 60–95 (strict, never optimistic)
+- **Confidence range**: 60–85 (strict; max 85 until 100+ settled tips, then up to 95)
 - **Odds range**: 1.20–5.00
 
 ## Parse Arguments
@@ -54,52 +54,115 @@ Run the fetch script:
 node .claude/skills/fr3-generate-tips/scripts/fetch-league-data.js <league-slug>
 ```
 
-This outputs JSON with: `matches` (upcoming fixtures with odds), `standings` (total/home/away tables), `recentResults` (last 30 matches).
+This outputs JSON with: `matches` (upcoming fixtures with odds + H2H data), `standings` (total/home/away tables), `recentResults` (last 30 matches).
 
 If a league returns 0 matches, skip it and move to the next.
 
-### 3. Historical accuracy (per league)
+### 3. Historical calibration (per league — THREE queries)
 
-Query past prediction accuracy to calibrate:
+Run all three queries to build a `HISTORICAL CONTEXT` block that MUST be consulted during every match analysis.
+
+**Query 1 — Per-prediction-type accuracy:**
 
 ```sql
 SELECT prediction,
   COUNT(*) as total,
-  SUM(CASE WHEN status = 'won' THEN 1 ELSE 0 END) as won
+  SUM(CASE WHEN status = 'won' THEN 1 ELSE 0 END) as won,
+  ROUND(100.0 * SUM(CASE WHEN status = 'won' THEN 1 ELSE 0 END) / COUNT(*)) as win_pct
 FROM tips
 WHERE league = '<slug>' AND status IN ('won', 'lost')
 GROUP BY prediction
-HAVING COUNT(*) >= 5
+HAVING COUNT(*) >= 3
 ORDER BY COUNT(*) DESC;
 ```
 
-Use this to prefer prediction types with higher historical accuracy and avoid types with poor track record.
+**Query 2 — Confidence calibration curve:**
+
+```sql
+SELECT
+  CASE
+    WHEN confidence BETWEEN 60 AND 69 THEN '60-69'
+    WHEN confidence BETWEEN 70 AND 79 THEN '70-79'
+    WHEN confidence BETWEEN 80 AND 95 THEN '80-95'
+  END as band,
+  COUNT(*) as total,
+  ROUND(100.0 * SUM(CASE WHEN status = 'won' THEN 1 ELSE 0 END) / COUNT(*)) as actual_pct,
+  ROUND(AVG(confidence)) as claimed_pct
+FROM tips WHERE status IN ('won', 'lost')
+GROUP BY 1 HAVING COUNT(*) >= 5 ORDER BY 1;
+```
+
+**Query 3 — Active retrospective insights:**
+
+```sql
+SELECT scope, scope_value, insight_type, insight_text, sample_size
+FROM prediction_insights
+WHERE is_active = true AND (expires_at IS NULL OR expires_at > NOW())
+ORDER BY confidence_level DESC, sample_size DESC LIMIT 20;
+```
+
+Format all three into a `HISTORICAL CONTEXT` block:
+
+```
+=== HISTORICAL CONTEXT ===
+
+PREDICTION ACCURACY (<league>):
+  1: 55% (11 tips) — AVOID
+  1X: 80% (10 tips) — PREFER
+  Over 2.5: 70% (10 tips) — OK
+  ...
+
+CONFIDENCE CALIBRATION:
+  60-69 band: claims 65%, actual 68% — CALIBRATED
+  70-79 band: claims 77%, actual 60% — OVERCONFIDENT (-17pp), deflate by 0.78
+  80-95 band: claims 83%, actual 75% — SLIGHTLY OVERCONFIDENT (-8pp), deflate by 0.90
+
+ACTIVE INSIGHTS:
+  [bias_detected] global: Home win ("1") predicted too often, only 55% win rate (N=11)
+  [calibration_drift] 70-79 band: 17pp gap between claimed and actual
+  [weak_spot] serie-a: "1" predictions at 50% win rate (N=8)
+  ...
+```
+
+**CRITICAL: You MUST consult this context during every match analysis.** If an insight warns about a pattern, you must explicitly address it in your reasoning.
 
 ### 4. Per-match deep analysis (DECOUPLED — one match at a time)
 
 For EACH match individually, perform ALL of the following steps before moving to the next match. Analyzing each match in isolation produces more accurate predictions.
 
-#### 4a. Targeted web research (per match)
+#### 4a. Targeted web research (per match — 4 searches)
 
 Use **WebSearch** to find specific information for THIS matchup:
 
-**Search 1** (match-specific):
+**Search 1** (match preview):
 
-- `"<home_team> vs <away_team> preview injuries lineup <date>"`
+- `"<home_team> vs <away_team> preview prediction <date>"`
+- Extract: expert predictions, key narratives, tactical previews
 
-**Search 2** (if needed — team-specific context):
+**Search 2** (injuries/lineup):
 
-- `"<team_name> team news injuries suspensions"` (for the team with less data)
+- `"<home_team> <away_team> injuries suspensions confirmed lineup <date>"`
+- Extract: confirmed absences, expected lineups, late fitness tests
+
+**Search 3** (tactical/form):
+
+- `"<home_team> OR <away_team> recent form analysis tactics last matches"`
+- Extract: tactical setup, formation, playing style, form trajectory
+
+**Search 4** (context):
+
+- `"<home_team> vs <away_team> head to head referee history"`
+- Extract: H2H psychological edge, referee tendencies, venue factors
 
 Look for:
 
-- **Injuries and suspensions** — which key players are OUT
-- **Expected lineups** — any rotation, resting players
+- **Injuries and suspensions** — which key players are OUT and their specific contribution (goals, assists, defensive impact)
+- **Expected lineups** — any rotation, resting players for upcoming fixtures
 - **Key player availability** — returns from injury, suspensions ending
-- **Motivation context** — title race, relegation fight, must-win, nothing to play for
+- **Motivation context** — title race, relegation fight, must-win, nothing to play for, end-of-season apathy
 - **Fixture congestion** — midweek European games, cup matches, travel fatigue
-- **Head-to-head psychological edge** — historical dominance in this fixture
-- **Referee** — if known, any notable tendencies (cards, penalties)
+- **Tactical matchup** — how each team's style interacts (e.g., high press vs counter-attack)
+- **Referee** — if known, cards per game, penalty tendencies, home/away bias
 
 #### 4b. Compute derived statistics (per match)
 
@@ -111,7 +174,7 @@ From the league data already fetched, extract for THIS match:
 - Home team's HOME record (W/D/L, GF/GA from home standings)
 - Away team's AWAY record (W/D/L, GF/GA from away standings)
 - Avg goals scored and conceded per match (total and context-specific)
-- Zone: Champions (rank ≤ 4), Europa (≤ 6), Conference (≤ 7), Relegation (bottom 3)
+- Zone: Champions (rank <= 4), Europa (<= 6), Conference (<= 7), Relegation (bottom 3)
 
 **From recent results (filter last 5 per team):**
 
@@ -120,49 +183,168 @@ From the league data already fetched, extract for THIS match:
 - Clean sheet%: % with 0 goals conceded
 - Current streak (winning/drawing/losing run)
 
-**Expected goals:**
+**Expected goals (improved xGoals model):**
 
-- xGoals = (homeAvgGF + awayAvgGA) / 2 + (awayAvgGF + homeAvgGA) / 2
+```
+// Context-specific ratings (home stats for home team, away stats for away team)
+homeAttack  = home team's HOME goals scored per game (from home standings)
+homeDefense = home team's HOME goals conceded per game (from home standings)
+awayAttack  = away team's AWAY goals scored per game (from away standings)
+awayDefense = away team's AWAY goals conceded per game (from away standings)
+
+// League baseline
+leagueAvg = total goals across all standings / total games played
+
+// Recent form adjustment (last 5 matches per team)
+homeRecentGF = home team's GF in last 5 / 5
+homeRecentGA = home team's GA in last 5 / 5
+awayRecentGF = away team's GF in last 5 / 5
+awayRecentGA = away team's GA in last 5 / 5
+
+// Blend: 60% context-specific, 40% recent form
+homeExpGoals = 0.6 * (homeAttack * awayDefense / leagueAvg) + 0.4 * (homeRecentGF * awayRecentGA / leagueAvg)
+awayExpGoals = 0.6 * (awayAttack * homeDefense / leagueAvg) + 0.4 * (awayRecentGF * homeRecentGA / leagueAvg)
+
+// H2H adjustment (if 5+ matches available from match.h2h)
+if h2h.total >= 5:
+  h2hAvgGoals = sum of all H2H match goals / h2h.total
+  xGoals = 0.90 * (homeExpGoals + awayExpGoals) + 0.10 * h2hAvgGoals
+else:
+  xGoals = homeExpGoals + awayExpGoals
+```
+
+**From H2H data (match.h2h — fetched automatically):**
+
+- Home team wins, away team wins, draws in last 10 meetings
+- Average goals per H2H match
+- Pattern: does one team dominate this fixture?
+- Any venue-specific trends (does home advantage hold in this matchup?)
 
 **From bookmaker odds (if available):**
 
-- Implied probabilities: 1/odds for home, draw, away
-- Compare with your statistical assessment — look for value
+- Implied probabilities: `(1/odds) * 100` for home, draw, away, O/U 2.5, BTTS
+- DO NOT look at these yet — save for the edge comparison in step 4c
 
-#### 4c. Deep reasoning (per match)
+#### 4c. Independent probability assessment + deep reasoning (per match)
 
-Think through each match thoroughly. Consider:
+**CRITICAL: Analyze ALL data WITHOUT looking at bookmaker odds first.** Form your own view, then compare.
 
-1. **Who is the stronger team overall?** (position, points, form)
-2. **How do they perform in this context?** (home team AT HOME, away team AWAY)
-3. **Goal patterns** — High or low scoring? Both teams score often?
-4. **Key absences** — Does any injury/suspension significantly change the balance?
-5. **Motivation asymmetry** — Does one team need points more desperately?
-6. **Head-to-head** — Any historical pattern in this fixture?
-7. **Form trajectory** — Is a team improving, declining, or stable?
-8. **What does the market say?** — Do odds agree or disagree with your analysis?
+**Step 1 — Form your own probability estimates:**
 
-Only THEN select your prediction. Choose the option with the highest probability of being correct, not the most exciting one.
+Based on standings, form, H2H, injuries, xGoals, motivation, tactical matchup, referee:
 
-#### 4d. Generate prediction (per match)
+- P(home win) = ?%, P(draw) = ?%, P(away win) = ?% (must sum to ~100%)
+- P(over 2.5) = ?%, P(under 2.5) = ?%
+- P(BTTS yes) = ?%, P(BTTS no) = ?%
 
-| Field        | Rules                                                                                                                                                                                                                                                                                                                                                                                             |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `prediction` | One of the 14 valid types. Choose the SAFEST pick with highest expected accuracy. Avoid exotic picks unless data is overwhelming.                                                                                                                                                                                                                                                                 |
-| `confidence` | 60-95. Reflects statistical reality. Must be justified by specific numbers. Never exceed 85 unless 4+ independent data points align. Never exceed 90 without truly exceptional convergence.                                                                                                                                                                                                       |
-| `odds`       | **MUST use real bookmaker odds** from the fetched data (match.odds). Map your prediction type to the correct market: 1/X/2 → match.odds.home/draw/away, Over/Under → match.odds.overUnder, Goal/No Goal → match.odds.goal/noGoal, 1X/X2 → match.odds.doubleChance. **NEVER invent or estimate odds.** If real odds are not available for a prediction type, DO NOT generate a tip for that match. |
-| `analysis`   | 2-3 sentences IN ITALIAN citing specific numbers (position, form, avg goals, BTTS%, injuries). Must justify the pick.                                                                                                                                                                                                                                                                             |
+**Step 2 — Compare against bookmaker implied probabilities:**
+
+- Bookmaker P(home) = (1/odds_home) * 100, etc. (normalize to sum to 100% by dividing each by overround)
+- Edge = Your probability - Bookmaker implied probability
+- Identify where your edge is strongest
+
+**Step 3 — 10-point reasoning framework:**
+
+Think through each match thoroughly using ALL 10 points:
+
+1. **Who is stronger overall?** (position, points, form, points per game)
+2. **Context-specific performance?** (home team AT HOME, away team AWAY — use context-specific standings, not overall)
+3. **Goal patterns** — xGoals model output, O/U trends for both teams, BTTS trends in last 5
+4. **Key absences impact** — specific player names and their contribution (goals, assists, defensive stats). How does their absence change the team?
+5. **Motivation asymmetry** — what's at stake for each team? Title, CL qualification, relegation, mid-table comfort?
+6. **H2H patterns** — use actual H2H data from fetch. Does one team dominate? Any venue pattern? Goal trends in H2H?
+7. **Form trajectory** — is each team improving, declining, or stable? Weight last 3 matches more heavily than last 5
+8. **Tactical matchup** — formation, playing style, how these styles interact (e.g., high-pressing team vs low-block counter-attacking team)
+9. **External factors** — referee tendencies, weather, fixture congestion, travel, derby/rivalry intensity
+10. **Probability assessment** — state explicit P(1), P(X), P(2), P(O2.5), P(BTTS), then compare to bookmaker odds. Where is the edge?
+
+**Step 4 — Check HISTORICAL CONTEXT:**
+
+- If an insight warns about a prediction type (e.g., "1" has 55% win rate), address it explicitly: "Despite the insight warning about home win predictions, this case is different because..."
+- If calibration data shows a gap for the relevant confidence band, note it for the calibration step
+- If a league-specific weak spot is flagged, apply extra scrutiny
+
+Only THEN select your prediction. Choose the option with the highest edge AND highest probability of being correct.
+
+#### 4d. Quality gate (per match)
+
+After full analysis, before generating the tip:
+
+**SKIP the match (no tip) if ANY of these conditions apply:**
+
+- No prediction type has edge > 5 percentage points over the bookmaker
+- Fewer than 10 matches played by either team this season (insufficient data)
+- No prediction reaches 62% estimated probability
+- Both teams on 3+ match losing streaks (chaotic, unpredictable)
+
+When skipping: `"SKIPPED: <home> vs <away> — <reason>"`
+
+This means we may generate 5-8 tips per league instead of 10. Quality over quantity.
+
+#### 4e. Generate prediction with reasoning (per match)
+
+| Field | Rules |
+| ----- | ----- |
+| `prediction` | One of the 14 valid types. Choose the pick with the highest genuine edge. Avoid exotic picks unless data is overwhelming. |
+| `confidence` | 60-85 (max 85 until 100+ settled tips). Reflects statistical reality. Must be calibrated (see below). |
+| `odds` | **MUST use real bookmaker odds** from the fetched data (match.odds). Map your prediction type to the correct market: 1/X/2 → match.odds.home/draw/away, Over/Under → match.odds.overUnder, Goal/No Goal → match.odds.goal/noGoal, 1X/X2 → match.odds.doubleChance. **NEVER invent or estimate odds.** If real odds are not available for a prediction type, DO NOT generate a tip for that match. |
+| `analysis` | 2-3 sentences IN ITALIAN citing specific numbers (position, form, avg goals, BTTS%, injuries, edge). Must justify the pick. |
+| `predicted_probability` | Your estimated probability for this prediction (e.g., 72.0). The raw number from your independent assessment. |
+| `reasoning` | Full structured reasoning (see format below). |
+
+**Confidence calibration:**
+
+1. Start with your raw probability estimate for the chosen prediction
+2. Check the calibration curve from Step 3 — if the relevant band (e.g., 70-79) shows a gap > 10pp between claimed and actual:
+   - `calibration_factor = actual_win_rate_for_band / midpoint_of_band`
+   - `adjusted = raw_probability * calibration_factor`
+3. Clamp to range [60, 85] — until we have 100+ settled tips, max confidence is 85
+4. This adjusted value is the `confidence` field
+
+**Reasoning format** (stored in `tips.reasoning` column):
+
+```
+DATA_SUMMARY:
+- Home: [team], [position], [points], [form], home record [W-D-L], home GF/GA per game [x/y]
+- Away: [team], [position], [points], [form], away record [W-D-L], away GF/GA per game [x/y]
+- H2H last [N]: [home wins]W, [away wins]W, [draws]D, avg goals [x]
+- xGoals: [total] (home [x], away [y])
+- Key absences: [list with impact assessment]
+- Motivation: [home context] vs [away context]
+
+PROBABILITY_ASSESSMENT:
+- P(1)=[x]%, P(X)=[y]%, P(2)=[z]%
+- P(O2.5)=[x]%, P(U2.5)=[y]%
+- P(BTTS)=[x]%, P(NoBTTS)=[y]%
+- Bookmaker implied: P(1)=[x]%, P(X)=[y]%, P(2)=[z]%
+
+EDGE_ANALYSIS:
+- Best edge: [prediction type] at +[x]pp over bookmaker
+- Second edge: [prediction type] at +[x]pp
+- Historical context check: [addressed any relevant insights/warnings]
+
+KEY_FACTORS:
+1. [STRONG/MODERATE/WEAK] [factor description]
+2. [STRONG/MODERATE/WEAK] [factor description]
+3. [STRONG/MODERATE/WEAK] [factor description]
+...
+
+DECISION: prediction=[type], raw_probability=[x]%, calibrated_confidence=[y]%
+QUALITY_GATE: edge [x]pp > 5pp threshold → PASS
+```
 
 **Accuracy-first rules:**
 
-1. **Safer picks win more.** Prefer 1X, X2, Over 1.5, Under 3.5 over exact outcomes unless evidence is very strong.
-2. **Analyze ALL data** — standings, form, home/away splits, goals, injuries, motivation, odds.
-3. **For Over/Under**: calculate avg total goals from BOTH teams' stats. Only pick Over 2.5 if xGoals > 2.8. Only pick Under 2.5 if xGoals < 2.2.
-4. **For Goal/No Goal**: BTTS% from last 5 must support. Only pick Goal if BTTS% > 65% for both teams. Only pick No Goal if one team has clean sheet% > 50%.
-5. **Never exceed 90% confidence** without at least: clear form advantage + home/away splits favoring + no key injuries + historical pattern + odds alignment.
-6. **When uncertain, reduce confidence** — 65% honest is better than 80% optimistic.
-7. **Consider the draw** — In tight matches between similar teams, X or X2/1X may be the most probable outcome.
-8. **Be contrarian only when data clearly supports it.** Don't pick upsets for variety.
+1. **Edge-first thinking.** Only bet where your estimated probability exceeds the bookmaker's implied probability by 5+ percentage points.
+2. **Safer picks win more.** Prefer 1X, X2, Over 1.5, Under 3.5 over exact outcomes unless edge is clearly strongest on exact outcomes.
+3. **Analyze ALL data** — standings, form, home/away splits, goals, H2H, injuries, motivation, tactical matchup, odds.
+4. **For Over/Under**: use the improved xGoals model. Only pick Over 2.5 if xGoals > 2.8. Only pick Under 2.5 if xGoals < 2.2.
+5. **For Goal/No Goal**: BTTS% from last 5 must support. Only pick Goal if BTTS% > 65% for both teams. Only pick No Goal if one team has clean sheet% > 50%.
+6. **Never exceed 85% confidence** (cap until 100+ settled tips exist). After that, never exceed 90% without at least: clear form advantage + home/away splits favoring + no key injuries + H2H pattern + odds alignment.
+7. **When uncertain, reduce confidence** — 65% honest is better than 80% optimistic.
+8. **Consider the draw** — In tight matches between similar teams, X or X2/1X may be the most probable outcome. Our biggest error category is draw_blindness.
+9. **Be contrarian only when data clearly supports it.** Don't pick upsets for variety.
+10. **Respect the insights.** If the retrospective system flagged a pattern, address it explicitly in your reasoning.
 
 ### 5. Assign tiers
 
@@ -180,7 +362,7 @@ ELSE → "vip"
 
 **Tier balancing** (always apply after initial assignment):
 
-- Sort predictions by value (confidence × odds) ascending
+- Sort predictions by value (confidence * odds) ascending
 - Bottom 25% → free, next 25% → pro, top 50% → vip
 - Combo predictions (containing "+") are always "vip"
 
@@ -193,14 +375,14 @@ Since this skill always produces the freshest analysis, **always replace** exist
 DELETE FROM tips WHERE status = 'pending' AND league = '<slug>'
   AND match_id IN ('<id1>', '<id2>', ...);
 
--- Insert fresh predictions
-INSERT INTO tips (match_id, home_team, away_team, match_date, prediction, odds, confidence, analysis, tier, league)
+-- Insert fresh predictions with reasoning and predicted_probability
+INSERT INTO tips (match_id, home_team, away_team, match_date, prediction, odds, confidence, analysis, tier, league, reasoning, predicted_probability)
 VALUES
-  ('<match_id>', '<home>', '<away>', '<date>', '<pred>', <odds>, <conf>, '<analysis>', '<tier>', '<league>'),
+  ('<match_id>', '<home>', '<away>', '<date>', '<pred>', <odds>, <conf>, '<analysis>', '<tier>', '<league>', '<reasoning>', <predicted_probability>),
   ...;
 ```
 
-**Escape single quotes** in team names and analysis: `'` → `''`
+**Escape single quotes** in team names, analysis, and reasoning: `'` → `''`
 
 ### 7. Summary
 
@@ -209,12 +391,13 @@ Display a formatted summary after all leagues:
 ```
 === GENERATION SUMMARY ===
 
-<flag> <LEAGUE NAME> (N tips)
-  Home vs Away — Prediction (tier, confidence%)
-  Home vs Away — Prediction (tier, confidence%)
+<flag> <LEAGUE NAME> (N tips, M skipped)
+  Home vs Away — Prediction @ odds (tier, confidence%, edge +Xpp)
+  Home vs Away — SKIPPED (reason)
   ...
 
-Total: N tips | Free: N | Pro: N | VIP: N
+Total: N tips | Skipped: M | Free: N | Pro: N | VIP: N
+Avg edge: +X.Xpp | Avg confidence: XX%
 ```
 
 Flags: serie-a = IT, champions-league = trophy, la-liga = ES, premier-league = EN, ligue-1 = FR, bundesliga = DE, eredivisie = NL
@@ -274,6 +457,7 @@ This ensures schedine are always in sync with the latest tips.
 - **Always replace** existing pending tips — never skip a match. Fresh analysis = better accuracy.
 - **One match at a time** — Analyze each match individually for maximum depth and accuracy.
 - Process leagues sequentially to respect API rate limits.
-- Target ~10 tips per league (based on available upcoming matches).
+- **Quality over quantity** — It's better to generate 5-8 high-edge tips than 10 mediocre ones. The quality gate exists for this reason.
 - All analysis text must be in Italian.
-- **Accuracy is the #1 priority.** When unsure, pick safer bets (1X, X2, Over 1.5) over risky ones.
+- **Accuracy is the #1 priority.** Only bet where you have a genuine edge. Skip matches where the edge is too thin.
+- **The feedback loop matters.** Historical accuracy, calibration curve, and retrospective insights are not optional context — they are mandatory inputs that must be consulted and addressed in every prediction.

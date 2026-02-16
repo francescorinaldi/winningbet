@@ -40,10 +40,10 @@ Derive `SEND_FLAG`:
 ## Pipeline Overview
 
 ```
-Phase 1: SETTLE    → settle finished matches        → /fr3-settle-tips
-Phase 2: GENERATE  → generate fresh tips if needed   → /fr3-generate-tips --delete [--send]
-Phase 3: SCHEDINE  → build weekly betting slips      → /fr3-generate-betting-slips [--send]
-Phase 4: SUMMARY   → final report (always runs)
+Phase 1: SETTLE    → settle finished matches + generate retrospectives  → /fr3-settle-tips
+Phase 2: GENERATE  → generate fresh tips if needed                      → /fr3-generate-tips --delete [--send]
+Phase 3: SCHEDINE  → build weekly betting slips                         → /fr3-generate-betting-slips [--send]
+Phase 4: SUMMARY   → final report with retrospective stats (always runs)
 ```
 
 Each phase runs only if its pre-check passes (unless `--force`).
@@ -196,9 +196,11 @@ If work was done:
 ```
 === PIPELINE COMPLETE ===
 - Settlement: <SETTLE_RESULT>
+- Retrospectives: N generated (N new insights detected)
 - Generation: <GENERATE_RESULT>
 - Schedine: <SCHEDINE_RESULT>
 - Telegram: <sent/not sent>
+- Active insights: N feeding into next generation
 ```
 
 If `--dry-run`:
@@ -206,6 +208,7 @@ If `--dry-run`:
 ```
 === DRY RUN COMPLETE ===
 - Settlement: would settle N tips
+- Retrospectives: would generate N retrospectives
 - Generation: would generate tips (N future tips, matches found: yes/no)
 - Schedine: would build schedine (N tips available this week)
 No changes were made.

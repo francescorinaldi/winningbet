@@ -9,7 +9,7 @@ Premium multi-league betting predictions platform (Serie A, Champions League, La
 - **Frontend**: HTML5, CSS3 (custom properties), Vanilla JS (ES6+ IIFE pattern)
 - **Backend**: Node.js Vercel Serverless Functions
 - **Database**: Supabase (PostgreSQL + Auth + RLS)
-- **AI**: Claude Code skill `/fr3-generate-tips` (primary), Anthropic Claude API (legacy serverless) — see [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md)
+- **AI**: Claude Code skill `/fr3-generate-tips` (primary, with retrospective learning), Anthropic Claude API (legacy serverless) — see [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md)
 - **Payments**: Stripe (subscriptions, webhooks, customer portal)
 - **APIs**: api-football.com (primary), football-data.org (fallback)
 - **Notifications**: Telegram Bot API, SendGrid (email)
@@ -43,7 +43,7 @@ public/shared.js        → Shared frontend utilities (mobile menu, particles, l
 public/script.js        → Main landing page logic (IIFE pattern)
 public/auth.js          → Authentication logic (Supabase Auth)
 public/dashboard.js     → User dashboard logic + Telegram linking
-supabase/migrations/    → Database schema migrations (9 files)
+supabase/migrations/    → Database schema migrations (10 files)
 .claude/skills/                        → Claude Code skills (project-specific)
 .claude/skills/fr3-generate-tips/      → /fr3-generate-tips (prediction engine)
 .claude/skills/fr3-generate-betting-slips/ → /fr3-generate-betting-slips (smart betting slips)
