@@ -4,6 +4,7 @@
  * Codice condiviso tra tutte le pagine del sito:
  *   - initMobileMenu() — Toggle del menu hamburger su mobile
  *   - initParticles(options) — Sistema di particelle animato (Canvas 2D)
+ *   - initCookieBanner() — Banner consenso cookie (GDPR)
  *   - initLangToggle() — Toggle lingua IT/EN
  *
  * Caricato prima degli script specifici di ogni pagina.
@@ -159,10 +160,6 @@ function initParticles(options) {
   init();
   animate();
 }
-
-// ==========================================
-// LANGUAGE TOGGLE
-// ==========================================
 
 // ==========================================
 // COOKIE CONSENT BANNER

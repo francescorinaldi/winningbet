@@ -18,7 +18,7 @@ const SMTP_HOST = process.env.SMTP_HOST;
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || '465', 10);
 const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
-const SMTP_FROM = process.env.SMTP_FROM || 'support@winningbet.it';
+const SMTP_FROM = process.env.SMTP_FROM;
 
 /**
  * Crea il transporter Nodemailer (lazy, singleton).
@@ -27,7 +27,7 @@ const SMTP_FROM = process.env.SMTP_FROM || 'support@winningbet.it';
 let _transporter = null;
 function getTransporter() {
   if (_transporter) return _transporter;
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) return null;
+  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS || !SMTP_FROM) return null;
 
   _transporter = nodemailer.createTransport({
     host: SMTP_HOST,
@@ -70,6 +70,7 @@ async function sendEmail(params) {
     return true;
   } catch (err) {
     console.error('SMTP error:', err.message);
+    _transporter = null;
     return false;
   }
 }

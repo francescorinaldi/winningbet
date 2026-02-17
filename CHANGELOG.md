@@ -6,6 +6,29 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Added
 
+- **Dashboard profile/subscription redesign** — Complete overhaul of the Account tab in `dashboard.html`. New profile hero banner with avatar (Google photo or initials), gold-ringed tier badge, member-since date. Side-by-side PRO/VIP upgrade plan cards with feature lists, pricing, and "Consigliato" badge on PRO. Manage subscription row for active subscribers. ~370 lines of new CSS with gradient backgrounds, glow effects, hover transforms, and responsive breakpoints.
+- **Auto-checkout from home pricing** — `script.js: updatePricingForAuth()` redirects logged-in users clicking PRO/VIP pricing buttons directly to `/dashboard.html?upgrade=pro|vip` instead of `/auth.html`. Dashboard reads `?upgrade=` param and auto-triggers Stripe checkout via `handleAutoCheckout()`.
+- **Language toggle on legal pages** — Added lang toggle button and `i18n.js` script to terms, privacy, and cookies pages for consistency with main site.
+
+### Changed
+
+- **Email sender address** — Default SMTP sender changed from `info@winningbet.it` to `support@winningbet.it` in `api/_lib/email.js`
+- **Contact email in terms** — `supporto@winningbet.it` → `support@winningbet.it` in `public/terms.html`
+- **Billing ALLOWED_ORIGINS** — Added `https://winningbet.vercel.app` to `api/billing.js` allowed origins to fix checkout redirect issues
+- **Stripe checkout error reporting** — `api/billing.js` now returns actual Stripe error message to frontend instead of generic Italian error. Logs `err.type` and `err.code` alongside `err.message`. Also logs `PRICE_IDS` for debugging.
+- **Dashboard checkout flow** — Rewrote `startCheckout()` to use direct `fetch` instead of `authFetch` wrapper, with detailed error messages and button disable/re-enable. Uses DOM manipulation instead of innerHTML (XSS safety).
+- **Google avatar support** — `loadProfile()` now detects Google avatar from `user_metadata.avatar_url` or `user_metadata.picture` and displays it in the profile hero.
+- **SMTP transporter reset on error** — `api/_lib/email.js` nulls `_transporter` on SMTP error for automatic reconnection on next send.
+- **Legal pages cleanup** — Removed unused `<canvas id="particles">` from terms, privacy, and cookies pages. Removed duplicate section header comment in `shared.js`.
+
+### Fixed
+
+- **Stripe checkout "errore di rete"** — Dashboard upgrade buttons failed silently because `authFetch` swallowed errors. Replaced with direct fetch + explicit error handling.
+- **Stripe connection error on Vercel** — Production `STRIPE_SECRET_KEY` had wrong content (130 chars vs 108). Re-added all 4 Stripe env vars cleanly from local `.env`.
+- **Home pricing redirect loop** — Logged-in users clicking pricing buttons were sent to `/auth.html` instead of checkout. Now redirects to dashboard with auto-checkout param.
+
+### Added
+
 - **Performance Analytics skill** (`/fr3-performance-analytics`) — Deep track record analysis: hit rate, ROI, avg odds, per-league/type/confidence/odds-band breakdowns, rolling trends, bias detection. Generates actionable recommendations as JSONB. Stores snapshots in `performance_snapshots` table. Flags: `--store`, `--period N`.
   - Migration `012_performance_snapshots.sql` — New table with UNIQUE on (snapshot_date, period_days), JSONB columns for breakdowns and recommendations
 - **Strategy Optimizer skill** (`/fr3-strategy-optimizer`) — Prescriptive strategy engine: analyzes winning vs losing patterns, finds optimal parameter mix, generates concrete `strategy_directives` with HIGH/MEDIUM/LOW impact and 30-day auto-expiry. 8 directive types (avoid/prefer prediction types and leagues, adjust confidence/odds/edge thresholds). Flag: `--dry-run`.
