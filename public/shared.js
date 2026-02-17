@@ -10,8 +10,17 @@
  * Caricato prima degli script specifici di ogni pagina.
  */
 
-/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP */
+/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES */
 /* eslint no-var: "off" */
+
+// ==========================================
+// TIER PRICING (shared between pages)
+// ==========================================
+
+var TIER_PRICES = {
+  pro: { amount: 9.99, currency: '€', display: '€9.99/mese' },
+  vip: { amount: 29.99, currency: '€', display: '€29.99/mese' },
+};
 
 // ==========================================
 // LEAGUE NAMES (shared between pages)

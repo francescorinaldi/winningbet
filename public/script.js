@@ -13,7 +13,7 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
-/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP */
+/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES */
 
 (function () {
   'use strict';
@@ -672,8 +672,8 @@
     if (isAuthenticated) {
       const btn = createEl('a', 'btn btn-gold btn-sm');
       btn.textContent = isVipCard
-        ? 'Diventa VIP \u2014 \u20AC29.99/mese'
-        : 'Passa a PRO \u2014 \u20AC9.99/mese';
+        ? `Diventa VIP \u2014 ${TIER_PRICES.vip.display}`
+        : `Passa a PRO \u2014 ${TIER_PRICES.pro.display}`;
       btn.href = '#pricing';
       overlay.appendChild(btn);
     } else {
@@ -1110,6 +1110,27 @@
   }
 
   /**
+   * Inietta i prezzi tier dalla configurazione centralizzata nel DOM.
+   * Aggiorna gli elementi con data-tier="pro" e data-tier="vip".
+   */
+  function injectTierPrices() {
+    document.querySelectorAll('[data-tier]').forEach(function (priceEl) {
+      const tier = priceEl.getAttribute('data-tier');
+      if (!TIER_PRICES[tier]) return;
+
+      const config = TIER_PRICES[tier];
+      const amountEl = priceEl.querySelector('.price-amount');
+      const decimalEl = priceEl.querySelector('.price-decimal');
+
+      if (amountEl && decimalEl) {
+        const parts = config.amount.toString().split('.');
+        amountEl.textContent = parts[0];
+        decimalEl.textContent = parts[1] ? '.' + parts[1] : '';
+      }
+    });
+  }
+
+  /**
    * Carica le statistiche dal track record API e aggiorna il DOM.
    * Se won+lost===0: mostra stato "in costruzione" (em dash, pending count).
    * Se ci sono dati reali: aggiorna DOM con valori veri + trigger counter animation.
@@ -1344,6 +1365,7 @@
   // Cookie banner + language toggle delegated to shared.js
 
   // Avvia il caricamento dati al ready della pagina
+  injectTierPrices();
   initLeagueSelector();
   loadMatches();
   loadResults().then(loadTrackRecord);
