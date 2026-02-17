@@ -50,7 +50,9 @@
   let userPrefs = null;
   let userBetsMap = {};
   let countdownInterval = null;
-  let currentLeague = localStorage.getItem('wb_dashboard_league') || 'serie-a';
+  let currentLeague = null;
+  try { currentLeague = localStorage.getItem('wb_dashboard_league'); } catch (_e) { /* storage unavailable */ }
+  currentLeague = currentLeague || 'serie-a';
 
   // ─── INIT ───────────────────────────────────────────────
 
@@ -1158,7 +1160,7 @@
       btn.classList.add('active');
 
       currentLeague = league;
-      localStorage.setItem('wb_dashboard_league', league);
+      try { localStorage.setItem('wb_dashboard_league', league); } catch (_e) { /* storage unavailable */ }
 
       loadTodayTips();
       loadHistory();
