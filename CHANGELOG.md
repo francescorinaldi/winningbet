@@ -9,6 +9,10 @@ All notable changes to WinningBet will be documented in this file.
 - **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.
 - **Copilot instructions accuracy** — Fixed outdated file counts in `.github/copilot-instructions.md`: HTML pages 3→6, JS files 7→6, migrations 9→14, tests 21→23
 
+### Fixed
+
+- **Email digest confidence guard** — `buildDailyDigest` in `api/_lib/email.js` now guards `tip.confidence` against `undefined`/`null`, displaying `—` instead of `"undefined%"` or `"null%"` in both HTML and plain text versions
+
 ### Added
 
 - **Dashboard profile/subscription redesign** — Complete overhaul of the Account tab in `dashboard.html`. New profile hero banner with avatar (Google photo or initials), gold-ringed tier badge, member-since date. Side-by-side PRO/VIP upgrade plan cards with feature lists, pricing, and "Consigliato" badge on PRO. Manage subscription row for active subscribers. ~370 lines of new CSS with gradient backgrounds, glow effects, hover transforms, and responsive breakpoints.
