@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Dashboard particle background** — Activated dead `<canvas id="particles">` in `dashboard.html` by adding `initParticles({ maxParticles: 30, densityDivisor: 25, connections: false })` call in `dashboard.js`. Canvas element was present but never initialized, now provides subtle visual consistency with other pages.
+
 ### Docs
 
 - **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.

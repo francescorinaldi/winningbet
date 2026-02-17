@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES */
+/* global initMobileMenu, initParticles, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES */
 
 (function () {
   'use strict';
@@ -20,6 +20,7 @@
   // Shared utilities
   initMobileMenu();
   initCookieBanner();
+  initParticles({ maxParticles: 30, densityDivisor: 25, connections: false });
 
   // ─── CONFIG ───────────────────────────────────────────
   const UI_TEXT = {
