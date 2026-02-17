@@ -189,18 +189,19 @@ function initCookieBanner() {
 
   if (!banner || !acceptBtn || !rejectBtn) return;
 
-  var consent = localStorage.getItem('cookie_consent');
+  var consent = null;
+  try { consent = localStorage.getItem('cookie_consent'); } catch (e) { /* storage unavailable */ }
   if (consent) return;
 
   banner.removeAttribute('hidden');
 
   acceptBtn.addEventListener('click', function () {
-    localStorage.setItem('cookie_consent', 'accepted');
+    try { localStorage.setItem('cookie_consent', 'accepted'); } catch (e) { /* storage unavailable */ }
     banner.setAttribute('hidden', '');
   });
 
   rejectBtn.addEventListener('click', function () {
-    localStorage.setItem('cookie_consent', 'rejected');
+    try { localStorage.setItem('cookie_consent', 'rejected'); } catch (e) { /* storage unavailable */ }
     banner.setAttribute('hidden', '');
   });
 }
@@ -217,7 +218,9 @@ function initLangToggle() {
     { code: 'IT', flag: '\uD83C\uDDEE\uD83C\uDDF9' },
     { code: 'EN', flag: '\uD83C\uDDEC\uD83C\uDDE7' },
   ];
-  var current = localStorage.getItem('lang') === 'EN' ? 1 : 0;
+  var savedLang = null;
+  try { savedLang = localStorage.getItem('lang'); } catch (e) { /* storage unavailable */ }
+  var current = savedLang === 'EN' ? 1 : 0;
 
   function render() {
     var lang = langs[current];
@@ -233,7 +236,7 @@ function initLangToggle() {
 
   btn.addEventListener('click', function () {
     current = current === 0 ? 1 : 0;
-    localStorage.setItem('lang', langs[current].code);
+    try { localStorage.setItem('lang', langs[current].code); } catch (e) { /* storage unavailable */ }
     render();
   });
 }
