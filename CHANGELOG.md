@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Dashboard auth path error handling** — Added try/catch to `checkAuth()`, `loadProfile()`, `updateSubscriptionUI()`, and `loadTelegramStatus()` in `public/dashboard.js`. If Supabase is unreachable, dashboard now shows `showAlert('Errore di connessione. Ricarica la pagina.', 'error')` instead of blank page with infinite spinners.
+
 ### Docs
 
 - **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.
