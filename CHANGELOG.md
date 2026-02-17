@@ -6,7 +6,7 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Fixed
 
-- **Particle animation pause on hidden tab** — `initParticles()` in `public/shared.js` now tracks `animationId` and listens for `visibilitychange` to cancel/resume `requestAnimationFrame`, preventing CPU/GPU waste when the tab is not visible.
+- **Particle animation pause on hidden tab** — `initParticles()` in `public/shared.js` now tracks `animationId` and listens for `visibilitychange` to cancel/resume `requestAnimationFrame`, preventing CPU/GPU waste when the tab is not visible. Includes guards against duplicate animation loops on rapid tab switching.
 
 ### Docs
 

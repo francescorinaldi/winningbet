@@ -172,10 +172,14 @@ function initParticles(options) {
 
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
-      cancelAnimationFrame(animationId);
-      animationId = null;
+      if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
     } else {
-      animate();
+      if (animationId === null) {
+        animate();
+      }
     }
   });
 
