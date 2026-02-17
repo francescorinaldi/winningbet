@@ -219,6 +219,7 @@ function initCookieBanner() {
 function formatMatchDate(iso) {
   if (!iso) return '\u2014';
   var d = new Date(iso);
+  if (isNaN(d.getTime())) return '\u2014';
   return (
     d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) +
     ' \u2014 ' +
