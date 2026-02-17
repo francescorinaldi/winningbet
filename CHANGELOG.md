@@ -29,6 +29,7 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Fixed
 
+- **Swallowed errors in `script.js`** — Added `console.error` logging to three catch blocks that silently swallowed errors: `loadHomepageUserTier` (defaulted paying users to free tier without logging), `loadTrackRecord` (reset UI silently on API failure), and `loadTipsFromAPI` inner catch (completely swallowed fixtures fetch errors).
 - **Stripe checkout "errore di rete"** — Dashboard upgrade buttons failed silently because `authFetch` swallowed errors. Replaced with direct fetch + explicit error handling.
 - **Stripe connection error on Vercel** — Production `STRIPE_SECRET_KEY` had wrong content (130 chars vs 108). Re-added all 4 Stripe env vars cleanly from local `.env`.
 - **Home pricing redirect loop** — Logged-in users clicking pricing buttons were sent to `/auth.html` instead of checkout. Now redirects to dashboard with auto-checkout param.
