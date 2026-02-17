@@ -14,7 +14,11 @@ const { stripe, PRICE_IDS } = require('./_lib/stripe');
 const { supabase } = require('./_lib/supabase');
 const { authenticate } = require('./_lib/auth-middleware');
 
-const ALLOWED_ORIGINS = ['https://winningbet.it', 'https://www.winningbet.it'];
+const ALLOWED_ORIGINS = [
+  'https://winningbet.it',
+  'https://www.winningbet.it',
+  'https://winningbet.vercel.app',
+];
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {

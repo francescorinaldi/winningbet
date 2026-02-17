@@ -9,7 +9,7 @@
  *   SMTP_PORT — Porta SMTP (465 per SSL, 587 per STARTTLS)
  *   SMTP_USER — Username SMTP
  *   SMTP_PASS — Password SMTP
- *   SMTP_FROM — Indirizzo mittente (es. info@winningbet.it)
+ *   SMTP_FROM — Indirizzo mittente (es. support@winningbet.it)
  */
 
 const nodemailer = require('nodemailer');
@@ -18,7 +18,7 @@ const SMTP_HOST = process.env.SMTP_HOST;
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || '465', 10);
 const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
-const SMTP_FROM = process.env.SMTP_FROM || 'info@winningbet.it';
+const SMTP_FROM = process.env.SMTP_FROM || 'support@winningbet.it';
 
 /**
  * Crea il transporter Nodemailer (lazy, singleton).
