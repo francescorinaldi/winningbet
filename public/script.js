@@ -1007,7 +1007,8 @@
         .eq('user_id', session.user.id)
         .single();
       homepageUserTier = (result.data && result.data.tier) || 'free';
-    } catch (_err) {
+    } catch (err) {
+      console.error('loadHomepageUserTier failed:', err);
       homepageUserTier = 'free';
     }
     // Ricarica i tips con il tier aggiornato
@@ -1246,7 +1247,8 @@
         roiEl.setAttribute('data-count', roiVal);
         animateCounter(roiEl);
       }
-    } catch (_err) {
+    } catch (err) {
+      console.error('loadTrackRecord failed:', err);
       resetTrackRecordUI();
     }
   }
@@ -1344,8 +1346,8 @@
               }
             });
           }
-        } catch (_matchErr) {
-          // Nessun match disponibile, mostra solo i tips dal database
+        } catch (matchErr) {
+          console.error('loadTipsFromAPI fixtures fetch failed:', matchErr);
         }
       }
 
@@ -1359,7 +1361,8 @@
           card.classList.add('visible');
         });
       });
-    } catch (_err) {
+    } catch (err) {
+      console.error('loadTipsFromAPI failed:', err);
       // Fallback: genera tips client-side
       loadTips();
     }
