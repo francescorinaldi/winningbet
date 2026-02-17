@@ -212,8 +212,10 @@ function initCookieBanner() {
 
 function initCopyrightYear() {
   var year = new Date().getFullYear();
-  document.querySelectorAll('.footer-copy span').forEach(function (el) {
-    el.textContent = el.textContent.replace(/\d{4}/, String(year));
+  document.querySelectorAll('.footer-copy > span:first-child').forEach(function (el) {
+    if (el.textContent) {
+      el.textContent = el.textContent.replace(/\d{4}/, String(year));
+    }
   });
 }
 
