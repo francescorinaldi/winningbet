@@ -179,27 +179,53 @@ function initParticles(options) {
 
 /**
  * Gestisce il banner di consenso cookie.
+ * Crea dinamicamente il banner e lo inietta nel DOM.
  * Mostra il banner solo se l'utente non ha gia' espresso
  * una preferenza (salvata in localStorage).
  */
 function initCookieBanner() {
-  var banner = document.getElementById('cookieBanner');
-  var acceptBtn = document.getElementById('cookieAccept');
-  var rejectBtn = document.getElementById('cookieReject');
-
-  if (!banner || !acceptBtn || !rejectBtn) return;
-
   var consent = localStorage.getItem('cookie_consent');
   if (consent) return;
 
+  var tFn = typeof window.t === 'function' ? window.t : function (key) {
+    var defaults = {
+      'cookie.text': 'Utilizziamo cookie tecnici per il funzionamento del sito. Per maggiori informazioni consulta la nostra',
+      'cookie.link': 'Cookie Policy',
+      'cookie.reject': 'Rifiuta',
+      'cookie.accept': 'Accetta',
+    };
+    return defaults[key] || key;
+  };
+
+  var banner = document.createElement('div');
+  banner.className = 'cookie-banner';
+  banner.id = 'cookieBanner';
+  banner.setAttribute('hidden', '');
+  banner.innerHTML =
+    '<div class="cookie-inner">' +
+    '<p class="cookie-text">' +
+    tFn('cookie.text') +
+    ' <a href="/cookies.html">' + tFn('cookie.link') + '</a>.' +
+    '</p>' +
+    '<div class="cookie-actions">' +
+    '<button class="btn btn-sm btn-outline" id="cookieReject" data-i18n="cookie.reject">' +
+    tFn('cookie.reject') +
+    '</button>' +
+    '<button class="btn btn-sm btn-gold" id="cookieAccept" data-i18n="cookie.accept">' +
+    tFn('cookie.accept') +
+    '</button>' +
+    '</div>' +
+    '</div>';
+
+  document.body.appendChild(banner);
   banner.removeAttribute('hidden');
 
-  acceptBtn.addEventListener('click', function () {
+  document.getElementById('cookieAccept').addEventListener('click', function () {
     localStorage.setItem('cookie_consent', 'accepted');
     banner.setAttribute('hidden', '');
   });
 
-  rejectBtn.addEventListener('click', function () {
+  document.getElementById('cookieReject').addEventListener('click', function () {
     localStorage.setItem('cookie_consent', 'rejected');
     banner.setAttribute('hidden', '');
   });

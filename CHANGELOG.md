@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Refactored
+
+- **Cookie banner deduplication** — Removed duplicated cookie banner HTML from all 6 pages (`index.html`, `auth.html`, `dashboard.html`, `cookies.html`, `privacy.html`, `terms.html`). `initCookieBanner()` in `public/shared.js` now dynamically creates and injects the banner into the DOM with proper i18n `data-i18n` attributes for language toggle support. Reduces ~200 lines of duplicated HTML and ensures single source of truth for cookie consent UI.
+
 ### Docs
 
 - **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.
