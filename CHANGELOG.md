@@ -11,7 +11,7 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Fixed
 
-- **Email digest confidence guard** — `buildDailyDigest` in `api/_lib/email.js` now guards `tip.confidence` against `undefined`/`null`, displaying `—` instead of `"undefined%"` or `"null%"` in both HTML and plain text versions
+- **Email/Telegram digest confidence guard** — `buildDailyDigest` in `api/_lib/email.js` and `formatTipBlock` in `api/_lib/telegram.js` now guard `tip.confidence` against `undefined`/`null`, displaying `—` instead of `"undefined%"` or `"null%"`
 
 ### Added
 
