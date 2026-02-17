@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- **Locale-aware date formatting** — Replaced 8+ hardcoded `'it-IT'` locale strings with dynamic `getLocale()` in frontend files (`script.js`, `dashboard.js`). Added `getLocale()` utility to `i18n.js` that returns `'it-IT'` or `'en-GB'` based on the user's language setting. Hardcoded Italian day abbreviations in `formatMatchDate()` now use the i18n `days` translation key. Backend files (`email.js`, `prediction-engine.js`) use named constants (`EMAIL_LOCALE`, `BACKEND_LOCALE`) for maintainability.
+
 ### Docs
 
 - **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.
@@ -30,6 +34,7 @@ All notable changes to WinningBet will be documented in this file.
 ### Fixed
 
 - **localStorage access not wrapped in try/catch** — Wrapped all 8 `localStorage.getItem()`/`setItem()` calls in `public/shared.js`, `dashboard.js`, and `i18n.js` with `try/catch` to prevent crashes in Safari private browsing, storage quota exceeded, or restricted iframe contexts. Renamed unused catch parameters to `_e` to comply with linting. Affects `initCookieBanner()` and `initLangToggle()` in shared.js, league persistence in dashboard.js, and `getLang()` in i18n.js.
+- **Hardcoded copyright year** — Replaced static "2026" with dynamic year via new `initCopyrightYear()` in `shared.js`. Applied to all 5 footers (`index.html`, `dashboard.html`, `cookies.html`, `privacy.html`, `terms.html`). Year auto-updates on language toggle.
 - **Stripe checkout "errore di rete"** — Dashboard upgrade buttons failed silently because `authFetch` swallowed errors. Replaced with direct fetch + explicit error handling.
 - **Stripe connection error on Vercel** — Production `STRIPE_SECRET_KEY` had wrong content (130 chars vs 108). Re-added all 4 Stripe env vars cleanly from local `.env`.
 - **Home pricing redirect loop** — Logged-in users clicking pricing buttons were sent to `/auth.html` instead of checkout. Now redirects to dashboard with auto-checkout param.

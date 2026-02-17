@@ -5,12 +5,13 @@
  *   - initMobileMenu() — Toggle del menu hamburger su mobile
  *   - initParticles(options) — Sistema di particelle animato (Canvas 2D)
  *   - initCookieBanner() — Banner consenso cookie (GDPR)
+ *   - initCopyrightYear() — Anno dinamico nel footer
  *   - initLangToggle() — Toggle lingua IT/EN
  *
  * Caricato prima degli script specifici di ogni pagina.
  */
 
-/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES */
+/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES */
 // Why `var`? This file is loaded as a non-module <script> — `var` declarations
 // become globals, making functions/constants available to other page scripts.
 // Switch to `const`/`let` + `export` when the frontend migrates to ES modules.
@@ -207,6 +208,19 @@ function initCookieBanner() {
 }
 
 // ==========================================
+// COPYRIGHT YEAR
+// ==========================================
+
+function initCopyrightYear() {
+  var year = new Date().getFullYear();
+  document.querySelectorAll('.footer-copy > span:first-child').forEach(function (el) {
+    if (el.textContent) {
+      el.textContent = el.textContent.replace(/\d{4}/, String(year));
+    }
+  });
+}
+
+// ==========================================
 // LANGUAGE TOGGLE
 // ==========================================
 
@@ -230,6 +244,7 @@ function initLangToggle() {
     if (typeof window.applyTranslations === 'function') {
       window.applyTranslations();
     }
+    initCopyrightYear();
   }
 
   render();

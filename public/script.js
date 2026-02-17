@@ -13,7 +13,7 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
-/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES */
+/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getLocale, t */
 
 (function () {
   'use strict';
@@ -77,12 +77,12 @@
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = Math.floor(eased * target);
 
-      el.textContent = current.toLocaleString('it-IT');
+      el.textContent = current.toLocaleString(getLocale());
 
       if (progress < 1) {
         requestAnimationFrame(update);
       } else {
-        el.textContent = target.toLocaleString('it-IT');
+        el.textContent = target.toLocaleString(getLocale());
       }
     }
 
@@ -408,7 +408,10 @@
    */
   function formatMatchDate(isoDate) {
     const d = new Date(isoDate);
-    const days = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+    const daysTranslation = t('days');
+    const days = Array.isArray(daysTranslation)
+      ? daysTranslation
+      : ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
     const day = days[d.getDay()];
     const hours = String(d.getHours()).padStart(2, '0');
     const mins = String(d.getMinutes()).padStart(2, '0');
@@ -1371,5 +1374,6 @@
   loadResults().then(loadTrackRecord);
   loadTipsFromAPI();
   initCookieBanner();
+  initCopyrightYear();
   initLangToggle();
 })();
