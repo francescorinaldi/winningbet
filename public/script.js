@@ -1358,7 +1358,8 @@
           card.classList.add('visible');
         });
       });
-    } catch (_err) {
+    } catch (err) {
+      console.error('loadTipsFromAPI failed:', err);
       // Fallback: genera tips client-side
       loadTips();
     }
