@@ -102,6 +102,15 @@ export default [
     },
   },
   {
+    files: ['jest.config.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        module: 'readonly',
+      },
+    },
+  },
+  {
     ignores: ['node_modules/', '.vercel/', 'supabase/', '.claude/'],
   },
   prettier,
