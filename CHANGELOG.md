@@ -7,6 +7,7 @@ All notable changes to WinningBet will be documented in this file.
 ### Docs
 
 - **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.
+- **Copilot instructions accuracy** — Fixed outdated file counts in `.github/copilot-instructions.md`: HTML pages 3→6, JS files 7→6, migrations 9→14, tests 21→23
 
 ### Added
 

@@ -9,17 +9,17 @@ Premium multi-league football betting predictions platform. Vanilla JS frontend 
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | HTML5, CSS3 (custom properties), Vanilla JS (ES6+ IIFE pattern) |
-| Backend | Node.js 18+ Vercel Serverless Functions (CommonJS) |
-| Database | Supabase (PostgreSQL + Auth + RLS) |
-| Payments | Stripe (subscriptions, webhooks, customer portal) |
-| APIs | api-football.com (primary), football-data.org (fallback) |
-| Notifications | Telegram Bot API, Nodemailer SMTP |
-| Testing | Jest 30 (350+ tests, 75%+ coverage) |
-| Linting | ESLint 9 (flat config) + Prettier |
-| Deployment | Vercel (auto-deploy from main) |
+| Layer         | Technology                                                      |
+| ------------- | --------------------------------------------------------------- |
+| Frontend      | HTML5, CSS3 (custom properties), Vanilla JS (ES6+ IIFE pattern) |
+| Backend       | Node.js 18+ Vercel Serverless Functions (CommonJS)              |
+| Database      | Supabase (PostgreSQL + Auth + RLS)                              |
+| Payments      | Stripe (subscriptions, webhooks, customer portal)               |
+| APIs          | api-football.com (primary), football-data.org (fallback)        |
+| Notifications | Telegram Bot API, Nodemailer SMTP                               |
+| Testing       | Jest 30 (350+ tests, 75%+ coverage)                             |
+| Linting       | ESLint 9 (flat config) + Prettier                               |
+| Deployment    | Vercel (auto-deploy from main)                                  |
 
 ## Commands
 
@@ -38,9 +38,9 @@ npm run test:coverage  # Jest with coverage report
 ```
 api/                    # 12 Vercel serverless functions
 api/_lib/               # 11 shared backend modules (cache, auth, APIs, Telegram, etc.)
-public/                 # Static frontend (no build step) — 3 HTML pages, 7 JS files, 1 CSS
-supabase/migrations/    # 9 incremental SQL migrations
-tests/                  # 21 test files (unit + integration)
+public/                 # Static frontend (no build step) — 6 HTML pages, 6 JS files, 1 CSS
+supabase/migrations/    # 14 incremental SQL migrations
+tests/                  # 23 test files (unit + integration)
 ```
 
 ### Backend Pattern
