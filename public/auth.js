@@ -1,4 +1,4 @@
-/* global initMobileMenu, initParticles, initLangToggle */
+/* global initMobileMenu, initParticles, initLangToggle, initCookieBanner */
 
 /**
  * WinningBet — Auth Page Logic
@@ -10,8 +10,9 @@
 (function () {
   'use strict';
 
-  // Mobile menu delegated to shared.js
+  // Shared utilities
   initMobileMenu();
+  initCookieBanner();
 
   // Particles (reduced version for auth page, no connections)
   initParticles({ maxParticles: 40, densityDivisor: 25, connections: false });

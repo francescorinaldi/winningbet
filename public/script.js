@@ -13,7 +13,7 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
-/* global initParticles, initMobileMenu, initLangToggle, LEAGUE_NAMES_MAP */
+/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP */
 
 (function () {
   'use strict';
@@ -1325,39 +1325,7 @@
     }
   }
 
-  // ==========================================
-  // COOKIE CONSENT BANNER
-  // ==========================================
-
-  /**
-   * Gestisce il banner di consenso cookie.
-   * Mostra il banner solo se l'utente non ha gia' espresso
-   * una preferenza (salvata in localStorage).
-   */
-  function initCookieBanner() {
-    const banner = document.getElementById('cookieBanner');
-    const acceptBtn = document.getElementById('cookieAccept');
-    const rejectBtn = document.getElementById('cookieReject');
-
-    if (!banner || !acceptBtn || !rejectBtn) return;
-
-    const consent = localStorage.getItem('cookie_consent');
-    if (consent) return; // Preferenza gia' espressa
-
-    banner.removeAttribute('hidden');
-
-    acceptBtn.addEventListener('click', function () {
-      localStorage.setItem('cookie_consent', 'accepted');
-      banner.setAttribute('hidden', '');
-    });
-
-    rejectBtn.addEventListener('click', function () {
-      localStorage.setItem('cookie_consent', 'rejected');
-      banner.setAttribute('hidden', '');
-    });
-  }
-
-  // Language toggle delegated to shared.js (initLangToggle)
+  // Cookie banner + language toggle delegated to shared.js
 
   // Avvia il caricamento dati al ready della pagina
   initLeagueSelector();

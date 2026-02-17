@@ -12,7 +12,7 @@ Premium multi-league betting predictions platform (Serie A, Champions League, La
 - **AI**: Claude Code skill `/fr3-generate-tips` (primary, Agent Team with parallel analysts + reviewer + retrospective learning), Anthropic Claude API (legacy serverless) — see [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md)
 - **Payments**: Stripe (subscriptions, webhooks, customer portal)
 - **APIs**: api-football.com (primary), football-data.org (fallback)
-- **Notifications**: Telegram Bot API, SendGrid (email)
+- **Notifications**: Telegram Bot API, Nodemailer SMTP (email)
 - **Deployment**: Vercel
 - **Linting**: ESLint 9 (flat config)
 - **Formatting**: Prettier
@@ -200,8 +200,11 @@ Valid slugs: `serie-a`, `champions-league`, `la-liga`, `premier-league`, `ligue-
 - `TELEGRAM_PRIVATE_CHANNEL_ID` — Private channel chat ID (pro/vip tips)
 - `TELEGRAM_BOT_USERNAME` — Bot username (without @) for deep link generation
 - `TELEGRAM_WEBHOOK_SECRET` — Secret token for Telegram webhook verification
-- `SENDGRID_API_KEY` — SendGrid API key
-- `SENDGRID_FROM_EMAIL` — Verified sender email address
+- `SMTP_HOST` — SMTP server hostname
+- `SMTP_PORT` — SMTP port (465 for SSL, 587 for STARTTLS)
+- `SMTP_USER` — SMTP username
+- `SMTP_PASS` — SMTP password
+- `SMTP_FROM` — Sender email address
 
 ## Code Conventions
 

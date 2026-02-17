@@ -673,7 +673,7 @@ Implemented in [`api/_lib/telegram.js`](api/_lib/telegram.js). Triggered by cron
 
 ### Email
 
-Implemented in [`api/_lib/email.js`](api/_lib/email.js) via SendGrid. The `handleSend()` function at [`cron-tasks.js:151-195`](api/cron-tasks.js) fetches active subscribers, filters tips by tier access, builds a daily digest, and sends per-user emails.
+Implemented in [`api/_lib/email.js`](api/_lib/email.js) via Nodemailer SMTP. The `handleSend()` function at [`cron-tasks.js:151-195`](api/cron-tasks.js) fetches active subscribers, filters tips by tier access, builds a daily digest, and sends per-user emails.
 
 ---
 

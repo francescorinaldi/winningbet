@@ -12,13 +12,14 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, LEAGUE_NAMES_MAP */
+/* global initMobileMenu, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP */
 
 (function () {
   'use strict';
 
-  // Mobile menu delegated to shared.js
+  // Shared utilities
   initMobileMenu();
+  initCookieBanner();
 
   // ─── CONFIG ───────────────────────────────────────────
   const TIER_PRICES = { pro: '\u20AC9.99/mese', vip: '\u20AC29.99/mese' };

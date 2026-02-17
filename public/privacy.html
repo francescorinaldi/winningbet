@@ -9,6 +9,27 @@
       content="Informativa sulla privacy di WinningBet. Come raccogliamo, usiamo e proteggiamo i tuoi dati."
     />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Privacy Policy — WinningBet" />
+    <meta
+      property="og:description"
+      content="Informativa sulla privacy di WinningBet. Come raccogliamo, usiamo e proteggiamo i tuoi dati."
+    />
+    <meta property="og:image" content="https://winningbet.it/og-image.png" />
+    <meta property="og:url" content="https://winningbet.it/privacy.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="it_IT" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Privacy Policy — WinningBet" />
+    <meta
+      name="twitter:description"
+      content="Informativa sulla privacy di WinningBet. Come raccogliamo, usiamo e proteggiamo i tuoi dati."
+    />
+    <meta name="twitter:image" content="https://winningbet.it/og-image.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -151,7 +172,7 @@
                 >)
               </li>
               <li><strong>Supabase:</strong> per l'hosting del database e l'autenticazione</li>
-              <li><strong>SendGrid:</strong> per l'invio di email transazionali</li>
+              <li><strong>Server SMTP proprio:</strong> per l'invio di email transazionali</li>
               <li><strong>Vercel:</strong> per l'hosting del sito web</li>
               <li><strong>Autorita' competenti:</strong> solo se richiesto per legge</li>
             </ul>
@@ -261,24 +282,24 @@
       </div>
     </footer>
 
+    <!-- Cookie Consent Banner -->
+    <div class="cookie-banner" id="cookieBanner" hidden>
+      <div class="cookie-inner">
+        <p class="cookie-text">
+          Utilizziamo cookie tecnici per il funzionamento del sito. Per maggiori informazioni
+          consulta la nostra <a href="/cookies.html">Cookie Policy</a>.
+        </p>
+        <div class="cookie-actions">
+          <button class="btn btn-sm btn-outline" id="cookieReject">Rifiuta</button>
+          <button class="btn btn-sm btn-gold" id="cookieAccept">Accetta</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="shared.js"></script>
     <script>
-      (function () {
-        var hamburger = document.getElementById('hamburger');
-        var navLinks = document.getElementById('navLinks');
-        if (!hamburger || !navLinks) return;
-        hamburger.addEventListener('click', function () {
-          hamburger.classList.toggle('active');
-          navLinks.classList.toggle('open');
-          document.body.style.overflow = navLinks.classList.contains('open') ? 'hidden' : '';
-        });
-        navLinks.querySelectorAll('a').forEach(function (link) {
-          link.addEventListener('click', function () {
-            hamburger.classList.remove('active');
-            navLinks.classList.remove('open');
-            document.body.style.overflow = '';
-          });
-        });
-      })();
+      initMobileMenu();
+      initCookieBanner();
     </script>
   </body>
 </html>

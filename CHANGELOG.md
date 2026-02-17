@@ -15,6 +15,8 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Changed
 
+- **Email: SendGrid → Nodemailer SMTP** — Migrated `api/_lib/email.js` from SendGrid API to Nodemailer with custom SMTP server. Same `sendEmail()` interface, no breaking changes for callers. New env vars: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`. Removed: `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`. Updated all tests.
+- **Cookie consent banner on all pages** — Moved `initCookieBanner()` from `script.js` to `shared.js`. Added cookie banner HTML to auth, dashboard, terms, privacy, and cookies pages. Legal pages (terms, privacy, cookies) now load `shared.js` instead of inline hamburger script.
 - **Copilot setup steps workflow** — Updated `copilot-setup-steps.yml` triggers: added `push` and `pull_request` (scoped to workflow file path) for CI validation, moved `permissions` to job level per GitHub best practices
 - **`/fr3-generate-tips` — V4 Comprehensive Overhaul**
   - **Minimum odds raised**: 1.20 → 1.50 (exception: double chance 1X/X2 at 1.30)
@@ -37,6 +39,15 @@ All notable changes to WinningBet will be documented in this file.
   - Now: Analytics → Optimize → Settle → Research → Generate → Schedine → Summary (7 phases)
   - New flags: `--skip-analytics`, `--skip-optimize`, `--skip-research`
   - Smart pre-checks: Analytics (snapshot today + min 10 tips), Optimize (directives <7 days + min 20 tips), Research (fresh research + upcoming matches)
+
+### Added
+
+- **SEO: robots.txt** — `public/robots.txt` with allow all, disallow `/api/`, sitemap link
+- **SEO: sitemap.xml** — `public/sitemap.xml` with all 6 public pages (/, auth, dashboard, terms, privacy, cookies)
+- **SEO: Open Graph + Twitter Card meta tags** — Added to all 6 HTML pages (og:title, og:description, og:image, og:url, og:type, og:locale, twitter:card). Placeholder OG image at `/og-image.png` (1200x630, to be created)
+
+### Added
+
 - **Agent Team Architecture for Tip Generation** — `/fr3-generate-tips` now uses Claude Code Agent Teams to parallelize league analysis. See [PREDICTION-ENGINE.md](PREDICTION-ENGINE.md) for full architecture.
   - **7 parallel analyst teammates** — One specialist per league (serie-a, champions-league, la-liga, premier-league, ligue-1, bundesliga, eredivisie), all running simultaneously. Wall-clock time drops from ~30min to ~12min.
   - **Reviewer teammate** — Senior quality reviewer validates ALL tips before they go live. Runs 8 checks: cross-league correlation, confidence inflation, edge consistency (8pp min), draw awareness (15% floor), prediction type diversity, portfolio EV, stale odds spot check, weather impact.

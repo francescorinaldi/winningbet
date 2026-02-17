@@ -5,6 +5,15 @@
  * Also tests escapeHtml indirectly through buildDailyDigest.
  */
 
+jest.mock('nodemailer', () => {
+  const sendMailMock = jest.fn().mockResolvedValue({ messageId: 'test-id' });
+  return {
+    createTransport: jest.fn().mockReturnValue({ sendMail: sendMailMock }),
+    __sendMailMock: sendMailMock,
+  };
+});
+
+const nodemailer = require('nodemailer');
 const { sendEmail, buildDailyDigest } = require('../../api/_lib/email');
 
 describe('email module', () => {
@@ -13,17 +22,7 @@ describe('email module', () => {
       jest.clearAllMocks();
     });
 
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
-
-    it('should return true on successful send (status 202)', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 202,
-        text: () => Promise.resolve(''),
-      });
-
+    it('should return true on successful send', async () => {
       const result = await sendEmail({
         to: 'test@example.com',
         subject: 'Test Subject',
@@ -31,25 +30,16 @@ describe('email module', () => {
       });
 
       expect(result).toBe(true);
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.sendgrid.com/v3/mail/send',
+      expect(nodemailer.__sendMailMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          method: 'POST',
-          headers: expect.objectContaining({
-            Authorization: 'Bearer SG.test-key',
-            'Content-Type': 'application/json',
-          }),
+          to: 'test@example.com',
+          subject: 'Test Subject',
+          html: '<p>Test</p>',
         }),
       );
     });
 
-    it('should include text/plain content when text param is provided', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 202,
-        text: () => Promise.resolve(''),
-      });
-
+    it('should include text when text param is provided', async () => {
       await sendEmail({
         to: 'test@example.com',
         subject: 'Test',
@@ -57,49 +47,27 @@ describe('email module', () => {
         text: 'Plain text',
       });
 
-      const callArgs = global.fetch.mock.calls[0][1];
-      const payload = JSON.parse(callArgs.body);
-
-      expect(payload.content).toHaveLength(2);
-      expect(payload.content[0]).toEqual({
-        type: 'text/plain',
-        value: 'Plain text',
-      });
-      expect(payload.content[1]).toEqual({
-        type: 'text/html',
-        value: '<p>HTML</p>',
-      });
+      expect(nodemailer.__sendMailMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          html: '<p>HTML</p>',
+          text: 'Plain text',
+        }),
+      );
     });
 
-    it('should only include text/html when text param is omitted', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 202,
-        text: () => Promise.resolve(''),
-      });
-
+    it('should not include text when text param is omitted', async () => {
       await sendEmail({
         to: 'test@example.com',
         subject: 'Test',
         html: '<p>HTML only</p>',
       });
 
-      const callArgs = global.fetch.mock.calls[0][1];
-      const payload = JSON.parse(callArgs.body);
-
-      expect(payload.content).toHaveLength(1);
-      expect(payload.content[0]).toEqual({
-        type: 'text/html',
-        value: '<p>HTML only</p>',
-      });
+      const callArgs = nodemailer.__sendMailMock.mock.calls[0][0];
+      expect(callArgs.text).toBeUndefined();
     });
 
-    it('should return false on HTTP error', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 400,
-        text: () => Promise.resolve('Bad Request'),
-      });
+    it('should return false on SMTP error', async () => {
+      nodemailer.__sendMailMock.mockRejectedValueOnce(new Error('Connection refused'));
 
       const result = await sendEmail({
         to: 'test@example.com',
@@ -110,21 +78,19 @@ describe('email module', () => {
       expect(result).toBe(false);
     });
 
-    it('should send correct Authorization header with Bearer token', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 202,
-        text: () => Promise.resolve(''),
-      });
-
+    it('should set from with name and address', async () => {
       await sendEmail({
         to: 'test@example.com',
         subject: 'Test',
         html: '<p>Test</p>',
       });
 
-      const callArgs = global.fetch.mock.calls[0][1];
-      expect(callArgs.headers.Authorization).toBe('Bearer SG.test-key');
+      const callArgs = nodemailer.__sendMailMock.mock.calls[0][0];
+      expect(callArgs.from).toEqual(
+        expect.objectContaining({
+          name: 'WinningBet',
+        }),
+      );
     });
   });
 

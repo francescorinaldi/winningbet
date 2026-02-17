@@ -1,21 +1,49 @@
 /**
- * SendGrid email client.
+ * Email client via SMTP (Nodemailer).
  *
- * Invia email transazionali tramite l'API v3 di SendGrid.
+ * Invia email transazionali tramite server SMTP proprio.
  * Usato per il riepilogo giornaliero dei tips agli abbonati.
  *
  * Variabili d'ambiente richieste:
- *   SENDGRID_API_KEY — API key di SendGrid
- *   SENDGRID_FROM_EMAIL — Indirizzo mittente verificato
+ *   SMTP_HOST — Hostname del server SMTP
+ *   SMTP_PORT — Porta SMTP (465 per SSL, 587 per STARTTLS)
+ *   SMTP_USER — Username SMTP
+ *   SMTP_PASS — Password SMTP
+ *   SMTP_FROM — Indirizzo mittente (es. info@winningbet.it)
  */
 
-const API_KEY = process.env.SENDGRID_API_KEY;
-const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'tips@winningbet.it';
+const nodemailer = require('nodemailer');
 
-const SENDGRID_API_URL = 'https://api.sendgrid.com/v3/mail/send';
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || '465', 10);
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const SMTP_FROM = process.env.SMTP_FROM || 'info@winningbet.it';
 
 /**
- * Invia una email tramite SendGrid.
+ * Crea il transporter Nodemailer (lazy, singleton).
+ * @returns {import('nodemailer').Transporter|null}
+ */
+let _transporter = null;
+function getTransporter() {
+  if (_transporter) return _transporter;
+  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) return null;
+
+  _transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_PORT === 465,
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASS,
+    },
+  });
+
+  return _transporter;
+}
+
+/**
+ * Invia una email tramite SMTP.
  *
  * @param {Object} params
  * @param {string} params.to - Destinatario
@@ -25,39 +53,25 @@ const SENDGRID_API_URL = 'https://api.sendgrid.com/v3/mail/send';
  * @returns {Promise<boolean>} true se inviata con successo
  */
 async function sendEmail(params) {
-  if (!API_KEY) {
-    console.warn('SendGrid API key not configured, skipping email');
+  const transporter = getTransporter();
+  if (!transporter) {
+    console.warn('SMTP not configured, skipping email');
     return false;
   }
 
-  const payload = {
-    personalizations: [{ to: [{ email: params.to }] }],
-    from: { email: FROM_EMAIL, name: 'WinningBet' },
-    subject: params.subject,
-    content: [],
-  };
-
-  if (params.text) {
-    payload.content.push({ type: 'text/plain', value: params.text });
-  }
-  payload.content.push({ type: 'text/html', value: params.html });
-
-  const response = await fetch(SENDGRID_API_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: 'Bearer ' + API_KEY,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (response.status >= 200 && response.status < 300) {
+  try {
+    await transporter.sendMail({
+      from: { name: 'WinningBet', address: SMTP_FROM },
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
+      text: params.text || undefined,
+    });
     return true;
+  } catch (err) {
+    console.error('SMTP error:', err.message);
+    return false;
   }
-
-  const errorText = await response.text();
-  console.error('SendGrid error:', response.status, errorText);
-  return false;
 }
 
 /**

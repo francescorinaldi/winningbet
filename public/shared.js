@@ -9,7 +9,7 @@
  * Caricato prima degli script specifici di ogni pagina.
  */
 
-/* exported initMobileMenu, initParticles, initLangToggle, LEAGUE_NAMES_MAP */
+/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP */
 /* eslint no-var: "off" */
 
 // ==========================================
@@ -158,6 +158,42 @@ function initParticles(options) {
   window.addEventListener('resize', resizeCanvas);
   init();
   animate();
+}
+
+// ==========================================
+// LANGUAGE TOGGLE
+// ==========================================
+
+// ==========================================
+// COOKIE CONSENT BANNER
+// ==========================================
+
+/**
+ * Gestisce il banner di consenso cookie.
+ * Mostra il banner solo se l'utente non ha gia' espresso
+ * una preferenza (salvata in localStorage).
+ */
+function initCookieBanner() {
+  var banner = document.getElementById('cookieBanner');
+  var acceptBtn = document.getElementById('cookieAccept');
+  var rejectBtn = document.getElementById('cookieReject');
+
+  if (!banner || !acceptBtn || !rejectBtn) return;
+
+  var consent = localStorage.getItem('cookie_consent');
+  if (consent) return;
+
+  banner.removeAttribute('hidden');
+
+  acceptBtn.addEventListener('click', function () {
+    localStorage.setItem('cookie_consent', 'accepted');
+    banner.setAttribute('hidden', '');
+  });
+
+  rejectBtn.addEventListener('click', function () {
+    localStorage.setItem('cookie_consent', 'rejected');
+    banner.setAttribute('hidden', '');
+  });
 }
 
 // ==========================================

@@ -16,7 +16,7 @@ Premium multi-league football betting predictions platform. Vanilla JS frontend 
 | Database | Supabase (PostgreSQL + Auth + RLS) |
 | Payments | Stripe (subscriptions, webhooks, customer portal) |
 | APIs | api-football.com (primary), football-data.org (fallback) |
-| Notifications | Telegram Bot API, SendGrid |
+| Notifications | Telegram Bot API, Nodemailer SMTP |
 | Testing | Jest 30 (350+ tests, 75%+ coverage) |
 | Linting | ESLint 9 (flat config) + Prettier |
 | Deployment | Vercel (auto-deploy from main) |
