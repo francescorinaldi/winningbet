@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="100%" stop-color="#16161f"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f0d078"/>
+      <stop offset="50%" stop-color="#d4a853"/>
+      <stop offset="100%" stop-color="#a67c2e"/>
+    </linearGradient>
+    <radialGradient id="ballGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="rgba(212,168,83,0.15)"/>
+      <stop offset="100%" stop-color="rgba(212,168,83,0)"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Subtle particle dots -->
+  <circle cx="150" cy="80" r="1.5" fill="#d4a853" opacity="0.3"/>
+  <circle cx="320" cy="150" r="1" fill="#d4a853" opacity="0.2"/>
+  <circle cx="500" cy="60" r="1.5" fill="#d4a853" opacity="0.25"/>
+  <circle cx="80" cy="300" r="1" fill="#d4a853" opacity="0.15"/>
+  <circle cx="250" cy="450" r="1.5" fill="#d4a853" opacity="0.2"/>
+  <circle cx="600" cy="520" r="1" fill="#d4a853" opacity="0.15"/>
+  <circle cx="450" cy="200" r="1" fill="#d4a853" opacity="0.1"/>
+  <circle cx="700" cy="100" r="1.5" fill="#d4a853" opacity="0.15"/>
+  <circle cx="180" cy="550" r="1" fill="#d4a853" opacity="0.2"/>
+
+  <!-- Ball glow (right side) -->
+  <circle cx="950" cy="300" r="220" fill="url(#ballGlow)"/>
+
+  <!-- Football (stylized) -->
+  <g transform="translate(950, 300)" opacity="0.12">
+    <circle r="140" fill="none" stroke="#d4a853" stroke-width="2"/>
+    <circle r="120" fill="none" stroke="#d4a853" stroke-width="1"/>
+    <!-- Pentagon pattern -->
+    <polygon points="0,-50 47,-15 29,40 -29,40 -47,-15" fill="none" stroke="#d4a853" stroke-width="1.5"/>
+    <line x1="0" y1="-50" x2="0" y2="-120" stroke="#d4a853" stroke-width="1"/>
+    <line x1="47" y1="-15" x2="110" y2="-38" stroke="#d4a853" stroke-width="1"/>
+    <line x1="29" y1="40" x2="68" y2="93" stroke="#d4a853" stroke-width="1"/>
+    <line x1="-29" y1="40" x2="-68" y2="93" stroke="#d4a853" stroke-width="1"/>
+    <line x1="-47" y1="-15" x2="-110" y2="-38" stroke="#d4a853" stroke-width="1"/>
+  </g>
+
+  <!-- Logo -->
+  <text x="100" y="200" font-family="'Space Grotesk', Arial, sans-serif" font-size="28" font-weight="700" fill="url(#gold)" filter="url(#glow)">&#9824; WinningBet</text>
+
+  <!-- Gold separator line -->
+  <rect x="100" y="220" width="180" height="3" rx="1.5" fill="url(#gold)"/>
+
+  <!-- Main title -->
+  <text x="100" y="280" font-family="'Space Grotesk', Arial, sans-serif" font-size="48" font-weight="700" fill="#f0f0f5">Pronostici Calcio</text>
+  <text x="100" y="340" font-family="'Space Grotesk', Arial, sans-serif" font-size="48" font-weight="700" fill="#f0f0f5">Premium</text>
+
+  <!-- Subtitle -->
+  <text x="100" y="390" font-family="'Inter', Arial, sans-serif" font-size="20" font-weight="400" fill="#8a8a9a">Analisi AI  &#183;  Track Record Verificato  &#183;  7 Leghe</text>
+
+  <!-- League list -->
+  <text x="100" y="440" font-family="'Inter', Arial, sans-serif" font-size="16" font-weight="500" fill="#d4a853">Serie A  &#183;  Champions League  &#183;  La Liga  &#183;  Premier League</text>
+  <text x="100" y="468" font-family="'Inter', Arial, sans-serif" font-size="16" font-weight="500" fill="#d4a853">Ligue 1  &#183;  Bundesliga  &#183;  Eredivisie</text>
+
+  <!-- Bottom disclaimer -->
+  <rect x="0" y="580" width="1200" height="50" fill="rgba(0,0,0,0.4)"/>
+  <text x="600" y="612" font-family="'Inter', Arial, sans-serif" font-size="14" font-weight="400" fill="#55556a" text-anchor="middle">18+  &#183;  Il gioco d'azzardo puo' causare dipendenza  &#183;  Gioca responsabilmente  &#183;  ADM</text>
+</svg>
