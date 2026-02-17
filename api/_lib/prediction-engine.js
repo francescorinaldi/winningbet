@@ -19,6 +19,7 @@ const { findOddsForPrediction } = require('./api-football');
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+const BACKEND_LOCALE = 'it-IT';
 
 /**
  * Tipi di pronostico supportati.
@@ -114,7 +115,7 @@ const BATCH_PREDICTION_SCHEMA = {
  */
 async function researchLeagueContext(leagueName, matches) {
   const matchList = matches
-    .map((m) => `- ${m.home} vs ${m.away} (${new Date(m.date).toLocaleDateString('it-IT')})`)
+    .map((m) => `- ${m.home} vs ${m.away} (${new Date(m.date).toLocaleDateString(BACKEND_LOCALE)})`)
     .join('\n');
 
   try {

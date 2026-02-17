@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- **Locale-aware date formatting** — Replaced 8+ hardcoded `'it-IT'` locale strings with dynamic `getLocale()` in frontend files (`script.js`, `dashboard.js`). Added `getLocale()` utility to `i18n.js` that returns `'it-IT'` or `'en-GB'` based on the user's language setting. Hardcoded Italian day abbreviations in `formatMatchDate()` now use the i18n `days` translation key. Backend files (`email.js`, `prediction-engine.js`) use named constants (`EMAIL_LOCALE`, `BACKEND_LOCALE`) for maintainability.
+
 ### Docs
 
 - **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.

@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES */
+/* global initMobileMenu, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES, getLocale */
 
 (function () {
   'use strict';
@@ -2024,8 +2024,8 @@
     const sun = new Date(mon);
     sun.setDate(mon.getDate() + 6);
 
-    const monStr = mon.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
-    const sunStr = sun.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+    const monStr = mon.toLocaleDateString(getLocale(), { day: 'numeric', month: 'short' });
+    const sunStr = sun.toLocaleDateString(getLocale(), { day: 'numeric', month: 'short' });
 
     if (schedineDate === currentMonday) {
       label.textContent = 'Questa settimana (' + monStr + ' - ' + sunStr + ')';
@@ -2298,7 +2298,7 @@
   function formatDate(iso) {
     if (!iso) return '\u2014';
     const d = new Date(iso);
-    return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
+    return d.toLocaleDateString(getLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   /**
@@ -2330,9 +2330,9 @@
     if (!iso) return '\u2014';
     const d = new Date(iso);
     return (
-      d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) +
+      d.toLocaleDateString(getLocale(), { day: 'numeric', month: 'short' }) +
       ' \u2014 ' +
-      d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+      d.toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit' })
     );
   }
 

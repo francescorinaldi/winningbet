@@ -407,8 +407,17 @@
     });
   }
 
+  /**
+   * Returns the BCP 47 locale tag for the current language.
+   * @returns {string} 'en-GB' when English is selected, 'it-IT' otherwise
+   */
+  function getLocale() {
+    return getLang() === 'en' ? 'en-GB' : 'it-IT';
+  }
+
   // Expose globally for use by script.js
   window.t = t;
   window.applyTranslations = applyTranslations;
   window.getLang = getLang;
+  window.getLocale = getLocale;
 })();
