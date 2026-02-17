@@ -409,13 +409,16 @@
 
   /**
    * Returns the BCP 47 locale tag for the current language.
+   * Used for JavaScript date/time formatting methods (toLocaleString, etc.)
    * @returns {string} 'en-GB' when English is selected, 'it-IT' otherwise
    */
   function getLocale() {
     return getLang() === 'en' ? 'en-GB' : 'it-IT';
   }
 
-  // Expose globally for use by script.js
+  // ─── Global Exports ────────────────────────────────────────────────────────
+
+  // Expose globally for use by script.js and dashboard.js
   window.t = t;
   window.applyTranslations = applyTranslations;
   window.getLang = getLang;

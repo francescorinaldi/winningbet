@@ -408,7 +408,10 @@
    */
   function formatMatchDate(isoDate) {
     const d = new Date(isoDate);
-    const days = t('days') || ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+    const daysTranslation = t('days');
+    const days = Array.isArray(daysTranslation)
+      ? daysTranslation
+      : ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
     const day = days[d.getDay()];
     const hours = String(d.getHours()).padStart(2, '0');
     const mins = String(d.getMinutes()).padStart(2, '0');
