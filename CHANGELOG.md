@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Docs
+
+- **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.
+
 ### Added
 
 - **Dashboard profile/subscription redesign** — Complete overhaul of the Account tab in `dashboard.html`. New profile hero banner with avatar (Google photo or initials), gold-ringed tier badge, member-since date. Side-by-side PRO/VIP upgrade plan cards with feature lists, pricing, and "Consigliato" badge on PRO. Manage subscription row for active subscribers. ~370 lines of new CSS with gradient backgrounds, glow effects, hover transforms, and responsive breakpoints.

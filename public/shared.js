@@ -11,6 +11,9 @@
  */
 
 /* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES */
+// Why `var`? This file is loaded as a non-module <script> — `var` declarations
+// become globals, making functions/constants available to other page scripts.
+// Switch to `const`/`let` + `export` when the frontend migrates to ES modules.
 /* eslint no-var: "off" */
 
 // ==========================================
