@@ -19,6 +19,7 @@ const SMTP_PORT = parseInt(process.env.SMTP_PORT || '465', 10);
 const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 const SMTP_FROM = process.env.SMTP_FROM;
+const EMAIL_LOCALE = 'it-IT';
 
 /**
  * Crea il transporter Nodemailer (lazy, singleton).
@@ -82,7 +83,7 @@ async function sendEmail(params) {
  * @returns {Object} { subject: string, html: string, text: string }
  */
 function buildDailyDigest(tips) {
-  const today = new Date().toLocaleDateString('it-IT', {
+  const today = new Date().toLocaleDateString(EMAIL_LOCALE, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
