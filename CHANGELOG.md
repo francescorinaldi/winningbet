@@ -18,6 +18,7 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Changed
 
+- **Centralized Supabase client config** — Moved Supabase URL and anon key from duplicated HTML meta tags (3 files) into `public/supabase-config.js` as JS constants (single source of truth). Removed `supabase-url` and `supabase-anon-key` meta tags from `index.html`, `auth.html`, and `dashboard.html`. Eliminated `getMeta()` helper that is no longer needed.
 - **Email sender address** — Default SMTP sender changed from `info@winningbet.it` to `support@winningbet.it` in `api/_lib/email.js`
 - **Contact email in terms** — `supporto@winningbet.it` → `support@winningbet.it` in `public/terms.html`
 - **Billing ALLOWED_ORIGINS** — Added `https://winningbet.vercel.app` to `api/billing.js` allowed origins to fix checkout redirect issues
