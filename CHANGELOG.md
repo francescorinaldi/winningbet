@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Refactored
+
+- **Deduplicate Monday-of-week computation** — Replaced inline IIFE initializing `schedineDate` in `public/dashboard.js` with a call to the existing `getCurrentWeekMonday()` function, eliminating duplicate logic.
+
 ### Docs
 
 - **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.
