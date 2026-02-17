@@ -13,7 +13,7 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
-/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES */
+/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES */
 
 (function () {
   'use strict';
@@ -1371,5 +1371,6 @@
   loadResults().then(loadTrackRecord);
   loadTipsFromAPI();
   initCookieBanner();
+  initCopyrightYear();
   initLangToggle();
 })();
