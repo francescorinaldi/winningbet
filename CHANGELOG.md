@@ -33,6 +33,7 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Fixed
 
+- **localStorage access not wrapped in try/catch** — Wrapped all 8 `localStorage.getItem()`/`setItem()` calls in `public/shared.js`, `dashboard.js`, and `i18n.js` with `try/catch` to prevent crashes in Safari private browsing, storage quota exceeded, or restricted iframe contexts. Renamed unused catch parameters to `_e` to comply with linting. Affects `initCookieBanner()` and `initLangToggle()` in shared.js, league persistence in dashboard.js, and `getLang()` in i18n.js.
 - **Hardcoded copyright year** — Replaced static "2026" with dynamic year via new `initCopyrightYear()` in `shared.js`. Applied to all 5 footers (`index.html`, `dashboard.html`, `cookies.html`, `privacy.html`, `terms.html`). Year auto-updates on language toggle.
 - **Stripe checkout "errore di rete"** — Dashboard upgrade buttons failed silently because `authFetch` swallowed errors. Replaced with direct fetch + explicit error handling.
 - **Stripe connection error on Vercel** — Production `STRIPE_SECRET_KEY` had wrong content (130 chars vs 108). Re-added all 4 Stripe env vars cleanly from local `.env`.
