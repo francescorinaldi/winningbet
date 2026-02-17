@@ -138,11 +138,11 @@
             <ul>
               <li><strong>Free:</strong> accesso limitato a pronostici base, gratuito</li>
               <li>
-                <strong>PRO (€9.99/mese):</strong> tutti i pronostici giornalieri e analisi
+                <strong>PRO (<span data-tier-price="pro">€9.99/mese</span>):</strong> tutti i pronostici giornalieri e analisi
                 dettagliate
               </li>
               <li>
-                <strong>VIP (€29.99/mese):</strong> tutto PRO + tips esclusivi, canale Telegram
+                <strong>VIP (<span data-tier-price="vip">€29.99/mese</span>):</strong> tutto PRO + tips esclusivi, canale Telegram
                 privato, supporto 1-to-1
               </li>
             </ul>
@@ -273,6 +273,14 @@
       initMobileMenu();
       initCookieBanner();
       initLangToggle();
+
+      // Inject tier prices
+      document.querySelectorAll('[data-tier-price]').forEach(function (el) {
+        var tier = el.getAttribute('data-tier-price');
+        if (TIER_PRICES[tier]) {
+          el.textContent = TIER_PRICES[tier].display;
+        }
+      });
     </script>
   </body>
 </html>

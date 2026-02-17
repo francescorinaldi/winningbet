@@ -13,6 +13,7 @@ All notable changes to WinningBet will be documented in this file.
 - **Dashboard profile/subscription redesign** — Complete overhaul of the Account tab in `dashboard.html`. New profile hero banner with avatar (Google photo or initials), gold-ringed tier badge, member-since date. Side-by-side PRO/VIP upgrade plan cards with feature lists, pricing, and "Consigliato" badge on PRO. Manage subscription row for active subscribers. ~370 lines of new CSS with gradient backgrounds, glow effects, hover transforms, and responsive breakpoints.
 - **Auto-checkout from home pricing** — `script.js: updatePricingForAuth()` redirects logged-in users clicking PRO/VIP pricing buttons directly to `/dashboard.html?upgrade=pro|vip` instead of `/auth.html`. Dashboard reads `?upgrade=` param and auto-triggers Stripe checkout via `handleAutoCheckout()`.
 - **Language toggle on legal pages** — Added lang toggle button and `i18n.js` script to terms, privacy, and cookies pages for consistency with main site.
+- **Centralized tier pricing configuration** — Added `TIER_PRICES` object to `public/shared.js` with structured pricing data (amount, currency, display format) for PRO (€9.99/mese) and VIP (€29.99/mese) tiers. Eliminates hardcoded prices across 5+ files. Prices now dynamically injected via JavaScript in `index.html`, `dashboard.html`, and `terms.html`. Single source of truth prevents inconsistencies when updating prices.
 
 ### Changed
 

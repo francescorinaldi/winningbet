@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP */
+/* global initMobileMenu, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES */
 
 (function () {
   'use strict';
@@ -22,7 +22,6 @@
   initCookieBanner();
 
   // ─── CONFIG ───────────────────────────────────────────
-  const TIER_PRICES = { pro: '\u20AC9.99/mese', vip: '\u20AC29.99/mese' };
   const UI_TEXT = {
     networkError: 'Errore di rete. Riprova.',
     loading: 'Caricamento...',
@@ -232,7 +231,7 @@
       return;
     }
 
-    subTier.textContent = tier.toUpperCase() + ' \u2014 ' + TIER_PRICES[tier];
+    subTier.textContent = tier.toUpperCase() + ' \u2014 ' + TIER_PRICES[tier].display;
 
     const subResult = await SupabaseConfig.client
       .from('subscriptions')
@@ -2302,6 +2301,31 @@
     return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
+  /**
+   * Inietta i prezzi tier dalla configurazione centralizzata nel DOM.
+   * Aggiorna gli elementi con data-tier="pro" e data-tier="vip".
+   */
+  function injectTierPrices() {
+    document.querySelectorAll('[data-tier]').forEach(function (priceEl) {
+      const tier = priceEl.getAttribute('data-tier');
+      if (!TIER_PRICES[tier]) return;
+
+      const config = TIER_PRICES[tier];
+      const amountEl = priceEl.querySelector(
+        '.upgrade-card__amount, .price-amount',
+      );
+      const decimalEl = priceEl.querySelector(
+        '.upgrade-card__decimal, .price-decimal',
+      );
+
+      if (amountEl && decimalEl) {
+        const parts = config.amount.toString().split('.');
+        amountEl.textContent = parts[0];
+        decimalEl.textContent = parts[1] ? '.' + parts[1] : '';
+      }
+    });
+  }
+
   function formatMatchDate(iso) {
     if (!iso) return '\u2014';
     const d = new Date(iso);
@@ -2328,5 +2352,6 @@
   }
 
   // Language toggle delegated to shared.js
+  injectTierPrices();
   initLangToggle();
 })();
