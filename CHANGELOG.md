@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Notification polling interval never cleared** — `setInterval(loadNotifications, 60000)` in `public/dashboard.js` now stores the interval ID, clears it on logout, and pauses/resumes via `visibilitychange` API when tab is hidden/shown. Prevents failed API calls after session expiry.
+
 ### Docs
 
 - **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.
