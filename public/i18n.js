@@ -373,7 +373,8 @@
    * @returns {string}
    */
   function getLang() {
-    const stored = localStorage.getItem('lang');
+    let stored = null;
+    try { stored = localStorage.getItem('lang'); } catch (_e) { /* storage unavailable */ }
     return stored === 'EN' ? 'en' : 'it';
   }
 

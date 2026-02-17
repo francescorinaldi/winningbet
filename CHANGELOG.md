@@ -29,7 +29,7 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Fixed
 
-- **localStorage access not wrapped in try/catch** — Wrapped all 5 `localStorage.getItem()`/`setItem()` calls in `public/shared.js` with `try/catch` to prevent crashes in Safari private browsing, storage quota exceeded, or restricted iframe contexts. Affects `initCookieBanner()` and `initLangToggle()`.
+- **localStorage access not wrapped in try/catch** — Wrapped all 8 `localStorage.getItem()`/`setItem()` calls in `public/shared.js`, `dashboard.js`, and `i18n.js` with `try/catch` to prevent crashes in Safari private browsing, storage quota exceeded, or restricted iframe contexts. Renamed unused catch parameters to `_e` to comply with linting. Affects `initCookieBanner()` and `initLangToggle()` in shared.js, league persistence in dashboard.js, and `getLang()` in i18n.js.
 - **Stripe checkout "errore di rete"** — Dashboard upgrade buttons failed silently because `authFetch` swallowed errors. Replaced with direct fetch + explicit error handling.
 - **Stripe connection error on Vercel** — Production `STRIPE_SECRET_KEY` had wrong content (130 chars vs 108). Re-added all 4 Stripe env vars cleanly from local `.env`.
 - **Home pricing redirect loop** — Logged-in users clicking pricing buttons were sent to `/auth.html` instead of checkout. Now redirects to dashboard with auto-checkout param.
