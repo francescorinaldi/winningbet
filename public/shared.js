@@ -158,6 +158,8 @@ function initParticles(options) {
     }
   }
 
+  var animationId = null;
+
   function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     particles.forEach(function (p) {
@@ -165,8 +167,17 @@ function initParticles(options) {
       p.draw();
     });
     if (drawConnections) renderConnections();
-    requestAnimationFrame(animate);
+    animationId = requestAnimationFrame(animate);
   }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    } else {
+      animate();
+    }
+  });
 
   window.addEventListener('resize', resizeCanvas);
   init();

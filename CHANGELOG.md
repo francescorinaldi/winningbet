@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Particle animation pause on hidden tab** — `initParticles()` in `public/shared.js` now tracks `animationId` and listens for `visibilitychange` to cancel/resume `requestAnimationFrame`, preventing CPU/GPU waste when the tab is not visible.
+
 ### Docs
 
 - **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.
