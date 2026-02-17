@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES, getLocale */
+/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getLocale */
 
 (function () {
   'use strict';
@@ -2353,5 +2353,6 @@
 
   // Language toggle delegated to shared.js
   injectTierPrices();
+  initCopyrightYear();
   initLangToggle();
 })();
