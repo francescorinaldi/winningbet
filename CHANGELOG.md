@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- **Consolidated `formatMatchDate()`** — Extracted duplicated `formatMatchDate()` from `script.js` and `dashboard.js` into `shared.js`. Uses locale-aware `toLocaleDateString('it-IT')` with null-safety. Single source of truth for match date formatting across all pages.
+
 ### Docs
 
 - **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.

@@ -6,11 +6,12 @@
  *   - initParticles(options) — Sistema di particelle animato (Canvas 2D)
  *   - initCookieBanner() — Banner consenso cookie (GDPR)
  *   - initLangToggle() — Toggle lingua IT/EN
+ *   - formatMatchDate(iso) — Formattazione date partite in italiano
  *
  * Caricato prima degli script specifici di ogni pagina.
  */
 
-/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES */
+/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, formatMatchDate, LEAGUE_NAMES_MAP, TIER_PRICES */
 // Why `var`? This file is loaded as a non-module <script> — `var` declarations
 // become globals, making functions/constants available to other page scripts.
 // Switch to `const`/`let` + `export` when the frontend migrates to ES modules.
@@ -203,6 +204,26 @@ function initCookieBanner() {
     localStorage.setItem('cookie_consent', 'rejected');
     banner.setAttribute('hidden', '');
   });
+}
+
+// ==========================================
+// DATE FORMATTING
+// ==========================================
+
+/**
+ * Formatta una data ISO in formato breve italiano per le partite.
+ * Esempio: "2025-09-15T18:45:00Z" -> "15 set — 18:45"
+ * @param {string} iso - Data in formato ISO 8601
+ * @returns {string} Data formattata (giorno mese — ora)
+ */
+function formatMatchDate(iso) {
+  if (!iso) return '\u2014';
+  var d = new Date(iso);
+  return (
+    d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) +
+    ' \u2014 ' +
+    d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+  );
 }
 
 // ==========================================

@@ -187,7 +187,7 @@
       'cookie.reject': 'Rifiuta',
       'cookie.accept': 'Accetta',
 
-      // Day abbreviations (used in formatMatchDate)
+      // Day abbreviations
       days: ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'],
     },
 

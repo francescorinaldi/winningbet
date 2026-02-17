@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES */
+/* global initMobileMenu, initLangToggle, initCookieBanner, formatMatchDate, LEAGUE_NAMES_MAP, TIER_PRICES */
 
 (function () {
   'use strict';
@@ -2324,16 +2324,6 @@
         decimalEl.textContent = parts[1] ? '.' + parts[1] : '';
       }
     });
-  }
-
-  function formatMatchDate(iso) {
-    if (!iso) return '\u2014';
-    const d = new Date(iso);
-    return (
-      d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) +
-      ' \u2014 ' +
-      d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
-    );
   }
 
   function formatRelativeTime(iso) {
