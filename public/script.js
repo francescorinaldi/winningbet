@@ -1011,12 +1011,27 @@
     loadTipsFromAPI();
   }
 
+  /**
+   * Aggiorna i bottoni pricing per utenti autenticati.
+   * Cambia href da /auth.html a /dashboard.html?upgrade=pro|vip.
+   */
+  function updatePricingForAuth() {
+    const buttons = document.querySelectorAll('.pricing-card [data-plan]');
+    buttons.forEach(function (btn) {
+      const plan = btn.getAttribute('data-plan');
+      if (plan === 'pro' || plan === 'vip') {
+        btn.href = '/dashboard.html?upgrade=' + plan;
+      }
+    });
+  }
+
   // Controlla la sessione all'avvio (solo se SupabaseConfig e' disponibile)
   if (typeof SupabaseConfig !== 'undefined') {
     SupabaseConfig.getSession().then(function (result) {
       updateNavForAuth(result.data.session);
       if (result.data.session) {
         loadHomepageUserTier(result.data.session);
+        updatePricingForAuth();
       }
     });
 
@@ -1024,6 +1039,7 @@
       updateNavForAuth(session);
       if (session) {
         loadHomepageUserTier(session);
+        updatePricingForAuth();
       }
     });
   }

@@ -2533,17 +2533,339 @@ img {
 }
 
 /* Dashboard Account */
+/* ─── Profile Hero Banner ──────────────────────────────────── */
+.profile-hero {
+  position: relative;
+  background: linear-gradient(135deg, #16161f 0%, #1a1a2e 50%, #16161f 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 36px 32px;
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+
+.profile-hero__glow {
+  position: absolute;
+  top: -40%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(212, 168, 83, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.profile-hero__content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.profile-hero__avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 24px rgba(212, 168, 83, 0.2);
+}
+
+.profile-hero__initials {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0a0a0f;
+}
+
+.profile-hero__avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-hero__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-hero__name {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-hero__email {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-hero__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.profile-hero__badge {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.profile-hero__badge--pro {
+  background: linear-gradient(135deg, rgba(212, 168, 83, 0.15), rgba(212, 168, 83, 0.05));
+  color: var(--gold);
+  border-color: var(--border-gold);
+}
+
+.profile-hero__badge--vip {
+  background: linear-gradient(135deg, rgba(212, 168, 83, 0.25), rgba(240, 208, 120, 0.1));
+  color: var(--gold-light);
+  border-color: var(--gold);
+  box-shadow: 0 0 12px rgba(212, 168, 83, 0.15);
+}
+
+.profile-hero__since {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ─── Upgrade Plans Section ────────────────────────────────── */
+.upgrade-section {
+  margin-bottom: 28px;
+}
+
+.upgrade-section__title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.upgrade-plans {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.upgrade-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.3s, transform 0.2s;
+}
+
+.upgrade-card:hover {
+  transform: translateY(-2px);
+}
+
+.upgrade-card--pro {
+  border-color: var(--border-gold);
+  background: linear-gradient(180deg, rgba(212, 168, 83, 0.04) 0%, var(--bg-card) 40%);
+}
+
+.upgrade-card--pro:hover {
+  border-color: var(--gold-dark);
+}
+
+.upgrade-card--vip {
+  border-color: var(--border);
+}
+
+.upgrade-card--vip:hover {
+  border-color: var(--border-gold);
+}
+
+.upgrade-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.upgrade-card__tier {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--gold);
+}
+
+.upgrade-card__popular {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(212, 168, 83, 0.12);
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+
+.upgrade-card__price {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 20px;
+}
+
+.upgrade-card__currency {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-right: 2px;
+}
+
+.upgrade-card__amount {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.upgrade-card__decimal {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.upgrade-card__period {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+.upgrade-card__features {
+  list-style: none;
+  margin-bottom: 24px;
+  flex: 1;
+}
+
+.upgrade-card__features li {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  padding: 5px 0;
+  padding-left: 18px;
+  position: relative;
+}
+
+.upgrade-card__features li::before {
+  content: '\2713';
+  position: absolute;
+  left: 0;
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.upgrade-card__btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.upgrade-card--pro .upgrade-card__btn {
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  color: #0a0a0f;
+  box-shadow: 0 2px 16px rgba(212, 168, 83, 0.25);
+}
+
+.upgrade-card--pro .upgrade-card__btn:hover {
+  box-shadow: 0 4px 24px rgba(212, 168, 83, 0.4);
+  transform: translateY(-1px);
+}
+
+.upgrade-card--vip .upgrade-card__btn {
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--border-gold);
+}
+
+.upgrade-card--vip .upgrade-card__btn:hover {
+  background: rgba(212, 168, 83, 0.08);
+  border-color: var(--gold);
+}
+
+.upgrade-card__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ─── Manage Subscription Row ──────────────────────────────── */
+.manage-sub-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 28px;
+}
+
+.manage-sub-row__info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.manage-sub-row__status {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--green);
+}
+
+.manage-sub-row__renewal {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* ─── Account Cards Grid ───────────────────────────────────── */
 .dash-account-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 24px;
+  gap: 20px;
 }
 
 .dash-account-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 28px;
+  padding: 24px;
 }
 
 .dash-card-title {
@@ -2551,11 +2873,11 @@ img {
   align-items: center;
   gap: 10px;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-secondary);
-  margin-bottom: 24px;
-  padding-bottom: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -2596,7 +2918,7 @@ img {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 /* Dashboard Telegram Status */
@@ -2642,6 +2964,33 @@ img {
   .dash-account-grid {
     grid-template-columns: 1fr;
   }
+
+  .upgrade-plans {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-hero {
+    padding: 24px 20px;
+  }
+
+  .profile-hero__avatar {
+    width: 56px;
+    height: 56px;
+  }
+
+  .profile-hero__initials {
+    font-size: 1.2rem;
+  }
+
+  .profile-hero__name {
+    font-size: 1.15rem;
+  }
+
+  .manage-sub-row {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2652,6 +3001,19 @@ img {
   .dash-history-filters .filter-btn {
     font-size: 0.8rem;
     padding: 8px 14px;
+  }
+
+  .profile-hero__content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .profile-hero__meta {
+    justify-content: center;
+  }
+
+  .upgrade-card {
+    padding: 24px 20px;
   }
 }
 

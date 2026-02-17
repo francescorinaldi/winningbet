@@ -154,6 +154,21 @@
     document.getElementById('userDisplayName').textContent = displayName;
     document.getElementById('userSince').textContent = formatDate(user.created_at);
 
+    // Set avatar: use Google profile picture if available
+    const avatarEl = document.getElementById('userAvatar');
+    const avatarUrl = meta.avatar_url || meta.picture || '';
+    if (avatarUrl && avatarEl) {
+      const img = document.createElement('img');
+      img.src = avatarUrl;
+      img.alt = displayName;
+      img.onerror = function () {
+        this.remove();
+      };
+      // Clear existing content (initials span) and add image
+      while (avatarEl.firstChild) avatarEl.removeChild(avatarEl.firstChild);
+      avatarEl.appendChild(img);
+    }
+
     updateSubscriptionUI(tier);
     loadTelegramStatus();
 
@@ -166,23 +181,54 @@
    * Aggiorna la sezione abbonamento in base al tier.
    */
   async function updateSubscriptionUI(tier) {
+    const subTierBadge = document.getElementById('subTierBadge');
+    const upgradeSection = document.getElementById('upgradeSection');
+    const upgradeProBtn = document.getElementById('upgradeProBtn');
+    const upgradeVipBtn = document.getElementById('upgradeVipBtn');
+    const manageSubBtn = document.getElementById('manageSubBtn');
+    const manageSubRow = document.getElementById('manageSubRow');
+    const subStatusDisplay = document.getElementById('subStatusDisplay');
+    const subRenewalDisplay = document.getElementById('subRenewalDisplay');
+
+    // Hidden compat elements
     const subTier = document.getElementById('subTier');
     const subStatus = document.getElementById('subStatus');
-    const upgradeBtn = document.getElementById('upgradeBtn');
-    const manageSubBtn = document.getElementById('manageSubBtn');
-    const renewalRow = document.getElementById('subRenewalRow');
-    const subRenewal = document.getElementById('subRenewal');
+
+    // Setup upgrade buttons
+    upgradeProBtn.onclick = function () {
+      startCheckout('pro');
+    };
+    upgradeVipBtn.onclick = function () {
+      startCheckout('vip');
+    };
+
+    // Update tier badge
+    subTierBadge.textContent = tier.toUpperCase();
+    subTierBadge.className = 'profile-hero__badge';
+    if (tier === 'pro') subTierBadge.classList.add('profile-hero__badge--pro');
+    if (tier === 'vip') subTierBadge.classList.add('profile-hero__badge--vip');
+
+    // Update avatar initials
+    const initials = document.getElementById('userInitials');
+    const name = document.getElementById('userDisplayName').textContent || '';
+    if (name && name !== '\u2014') {
+      const parts = name.trim().split(/\s+/);
+      initials.textContent = parts.length > 1
+        ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+        : parts[0].substring(0, 2).toUpperCase();
+    }
 
     if (tier === 'free') {
       subTier.textContent = 'Free';
       subStatus.textContent = 'Gratuito';
-      upgradeBtn.style.display = '';
-      upgradeBtn.textContent = UI_TEXT.upgradeTo.pro;
-      upgradeBtn.onclick = function () {
-        startCheckout('pro');
-      };
-      manageSubBtn.style.display = 'none';
-      renewalRow.style.display = 'none';
+      upgradeSection.style.display = '';
+      manageSubRow.style.display = 'none';
+
+      // Show both plans for free users
+      document.querySelector('.upgrade-card--pro').style.display = '';
+      document.querySelector('.upgrade-card--vip').style.display = '';
+
+      handleAutoCheckout(tier);
       return;
     }
 
@@ -203,56 +249,107 @@
 
     if (subResult.data) {
       subStatus.textContent = 'Attivo';
-      subStatus.className = 'dash-sub-value dash-sub-value--active';
-      renewalRow.style.display = '';
-      subRenewal.textContent = formatDate(subResult.data.current_period_end);
+      manageSubRow.style.display = '';
+      subStatusDisplay.textContent = tier.toUpperCase() + ' Attivo';
+      subRenewalDisplay.textContent = 'Rinnovo: ' + formatDate(subResult.data.current_period_end);
     } else {
       subStatus.textContent = 'Non attivo';
     }
 
     if (tier === 'pro') {
-      upgradeBtn.textContent = UI_TEXT.upgradeTo.vip;
-      upgradeBtn.style.display = '';
-      upgradeBtn.onclick = function () {
-        startCheckout('vip');
-      };
+      // PRO user: show only VIP upgrade
+      upgradeSection.style.display = '';
+      upgradeSection.querySelector('.upgrade-section__title').textContent = 'Passa a VIP';
+      document.querySelector('.upgrade-card--pro').style.display = 'none';
+      document.querySelector('.upgrade-card--vip').style.display = '';
     } else {
-      upgradeBtn.style.display = 'none';
+      // VIP user: hide upgrade section
+      upgradeSection.style.display = 'none';
     }
 
     if (profile && profile.stripe_customer_id) {
       manageSubBtn.style.display = '';
       manageSubBtn.onclick = openCustomerPortal;
     }
+
+    handleAutoCheckout(tier);
+  }
+
+  /**
+   * Gestisce l'auto-checkout da URL param (?upgrade=pro|vip).
+   * Usato quando l'utente clicca "Scegli PRO" dalla home page.
+   */
+  function handleAutoCheckout(currentTier) {
+    const params = new URLSearchParams(window.location.search);
+    const requestedTier = params.get('upgrade');
+    if (!requestedTier || !TIER_PRICES[requestedTier]) return;
+
+    // Pulisci il param dall'URL
+    window.history.replaceState({}, '', '/dashboard.html');
+
+    // Non avviare checkout se l'utente ha gia' quel tier o superiore
+    const hierarchy = { free: 0, pro: 1, vip: 2 };
+    if ((hierarchy[currentTier] || 0) >= (hierarchy[requestedTier] || 0)) return;
+
+    startCheckout(requestedTier);
   }
 
   /**
    * Avvia il checkout Stripe per un piano.
    */
   async function startCheckout(tier) {
-    const btn = document.getElementById('upgradeBtn');
-    btn.disabled = true;
-    btn.textContent = UI_TEXT.loading;
+    // Disabilita tutti i bottoni upgrade durante il caricamento
+    const allUpgradeButtons = document.querySelectorAll('.upgrade-card__btn');
+    allUpgradeButtons.forEach(function (b) {
+      b.disabled = true;
+      b.textContent = 'Caricamento...';
+    });
 
     try {
-      const data = await authFetch('/api/billing', {
+      if (!session) {
+        showAlert('Sessione scaduta. Ricarica la pagina e riprova.', 'error');
+        return;
+      }
+
+      const resp = await fetch('/api/billing', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + session.access_token,
+        },
         body: JSON.stringify({ action: 'checkout', tier: tier }),
       });
+
+      if (!resp.ok) {
+        const errData = await resp.json().catch(function () {
+          return {};
+        });
+        console.error('[checkout] HTTP ' + resp.status, errData);
+        showAlert(errData.error || 'Errore nel pagamento (HTTP ' + resp.status + ')', 'error');
+        return;
+      }
+
+      const data = await resp.json();
 
       if (data.url) {
         window.location.href = data.url;
       } else {
         showAlert('Errore nella creazione del pagamento. Riprova.', 'error');
-        btn.disabled = false;
-        btn.textContent = UI_TEXT.upgradeTo[tier];
       }
     } catch (err) {
-      console.warn('[checkout]', err.message);
-      showAlert(UI_TEXT.networkError, 'error');
-      btn.disabled = false;
-      btn.textContent = UI_TEXT.upgradeTo[tier];
+      console.error('[checkout] Network error:', err);
+      showAlert('Errore di connessione: ' + err.message, 'error');
+    } finally {
+      const proBtn = document.getElementById('upgradeProBtn');
+      const vipBtn = document.getElementById('upgradeVipBtn');
+      if (proBtn) {
+        proBtn.disabled = false;
+        proBtn.textContent = 'Scegli PRO';
+      }
+      if (vipBtn) {
+        vipBtn.disabled = false;
+        vipBtn.textContent = 'Diventa VIP';
+      }
     }
   }
 

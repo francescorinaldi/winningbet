@@ -92,8 +92,11 @@ async function handleCheckout(req, res) {
 
     return res.status(200).json({ url: session.url });
   } catch (err) {
-    console.error('Stripe checkout error:', err.message);
-    return res.status(500).json({ error: 'Errore nella creazione della sessione di pagamento' });
+    console.error('Stripe checkout error:', err.message, err.type || '', err.code || '');
+    console.error('Price IDs:', JSON.stringify(PRICE_IDS));
+    return res
+      .status(500)
+      .json({ error: 'Errore nella creazione della sessione di pagamento: ' + err.message });
   }
 }
 

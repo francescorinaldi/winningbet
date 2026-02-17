@@ -337,91 +337,93 @@
 
         <!-- TAB: Account -->
         <section class="dash-panel" id="panelAccount" style="display: none">
+          <!-- Profile Hero Banner -->
+          <div class="profile-hero">
+            <div class="profile-hero__glow"></div>
+            <div class="profile-hero__content">
+              <div class="profile-hero__avatar" id="userAvatar">
+                <span class="profile-hero__initials" id="userInitials">?</span>
+              </div>
+              <div class="profile-hero__info">
+                <h2 class="profile-hero__name" id="userDisplayName">&mdash;</h2>
+                <p class="profile-hero__email" id="userEmail">&mdash;</p>
+                <div class="profile-hero__meta">
+                  <span class="profile-hero__badge" id="subTierBadge">FREE</span>
+                  <span class="profile-hero__since">Membro dal <span id="userSince">&mdash;</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subscription Status (hidden elements for JS compat) -->
+          <span id="subTier" style="display:none">Free</span>
+          <span id="subStatus" style="display:none">&mdash;</span>
+          <div id="subRenewalRow" style="display:none"><span id="subRenewal">&mdash;</span></div>
+
+          <!-- Upgrade Plans -->
+          <div class="upgrade-section" id="upgradeSection">
+            <h3 class="upgrade-section__title">Sblocca il tuo potenziale</h3>
+            <div class="upgrade-plans">
+              <div class="upgrade-card upgrade-card--pro">
+                <div class="upgrade-card__header">
+                  <span class="upgrade-card__tier">PRO</span>
+                  <span class="upgrade-card__popular">Consigliato</span>
+                </div>
+                <div class="upgrade-card__price">
+                  <span class="upgrade-card__currency">&euro;</span>
+                  <span class="upgrade-card__amount">9</span>
+                  <span class="upgrade-card__decimal">.99</span>
+                  <span class="upgrade-card__period">/mese</span>
+                </div>
+                <ul class="upgrade-card__features">
+                  <li>Tips PRO multi-lega</li>
+                  <li>Analisi pre-partita</li>
+                  <li>Schedine settimanali</li>
+                  <li>Storico completo</li>
+                </ul>
+                <button class="upgrade-card__btn" id="upgradeProBtn">Scegli PRO</button>
+              </div>
+              <div class="upgrade-card upgrade-card--vip">
+                <div class="upgrade-card__header">
+                  <span class="upgrade-card__tier">VIP</span>
+                </div>
+                <div class="upgrade-card__price">
+                  <span class="upgrade-card__currency">&euro;</span>
+                  <span class="upgrade-card__amount">29</span>
+                  <span class="upgrade-card__decimal">.99</span>
+                  <span class="upgrade-card__period">/mese</span>
+                </div>
+                <ul class="upgrade-card__features">
+                  <li>Tutto del piano PRO</li>
+                  <li>Tips VALUE esclusivi</li>
+                  <li>Canale Telegram VIP</li>
+                  <li>Supporto diretto 1-to-1</li>
+                </ul>
+                <button class="upgrade-card__btn" id="upgradeVipBtn">Diventa VIP</button>
+              </div>
+            </div>
+            <!-- Hidden compat elements -->
+            <button id="upgradeBtn" style="display:none"></button>
+            <div id="upgradePicker" style="display:none"></div>
+          </div>
+
+          <!-- Manage subscription (shown when user has active sub) -->
+          <div class="manage-sub-row" id="manageSubRow" style="display: none">
+            <div class="manage-sub-row__info">
+              <span class="manage-sub-row__status" id="subStatusDisplay">Attivo</span>
+              <span class="manage-sub-row__renewal" id="subRenewalDisplay"></span>
+            </div>
+            <button class="btn btn-outline" id="manageSubBtn" style="display: none">
+              Gestisci Abbonamento
+            </button>
+          </div>
+
           <div class="dash-account-grid">
-            <!-- Subscription card -->
-            <div class="dash-account-card">
-              <h3 class="dash-card-title">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                >
-                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                  <line x1="1" y1="10" x2="23" y2="10" />
-                </svg>
-                Abbonamento
-              </h3>
-              <div class="dash-sub-info" id="subInfo">
-                <div class="dash-sub-row">
-                  <span class="dash-sub-label">Piano attuale</span>
-                  <span class="dash-sub-value" id="subTier">Free</span>
-                </div>
-                <div class="dash-sub-row">
-                  <span class="dash-sub-label">Stato</span>
-                  <span class="dash-sub-value" id="subStatus">&mdash;</span>
-                </div>
-                <div class="dash-sub-row" id="subRenewalRow" style="display: none">
-                  <span class="dash-sub-label">Prossimo rinnovo</span>
-                  <span class="dash-sub-value" id="subRenewal">&mdash;</span>
-                </div>
-              </div>
-              <div class="dash-sub-actions">
-                <button class="btn btn-gold btn-block" id="upgradeBtn">Passa a PRO</button>
-                <button class="btn btn-outline btn-block" id="manageSubBtn" style="display: none">
-                  Gestisci Abbonamento
-                </button>
-              </div>
-            </div>
-
-            <!-- Account info card -->
-            <div class="dash-account-card">
-              <h3 class="dash-card-title">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                >
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-                Profilo
-              </h3>
-              <div class="dash-profile-info">
-                <div class="dash-sub-row">
-                  <span class="dash-sub-label">Email</span>
-                  <span class="dash-sub-value" id="userEmail">&mdash;</span>
-                </div>
-                <div class="dash-sub-row">
-                  <span class="dash-sub-label">Nome</span>
-                  <span class="dash-sub-value" id="userDisplayName">&mdash;</span>
-                </div>
-                <div class="dash-sub-row">
-                  <span class="dash-sub-label">Membro dal</span>
-                  <span class="dash-sub-value" id="userSince">&mdash;</span>
-                </div>
-              </div>
-            </div>
-
             <!-- Telegram linking card -->
             <div class="dash-account-card">
               <h3 class="dash-card-title">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                >
-                  <path
-                    d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-16.5 7.5a2.25 2.25 0 0 0 .126 4.16l4.5 1.5 1.5 4.5a2.25 2.25 0 0 0 4.16.126l7.5-16.5a2.242 2.242 0 0 0-0.264-1.501z"
-                  />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-16.5 7.5a2.25 2.25 0 0 0 .126 4.16l4.5 1.5 1.5 4.5a2.25 2.25 0 0 0 4.16.126l7.5-16.5a2.242 2.242 0 0 0-0.264-1.501z"/>
                 </svg>
                 Telegram
               </h3>
@@ -429,11 +431,7 @@
                 <p class="dash-telegram-status" id="telegramStatus">Verifica in corso...</p>
               </div>
               <div class="dash-sub-actions">
-                <button
-                  class="btn btn-telegram btn-block"
-                  id="linkTelegramBtn"
-                  style="display: none"
-                >
+                <button class="btn btn-telegram btn-block" id="linkTelegramBtn" style="display: none">
                   Collega Telegram
                 </button>
               </div>
