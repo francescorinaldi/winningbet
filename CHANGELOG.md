@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Refactored
+
+- **Tier hierarchy consolidation** — Created `api/_lib/tiers.js` as single source of truth for `TIER_LEVELS` constant (`{ free: 0, pro: 1, vip: 2 }`). Removed duplicate tier hierarchy definitions from `api/_lib/auth-middleware.js`, `public/script.js`, and `public/dashboard.js`. Added `TIER_LEVELS` to `public/shared.js` as frontend global (matching `TIER_PRICES` pattern). Backend now imports from centralized module; frontend uses shared global. Prevents inconsistencies when tier system evolves.
+
 ### Docs
 
 - **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.
