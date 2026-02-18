@@ -180,21 +180,62 @@ function initParticles(options) {
 
 /**
  * Gestisce il banner di consenso cookie.
+ * Crea dinamicamente il banner e lo inietta nel DOM.
  * Mostra il banner solo se l'utente non ha gia' espresso
  * una preferenza (salvata in localStorage).
  */
 function initCookieBanner() {
-  var banner = document.getElementById('cookieBanner');
-  var acceptBtn = document.getElementById('cookieAccept');
-  var rejectBtn = document.getElementById('cookieReject');
-
-  if (!banner || !acceptBtn || !rejectBtn) return;
-
   var consent = null;
   try { consent = localStorage.getItem('cookie_consent'); } catch (_e) { /* storage unavailable */ }
   if (consent) return;
 
-  banner.removeAttribute('hidden');
+  var tFn = typeof window.t === 'function' ? window.t : function (key) {
+    var defaults = {
+      'cookie.text': 'Utilizziamo cookie tecnici per il funzionamento del sito. Per maggiori informazioni consulta la nostra',
+      'cookie.link': 'Cookie Policy',
+      'cookie.reject': 'Rifiuta',
+      'cookie.accept': 'Accetta',
+    };
+    return defaults[key] || key;
+  };
+
+  var banner = document.createElement('div');
+  banner.className = 'cookie-banner';
+  banner.id = 'cookieBanner';
+
+  var inner = document.createElement('div');
+  inner.className = 'cookie-inner';
+
+  var text = document.createElement('p');
+  text.className = 'cookie-text';
+  text.textContent = tFn('cookie.text') + ' ';
+  var link = document.createElement('a');
+  link.href = '/cookies.html';
+  link.textContent = tFn('cookie.link');
+  text.appendChild(link);
+  text.appendChild(document.createTextNode('.'));
+
+  var actions = document.createElement('div');
+  actions.className = 'cookie-actions';
+
+  var rejectBtn = document.createElement('button');
+  rejectBtn.className = 'btn btn-sm btn-outline';
+  rejectBtn.id = 'cookieReject';
+  rejectBtn.setAttribute('data-i18n', 'cookie.reject');
+  rejectBtn.textContent = tFn('cookie.reject');
+
+  var acceptBtn = document.createElement('button');
+  acceptBtn.className = 'btn btn-sm btn-gold';
+  acceptBtn.id = 'cookieAccept';
+  acceptBtn.setAttribute('data-i18n', 'cookie.accept');
+  acceptBtn.textContent = tFn('cookie.accept');
+
+  actions.appendChild(rejectBtn);
+  actions.appendChild(acceptBtn);
+  inner.appendChild(text);
+  inner.appendChild(actions);
+  banner.appendChild(inner);
+  document.body.appendChild(banner);
 
   acceptBtn.addEventListener('click', function () {
     try { localStorage.setItem('cookie_consent', 'accepted'); } catch (_e) { /* storage unavailable */ }
