@@ -2142,6 +2142,10 @@ img {
   .skeleton-line::after {
     animation: none;
   }
+
+  .notif-badge {
+    animation: none;
+  }
 }
 
 /* ============================================
@@ -3653,8 +3657,8 @@ img {
   position: absolute;
   top: -4px;
   right: -4px;
-  background: var(--gold);
-  color: var(--bg-primary);
+  background: var(--red);
+  color: #fff;
   font-size: 0.65rem;
   font-weight: 700;
   min-width: 16px;
@@ -3664,6 +3668,17 @@ img {
   align-items: center;
   justify-content: center;
   padding: 0 4px;
+  animation: notif-pulse 2s ease-in-out infinite;
+}
+
+@keyframes notif-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(231, 76, 60, 0);
+  }
 }
 
 /* ─── Notification Dropdown ─────────────────── */
