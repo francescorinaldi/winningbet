@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Refactored
+
+- **Copilot agents: 5-agent chain → 2-agent architecture** — Replaced PM, Planner, Implementer, WinningBet-Dev, and Reviewer with two self-contained agents: **Coder** (all-in-one: plan, implement, verify, self-review) and **Reviewer** (code quality with direct fix capability). Eliminates ~50% timeout failures on GitHub.com's 10-minute coding agent limit by removing multi-agent handoff overhead. Reviewer now has `edit` and `execute` tools to fix issues directly instead of bouncing back.
+
 ### Changed
 
 - **Locale-aware date formatting** — Replaced 8+ hardcoded `'it-IT'` locale strings with dynamic `getLocale()` in frontend files (`script.js`, `dashboard.js`). Added `getLocale()` utility to `i18n.js` that returns `'it-IT'` or `'en-GB'` based on the user's language setting. Hardcoded Italian day abbreviations in `formatMatchDate()` now use the i18n `days` translation key. Backend files (`email.js`, `prediction-engine.js`) use named constants (`EMAIL_LOCALE`, `BACKEND_LOCALE`) for maintainability.
