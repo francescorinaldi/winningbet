@@ -12,7 +12,7 @@
  * Caricato prima degli script specifici di ogni pagina.
  */
 
-/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, formatMatchDate */
+/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, formatMatchDate, setErrorState, REDUCED_MOTION */
 /* global getLocale */
 // Why `var`? This file is loaded as a non-module <script> — `var` declarations
 // become globals, making functions/constants available to other page scripts.
@@ -63,6 +63,70 @@ var LEAGUE_NAMES_MAP = {
 };
 
 // ==========================================
+// REDUCED MOTION (accessibility)
+// ==========================================
+
+var REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ==========================================
+// ERROR STATE WITH RETRY
+// ==========================================
+
+/**
+ * Mostra uno stato di errore con messaggio e bottone "Riprova".
+ * Sostituisce il contenuto del container con icona SVG + testo + CTA retry.
+ * @param {HTMLElement} container - Elemento contenitore
+ * @param {string} message - Messaggio di errore
+ * @param {Function|null} retryFn - Funzione da chiamare al click "Riprova"
+ */
+function setErrorState(container, message, retryFn) {
+  container.textContent = '';
+
+  var wrapper = document.createElement('div');
+  wrapper.className = 'error-state';
+
+  // SVG warning icon
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', '32');
+  svg.setAttribute('height', '32');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.5');
+  svg.setAttribute('aria-hidden', 'true');
+  var tri = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  tri.setAttribute('d', 'M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z');
+  var line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line1.setAttribute('x1', '12'); line1.setAttribute('y1', '9');
+  line1.setAttribute('x2', '12'); line1.setAttribute('y2', '13');
+  var line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line2.setAttribute('x1', '12'); line2.setAttribute('y1', '17');
+  line2.setAttribute('x2', '12.01'); line2.setAttribute('y2', '17');
+  svg.appendChild(tri);
+  svg.appendChild(line1);
+  svg.appendChild(line2);
+  wrapper.appendChild(svg);
+
+  var msg = document.createElement('p');
+  msg.className = 'error-state-message';
+  msg.textContent = message;
+  wrapper.appendChild(msg);
+
+  if (typeof retryFn === 'function') {
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-outline btn-sm error-state-retry';
+    btn.textContent = 'Riprova';
+    btn.addEventListener('click', function () {
+      container.textContent = '';
+      retryFn();
+    });
+    wrapper.appendChild(btn);
+  }
+
+  container.appendChild(wrapper);
+}
+
+// ==========================================
 // MOBILE MENU
 // ==========================================
 
@@ -71,27 +135,55 @@ function initMobileMenu() {
   var navLinks = document.getElementById('navLinks');
   if (!hamburger || !navLinks) return;
 
+  // Create backdrop overlay
+  var backdrop = document.createElement('div');
+  backdrop.className = 'nav-backdrop';
+  backdrop.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(backdrop);
+
   function closeMenu() {
     hamburger.classList.remove('active');
+    hamburger.setAttribute('aria-expanded', 'false');
     navLinks.classList.remove('open');
+    backdrop.classList.remove('open');
     document.body.style.overflow = '';
   }
 
+  function openMenu() {
+    hamburger.classList.add('active');
+    hamburger.setAttribute('aria-expanded', 'true');
+    navLinks.classList.add('open');
+    backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  // Set initial aria state
+  hamburger.setAttribute('aria-expanded', 'false');
+  hamburger.setAttribute('aria-controls', 'navLinks');
+
   hamburger.addEventListener('click', function (e) {
     e.stopPropagation();
-    hamburger.classList.toggle('active');
-    navLinks.classList.toggle('open');
-    document.body.style.overflow = navLinks.classList.contains('open') ? 'hidden' : '';
+    if (navLinks.classList.contains('open')) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
   });
 
-  // Close menu when clicking any link or button inside nav (except lang-toggle which stays open)
+  // ESC key closes the menu
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && navLinks.classList.contains('open')) {
+      closeMenu();
+      hamburger.focus();
+    }
+  });
+
+  // Close on backdrop click
+  backdrop.addEventListener('click', closeMenu);
+
+  // Close menu when clicking any link inside nav
   navLinks.querySelectorAll('a').forEach(function (link) {
     link.addEventListener('click', closeMenu);
-  });
-
-  // Close menu when tapping the overlay background (not the nav items themselves)
-  navLinks.addEventListener('click', function (e) {
-    if (e.target === navLinks) closeMenu();
   });
 }
 
@@ -230,6 +322,12 @@ function initParticles(options) {
     animationId = requestAnimationFrame(animate);
   }
 
+  function drawStatic() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(function (p) { p.draw(); });
+    if (drawConnections) renderConnections();
+  }
+
   // Pause animation when tab is hidden to save CPU
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
@@ -242,9 +340,16 @@ function initParticles(options) {
     }
   });
 
-  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('resize', function () {
+    resizeCanvas();
+    if (REDUCED_MOTION) drawStatic();
+  });
   init();
-  animate();
+  if (REDUCED_MOTION) {
+    drawStatic();
+  } else {
+    animate();
+  }
 }
 
 // ==========================================

@@ -4,6 +4,15 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added (Wave 1 — Accessibility & UX Critical Fixes)
+
+- **1.1 Error handling con retry UI** — Added `setErrorState(container, message, retryFn)` to `shared.js`: warning SVG icon + error message + "Riprova" button. Replaced all silent `.catch()` blocks in `loadTips`, `loadMatches`, `loadResults`, `loadTrackRecord` (script.js) and `loadTodayTips`, `loadHistory`, `loadSchedule` (dashboard.js). Added `.error-state` CSS with red warning icon, descriptive message and retry CTA.
+- **1.2 :focus-visible su tutti gli elementi interattivi** — Added global `:focus-visible` rule with `outline: 2px solid var(--gold); outline-offset: 2px` after Reset & Base. Added `:focus:not(:focus-visible) { outline: none }` to suppress ring for mouse users. Single rule covers all interactive elements: `.btn`, `.filter-btn`, `.league-btn`, `.dash-tab`, `.faq-question`, `.hamburger`, inputs.
+- **1.3 Mobile menu: backdrop, ESC, slide animation** — Replaced `display: none/flex` toggle with `transform: translateX(100%)/translateX(0)` + `visibility` for smooth slide-in animation. Added `.nav-backdrop` overlay (created dynamically by `initMobileMenu()`). ESC key closes menu and returns focus to hamburger. Backdrop click closes menu. `aria-expanded` on hamburger updated on toggle.
+- **1.4 prefers-reduced-motion** — Added `var REDUCED_MOTION` constant in `shared.js`. CSS `@media (prefers-reduced-motion: reduce)` disables all animations (particles hidden, matches ticker stopped, reveal instant). `animateCounter()` sets final value immediately without animation. Reveal observer adds `.visible` instantly. `initParticles()` renders single static frame instead of RAF loop.
+- **1.5 ARIA labels e live regions** — Added `aria-live="polite"` + `aria-label` on `#matchesScroll`, `#tipsGrid`, `#resultsList`, `#dashTipsGrid`, `#schedineGrid`, `#dashHistoryList`. Added `role="status"` + `aria-label` on all `.loading-spinner` elements. Dashboard tabs: `role="tablist"` on container, `role="tab"` + `aria-selected` + `aria-controls` on each tab, `role="tabpanel"` + `aria-labelledby` on each panel. FAQ: `aria-expanded` on all `.faq-question` buttons (initial `false`, toggled by JS). Hamburger: `aria-expanded` + `aria-controls` managed by `initMobileMenu()`.
+- **1.6 Indicatori status colorblind-safe** — Added `aria-label` with human-readable text to all history status icons in `renderHistory()`: ✓ → `aria-label="Vinto"`, ✗ → `aria-label="Perso"`, — → `aria-label="Annullata"`, ● → `aria-label="In corso"`. Form dots (W/D/L) were already colorblind-safe via letter text content.
+
 ### Fixed
 
 - **Floating promises in script.js (H-05)** — Added `.catch()` handlers to `loadMatches()`, `loadResults().then(loadTrackRecord)`, and `loadTipsFromAPI()` in both the init section and league selector callback. Unhandled rejections now log warnings instead of silently failing.

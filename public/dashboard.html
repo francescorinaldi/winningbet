@@ -172,17 +172,17 @@
         </div>
 
         <!-- Tab navigation -->
-        <div class="dash-tabs">
-          <button class="dash-tab active" data-tab="tips">Tips di Oggi</button>
-          <button class="dash-tab" data-tab="schedine">Schedine</button>
-          <button class="dash-tab" data-tab="history">Storico</button>
+        <div class="dash-tabs" role="tablist" aria-label="Sezioni dashboard">
+          <button class="dash-tab active" data-tab="tips" role="tab" aria-selected="true" aria-controls="panelTips" id="tabTips">Tips di Oggi</button>
+          <button class="dash-tab" data-tab="schedine" role="tab" aria-selected="false" aria-controls="panelSchedule" id="tabSchedine">Schedine</button>
+          <button class="dash-tab" data-tab="history" role="tab" aria-selected="false" aria-controls="panelHistory" id="tabHistory">Storico</button>
         </div>
 
         <!-- TAB: Today's Tips -->
-        <section class="dash-panel" id="panelTips">
-          <div class="dash-tips-grid" id="dashTipsGrid">
+        <section class="dash-panel" id="panelTips" role="tabpanel" aria-labelledby="tabTips">
+          <div class="dash-tips-grid" id="dashTipsGrid" aria-live="polite" aria-label="Pronostici di oggi">
             <div class="tips-loading">
-              <span class="loading-spinner"></span>
+              <span class="loading-spinner" role="status" aria-label="Caricamento pronostici in corso"></span>
               <span>Caricamento pronostici...</span>
             </div>
           </div>
@@ -213,7 +213,7 @@
         </section>
 
         <!-- TAB: Schedine (Betting Slips) -->
-        <section class="dash-panel" id="panelSchedule" style="display: none">
+        <section class="dash-panel" id="panelSchedule" role="tabpanel" aria-labelledby="tabSchedine" style="display: none">
           <!-- Budget summary bar -->
           <div class="schedine-budget-bar" id="schedineBudgetBar" style="display: none">
             <div class="budget-stat">
@@ -244,9 +244,9 @@
             </button>
           </div>
           <!-- Schedine cards -->
-          <div class="schedine-grid" id="schedineGrid">
+          <div class="schedine-grid" id="schedineGrid" aria-live="polite" aria-label="Schedine della settimana">
             <div class="tips-loading">
-              <span class="loading-spinner"></span>
+              <span class="loading-spinner" role="status" aria-label="Caricamento schedine in corso"></span>
               <span>Caricamento schedine...</span>
             </div>
           </div>
@@ -291,7 +291,7 @@
         </section>
 
         <!-- TAB: History -->
-        <section class="dash-panel" id="panelHistory" style="display: none">
+        <section class="dash-panel" id="panelHistory" role="tabpanel" aria-labelledby="tabHistory" style="display: none">
           <div class="dash-history-filters">
             <button class="filter-btn active" data-status="all">Tutti</button>
             <button class="filter-btn" data-status="won">Vinti</button>
@@ -304,9 +304,9 @@
             <div class="chart-title">Profitto Mensile</div>
             <div class="chart dash-chart" id="dashChart"></div>
           </div>
-          <div class="dash-history-list" id="dashHistoryList">
+          <div class="dash-history-list" id="dashHistoryList" aria-live="polite" aria-label="Storico pronostici">
             <div class="tips-loading">
-              <span class="loading-spinner"></span>
+              <span class="loading-spinner" role="status" aria-label="Caricamento storico in corso"></span>
               <span>Caricamento storico...</span>
             </div>
           </div>

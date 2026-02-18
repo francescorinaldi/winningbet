@@ -99,6 +99,22 @@
   box-sizing: border-box;
 }
 
+/* ============================================
+   ACCESSIBILITY — FOCUS VISIBLE
+   ============================================
+   Keyboard-visible focus ring: gold outline.
+   Hidden for mouse/touch users via :focus:not(:focus-visible).
+   ============================================ */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
@@ -1794,6 +1810,34 @@ img {
   width: 100%;
 }
 
+/* ─── Error State with Retry ─────────────── */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--text-muted);
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.error-state svg {
+  color: var(--red);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.error-state-message {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.error-state-retry {
+  margin-top: 4px;
+}
+
 /* Result date (for dynamic results) */
 .result-date {
   font-size: 0.75rem;
@@ -1838,6 +1882,41 @@ img {
 }
 
 /* ============================================
+   ACCESSIBILITY — PREFERS-REDUCED-MOTION
+   ============================================
+   Disabilita tutte le animazioni/transizioni per utenti
+   che hanno richiesto movimento ridotto nelle impostazioni OS.
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .confidence-fill {
+    transition: none;
+  }
+
+  .matches-track {
+    animation: none;
+  }
+
+  #particles {
+    display: none;
+  }
+}
+
+/* ============================================
    RESPONSIVE
    ============================================
    3 breakpoint principali:
@@ -1876,14 +1955,30 @@ img {
   }
 }
 
+/* Nav backdrop overlay (created dynamically by shared.js) */
+.nav-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1001;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.nav-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+}
+
 @media (max-width: 768px) {
   .nav-links {
-    display: none;
+    display: flex;
     position: fixed;
     top: 0;
-    left: 0;
     right: 0;
     bottom: 0;
+    width: min(320px, 85vw);
     background: rgba(10, 10, 15, 0.98);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -1893,10 +1988,14 @@ img {
     gap: 24px;
     z-index: 1002;
     padding: 80px 24px 40px;
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s;
   }
 
   .nav-links.open {
-    display: flex;
+    transform: translateX(0);
+    visibility: visible;
   }
 
   .nav-links a {

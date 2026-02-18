@@ -13,7 +13,7 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
-/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, formatMatchDate, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, getLocale */
+/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, formatMatchDate, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, getLocale, setErrorState, REDUCED_MOTION */
 
 (function () {
   'use strict';
@@ -68,6 +68,12 @@
     const target = parseInt(el.getAttribute('data-count'), 10);
     if (isNaN(target) || target === 0) return;
 
+    // Skip animation for users who prefer reduced motion
+    if (REDUCED_MOTION) {
+      el.textContent = target.toLocaleString(getLocale());
+      return;
+    }
+
     const duration = 2000;
     const startTime = performance.now();
 
@@ -116,32 +122,39 @@
 
   const hasHash = window.location.hash.length > 1;
 
-  revealElements.forEach(function (el) {
-    if (hasHash) {
-      const rect = el.getBoundingClientRect();
-      const inViewport = rect.top < window.innerHeight && rect.bottom > 0;
-      if (inViewport) {
-        el.classList.add('reveal', 'visible');
-        return;
+  // If reduced motion, make everything visible immediately — no fade-in animations
+  if (REDUCED_MOTION) {
+    revealElements.forEach(function (el) {
+      el.classList.add('reveal', 'visible');
+    });
+  } else {
+    revealElements.forEach(function (el) {
+      if (hasHash) {
+        const rect = el.getBoundingClientRect();
+        const inViewport = rect.top < window.innerHeight && rect.bottom > 0;
+        if (inViewport) {
+          el.classList.add('reveal', 'visible');
+          return;
+        }
       }
-    }
-    el.classList.add('reveal');
-  });
+      el.classList.add('reveal');
+    });
 
-  const revealObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        revealObserver.unobserve(entry.target);
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    revealElements.forEach(function (el) {
+      if (!el.classList.contains('visible')) {
+        revealObserver.observe(el);
       }
     });
-  }, observerOptions);
-
-  revealElements.forEach(function (el) {
-    if (!el.classList.contains('visible')) {
-      revealObserver.observe(el);
-    }
-  });
+  }
 
   // Counter triggers — attiva animateCounter al primo scroll su [data-count]
   const counterElements = document.querySelectorAll('[data-count]');
@@ -261,11 +274,17 @@
 
   faqItems.forEach((item) => {
     const question = item.querySelector('.faq-question');
+    // Set initial ARIA state
+    question.setAttribute('aria-expanded', 'false');
     question.addEventListener('click', () => {
       const isActive = item.classList.contains('active');
-      faqItems.forEach((i) => i.classList.remove('active'));
+      faqItems.forEach((i) => {
+        i.classList.remove('active');
+        i.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+      });
       if (!isActive) {
         item.classList.add('active');
+        question.setAttribute('aria-expanded', 'true');
       }
     });
   });
@@ -843,7 +862,7 @@
       });
     } catch (err) {
       console.error('loadTips failed:', err);
-      setEmptyState(container, 'tips-empty', 'Impossibile caricare i pronostici');
+      setErrorState(container, 'Impossibile caricare i pronostici', loadTips);
     }
   }
 
@@ -894,7 +913,7 @@
       track.style.setProperty('--ticker-duration', duration + 's');
     } catch (err) {
       console.error('loadMatches failed:', err);
-      setEmptyState(container, 'matches-empty', 'Impossibile caricare le partite');
+      setErrorState(container, 'Impossibile caricare le partite', loadMatches);
     }
   }
 
@@ -931,7 +950,7 @@
       });
     } catch (err) {
       console.error('loadResults failed:', err);
-      setEmptyState(container, 'results-empty', 'Impossibile caricare i risultati');
+      setErrorState(container, 'Impossibile caricare i risultati', loadResults);
     }
   }
 
@@ -1241,6 +1260,8 @@
     } catch (err) {
       console.error('loadTrackRecord failed:', err);
       resetTrackRecordUI();
+      const container = document.getElementById('resultsList');
+      if (container) setErrorState(container, 'Impossibile caricare i risultati', loadTrackRecord);
     }
   }
 

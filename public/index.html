@@ -198,9 +198,9 @@
             EREDIVISIE</span
           >
         </div>
-        <div class="matches-scroll" id="matchesScroll">
+        <div class="matches-scroll" id="matchesScroll" aria-live="polite" aria-label="Prossime partite">
           <div class="matches-loading">
-            <span class="loading-spinner"></span>
+            <span class="loading-spinner" role="status" aria-label="Caricamento partite in corso"></span>
             <span data-i18n="live.loading">Caricamento partite...</span>
           </div>
         </div>
@@ -267,9 +267,9 @@
           </div>
         </div>
 
-        <div class="tips-grid" id="tipsGrid">
+        <div class="tips-grid" id="tipsGrid" aria-live="polite" aria-label="Pronostici del giorno">
           <div class="tips-loading">
-            <span class="loading-spinner"></span>
+            <span class="loading-spinner" role="status" aria-label="Caricamento pronostici in corso"></span>
             <span data-i18n="tips.loading">Caricamento pronostici...</span>
           </div>
         </div>
@@ -429,9 +429,9 @@
              Ogni riga mostra: data, squadre, punteggio, badge Over/Under 2.5 -->
         <div class="recent-results">
           <h3 class="results-title" data-i18n="stats.results.title">I Nostri Risultati</h3>
-          <div class="results-list" id="resultsList">
+          <div class="results-list" id="resultsList" aria-live="polite" aria-label="Risultati recenti">
             <div class="results-loading">
-              <span class="loading-spinner"></span>
+              <span class="loading-spinner" role="status" aria-label="Caricamento risultati in corso"></span>
               <span data-i18n="stats.results.loading">Caricamento risultati...</span>
             </div>
           </div>
@@ -650,7 +650,7 @@
 
         <div class="faq-list">
           <div class="faq-item">
-            <button class="faq-question">
+            <button class="faq-question" aria-expanded="false">
               <span data-i18n="faq.q1">Come funzionano i vostri pronostici?</span>
               <span class="faq-icon">+</span>
             </button>
@@ -664,7 +664,7 @@
             </div>
           </div>
           <div class="faq-item">
-            <button class="faq-question">
+            <button class="faq-question" aria-expanded="false">
               <span data-i18n="faq.q2">Posso davvero guadagnare con le scommesse?</span>
               <span class="faq-icon">+</span>
             </button>
@@ -678,7 +678,7 @@
             </div>
           </div>
           <div class="faq-item">
-            <button class="faq-question">
+            <button class="faq-question" aria-expanded="false">
               <span data-i18n="faq.q3">Come funziona l'abbonamento?</span>
               <span class="faq-icon">+</span>
             </button>
@@ -692,7 +692,7 @@
             </div>
           </div>
           <div class="faq-item">
-            <button class="faq-question">
+            <button class="faq-question" aria-expanded="false">
               <span data-i18n="faq.q4">Che bookmaker consigliate?</span>
               <span class="faq-icon">+</span>
             </button>
@@ -705,7 +705,7 @@
             </div>
           </div>
           <div class="faq-item">
-            <button class="faq-question">
+            <button class="faq-question" aria-expanded="false">
               <span data-i18n="faq.q5">Quanto dovrei puntare su ogni tip?</span>
               <span class="faq-icon">+</span>
             </button>

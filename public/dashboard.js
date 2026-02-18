@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, formatMatchDate, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getLocale */
+/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, formatMatchDate, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState */
 
 (function () {
   'use strict';
@@ -430,8 +430,7 @@
       renderTipsGrid(grid, tips);
     } catch (err) {
       console.warn('[loadTodayTips]', err.message);
-      grid.textContent = '';
-      emptyState.style.display = '';
+      setErrorState(grid, 'Impossibile caricare i pronostici', loadTodayTips);
       startCountdown();
     }
   }
@@ -890,7 +889,8 @@
       loadDashboardChart();
     } catch (err) {
       console.warn('[loadHistory]', err.message);
-      document.getElementById('dashHistoryEmpty').style.display = '';
+      const histList = document.getElementById('dashHistoryList');
+      if (histList) setErrorState(histList, 'Impossibile caricare lo storico', loadHistory);
     }
   }
 
@@ -939,10 +939,10 @@
 
       const statusEl = document.createElement('span');
       statusEl.className = 'dash-history-status dash-history-status--' + tip.status;
-      if (tip.status === 'won') statusEl.textContent = '\u2713';
-      else if (tip.status === 'lost') statusEl.textContent = '\u2717';
-      else if (tip.status === 'void') statusEl.textContent = '\u2014';
-      else statusEl.textContent = '\u25CF';
+      if (tip.status === 'won') { statusEl.textContent = '\u2713'; statusEl.setAttribute('aria-label', 'Vinto'); }
+      else if (tip.status === 'lost') { statusEl.textContent = '\u2717'; statusEl.setAttribute('aria-label', 'Perso'); }
+      else if (tip.status === 'void') { statusEl.textContent = '\u2014'; statusEl.setAttribute('aria-label', 'Annullata'); }
+      else { statusEl.textContent = '\u25CF'; statusEl.setAttribute('aria-label', 'In corso'); }
       item.appendChild(statusEl);
 
       const matchInfo = document.createElement('div');
@@ -1066,8 +1066,10 @@
       tab.addEventListener('click', function () {
         tabs.forEach(function (t) {
           t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
         });
         tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
 
         // Deactivate settings when switching to a tab
         const settingsBtn = document.getElementById('settingsBtn');
@@ -1803,14 +1805,13 @@
       renderSchedule(grid, data.schedine);
     } catch (err) {
       console.warn('[loadSchedule]', err.message);
-      grid.textContent = '';
+      budgetBar.style.display = 'none';
 
       if (err.message === 'HTTP 403') {
+        grid.textContent = '';
         upgrade.style.display = '';
-        budgetBar.style.display = 'none';
       } else {
-        empty.style.display = '';
-        budgetBar.style.display = 'none';
+        setErrorState(grid, 'Impossibile caricare le schedine', loadSchedule);
       }
     }
   }
