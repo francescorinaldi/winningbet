@@ -166,7 +166,7 @@ function initParticles(options) {
 
       for (ni = ci; ni <= ci + 1 && ni < cols; ni++) {
         for (nj = cj - 1; nj <= cj + 1 && nj < rows; nj++) {
-          if (nj < 0) continue;
+          if (ni < 0 || nj < 0) continue;
           cellIdx = nj * cols + ni;
           if (!grid[cellIdx]) continue;
           var cell = grid[cellIdx];
