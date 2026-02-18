@@ -12,7 +12,7 @@
  * Caricato prima degli script specifici di ogni pagina.
  */
 
-/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, formatMatchDate, setErrorState, REDUCED_MOTION */
+/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, formatMatchDate, setErrorState, REDUCED_MOTION, showToast */
 /* global getLocale */
 // Why `var`? This file is loaded as a non-module <script> — `var` declarations
 // become globals, making functions/constants available to other page scripts.
@@ -95,13 +95,20 @@ function setErrorState(container, message, retryFn) {
   svg.setAttribute('stroke-width', '1.5');
   svg.setAttribute('aria-hidden', 'true');
   var tri = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  tri.setAttribute('d', 'M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z');
+  tri.setAttribute(
+    'd',
+    'M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z',
+  );
   var line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  line1.setAttribute('x1', '12'); line1.setAttribute('y1', '9');
-  line1.setAttribute('x2', '12'); line1.setAttribute('y2', '13');
+  line1.setAttribute('x1', '12');
+  line1.setAttribute('y1', '9');
+  line1.setAttribute('x2', '12');
+  line1.setAttribute('y2', '13');
   var line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  line2.setAttribute('x1', '12'); line2.setAttribute('y1', '17');
-  line2.setAttribute('x2', '12.01'); line2.setAttribute('y2', '17');
+  line2.setAttribute('x1', '12');
+  line2.setAttribute('y1', '17');
+  line2.setAttribute('x2', '12.01');
+  line2.setAttribute('y2', '17');
   svg.appendChild(tri);
   svg.appendChild(line1);
   svg.appendChild(line2);
@@ -124,6 +131,81 @@ function setErrorState(container, message, retryFn) {
   }
 
   container.appendChild(wrapper);
+}
+
+// ==========================================
+// TOAST NOTIFICATIONS
+// ==========================================
+
+var _toastContainer = null;
+
+/**
+ * Mostra un toast temporaneo con messaggio e tipo.
+ * @param {string} message - Testo del messaggio
+ * @param {'success'|'error'|'info'} [type='info'] - Tipo di toast
+ * @param {number} [duration=3000] - Durata in ms prima dell'auto-dismiss
+ */
+function showToast(message, type, duration) {
+  type = type || 'info';
+  duration = duration || 3000;
+
+  if (!_toastContainer) {
+    _toastContainer = document.createElement('div');
+    _toastContainer.className = 'toast-container';
+    _toastContainer.setAttribute('aria-live', 'polite');
+    _toastContainer.setAttribute('aria-label', 'Notifiche');
+    document.body.appendChild(_toastContainer);
+  }
+
+  var icons = { success: '\u2713', error: '\u2717', info: '\u2139' };
+
+  var toast = document.createElement('div');
+  toast.className = 'toast toast--' + type;
+  toast.setAttribute('role', 'status');
+
+  var icon = document.createElement('span');
+  icon.className = 'toast-icon';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.textContent = icons[type] || icons.info;
+  toast.appendChild(icon);
+
+  var text = document.createElement('span');
+  text.className = 'toast-text';
+  text.textContent = message;
+  toast.appendChild(text);
+
+  _toastContainer.appendChild(toast);
+
+  // Slide in
+  if (REDUCED_MOTION) {
+    toast.classList.add('visible');
+  } else {
+    requestAnimationFrame(function () {
+      toast.classList.add('visible');
+    });
+  }
+
+  // Click to dismiss
+  toast.addEventListener('click', function () {
+    removeToast(toast);
+  });
+
+  // Auto-dismiss
+  setTimeout(function () {
+    removeToast(toast);
+  }, duration);
+}
+
+function removeToast(toast) {
+  if (!toast.parentNode) return;
+  toast.classList.remove('visible');
+  if (REDUCED_MOTION) {
+    toast.remove();
+  } else {
+    setTimeout(function () {
+      toast.remove();
+    }, 300);
+  }
 }
 
 // ==========================================
@@ -324,7 +406,9 @@ function initParticles(options) {
 
   function drawStatic() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(function (p) { p.draw(); });
+    particles.forEach(function (p) {
+      p.draw();
+    });
     if (drawConnections) renderConnections();
   }
 
@@ -364,18 +448,26 @@ function initParticles(options) {
  */
 function initCookieBanner() {
   var consent = null;
-  try { consent = localStorage.getItem('cookie_consent'); } catch (_e) { /* storage unavailable */ }
+  try {
+    consent = localStorage.getItem('cookie_consent');
+  } catch (_e) {
+    /* storage unavailable */
+  }
   if (consent) return;
 
-  var tFn = typeof window.t === 'function' ? window.t : function (key) {
-    var defaults = {
-      'cookie.text': 'Utilizziamo cookie tecnici per il funzionamento del sito. Per maggiori informazioni consulta la nostra',
-      'cookie.link': 'Cookie Policy',
-      'cookie.reject': 'Rifiuta',
-      'cookie.accept': 'Accetta',
-    };
-    return defaults[key] || key;
-  };
+  var tFn =
+    typeof window.t === 'function'
+      ? window.t
+      : function (key) {
+          var defaults = {
+            'cookie.text':
+              'Utilizziamo cookie tecnici per il funzionamento del sito. Per maggiori informazioni consulta la nostra',
+            'cookie.link': 'Cookie Policy',
+            'cookie.reject': 'Rifiuta',
+            'cookie.accept': 'Accetta',
+          };
+          return defaults[key] || key;
+        };
 
   var banner = document.createElement('div');
   banner.className = 'cookie-banner';
@@ -416,12 +508,20 @@ function initCookieBanner() {
   document.body.appendChild(banner);
 
   acceptBtn.addEventListener('click', function () {
-    try { localStorage.setItem('cookie_consent', 'accepted'); } catch (_e) { /* storage unavailable */ }
+    try {
+      localStorage.setItem('cookie_consent', 'accepted');
+    } catch (_e) {
+      /* storage unavailable */
+    }
     banner.setAttribute('hidden', '');
   });
 
   rejectBtn.addEventListener('click', function () {
-    try { localStorage.setItem('cookie_consent', 'rejected'); } catch (_e) { /* storage unavailable */ }
+    try {
+      localStorage.setItem('cookie_consent', 'rejected');
+    } catch (_e) {
+      /* storage unavailable */
+    }
     banner.setAttribute('hidden', '');
   });
 }
@@ -475,7 +575,11 @@ function initLangToggle() {
     { code: 'EN', flag: '\uD83C\uDDEC\uD83C\uDDE7' },
   ];
   var savedLang = null;
-  try { savedLang = localStorage.getItem('lang'); } catch (_e) { /* storage unavailable */ }
+  try {
+    savedLang = localStorage.getItem('lang');
+  } catch (_e) {
+    /* storage unavailable */
+  }
   var current = savedLang === 'EN' ? 1 : 0;
 
   function render() {
@@ -493,7 +597,11 @@ function initLangToggle() {
 
   btn.addEventListener('click', function () {
     current = current === 0 ? 1 : 0;
-    try { localStorage.setItem('lang', langs[current].code); } catch (_e) { /* storage unavailable */ }
+    try {
+      localStorage.setItem('lang', langs[current].code);
+    } catch (_e) {
+      /* storage unavailable */
+    }
     render();
   });
 }

@@ -13,7 +13,7 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
-/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale, setErrorState, REDUCED_MOTION, createEl, buildMatchCard, buildResultItem, buildTipResultItem, buildTipCard, canAccessTier, setEmptyState, activateConfidenceBars */
+/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale, setErrorState, REDUCED_MOTION, createEl, buildMatchCard, buildResultItem, buildTipResultItem, buildTipCard, canAccessTier, setEmptyState, activateConfidenceBars, showToast */
 
 (function () {
   'use strict';
@@ -368,9 +368,17 @@
 
         currentLeague = league;
         updateLeagueLabels();
-        loadMatches().catch(function (err) { console.warn('[league] loadMatches:', err.message); });
-        loadResults().then(loadTrackRecord).catch(function (err) { console.warn('[league] loadResults/trackRecord:', err.message); });
-        loadTipsFromAPI().catch(function (err) { console.warn('[league] loadTipsFromAPI:', err.message); });
+        loadMatches().catch(function (err) {
+          console.warn('[league] loadMatches:', err.message);
+        });
+        loadResults()
+          .then(loadTrackRecord)
+          .catch(function (err) {
+            console.warn('[league] loadResults/trackRecord:', err.message);
+          });
+        loadTipsFromAPI().catch(function (err) {
+          console.warn('[league] loadTipsFromAPI:', err.message);
+        });
       });
     });
   }
@@ -622,12 +630,16 @@
           updatePricingForAuth();
         } else {
           // No session — load tips now (unauthenticated)
-          loadTipsFromAPI().catch(function (err) { console.warn('[init] loadTipsFromAPI:', err.message); });
+          loadTipsFromAPI().catch(function (err) {
+            console.warn('[init] loadTipsFromAPI:', err.message);
+          });
         }
       })
       .catch(function () {
         updateNavForAuth(null);
-        loadTipsFromAPI().catch(function () { /* already logged */ });
+        loadTipsFromAPI().catch(function () {
+          /* already logged */
+        });
       });
 
     SupabaseConfig.onAuthStateChange(function (_event, session) {
@@ -966,12 +978,20 @@
   // Avvia il caricamento dati al ready della pagina
   injectTierPrices();
   initLeagueSelector();
-  loadMatches().catch(function (err) { console.warn('[init] loadMatches:', err.message); });
-  loadResults().then(loadTrackRecord).catch(function (err) { console.warn('[init] loadResults/trackRecord:', err.message); });
+  loadMatches().catch(function (err) {
+    console.warn('[init] loadMatches:', err.message);
+  });
+  loadResults()
+    .then(loadTrackRecord)
+    .catch(function (err) {
+      console.warn('[init] loadResults/trackRecord:', err.message);
+    });
   // Tips loaded after auth check to avoid double fetch (#73).
   // If SupabaseConfig unavailable, load immediately.
   if (typeof SupabaseConfig === 'undefined') {
-    loadTipsFromAPI().catch(function (err) { console.warn('[init] loadTipsFromAPI:', err.message); });
+    loadTipsFromAPI().catch(function (err) {
+      console.warn('[init] loadTipsFromAPI:', err.message);
+    });
   }
   initCookieBanner();
   initCopyrightYear();

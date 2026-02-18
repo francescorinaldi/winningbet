@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState, dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications */
+/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState, dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, showToast */
 
 (function () {
   'use strict';
@@ -52,7 +52,11 @@
   let countdownInterval = null;
   let notifInterval = null;
   let currentLeague = null;
-  try { currentLeague = localStorage.getItem('wb_dashboard_league'); } catch (_e) { /* storage unavailable */ }
+  try {
+    currentLeague = localStorage.getItem('wb_dashboard_league');
+  } catch (_e) {
+    /* storage unavailable */
+  }
   currentLeague = currentLeague || 'serie-a';
 
   // ─── INIT ───────────────────────────────────────────────
@@ -219,9 +223,10 @@
       const name = document.getElementById('userDisplayName').textContent || '';
       if (name && name !== '\u2014') {
         const parts = name.trim().split(/\s+/);
-        initials.textContent = parts.length > 1
-          ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-          : parts[0].substring(0, 2).toUpperCase();
+        initials.textContent =
+          parts.length > 1
+            ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+            : parts[0].substring(0, 2).toUpperCase();
       }
 
       if (tier === 'free') {
@@ -851,7 +856,11 @@
       btn.classList.add('active');
 
       currentLeague = league;
-      try { localStorage.setItem('wb_dashboard_league', league); } catch (_e) { /* storage unavailable */ }
+      try {
+        localStorage.setItem('wb_dashboard_league', league);
+      } catch (_e) {
+        /* storage unavailable */
+      }
 
       loadTodayTips();
       loadHistory();
@@ -1760,12 +1769,8 @@
       if (!TIER_PRICES[tier]) return;
 
       const config = TIER_PRICES[tier];
-      const amountEl = priceEl.querySelector(
-        '.upgrade-card__amount, .price-amount',
-      );
-      const decimalEl = priceEl.querySelector(
-        '.upgrade-card__decimal, .price-decimal',
-      );
+      const amountEl = priceEl.querySelector('.upgrade-card__amount, .price-amount');
+      const decimalEl = priceEl.querySelector('.upgrade-card__decimal, .price-decimal');
 
       if (amountEl && decimalEl) {
         const parts = config.amount.toString().split('.');

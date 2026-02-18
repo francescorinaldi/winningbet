@@ -1810,6 +1810,79 @@ img {
   width: 100%;
 }
 
+/* ─── Toast Notifications ──────────────────── */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transform: translateX(120%);
+  opacity: 0;
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease;
+  max-width: 360px;
+}
+
+.toast.visible {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.toast--success {
+  border-color: rgba(46, 204, 113, 0.3);
+}
+
+.toast--success .toast-icon {
+  color: var(--green);
+}
+
+.toast--error {
+  border-color: rgba(231, 76, 60, 0.3);
+}
+
+.toast--error .toast-icon {
+  color: var(--red);
+}
+
+.toast--info {
+  border-color: rgba(212, 168, 83, 0.3);
+}
+
+.toast--info .toast-icon {
+  color: var(--gold);
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+}
+
+.toast-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
 /* ─── Error State with Retry ─────────────── */
 .error-state {
   display: flex;
@@ -1914,6 +1987,10 @@ img {
   #particles {
     display: none;
   }
+
+  .toast {
+    transition: none;
+  }
 }
 
 /* ============================================
@@ -1963,7 +2040,9 @@ img {
   z-index: 1001;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
 }
 
 .nav-backdrop.open {
@@ -1990,7 +2069,9 @@ img {
     padding: 80px 24px 40px;
     transform: translateX(100%);
     visibility: hidden;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s;
+    transition:
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      visibility 0.3s;
   }
 
   .nav-links.open {
@@ -2073,6 +2154,16 @@ img {
 
   .chart {
     height: 150px;
+  }
+
+  .toast-container {
+    right: 12px;
+    left: 12px;
+    bottom: 16px;
+  }
+
+  .toast {
+    max-width: 100%;
   }
 }
 
@@ -2775,7 +2866,9 @@ img {
   padding: 28px 24px;
   display: flex;
   flex-direction: column;
-  transition: border-color 0.3s, transform 0.2s;
+  transition:
+    border-color 0.3s,
+    transform 0.2s;
 }
 
 .upgrade-card:hover {
