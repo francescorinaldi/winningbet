@@ -12,6 +12,7 @@
  */
 
 /* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, formatMatchDate, LEAGUE_NAMES_MAP, TIER_PRICES */
+/* global getLocale */
 // Why `var`? This file is loaded as a non-module <script> — `var` declarations
 // become globals, making functions/constants available to other page scripts.
 // Switch to `const`/`let` + `export` when the frontend migrates to ES modules.
@@ -221,9 +222,9 @@ function formatMatchDate(iso) {
   var d = new Date(iso);
   if (isNaN(d.getTime())) return '\u2014';
   return (
-    d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) +
+    d.toLocaleDateString(getLocale(), { day: 'numeric', month: 'short' }) +
     ' \u2014 ' +
-    d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+    d.toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit' })
   );
 }
 
