@@ -1897,6 +1897,40 @@ img {
   }
 }
 
+/* ─── Empty State ──────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 24px;
+  text-align: center;
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.empty-state svg {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.empty-state-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  max-width: 300px;
+}
+
+.empty-state .btn {
+  margin-top: 4px;
+}
+
 /* ─── Toast Notifications ──────────────────── */
 .toast-container {
   position: fixed;

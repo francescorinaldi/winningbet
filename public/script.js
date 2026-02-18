@@ -13,7 +13,7 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
-/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale, setErrorState, REDUCED_MOTION, createEl, buildMatchCard, buildResultItem, buildTipResultItem, buildTipCard, canAccessTier, setEmptyState, activateConfidenceBars, showToast, buildSkeletonCards */
+/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale, setErrorState, REDUCED_MOTION, createEl, buildMatchCard, buildResultItem, buildTipResultItem, buildTipCard, canAccessTier, setEmptyState, activateConfidenceBars, showToast, buildSkeletonCards, buildEmptyState */
 
 (function () {
   'use strict';
@@ -440,7 +440,11 @@
       buildSkeletonCards(container, 3, 'card');
       const matches = await fetchAPI('fixtures', { type: 'matches', league: currentLeague });
       if (!matches || matches.length < 3) {
-        setEmptyState(container, 'tips-empty', 'Nessun pronostico disponibile al momento');
+        buildEmptyState(container, {
+          icon: 'clipboard',
+          title: 'Nessun pronostico disponibile',
+          subtitle: 'I pronostici vengono pubblicati ogni giorno. Torna più tardi!',
+        });
         return;
       }
       container.textContent = '';
@@ -495,7 +499,11 @@
       }
 
       if (!matches || matches.length === 0) {
-        setEmptyState(container, 'matches-empty', 'Nessuna partita in programma');
+        buildEmptyState(container, {
+          icon: 'calendar',
+          title: 'Nessuna partita in programma',
+          subtitle: 'Le prossime partite appariranno qui automaticamente.',
+        });
         return;
       }
       container.textContent = '';
@@ -547,7 +555,11 @@
       }
 
       if (!results || results.length === 0) {
-        setEmptyState(container, 'results-empty', 'Nessun risultato disponibile');
+        buildEmptyState(container, {
+          icon: 'trophy',
+          title: 'Nessun risultato disponibile',
+          subtitle: 'I risultati appariranno dopo le partite.',
+        });
         return;
       }
       container.textContent = '';

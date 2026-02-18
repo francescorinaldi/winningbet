@@ -12,7 +12,7 @@
  * Caricato prima degli script specifici di ogni pagina.
  */
 
-/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, formatMatchDate, setErrorState, REDUCED_MOTION, showToast, buildSkeletonCards */
+/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, formatMatchDate, setErrorState, REDUCED_MOTION, showToast, buildSkeletonCards, buildEmptyState */
 /* global getLocale */
 // Why `var`? This file is loaded as a non-module <script> — `var` declarations
 // become globals, making functions/constants available to other page scripts.
@@ -227,6 +227,81 @@ function buildSkeletonCards(container, count, variant) {
     el.setAttribute('aria-hidden', 'true');
     container.appendChild(el);
   }
+}
+
+// ==========================================
+// EMPTY STATE
+// ==========================================
+
+/**
+ * Mostra uno stato vuoto informativo con icona, titolo, sottotitolo e azione opzionale.
+ * @param {HTMLElement} container - Elemento contenitore (viene svuotato)
+ * @param {Object} opts
+ * @param {'calendar'|'clipboard'|'trophy'|'search'} opts.icon - Tipo icona SVG
+ * @param {string} opts.title - Titolo principale
+ * @param {string} [opts.subtitle] - Sottotitolo opzionale
+ * @param {{label: string, onClick: Function}} [opts.action] - Bottone azione opzionale
+ */
+function buildEmptyState(container, opts) {
+  container.textContent = '';
+
+  var wrapper = document.createElement('div');
+  wrapper.className = 'empty-state';
+
+  var svgPaths = {
+    calendar:
+      'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z',
+    clipboard:
+      'M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2M9 2h6a1 1 0 011 1v1a1 1 0 01-1 1H9a1 1 0 01-1-1V3a1 1 0 011-1z',
+    trophy:
+      'M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z',
+    search: 'M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.35-4.35',
+  };
+
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', '40');
+  svg.setAttribute('height', '40');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.5');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+
+  var pathData = svgPaths[opts.icon] || svgPaths.clipboard;
+  pathData
+    .split('M')
+    .filter(Boolean)
+    .forEach(function (seg) {
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M' + seg);
+      svg.appendChild(path);
+    });
+
+  wrapper.appendChild(svg);
+
+  var title = document.createElement('p');
+  title.className = 'empty-state-title';
+  title.textContent = opts.title;
+  wrapper.appendChild(title);
+
+  if (opts.subtitle) {
+    var sub = document.createElement('p');
+    sub.className = 'empty-state-subtitle';
+    sub.textContent = opts.subtitle;
+    wrapper.appendChild(sub);
+  }
+
+  if (opts.action) {
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-outline btn-sm';
+    btn.textContent = opts.action.label;
+    btn.addEventListener('click', opts.action.onClick);
+    wrapper.appendChild(btn);
+  }
+
+  container.appendChild(wrapper);
 }
 
 // ==========================================
