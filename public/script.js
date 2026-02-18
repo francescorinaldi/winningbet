@@ -13,7 +13,7 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
-/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale, t */
+/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, formatMatchDate, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale */
 
 (function () {
   'use strict';
@@ -399,24 +399,6 @@
     const res = await fetch(url);
     if (!res.ok) throw new Error(`API ${endpoint}: ${res.status}`);
     return res.json();
-  }
-
-  /**
-   * Formatta una data ISO in formato breve italiano per le partite.
-   * Esempio: "2025-09-15T18:45:00Z" -> "Lun 18:45"
-   * @param {string} isoDate - Data in formato ISO 8601
-   * @returns {string} Data formattata (giorno abbreviato + ora)
-   */
-  function formatMatchDate(isoDate) {
-    const d = new Date(isoDate);
-    const daysTranslation = t('days');
-    const days = Array.isArray(daysTranslation)
-      ? daysTranslation
-      : ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
-    const day = days[d.getDay()];
-    const hours = String(d.getHours()).padStart(2, '0');
-    const mins = String(d.getMinutes()).padStart(2, '0');
-    return day + ' ' + hours + ':' + mins;
   }
 
   /**
