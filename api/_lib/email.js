@@ -69,7 +69,7 @@ async function sendEmail(params) {
     });
     return true;
   } catch (err) {
-    console.error('SMTP error:', err.message);
+    console.error('SMTP error:', err.message, err.responseCode || '', err.command || '');
     _transporter = null;
     return false;
   }
