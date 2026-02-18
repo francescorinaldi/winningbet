@@ -80,22 +80,27 @@
    * Verifica autenticazione. Redirect a /auth.html se non loggato.
    */
   async function checkAuth() {
-    const result = await SupabaseConfig.getSession();
-    session = result.data.session;
+    try {
+      const result = await SupabaseConfig.getSession();
+      session = result.data.session;
 
-    if (!session) {
-      window.location.href = '/auth.html';
-      return;
+      if (!session) {
+        window.location.href = '/auth.html';
+        return;
+      }
+
+      await loadProfile();
+      loadTodayTips();
+      loadHistory();
+      loadActivity();
+      loadNotifications();
+      loadPreferences();
+      loadUserBets();
+      loadSchedule();
+    } catch (err) {
+      console.error('[checkAuth]', err.message || err);
+      showAlert('Errore di connessione. Ricarica la pagina.', 'error');
     }
-
-    await loadProfile();
-    loadTodayTips();
-    loadHistory();
-    loadActivity();
-    loadNotifications();
-    loadPreferences();
-    loadUserBets();
-    loadSchedule();
   }
 
   // ─── PROFILE ────────────────────────────────────────────
@@ -104,170 +109,180 @@
    * Carica il profilo utente da Supabase e aggiorna la UI.
    */
   async function loadProfile() {
-    const user = session.user;
+    try {
+      const user = session.user;
 
-    const result = await SupabaseConfig.client
-      .from('profiles')
-      .select('display_name, tier, stripe_customer_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (result.error && result.error.code !== 'PGRST116') {
-      console.warn('[loadProfile]', result.error.message);
-    }
-    profile = result.data;
-
-    const meta = user.user_metadata || {};
-    const authName = meta.display_name || meta.full_name || meta.name || '';
-    const profileName = (profile && profile.display_name) || '';
-    const emailPrefix = user.email.split('@')[0];
-
-    const rawName = authName || profileName || emailPrefix;
-    const displayName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-    document.getElementById('userName').textContent = displayName;
-
-    if (authName && profile && profile.display_name !== authName) {
-      SupabaseConfig.client
+      const result = await SupabaseConfig.client
         .from('profiles')
-        .update({ display_name: authName })
+        .select('display_name, tier, stripe_customer_id')
         .eq('user_id', user.id)
-        .then(function (r) {
-          if (r.error) console.warn('[profile-update]', r.error.message);
-        })
-        .catch(function (err) {
-          console.warn('[profile-update]', err.message);
-        });
+        .single();
+
+      if (result.error && result.error.code !== 'PGRST116') {
+        console.warn('[loadProfile]', result.error.message);
+      }
+      profile = result.data;
+
+      const meta = user.user_metadata || {};
+      const authName = meta.display_name || meta.full_name || meta.name || '';
+      const profileName = (profile && profile.display_name) || '';
+      const emailPrefix = user.email.split('@')[0];
+
+      const rawName = authName || profileName || emailPrefix;
+      const displayName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+      document.getElementById('userName').textContent = displayName;
+
+      if (authName && profile && profile.display_name !== authName) {
+        SupabaseConfig.client
+          .from('profiles')
+          .update({ display_name: authName })
+          .eq('user_id', user.id)
+          .then(function (r) {
+            if (r.error) console.warn('[profile-update]', r.error.message);
+          })
+          .catch(function (err) {
+            console.warn('[profile-update]', err.message);
+          });
+      }
+
+      const tier = (profile && profile.tier) || 'free';
+      const tierLabel = document.getElementById('tierLabel');
+      const tierBadge = document.getElementById('tierBadge');
+      tierLabel.textContent = tier.toUpperCase();
+      tierBadge.className = 'dash-tier-badge dash-tier-badge--' + tier;
+
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userDisplayName').textContent = displayName;
+      document.getElementById('userSince').textContent = formatDate(user.created_at);
+
+      // Set avatar: use Google profile picture if available
+      const avatarEl = document.getElementById('userAvatar');
+      const avatarUrl = meta.avatar_url || meta.picture || '';
+      if (avatarUrl && avatarEl) {
+        const img = document.createElement('img');
+        img.src = avatarUrl;
+        img.alt = displayName;
+        img.onerror = function () {
+          this.remove();
+        };
+        // Clear existing content (initials span) and add image
+        while (avatarEl.firstChild) avatarEl.removeChild(avatarEl.firstChild);
+        avatarEl.appendChild(img);
+      }
+
+      updateSubscriptionUI(tier);
+      loadTelegramStatus();
+
+      // Show notification bell for authenticated users
+      const notifBell = document.getElementById('notifBell');
+      if (notifBell) notifBell.style.display = '';
+    } catch (err) {
+      console.error('[loadProfile]', err.message || err);
+      showAlert('Errore di connessione. Ricarica la pagina.', 'error');
     }
-
-    const tier = (profile && profile.tier) || 'free';
-    const tierLabel = document.getElementById('tierLabel');
-    const tierBadge = document.getElementById('tierBadge');
-    tierLabel.textContent = tier.toUpperCase();
-    tierBadge.className = 'dash-tier-badge dash-tier-badge--' + tier;
-
-    document.getElementById('userEmail').textContent = user.email;
-    document.getElementById('userDisplayName').textContent = displayName;
-    document.getElementById('userSince').textContent = formatDate(user.created_at);
-
-    // Set avatar: use Google profile picture if available
-    const avatarEl = document.getElementById('userAvatar');
-    const avatarUrl = meta.avatar_url || meta.picture || '';
-    if (avatarUrl && avatarEl) {
-      const img = document.createElement('img');
-      img.src = avatarUrl;
-      img.alt = displayName;
-      img.onerror = function () {
-        this.remove();
-      };
-      // Clear existing content (initials span) and add image
-      while (avatarEl.firstChild) avatarEl.removeChild(avatarEl.firstChild);
-      avatarEl.appendChild(img);
-    }
-
-    updateSubscriptionUI(tier);
-    loadTelegramStatus();
-
-    // Show notification bell for authenticated users
-    const notifBell = document.getElementById('notifBell');
-    if (notifBell) notifBell.style.display = '';
   }
 
   /**
    * Aggiorna la sezione abbonamento in base al tier.
    */
   async function updateSubscriptionUI(tier) {
-    const subTierBadge = document.getElementById('subTierBadge');
-    const upgradeSection = document.getElementById('upgradeSection');
-    const upgradeProBtn = document.getElementById('upgradeProBtn');
-    const upgradeVipBtn = document.getElementById('upgradeVipBtn');
-    const manageSubBtn = document.getElementById('manageSubBtn');
-    const manageSubRow = document.getElementById('manageSubRow');
-    const subStatusDisplay = document.getElementById('subStatusDisplay');
-    const subRenewalDisplay = document.getElementById('subRenewalDisplay');
+    try {
+      const subTierBadge = document.getElementById('subTierBadge');
+      const upgradeSection = document.getElementById('upgradeSection');
+      const upgradeProBtn = document.getElementById('upgradeProBtn');
+      const upgradeVipBtn = document.getElementById('upgradeVipBtn');
+      const manageSubBtn = document.getElementById('manageSubBtn');
+      const manageSubRow = document.getElementById('manageSubRow');
+      const subStatusDisplay = document.getElementById('subStatusDisplay');
+      const subRenewalDisplay = document.getElementById('subRenewalDisplay');
 
-    // Hidden compat elements
-    const subTier = document.getElementById('subTier');
-    const subStatus = document.getElementById('subStatus');
+      // Hidden compat elements
+      const subTier = document.getElementById('subTier');
+      const subStatus = document.getElementById('subStatus');
 
-    // Setup upgrade buttons
-    upgradeProBtn.onclick = function () {
-      startCheckout('pro');
-    };
-    upgradeVipBtn.onclick = function () {
-      startCheckout('vip');
-    };
+      // Setup upgrade buttons
+      upgradeProBtn.onclick = function () {
+        startCheckout('pro');
+      };
+      upgradeVipBtn.onclick = function () {
+        startCheckout('vip');
+      };
 
-    // Update tier badge
-    subTierBadge.textContent = tier.toUpperCase();
-    subTierBadge.className = 'profile-hero__badge';
-    if (tier === 'pro') subTierBadge.classList.add('profile-hero__badge--pro');
-    if (tier === 'vip') subTierBadge.classList.add('profile-hero__badge--vip');
+      // Update tier badge
+      subTierBadge.textContent = tier.toUpperCase();
+      subTierBadge.className = 'profile-hero__badge';
+      if (tier === 'pro') subTierBadge.classList.add('profile-hero__badge--pro');
+      if (tier === 'vip') subTierBadge.classList.add('profile-hero__badge--vip');
 
-    // Update avatar initials
-    const initials = document.getElementById('userInitials');
-    const name = document.getElementById('userDisplayName').textContent || '';
-    if (name && name !== '\u2014') {
-      const parts = name.trim().split(/\s+/);
-      initials.textContent = parts.length > 1
-        ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-        : parts[0].substring(0, 2).toUpperCase();
-    }
+      // Update avatar initials
+      const initials = document.getElementById('userInitials');
+      const name = document.getElementById('userDisplayName').textContent || '';
+      if (name && name !== '\u2014') {
+        const parts = name.trim().split(/\s+/);
+        initials.textContent = parts.length > 1
+          ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+          : parts[0].substring(0, 2).toUpperCase();
+      }
 
-    if (tier === 'free') {
-      subTier.textContent = 'Free';
-      subStatus.textContent = 'Gratuito';
-      upgradeSection.style.display = '';
-      manageSubRow.style.display = 'none';
+      if (tier === 'free') {
+        subTier.textContent = 'Free';
+        subStatus.textContent = 'Gratuito';
+        upgradeSection.style.display = '';
+        manageSubRow.style.display = 'none';
 
-      // Show both plans for free users
-      document.querySelector('.upgrade-card--pro').style.display = '';
-      document.querySelector('.upgrade-card--vip').style.display = '';
+        // Show both plans for free users
+        document.querySelector('.upgrade-card--pro').style.display = '';
+        document.querySelector('.upgrade-card--vip').style.display = '';
+
+        handleAutoCheckout(tier);
+        return;
+      }
+
+      subTier.textContent = tier.toUpperCase() + ' \u2014 ' + TIER_PRICES[tier].display;
+
+      const subResult = await SupabaseConfig.client
+        .from('subscriptions')
+        .select('status, current_period_end')
+        .eq('user_id', session.user.id)
+        .eq('status', 'active')
+        .order('current_period_end', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (subResult.error && subResult.error.code !== 'PGRST116') {
+        console.warn('[subscription]', subResult.error.message);
+      }
+
+      if (subResult.data) {
+        subStatus.textContent = 'Attivo';
+        manageSubRow.style.display = '';
+        subStatusDisplay.textContent = tier.toUpperCase() + ' Attivo';
+        subRenewalDisplay.textContent = 'Rinnovo: ' + formatDate(subResult.data.current_period_end);
+      } else {
+        subStatus.textContent = 'Non attivo';
+      }
+
+      if (tier === 'pro') {
+        // PRO user: show only VIP upgrade
+        upgradeSection.style.display = '';
+        upgradeSection.querySelector('.upgrade-section__title').textContent = 'Passa a VIP';
+        document.querySelector('.upgrade-card--pro').style.display = 'none';
+        document.querySelector('.upgrade-card--vip').style.display = '';
+      } else {
+        // VIP user: hide upgrade section
+        upgradeSection.style.display = 'none';
+      }
+
+      if (profile && profile.stripe_customer_id) {
+        manageSubBtn.style.display = '';
+        manageSubBtn.onclick = openCustomerPortal;
+      }
 
       handleAutoCheckout(tier);
-      return;
+    } catch (err) {
+      console.error('[updateSubscriptionUI]', err.message || err);
+      showAlert('Errore di connessione. Ricarica la pagina.', 'error');
     }
-
-    subTier.textContent = tier.toUpperCase() + ' \u2014 ' + TIER_PRICES[tier].display;
-
-    const subResult = await SupabaseConfig.client
-      .from('subscriptions')
-      .select('status, current_period_end')
-      .eq('user_id', session.user.id)
-      .eq('status', 'active')
-      .order('current_period_end', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (subResult.error && subResult.error.code !== 'PGRST116') {
-      console.warn('[subscription]', subResult.error.message);
-    }
-
-    if (subResult.data) {
-      subStatus.textContent = 'Attivo';
-      manageSubRow.style.display = '';
-      subStatusDisplay.textContent = tier.toUpperCase() + ' Attivo';
-      subRenewalDisplay.textContent = 'Rinnovo: ' + formatDate(subResult.data.current_period_end);
-    } else {
-      subStatus.textContent = 'Non attivo';
-    }
-
-    if (tier === 'pro') {
-      // PRO user: show only VIP upgrade
-      upgradeSection.style.display = '';
-      upgradeSection.querySelector('.upgrade-section__title').textContent = 'Passa a VIP';
-      document.querySelector('.upgrade-card--pro').style.display = 'none';
-      document.querySelector('.upgrade-card--vip').style.display = '';
-    } else {
-      // VIP user: hide upgrade section
-      upgradeSection.style.display = 'none';
-    }
-
-    if (profile && profile.stripe_customer_id) {
-      manageSubBtn.style.display = '';
-      manageSubBtn.onclick = openCustomerPortal;
-    }
-
-    handleAutoCheckout(tier);
   }
 
   /**
@@ -2209,31 +2224,36 @@
   // ─── TELEGRAM LINKING ──────────────────────────────────
 
   async function loadTelegramStatus() {
-    const statusEl = document.getElementById('telegramStatus');
-    const linkBtn = document.getElementById('linkTelegramBtn');
+    try {
+      const statusEl = document.getElementById('telegramStatus');
+      const linkBtn = document.getElementById('linkTelegramBtn');
 
-    const result = await SupabaseConfig.client
-      .from('profiles')
-      .select('telegram_user_id')
-      .eq('user_id', session.user.id)
-      .single();
+      const result = await SupabaseConfig.client
+        .from('profiles')
+        .select('telegram_user_id')
+        .eq('user_id', session.user.id)
+        .single();
 
-    if (result.error && result.error.code !== 'PGRST116') {
-      console.warn('[loadTelegramStatus]', result.error.message);
-    }
+      if (result.error && result.error.code !== 'PGRST116') {
+        console.warn('[loadTelegramStatus]', result.error.message);
+      }
 
-    const telegramId = result.data && result.data.telegram_user_id;
+      const telegramId = result.data && result.data.telegram_user_id;
 
-    if (telegramId) {
-      statusEl.textContent = 'Account Telegram collegato';
-      statusEl.className = 'dash-telegram-status dash-telegram-status--linked';
-      linkBtn.style.display = 'none';
-    } else {
-      statusEl.textContent =
-        'Collega il tuo account Telegram per ricevere i pronostici direttamente in chat.';
-      statusEl.className = 'dash-telegram-status';
-      linkBtn.style.display = '';
-      linkBtn.onclick = handleLinkTelegram;
+      if (telegramId) {
+        statusEl.textContent = 'Account Telegram collegato';
+        statusEl.className = 'dash-telegram-status dash-telegram-status--linked';
+        linkBtn.style.display = 'none';
+      } else {
+        statusEl.textContent =
+          'Collega il tuo account Telegram per ricevere i pronostici direttamente in chat.';
+        statusEl.className = 'dash-telegram-status';
+        linkBtn.style.display = '';
+        linkBtn.onclick = handleLinkTelegram;
+      }
+    } catch (err) {
+      console.error('[loadTelegramStatus]', err.message || err);
+      showAlert('Errore di connessione. Ricarica la pagina.', 'error');
     }
   }
 
