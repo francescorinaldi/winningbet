@@ -4,6 +4,11 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Floating promises in script.js (H-05)** — Added `.catch()` handlers to `loadMatches()`, `loadResults().then(loadTrackRecord)`, and `loadTipsFromAPI()` in both the init section and league selector callback. Unhandled rejections now log warnings instead of silently failing.
+- **Double tips fetch on homepage (M-02)** — `loadTipsFromAPI()` was called unconditionally at page init AND again by `loadHomepageUserTier()` for authenticated users, causing duplicate API calls. Tips are now loaded only after the auth check: via `loadHomepageUserTier` if authenticated, or directly if not. Fallback for missing `SupabaseConfig`.
+
 ### Refactored
 
 - **Copilot agents: 5-agent chain → 2-agent architecture** — Replaced PM, Planner, Implementer, WinningBet-Dev, and Reviewer with two self-contained agents: **Coder** (all-in-one: plan, implement, verify, self-review) and **Reviewer** (code quality with direct fix capability). Eliminates ~50% timeout failures on GitHub.com's 10-minute coding agent limit by removing multi-agent handoff overhead. Reviewer now has `edit` and `execute` tools to fix issues directly instead of bouncing back.
