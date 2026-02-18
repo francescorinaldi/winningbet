@@ -7,11 +7,13 @@
  *   - initCookieBanner() — Banner consenso cookie (GDPR)
  *   - initCopyrightYear() — Anno dinamico nel footer
  *   - initLangToggle() — Toggle lingua IT/EN
+ *   - formatMatchDate(iso) — Formattazione date partite (locale-aware)
  *
  * Caricato prima degli script specifici di ogni pagina.
  */
 
-/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay */
+/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, formatMatchDate */
+/* global getLocale */
 // Why `var`? This file is loaded as a non-module <script> — `var` declarations
 // become globals, making functions/constants available to other page scripts.
 // Switch to `const`/`let` + `export` when the frontend migrates to ES modules.
@@ -312,6 +314,29 @@ function initCookieBanner() {
     try { localStorage.setItem('cookie_consent', 'rejected'); } catch (_e) { /* storage unavailable */ }
     banner.setAttribute('hidden', '');
   });
+}
+
+// ==========================================
+// DATE FORMATTING
+// ==========================================
+
+/**
+ * Formatta una data ISO in formato breve per le partite.
+ * Usa getLocale() per adattarsi alla lingua corrente.
+ * Esempio (it): "2025-09-15T18:45:00Z" -> "15 set — 18:45"
+ * @param {string} iso - Data in formato ISO 8601
+ * @returns {string} Data formattata (giorno mese — ora)
+ */
+function formatMatchDate(iso) {
+  if (!iso) return '\u2014';
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return '\u2014';
+  var locale = typeof getLocale === 'function' ? getLocale() : 'it-IT';
+  return (
+    d.toLocaleDateString(locale, { day: 'numeric', month: 'short' }) +
+    ' \u2014 ' +
+    d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  );
 }
 
 // ==========================================
