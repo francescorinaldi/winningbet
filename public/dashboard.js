@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState, dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications */
+/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState, dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, showToast, buildSkeletonCards, setLastUpdated, retryWithBackoff */
 
 (function () {
   'use strict';
@@ -52,7 +52,11 @@
   let countdownInterval = null;
   let notifInterval = null;
   let currentLeague = null;
-  try { currentLeague = localStorage.getItem('wb_dashboard_league'); } catch (_e) { /* storage unavailable */ }
+  try {
+    currentLeague = localStorage.getItem('wb_dashboard_league');
+  } catch (_e) {
+    /* storage unavailable */
+  }
   currentLeague = currentLeague || 'serie-a';
 
   // ─── INIT ───────────────────────────────────────────────
@@ -219,9 +223,10 @@
       const name = document.getElementById('userDisplayName').textContent || '';
       if (name && name !== '\u2014') {
         const parts = name.trim().split(/\s+/);
-        initials.textContent = parts.length > 1
-          ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-          : parts[0].substring(0, 2).toUpperCase();
+        initials.textContent =
+          parts.length > 1
+            ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+            : parts[0].substring(0, 2).toUpperCase();
       }
 
       if (tier === 'free') {
@@ -401,10 +406,16 @@
     const emptyState = document.getElementById('dashTipsEmpty');
 
     try {
+      buildSkeletonCards(grid, 3, 'card');
       const tipLimit = currentLeague === 'all' ? 50 : 20;
-      const tips = await authFetch(
-        '/api/tips?status=today&limit=' + tipLimit + '&league=' + encodeURIComponent(currentLeague),
-      );
+      const tips = await retryWithBackoff(function () {
+        return authFetch(
+          '/api/tips?status=today&limit=' +
+            tipLimit +
+            '&league=' +
+            encodeURIComponent(currentLeague),
+        );
+      });
 
       if (!Array.isArray(tips) || tips.length === 0) {
         grid.textContent = '';
@@ -428,6 +439,7 @@
       });
 
       renderTipsGrid(grid, tips);
+      setLastUpdated('dashTipsUpdated', loadTodayTips);
     } catch (err) {
       console.warn('[loadTodayTips]', err.message);
       setErrorState(grid, 'Impossibile caricare i pronostici', loadTodayTips);
@@ -615,6 +627,8 @@
    */
   async function loadHistory() {
     try {
+      const histList = document.getElementById('dashHistoryList');
+      if (histList) buildSkeletonCards(histList, 4, 'history');
       let results = [];
 
       const statuses = ['won', 'lost', 'void', 'pending'];
@@ -623,7 +637,9 @@
         return authFetch('/api/tips?status=' + s + '&limit=50' + leagueParam);
       });
 
-      const responses = await Promise.all(promises);
+      const responses = await retryWithBackoff(function () {
+        return Promise.all(promises);
+      });
       responses.forEach(function (data) {
         if (Array.isArray(data)) {
           results = results.concat(data);
@@ -645,6 +661,7 @@
 
       renderHistory('all');
       loadDashboardChart();
+      setLastUpdated('dashHistoryUpdated', loadHistory);
     } catch (err) {
       console.warn('[loadHistory]', err.message);
       const histList = document.getElementById('dashHistoryList');
@@ -743,6 +760,8 @@
 
   function setupTabs() {
     const tabs = document.querySelectorAll('.dash-tab');
+    const STORAGE_KEY = 'wb_dashboard_tab';
+
     tabs.forEach(function (tab) {
       tab.addEventListener('click', function () {
         tabs.forEach(function (t) {
@@ -752,24 +771,41 @@
         tab.classList.add('active');
         tab.setAttribute('aria-selected', 'true');
 
-        // Deactivate settings when switching to a tab
         const settingsBtn = document.getElementById('settingsBtn');
         if (settingsBtn) settingsBtn.classList.remove('active');
 
         const target = tab.getAttribute('data-tab');
+
+        try {
+          localStorage.setItem(STORAGE_KEY, target);
+        } catch (_e) {
+          /* storage unavailable */
+        }
+
         document.getElementById('panelTips').style.display = target === 'tips' ? '' : 'none';
         document.getElementById('panelSchedule').style.display =
           target === 'schedine' ? '' : 'none';
         document.getElementById('panelHistory').style.display = target === 'history' ? '' : 'none';
         document.getElementById('panelAccount').style.display = 'none';
 
-        // Show/hide league selector (not relevant for schedine)
         const leagueSelector = document.getElementById('dashLeagueSelector');
         if (leagueSelector) {
           leagueSelector.style.display = target === 'schedine' ? 'none' : '';
         }
       });
     });
+
+    // Restore saved tab (after listeners are attached)
+    let savedTab = null;
+    try {
+      savedTab = localStorage.getItem(STORAGE_KEY);
+    } catch (_e) {
+      /* storage unavailable */
+    }
+    if (savedTab && savedTab !== 'tips') {
+      const target = document.querySelector('.dash-tab[data-tab="' + savedTab + '"]');
+      if (target) target.click();
+    }
   }
 
   /**
@@ -851,7 +887,11 @@
       btn.classList.add('active');
 
       currentLeague = league;
-      try { localStorage.setItem('wb_dashboard_league', league); } catch (_e) { /* storage unavailable */ }
+      try {
+        localStorage.setItem('wb_dashboard_league', league);
+      } catch (_e) {
+        /* storage unavailable */
+      }
 
       loadTodayTips();
       loadHistory();
@@ -1380,19 +1420,6 @@
 
   // ─── SCHEDINE (BETTING SLIPS) ─────────────────────────
 
-  function showGridLoading(grid) {
-    grid.textContent = '';
-    const loader = document.createElement('div');
-    loader.className = 'tips-loading';
-    const spinner = document.createElement('span');
-    spinner.className = 'loading-spinner';
-    loader.appendChild(spinner);
-    const text = document.createElement('span');
-    text.textContent = 'Caricamento schedine...';
-    loader.appendChild(text);
-    grid.appendChild(loader);
-  }
-
   async function loadSchedule() {
     const grid = document.getElementById('schedineGrid');
     const empty = document.getElementById('schedineEmpty');
@@ -1417,12 +1444,14 @@
       return;
     }
 
-    showGridLoading(grid);
+    buildSkeletonCards(grid, 2, 'card');
     empty.style.display = 'none';
     upgrade.style.display = 'none';
 
     try {
-      const data = await authFetch('/api/betting-slips?date=' + encodeURIComponent(schedineDate));
+      const data = await retryWithBackoff(function () {
+        return authFetch('/api/betting-slips?date=' + encodeURIComponent(schedineDate));
+      });
 
       if (!data.schedine || data.schedine.length === 0) {
         grid.textContent = '';
@@ -1760,12 +1789,8 @@
       if (!TIER_PRICES[tier]) return;
 
       const config = TIER_PRICES[tier];
-      const amountEl = priceEl.querySelector(
-        '.upgrade-card__amount, .price-amount',
-      );
-      const decimalEl = priceEl.querySelector(
-        '.upgrade-card__decimal, .price-decimal',
-      );
+      const amountEl = priceEl.querySelector('.upgrade-card__amount, .price-amount');
+      const decimalEl = priceEl.querySelector('.upgrade-card__decimal, .price-decimal');
 
       if (amountEl && decimalEl) {
         const parts = config.amount.toString().split('.');

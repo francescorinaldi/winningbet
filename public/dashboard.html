@@ -170,19 +170,51 @@
 
         <!-- Tab navigation -->
         <div class="dash-tabs" role="tablist" aria-label="Sezioni dashboard">
-          <button class="dash-tab active" data-tab="tips" role="tab" aria-selected="true" aria-controls="panelTips" id="tabTips">Tips di Oggi</button>
-          <button class="dash-tab" data-tab="schedine" role="tab" aria-selected="false" aria-controls="panelSchedule" id="tabSchedine">Schedine</button>
-          <button class="dash-tab" data-tab="history" role="tab" aria-selected="false" aria-controls="panelHistory" id="tabHistory">Storico</button>
+          <button
+            class="dash-tab active"
+            data-tab="tips"
+            role="tab"
+            aria-selected="true"
+            aria-controls="panelTips"
+            id="tabTips"
+          >
+            Tips di Oggi
+          </button>
+          <button
+            class="dash-tab"
+            data-tab="schedine"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panelSchedule"
+            id="tabSchedine"
+          >
+            Schedine
+          </button>
+          <button
+            class="dash-tab"
+            data-tab="history"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panelHistory"
+            id="tabHistory"
+          >
+            Storico
+          </button>
         </div>
 
         <!-- TAB: Today's Tips -->
         <section class="dash-panel" id="panelTips" role="tabpanel" aria-labelledby="tabTips">
-          <div class="dash-tips-grid" id="dashTipsGrid" aria-live="polite" aria-label="Pronostici di oggi">
-            <div class="tips-loading">
-              <span class="loading-spinner" role="status" aria-label="Caricamento pronostici in corso"></span>
-              <span>Caricamento pronostici...</span>
-            </div>
+          <div
+            class="dash-tips-grid"
+            id="dashTipsGrid"
+            aria-live="polite"
+            aria-label="Pronostici di oggi"
+          >
+            <div class="skeleton skeleton-card" aria-hidden="true"></div>
+            <div class="skeleton skeleton-card" aria-hidden="true"></div>
+            <div class="skeleton skeleton-card" aria-hidden="true"></div>
           </div>
+          <div class="last-updated" id="dashTipsUpdated"></div>
           <div class="dash-tips-empty" id="dashTipsEmpty" style="display: none">
             <svg
               width="48"
@@ -210,7 +242,13 @@
         </section>
 
         <!-- TAB: Schedine (Betting Slips) -->
-        <section class="dash-panel" id="panelSchedule" role="tabpanel" aria-labelledby="tabSchedine" style="display: none">
+        <section
+          class="dash-panel"
+          id="panelSchedule"
+          role="tabpanel"
+          aria-labelledby="tabSchedine"
+          style="display: none"
+        >
           <!-- Budget summary bar -->
           <div class="schedine-budget-bar" id="schedineBudgetBar" style="display: none">
             <div class="budget-stat">
@@ -241,11 +279,14 @@
             </button>
           </div>
           <!-- Schedine cards -->
-          <div class="schedine-grid" id="schedineGrid" aria-live="polite" aria-label="Schedine della settimana">
-            <div class="tips-loading">
-              <span class="loading-spinner" role="status" aria-label="Caricamento schedine in corso"></span>
-              <span>Caricamento schedine...</span>
-            </div>
+          <div
+            class="schedine-grid"
+            id="schedineGrid"
+            aria-live="polite"
+            aria-label="Schedine della settimana"
+          >
+            <div class="skeleton skeleton-card" aria-hidden="true"></div>
+            <div class="skeleton skeleton-card" aria-hidden="true"></div>
           </div>
           <!-- Empty state -->
           <div class="schedine-empty" id="schedineEmpty" style="display: none">
@@ -288,7 +329,13 @@
         </section>
 
         <!-- TAB: History -->
-        <section class="dash-panel" id="panelHistory" role="tabpanel" aria-labelledby="tabHistory" style="display: none">
+        <section
+          class="dash-panel"
+          id="panelHistory"
+          role="tabpanel"
+          aria-labelledby="tabHistory"
+          style="display: none"
+        >
           <div class="dash-history-filters">
             <button class="filter-btn active" data-status="all">Tutti</button>
             <button class="filter-btn" data-status="won">Vinti</button>
@@ -301,12 +348,17 @@
             <div class="chart-title">Profitto Mensile</div>
             <div class="chart dash-chart" id="dashChart"></div>
           </div>
-          <div class="dash-history-list" id="dashHistoryList" aria-live="polite" aria-label="Storico pronostici">
-            <div class="tips-loading">
-              <span class="loading-spinner" role="status" aria-label="Caricamento storico in corso"></span>
-              <span>Caricamento storico...</span>
-            </div>
+          <div
+            class="dash-history-list"
+            id="dashHistoryList"
+            aria-live="polite"
+            aria-label="Storico pronostici"
+          >
+            <div class="skeleton skeleton-history" aria-hidden="true"></div>
+            <div class="skeleton skeleton-history" aria-hidden="true"></div>
+            <div class="skeleton skeleton-history" aria-hidden="true"></div>
           </div>
+          <div class="last-updated" id="dashHistoryUpdated"></div>
           <div class="dash-history-empty" id="dashHistoryEmpty" style="display: none">
             <svg
               width="48"
@@ -339,16 +391,18 @@
                 <p class="profile-hero__email" id="userEmail">&mdash;</p>
                 <div class="profile-hero__meta">
                   <span class="profile-hero__badge" id="subTierBadge">FREE</span>
-                  <span class="profile-hero__since">Membro dal <span id="userSince">&mdash;</span></span>
+                  <span class="profile-hero__since"
+                    >Membro dal <span id="userSince">&mdash;</span></span
+                  >
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Subscription Status (hidden elements for JS compat) -->
-          <span id="subTier" style="display:none">Free</span>
-          <span id="subStatus" style="display:none">&mdash;</span>
-          <div id="subRenewalRow" style="display:none"><span id="subRenewal">&mdash;</span></div>
+          <span id="subTier" style="display: none">Free</span>
+          <span id="subStatus" style="display: none">&mdash;</span>
+          <div id="subRenewalRow" style="display: none"><span id="subRenewal">&mdash;</span></div>
 
           <!-- Upgrade Plans -->
           <div class="upgrade-section" id="upgradeSection">
@@ -393,8 +447,8 @@
               </div>
             </div>
             <!-- Hidden compat elements -->
-            <button id="upgradeBtn" style="display:none"></button>
-            <div id="upgradePicker" style="display:none"></div>
+            <button id="upgradeBtn" style="display: none"></button>
+            <div id="upgradePicker" style="display: none"></div>
           </div>
 
           <!-- Manage subscription (shown when user has active sub) -->
@@ -412,8 +466,17 @@
             <!-- Telegram linking card -->
             <div class="dash-account-card">
               <h3 class="dash-card-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-16.5 7.5a2.25 2.25 0 0 0 .126 4.16l4.5 1.5 1.5 4.5a2.25 2.25 0 0 0 4.16.126l7.5-16.5a2.242 2.242 0 0 0-0.264-1.501z"/>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path
+                    d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-16.5 7.5a2.25 2.25 0 0 0 .126 4.16l4.5 1.5 1.5 4.5a2.25 2.25 0 0 0 4.16.126l7.5-16.5a2.242 2.242 0 0 0-0.264-1.501z"
+                  />
                 </svg>
                 Telegram
               </h3>
@@ -421,7 +484,11 @@
                 <p class="dash-telegram-status" id="telegramStatus">Verifica in corso...</p>
               </div>
               <div class="dash-sub-actions">
-                <button class="btn btn-telegram btn-block" id="linkTelegramBtn" style="display: none">
+                <button
+                  class="btn btn-telegram btn-block"
+                  id="linkTelegramBtn"
+                  style="display: none"
+                >
                   Collega Telegram
                 </button>
               </div>
@@ -538,7 +605,6 @@
         </div>
       </div>
     </footer>
-
 
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

@@ -13,7 +13,7 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
-/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale, setErrorState, REDUCED_MOTION, createEl, buildMatchCard, buildResultItem, buildTipResultItem, buildTipCard, canAccessTier, setEmptyState, activateConfidenceBars */
+/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale, setErrorState, REDUCED_MOTION, createEl, buildMatchCard, buildResultItem, buildTipResultItem, buildTipCard, canAccessTier, setEmptyState, activateConfidenceBars, showToast, buildSkeletonCards, buildEmptyState, setLastUpdated, retryWithBackoff */
 
 (function () {
   'use strict';
@@ -368,9 +368,17 @@
 
         currentLeague = league;
         updateLeagueLabels();
-        loadMatches().catch(function (err) { console.warn('[league] loadMatches:', err.message); });
-        loadResults().then(loadTrackRecord).catch(function (err) { console.warn('[league] loadResults/trackRecord:', err.message); });
-        loadTipsFromAPI().catch(function (err) { console.warn('[league] loadTipsFromAPI:', err.message); });
+        loadMatches().catch(function (err) {
+          console.warn('[league] loadMatches:', err.message);
+        });
+        loadResults()
+          .then(loadTrackRecord)
+          .catch(function (err) {
+            console.warn('[league] loadResults/trackRecord:', err.message);
+          });
+        loadTipsFromAPI().catch(function (err) {
+          console.warn('[league] loadTipsFromAPI:', err.message);
+        });
       });
     });
   }
@@ -429,9 +437,16 @@
   async function loadTips() {
     const container = document.getElementById('tipsGrid');
     try {
-      const matches = await fetchAPI('fixtures', { type: 'matches', league: currentLeague });
+      buildSkeletonCards(container, 3, 'card');
+      const matches = await retryWithBackoff(function () {
+        return fetchAPI('fixtures', { type: 'matches', league: currentLeague });
+      });
       if (!matches || matches.length < 3) {
-        setEmptyState(container, 'tips-empty', 'Nessun pronostico disponibile al momento');
+        buildEmptyState(container, {
+          icon: 'clipboard',
+          title: 'Nessun pronostico disponibile',
+          subtitle: 'I pronostici vengono pubblicati ogni giorno. Torna più tardi!',
+        });
         return;
       }
       container.textContent = '';
@@ -468,24 +483,30 @@
   async function loadMatches() {
     const container = document.getElementById('matchesScroll');
     try {
-      let matches;
-      if (currentLeague === 'all') {
-        const results = await Promise.all(
-          ALL_LEAGUE_SLUGS.map(function (slug) {
-            return fetchAPI('fixtures', { type: 'matches', league: slug }).catch(function () {
-              return [];
+      buildSkeletonCards(container, 4, 'match');
+      const matches = await retryWithBackoff(function () {
+        if (currentLeague === 'all') {
+          return Promise.all(
+            ALL_LEAGUE_SLUGS.map(function (slug) {
+              return fetchAPI('fixtures', { type: 'matches', league: slug }).catch(function () {
+                return [];
+              });
+            }),
+          ).then(function (results) {
+            return results.flat().sort(function (a, b) {
+              return new Date(a.date) - new Date(b.date);
             });
-          }),
-        );
-        matches = results.flat().sort(function (a, b) {
-          return new Date(a.date) - new Date(b.date);
-        });
-      } else {
-        matches = await fetchAPI('fixtures', { type: 'matches', league: currentLeague });
-      }
+          });
+        }
+        return fetchAPI('fixtures', { type: 'matches', league: currentLeague });
+      });
 
       if (!matches || matches.length === 0) {
-        setEmptyState(container, 'matches-empty', 'Nessuna partita in programma');
+        buildEmptyState(container, {
+          icon: 'calendar',
+          title: 'Nessuna partita in programma',
+          subtitle: 'Le prossime partite appariranno qui automaticamente.',
+        });
         return;
       }
       container.textContent = '';
@@ -506,6 +527,7 @@
       // Calcola la durata in base al numero di card (3s per card)
       const duration = matches.length * 3;
       track.style.setProperty('--ticker-duration', duration + 's');
+      setLastUpdated('matchesUpdated', loadMatches);
     } catch (err) {
       console.error('loadMatches failed:', err);
       setErrorState(container, 'Impossibile caricare le partite', loadMatches);
@@ -519,30 +541,37 @@
   async function loadResults() {
     const container = document.getElementById('resultsList');
     try {
-      let results;
-      if (currentLeague === 'all') {
-        const responses = await Promise.all(
-          ALL_LEAGUE_SLUGS.map(function (slug) {
-            return fetchAPI('fixtures', { type: 'results', league: slug }).catch(function () {
-              return [];
+      buildSkeletonCards(container, 4, 'history');
+      const results = await retryWithBackoff(function () {
+        if (currentLeague === 'all') {
+          return Promise.all(
+            ALL_LEAGUE_SLUGS.map(function (slug) {
+              return fetchAPI('fixtures', { type: 'results', league: slug }).catch(function () {
+                return [];
+              });
+            }),
+          ).then(function (responses) {
+            return responses.flat().sort(function (a, b) {
+              return new Date(b.date) - new Date(a.date);
             });
-          }),
-        );
-        results = responses.flat().sort(function (a, b) {
-          return new Date(b.date) - new Date(a.date);
-        });
-      } else {
-        results = await fetchAPI('fixtures', { type: 'results', league: currentLeague });
-      }
+          });
+        }
+        return fetchAPI('fixtures', { type: 'results', league: currentLeague });
+      });
 
       if (!results || results.length === 0) {
-        setEmptyState(container, 'results-empty', 'Nessun risultato disponibile');
+        buildEmptyState(container, {
+          icon: 'trophy',
+          title: 'Nessun risultato disponibile',
+          subtitle: 'I risultati appariranno dopo le partite.',
+        });
         return;
       }
       container.textContent = '';
       results.forEach(function (r) {
         container.appendChild(buildResultItem(r));
       });
+      setLastUpdated('resultsUpdated', loadResults);
     } catch (err) {
       console.error('loadResults failed:', err);
       setErrorState(container, 'Impossibile caricare i risultati', loadResults);
@@ -622,12 +651,16 @@
           updatePricingForAuth();
         } else {
           // No session — load tips now (unauthenticated)
-          loadTipsFromAPI().catch(function (err) { console.warn('[init] loadTipsFromAPI:', err.message); });
+          loadTipsFromAPI().catch(function (err) {
+            console.warn('[init] loadTipsFromAPI:', err.message);
+          });
         }
       })
       .catch(function () {
         updateNavForAuth(null);
-        loadTipsFromAPI().catch(function () { /* already logged */ });
+        loadTipsFromAPI().catch(function () {
+          /* already logged */
+        });
       });
 
     SupabaseConfig.onAuthStateChange(function (_event, session) {
@@ -954,6 +987,7 @@
           card.classList.add('visible');
         });
       });
+      setLastUpdated('tipsUpdated', loadTipsFromAPI);
     } catch (err) {
       console.error('loadTipsFromAPI failed:', err);
       // Fallback: genera tips client-side
@@ -966,12 +1000,20 @@
   // Avvia il caricamento dati al ready della pagina
   injectTierPrices();
   initLeagueSelector();
-  loadMatches().catch(function (err) { console.warn('[init] loadMatches:', err.message); });
-  loadResults().then(loadTrackRecord).catch(function (err) { console.warn('[init] loadResults/trackRecord:', err.message); });
+  loadMatches().catch(function (err) {
+    console.warn('[init] loadMatches:', err.message);
+  });
+  loadResults()
+    .then(loadTrackRecord)
+    .catch(function (err) {
+      console.warn('[init] loadResults/trackRecord:', err.message);
+    });
   // Tips loaded after auth check to avoid double fetch (#73).
   // If SupabaseConfig unavailable, load immediately.
   if (typeof SupabaseConfig === 'undefined') {
-    loadTipsFromAPI().catch(function (err) { console.warn('[init] loadTipsFromAPI:', err.message); });
+    loadTipsFromAPI().catch(function (err) {
+      console.warn('[init] loadTipsFromAPI:', err.message);
+    });
   }
   initCookieBanner();
   initCopyrightYear();
