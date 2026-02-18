@@ -7,32 +7,17 @@
  * Richiede il tag script del Supabase CDN in index.html:
  * <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
  *
- * Le variabili SUPABASE_URL e SUPABASE_ANON_KEY sono iniettate
- * come meta tag dalla pagina HTML per evitare hardcoding.
  */
 
 // eslint-disable-next-line no-unused-vars
 const SupabaseConfig = (function () {
   'use strict';
 
-  /**
-   * Legge un meta tag dal DOM.
-   * @param {string} name - Nome del meta tag
-   * @returns {string} Contenuto del meta tag
-   */
-  function getMeta(name) {
-    const el = document.querySelector('meta[name="' + name + '"]');
-    return el ? el.getAttribute('content') : '';
-  }
-
-  const url = getMeta('supabase-url');
-  const anonKey = getMeta('supabase-anon-key');
-
-  if (!url || !anonKey) {
-    console.error(
-      'Supabase config missing: add meta tags supabase-url and supabase-anon-key to HTML',
-    );
-  }
+  // Supabase project config — single source of truth.
+  // The anon key is safe to expose client-side (protected by RLS policies).
+  const url = 'https://xqrxfnovlukbbuvhbavj.supabase.co';
+  const anonKey =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhxcnhmbm92bHVrYmJ1dmhiYXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMjczNTYsImV4cCI6MjA4NTkwMzM1Nn0.M9IJED7_yoNdRDf3yjwULxWqIlgO1FTEwhHFNBpULSg';
 
   const client = supabase.createClient(url, anonKey);
 
