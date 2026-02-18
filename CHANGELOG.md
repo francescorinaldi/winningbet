@@ -4,6 +4,16 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added (Wave 2 — Polish)
+
+- **2.1 Skeleton loading** — Added `.skeleton`, `.skeleton-card`, `.skeleton-match`, `.skeleton-history` CSS with `@keyframes shimmer` animation. `buildSkeletonCards(container, count, variant)` in `shared.js`. Replaced all initial HTML spinners in `index.html` and `dashboard.html` with skeleton placeholders. JS fetches show skeletons before API calls. Removed `showGridLoading()` from dashboard.js. Respects `prefers-reduced-motion`.
+- **2.2 Retry con backoff** — Added `retryWithBackoff(fn, opts)` in `shared.js` with exponential backoff (1s → 2s → 4s), max 3 retries, 10s timeout via `AbortController`. Wrapped all primary API fetches in `script.js` (`loadTips`, `loadMatches`, `loadResults`) and `dashboard.js` (`loadTodayTips`, `loadHistory`, `loadSchedule`).
+- **2.3 Empty states informativi** — Added `buildEmptyState(container, opts)` in `shared.js` with SVG icons (calendar, clipboard, trophy, search), title, subtitle, optional action button. Replaced `setEmptyState` calls in `script.js` with context-specific messages and icons. `.empty-state` CSS component.
+- **2.4 Timestamp "Aggiornato alle HH:MM"** — Added `setLastUpdated(containerId, refreshFn)` in `shared.js`. Shows locale-aware time + clickable refresh icon (↻). Applied after all successful fetches in both landing and dashboard. `.last-updated` CSS.
+- **2.5 Toast system** — Added `showToast(message, type, duration)` in `shared.js`. Fixed container bottom-right (desktop), full-width mobile. Types: success (green), error (red), info (gold). Slide-in animation, auto-dismiss 3s, click to dismiss. `aria-live="polite"` for accessibility. Respects `prefers-reduced-motion`.
+- **2.6 Tab state persistence** — Dashboard active tab saved in `localStorage('wb_dashboard_tab')`. Restored on page load via simulated click after listeners are attached. Skips restore if saved tab is 'tips' (default).
+- **2.7 Notification badge** — Changed `.notif-badge` background from `var(--gold)` to `var(--red)`, white text, added `notif-pulse` animation (pulsing red box-shadow). Respects `prefers-reduced-motion`.
+
 ### Added (Wave 1 — Accessibility & UX Critical Fixes)
 
 - **1.1 Error handling con retry UI** — Added `setErrorState(container, message, retryFn)` to `shared.js`: warning SVG icon + error message + "Riprova" button. Replaced all silent `.catch()` blocks in `loadTips`, `loadMatches`, `loadResults`, `loadTrackRecord` (script.js) and `loadTodayTips`, `loadHistory`, `loadSchedule` (dashboard.js). Added `.error-state` CSS with red warning icon, descriptive message and retry CTA.
