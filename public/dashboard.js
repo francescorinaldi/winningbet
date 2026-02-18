@@ -58,14 +58,7 @@
   // ─── INIT ───────────────────────────────────────────────
 
   // Compute Monday of the current ISO week for schedine navigation
-  let schedineDate = (function () {
-    const now = new Date();
-    const day = now.getDay(); // 0=Sun, 1=Mon
-    const offset = day === 0 ? -6 : 1 - day;
-    const mon = new Date(now);
-    mon.setDate(now.getDate() + offset);
-    return mon.toISOString().split('T')[0];
-  })();
+  let schedineDate = getCurrentWeekMonday();
 
   document.addEventListener('DOMContentLoaded', function () {
     checkAuth();
