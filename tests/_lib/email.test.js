@@ -224,6 +224,43 @@ describe('email module', () => {
       expect(digest.text).toContain('1.80');
     });
 
+    it('should handle missing confidence gracefully', () => {
+      const tips = [
+        {
+          home_team: 'Milan',
+          away_team: 'Inter',
+          prediction: '1',
+          odds: 1.85,
+          confidence: null,
+        },
+      ];
+
+      const digest = buildDailyDigest(tips);
+
+      expect(digest.html).toContain('—');
+      expect(digest.html).not.toContain('null%');
+      expect(digest.html).not.toContain('undefined%');
+      expect(digest.text).toContain('(—)');
+      expect(digest.text).not.toContain('null%');
+      expect(digest.text).not.toContain('undefined%');
+    });
+
+    it('should handle undefined confidence gracefully', () => {
+      const tips = [
+        {
+          home_team: 'Milan',
+          away_team: 'Inter',
+          prediction: '1',
+          odds: 1.85,
+        },
+      ];
+
+      const digest = buildDailyDigest(tips);
+
+      expect(digest.html).not.toContain('undefined%');
+      expect(digest.text).not.toContain('undefined%');
+    });
+
     it('should handle missing odds gracefully', () => {
       const tips = [
         {

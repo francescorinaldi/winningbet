@@ -121,7 +121,9 @@ function formatTipBlock(tip) {
   const away = escapeMarkdown(tip.away_team);
   const prediction = escapeMarkdown(tip.prediction);
   const odds = escapeMarkdown(parseFloat(tip.odds).toFixed(2));
-  const confidence = escapeMarkdown(tip.confidence + '%');
+  const confidence = escapeMarkdown(
+    tip.confidence !== null && tip.confidence !== undefined ? tip.confidence + '%' : '—',
+  );
 
   const lines = [
     '\u26BD *' + home + ' vs ' + away + '*',

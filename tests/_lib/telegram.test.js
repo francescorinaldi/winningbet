@@ -421,5 +421,31 @@ describe('telegram module', () => {
       expect(payload.text).toContain('6\\.00');
       expect(payload.text).toContain('2 pronostici');
     });
+    it('should handle missing confidence gracefully', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        json: () => Promise.resolve({ ok: true, result: { message_id: 1 } }),
+      });
+
+      const tips = [
+        {
+          home_team: 'Milan',
+          away_team: 'Inter',
+          prediction: '1',
+          odds: 1.85,
+          confidence: null,
+          tier: 'free',
+          league: 'serie-a',
+        },
+      ];
+
+      await telegram.sendPublicTips(tips);
+
+      const callArgs = global.fetch.mock.calls[0][1];
+      const payload = JSON.parse(callArgs.body);
+
+      expect(payload.text).not.toContain('null%');
+      expect(payload.text).not.toContain('undefined%');
+      expect(payload.text).toContain('—');
+    });
   });
 });
