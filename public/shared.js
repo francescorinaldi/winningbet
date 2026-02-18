@@ -12,7 +12,7 @@
  * Caricato prima degli script specifici di ogni pagina.
  */
 
-/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, formatMatchDate, setErrorState, REDUCED_MOTION, showToast, buildSkeletonCards, buildEmptyState, setLastUpdated */
+/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, formatMatchDate, setErrorState, REDUCED_MOTION, showToast, buildSkeletonCards, buildEmptyState, setLastUpdated, retryWithBackoff */
 /* global getLocale */
 // Why `var`? This file is loaded as a non-module <script> — `var` declarations
 // become globals, making functions/constants available to other page scripts.
@@ -334,6 +334,56 @@ function setLastUpdated(containerId, refreshFn) {
     btn.addEventListener('click', refreshFn);
     el.appendChild(btn);
   }
+}
+
+// ==========================================
+// RETRY WITH EXPONENTIAL BACKOFF
+// ==========================================
+
+/**
+ * Esegue una funzione con retry automatico e backoff esponenziale.
+ * @param {Function} fn - Funzione async da eseguire
+ * @param {Object} [opts]
+ * @param {number} [opts.maxRetries=3] - Tentativi massimi
+ * @param {number} [opts.baseDelay=1000] - Delay base in ms (raddoppia ad ogni retry)
+ * @param {number} [opts.timeout=10000] - Timeout per singola chiamata in ms
+ * @returns {Promise<*>} Risultato della funzione
+ */
+function retryWithBackoff(fn, opts) {
+  opts = opts || {};
+  var maxRetries = opts.maxRetries || 3;
+  var baseDelay = opts.baseDelay || 1000;
+  var timeout = opts.timeout || 10000;
+
+  return new Promise(function (resolve, reject) {
+    var attempt = 0;
+
+    function tryOnce() {
+      attempt++;
+
+      var controller = new AbortController();
+      var timer = setTimeout(function () {
+        controller.abort();
+      }, timeout);
+
+      Promise.resolve(fn(controller.signal))
+        .then(function (result) {
+          clearTimeout(timer);
+          resolve(result);
+        })
+        .catch(function (err) {
+          clearTimeout(timer);
+          if (attempt >= maxRetries) {
+            reject(err);
+            return;
+          }
+          var delay = baseDelay * Math.pow(2, attempt - 1);
+          setTimeout(tryOnce, delay);
+        });
+    }
+
+    tryOnce();
+  });
 }
 
 // ==========================================

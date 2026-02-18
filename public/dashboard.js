@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState, dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, showToast, buildSkeletonCards, setLastUpdated */
+/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState, dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, showToast, buildSkeletonCards, setLastUpdated, retryWithBackoff */
 
 (function () {
   'use strict';
@@ -408,9 +408,14 @@
     try {
       buildSkeletonCards(grid, 3, 'card');
       const tipLimit = currentLeague === 'all' ? 50 : 20;
-      const tips = await authFetch(
-        '/api/tips?status=today&limit=' + tipLimit + '&league=' + encodeURIComponent(currentLeague),
-      );
+      const tips = await retryWithBackoff(function () {
+        return authFetch(
+          '/api/tips?status=today&limit=' +
+            tipLimit +
+            '&league=' +
+            encodeURIComponent(currentLeague),
+        );
+      });
 
       if (!Array.isArray(tips) || tips.length === 0) {
         grid.textContent = '';
@@ -632,7 +637,9 @@
         return authFetch('/api/tips?status=' + s + '&limit=50' + leagueParam);
       });
 
-      const responses = await Promise.all(promises);
+      const responses = await retryWithBackoff(function () {
+        return Promise.all(promises);
+      });
       responses.forEach(function (data) {
         if (Array.isArray(data)) {
           results = results.concat(data);
@@ -1442,7 +1449,9 @@
     upgrade.style.display = 'none';
 
     try {
-      const data = await authFetch('/api/betting-slips?date=' + encodeURIComponent(schedineDate));
+      const data = await retryWithBackoff(function () {
+        return authFetch('/api/betting-slips?date=' + encodeURIComponent(schedineDate));
+      });
 
       if (!data.schedine || data.schedine.length === 0) {
         grid.textContent = '';

@@ -13,7 +13,7 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
-/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale, setErrorState, REDUCED_MOTION, createEl, buildMatchCard, buildResultItem, buildTipResultItem, buildTipCard, canAccessTier, setEmptyState, activateConfidenceBars, showToast, buildSkeletonCards, buildEmptyState, setLastUpdated */
+/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale, setErrorState, REDUCED_MOTION, createEl, buildMatchCard, buildResultItem, buildTipResultItem, buildTipCard, canAccessTier, setEmptyState, activateConfidenceBars, showToast, buildSkeletonCards, buildEmptyState, setLastUpdated, retryWithBackoff */
 
 (function () {
   'use strict';
@@ -438,7 +438,9 @@
     const container = document.getElementById('tipsGrid');
     try {
       buildSkeletonCards(container, 3, 'card');
-      const matches = await fetchAPI('fixtures', { type: 'matches', league: currentLeague });
+      const matches = await retryWithBackoff(function () {
+        return fetchAPI('fixtures', { type: 'matches', league: currentLeague });
+      });
       if (!matches || matches.length < 3) {
         buildEmptyState(container, {
           icon: 'clipboard',
@@ -482,21 +484,22 @@
     const container = document.getElementById('matchesScroll');
     try {
       buildSkeletonCards(container, 4, 'match');
-      let matches;
-      if (currentLeague === 'all') {
-        const results = await Promise.all(
-          ALL_LEAGUE_SLUGS.map(function (slug) {
-            return fetchAPI('fixtures', { type: 'matches', league: slug }).catch(function () {
-              return [];
+      const matches = await retryWithBackoff(function () {
+        if (currentLeague === 'all') {
+          return Promise.all(
+            ALL_LEAGUE_SLUGS.map(function (slug) {
+              return fetchAPI('fixtures', { type: 'matches', league: slug }).catch(function () {
+                return [];
+              });
+            }),
+          ).then(function (results) {
+            return results.flat().sort(function (a, b) {
+              return new Date(a.date) - new Date(b.date);
             });
-          }),
-        );
-        matches = results.flat().sort(function (a, b) {
-          return new Date(a.date) - new Date(b.date);
-        });
-      } else {
-        matches = await fetchAPI('fixtures', { type: 'matches', league: currentLeague });
-      }
+          });
+        }
+        return fetchAPI('fixtures', { type: 'matches', league: currentLeague });
+      });
 
       if (!matches || matches.length === 0) {
         buildEmptyState(container, {
@@ -539,21 +542,22 @@
     const container = document.getElementById('resultsList');
     try {
       buildSkeletonCards(container, 4, 'history');
-      let results;
-      if (currentLeague === 'all') {
-        const responses = await Promise.all(
-          ALL_LEAGUE_SLUGS.map(function (slug) {
-            return fetchAPI('fixtures', { type: 'results', league: slug }).catch(function () {
-              return [];
+      const results = await retryWithBackoff(function () {
+        if (currentLeague === 'all') {
+          return Promise.all(
+            ALL_LEAGUE_SLUGS.map(function (slug) {
+              return fetchAPI('fixtures', { type: 'results', league: slug }).catch(function () {
+                return [];
+              });
+            }),
+          ).then(function (responses) {
+            return responses.flat().sort(function (a, b) {
+              return new Date(b.date) - new Date(a.date);
             });
-          }),
-        );
-        results = responses.flat().sort(function (a, b) {
-          return new Date(b.date) - new Date(a.date);
-        });
-      } else {
-        results = await fetchAPI('fixtures', { type: 'results', league: currentLeague });
-      }
+          });
+        }
+        return fetchAPI('fixtures', { type: 'results', league: currentLeague });
+      });
 
       if (!results || results.length === 0) {
         buildEmptyState(container, {
