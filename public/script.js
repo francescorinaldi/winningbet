@@ -1014,13 +1014,18 @@
 
   // Controlla la sessione all'avvio (solo se SupabaseConfig e' disponibile)
   if (typeof SupabaseConfig !== 'undefined') {
-    SupabaseConfig.getSession().then(function (result) {
-      updateNavForAuth(result.data.session);
-      if (result.data.session) {
-        loadHomepageUserTier(result.data.session);
-        updatePricingForAuth();
-      }
-    });
+    SupabaseConfig.getSession()
+      .then(function (result) {
+        const session = result && result.data ? result.data.session : null;
+        updateNavForAuth(session);
+        if (session) {
+          loadHomepageUserTier(session);
+          updatePricingForAuth();
+        }
+      })
+      .catch(function () {
+        updateNavForAuth(null);
+      });
 
     SupabaseConfig.onAuthStateChange(function (_event, session) {
       updateNavForAuth(session);
@@ -1264,7 +1269,7 @@
       const fetchOptions = {};
       if (typeof SupabaseConfig !== 'undefined') {
         const sessionResult = await SupabaseConfig.getSession();
-        if (sessionResult.data.session) {
+        if (sessionResult && sessionResult.data && sessionResult.data.session) {
           fetchOptions.headers = {
             Authorization: 'Bearer ' + sessionResult.data.session.access_token,
           };

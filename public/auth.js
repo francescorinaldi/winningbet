@@ -41,11 +41,15 @@
   // ==========================================
   // CHECK EXISTING SESSION
   // ==========================================
-  SupabaseConfig.getSession().then(function (result) {
-    if (result.data.session) {
-      location.href = '/dashboard.html';
-    }
-  });
+  SupabaseConfig.getSession()
+    .then(function (result) {
+      if (result && result.data && result.data.session) {
+        location.href = '/dashboard.html';
+      }
+    })
+    .catch(function () {
+      // Supabase auth service unavailable — stay on auth page
+    });
 
   // Language toggle delegated to shared.js
   initLangToggle();
