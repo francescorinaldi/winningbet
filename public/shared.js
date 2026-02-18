@@ -12,7 +12,7 @@
  * Caricato prima degli script specifici di ogni pagina.
  */
 
-/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, formatMatchDate, setErrorState, REDUCED_MOTION, showToast */
+/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, formatMatchDate, setErrorState, REDUCED_MOTION, showToast, buildSkeletonCards */
 /* global getLocale */
 // Why `var`? This file is loaded as a non-module <script> — `var` declarations
 // become globals, making functions/constants available to other page scripts.
@@ -205,6 +205,27 @@ function removeToast(toast) {
     setTimeout(function () {
       toast.remove();
     }, 300);
+  }
+}
+
+// ==========================================
+// SKELETON LOADING
+// ==========================================
+
+/**
+ * Genera N skeleton card placeholder nel container.
+ * @param {HTMLElement} container - Elemento contenitore (viene svuotato)
+ * @param {number} count - Numero di skeleton card
+ * @param {'card'|'match'|'history'} [variant='card'] - Tipo di skeleton
+ */
+function buildSkeletonCards(container, count, variant) {
+  variant = variant || 'card';
+  container.textContent = '';
+  for (var i = 0; i < count; i++) {
+    var el = document.createElement('div');
+    el.className = 'skeleton skeleton-' + variant;
+    el.setAttribute('aria-hidden', 'true');
+    container.appendChild(el);
   }
 }
 

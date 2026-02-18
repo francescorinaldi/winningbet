@@ -13,7 +13,7 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
-/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale, setErrorState, REDUCED_MOTION, createEl, buildMatchCard, buildResultItem, buildTipResultItem, buildTipCard, canAccessTier, setEmptyState, activateConfidenceBars, showToast */
+/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale, setErrorState, REDUCED_MOTION, createEl, buildMatchCard, buildResultItem, buildTipResultItem, buildTipCard, canAccessTier, setEmptyState, activateConfidenceBars, showToast, buildSkeletonCards */
 
 (function () {
   'use strict';
@@ -437,6 +437,7 @@
   async function loadTips() {
     const container = document.getElementById('tipsGrid');
     try {
+      buildSkeletonCards(container, 3, 'card');
       const matches = await fetchAPI('fixtures', { type: 'matches', league: currentLeague });
       if (!matches || matches.length < 3) {
         setEmptyState(container, 'tips-empty', 'Nessun pronostico disponibile al momento');
@@ -476,6 +477,7 @@
   async function loadMatches() {
     const container = document.getElementById('matchesScroll');
     try {
+      buildSkeletonCards(container, 4, 'match');
       let matches;
       if (currentLeague === 'all') {
         const results = await Promise.all(
@@ -527,6 +529,7 @@
   async function loadResults() {
     const container = document.getElementById('resultsList');
     try {
+      buildSkeletonCards(container, 4, 'history');
       let results;
       if (currentLeague === 'all') {
         const responses = await Promise.all(

@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState, dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, showToast */
+/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState, dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, showToast, buildSkeletonCards */
 
 (function () {
   'use strict';
@@ -406,6 +406,7 @@
     const emptyState = document.getElementById('dashTipsEmpty');
 
     try {
+      buildSkeletonCards(grid, 3, 'card');
       const tipLimit = currentLeague === 'all' ? 50 : 20;
       const tips = await authFetch(
         '/api/tips?status=today&limit=' + tipLimit + '&league=' + encodeURIComponent(currentLeague),
@@ -620,6 +621,8 @@
    */
   async function loadHistory() {
     try {
+      const histList = document.getElementById('dashHistoryList');
+      if (histList) buildSkeletonCards(histList, 4, 'history');
       let results = [];
 
       const statuses = ['won', 'lost', 'void', 'pending'];
@@ -1389,19 +1392,6 @@
 
   // ─── SCHEDINE (BETTING SLIPS) ─────────────────────────
 
-  function showGridLoading(grid) {
-    grid.textContent = '';
-    const loader = document.createElement('div');
-    loader.className = 'tips-loading';
-    const spinner = document.createElement('span');
-    spinner.className = 'loading-spinner';
-    loader.appendChild(spinner);
-    const text = document.createElement('span');
-    text.textContent = 'Caricamento schedine...';
-    loader.appendChild(text);
-    grid.appendChild(loader);
-  }
-
   async function loadSchedule() {
     const grid = document.getElementById('schedineGrid');
     const empty = document.getElementById('schedineEmpty');
@@ -1426,7 +1416,7 @@
       return;
     }
 
-    showGridLoading(grid);
+    buildSkeletonCards(grid, 2, 'card');
     empty.style.display = 'none';
     upgrade.style.display = 'none';
 

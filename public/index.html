@@ -198,11 +198,15 @@
             EREDIVISIE</span
           >
         </div>
-        <div class="matches-scroll" id="matchesScroll" aria-live="polite" aria-label="Prossime partite">
-          <div class="matches-loading">
-            <span class="loading-spinner" role="status" aria-label="Caricamento partite in corso"></span>
-            <span data-i18n="live.loading">Caricamento partite...</span>
-          </div>
+        <div
+          class="matches-scroll"
+          id="matchesScroll"
+          aria-live="polite"
+          aria-label="Prossime partite"
+        >
+          <div class="skeleton skeleton-match" aria-hidden="true"></div>
+          <div class="skeleton skeleton-match" aria-hidden="true"></div>
+          <div class="skeleton skeleton-match" aria-hidden="true"></div>
         </div>
       </div>
     </section>
@@ -268,10 +272,9 @@
         </div>
 
         <div class="tips-grid" id="tipsGrid" aria-live="polite" aria-label="Pronostici del giorno">
-          <div class="tips-loading">
-            <span class="loading-spinner" role="status" aria-label="Caricamento pronostici in corso"></span>
-            <span data-i18n="tips.loading">Caricamento pronostici...</span>
-          </div>
+          <div class="skeleton skeleton-card" aria-hidden="true"></div>
+          <div class="skeleton skeleton-card" aria-hidden="true"></div>
+          <div class="skeleton skeleton-card" aria-hidden="true"></div>
         </div>
       </div>
     </section>
@@ -429,11 +432,15 @@
              Ogni riga mostra: data, squadre, punteggio, badge Over/Under 2.5 -->
         <div class="recent-results">
           <h3 class="results-title" data-i18n="stats.results.title">I Nostri Risultati</h3>
-          <div class="results-list" id="resultsList" aria-live="polite" aria-label="Risultati recenti">
-            <div class="results-loading">
-              <span class="loading-spinner" role="status" aria-label="Caricamento risultati in corso"></span>
-              <span data-i18n="stats.results.loading">Caricamento risultati...</span>
-            </div>
+          <div
+            class="results-list"
+            id="resultsList"
+            aria-live="polite"
+            aria-label="Risultati recenti"
+          >
+            <div class="skeleton skeleton-history" aria-hidden="true"></div>
+            <div class="skeleton skeleton-history" aria-hidden="true"></div>
+            <div class="skeleton skeleton-history" aria-hidden="true"></div>
           </div>
         </div>
       </div>
@@ -514,7 +521,9 @@
             <ul class="pricing-features">
               <li class="feature-included">
                 <span class="feature-check">&#10003;</span>
-                <span data-i18n="pricing.pro.f1">1-5 tips al giorno in base al calendario sportivo</span>
+                <span data-i18n="pricing.pro.f1"
+                  >1-5 tips al giorno in base al calendario sportivo</span
+                >
               </li>
               <li class="feature-included">
                 <span class="feature-check">&#10003;</span>
@@ -783,7 +792,6 @@
         </div>
       </div>
     </footer>
-
 
     <!-- Supabase CDN (auth only — anon key is safe to expose) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
