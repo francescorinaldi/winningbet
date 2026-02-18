@@ -10,6 +10,7 @@
  */
 
 const { supabase } = require('./supabase');
+const { TIER_LEVELS } = require('./tiers');
 
 /**
  * Estrae e verifica il JWT dall'header Authorization.
@@ -62,8 +63,7 @@ async function authenticate(req) {
  * @returns {boolean}
  */
 function hasAccess(userTier, requiredTier) {
-  const tierLevels = { free: 0, pro: 1, vip: 2 };
-  return (tierLevels[userTier] || 0) >= (tierLevels[requiredTier] || 0);
+  return (TIER_LEVELS[userTier] || 0) >= (TIER_LEVELS[requiredTier] || 0);
 }
 
 /**

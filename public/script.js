@@ -13,7 +13,7 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
-/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, formatMatchDate, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale */
+/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, formatMatchDate, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, getLocale */
 
 (function () {
   'use strict';
@@ -957,9 +957,8 @@
    */
   function canAccessTier(userTier, cardTier) {
     if (cardTier === 'free') return true;
-    const hierarchy = { free: 0, pro: 1, vip: 2 };
-    const userLevel = userTier ? hierarchy[userTier] || 0 : -1;
-    const cardLevel = hierarchy[cardTier] || 0;
+    const userLevel = userTier ? TIER_LEVELS[userTier] || 0 : -1;
+    const cardLevel = TIER_LEVELS[cardTier] || 0;
     return userLevel >= cardLevel;
   }
 

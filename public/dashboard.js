@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, formatMatchDate, LEAGUE_NAMES_MAP, TIER_PRICES, getLocale */
+/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, formatMatchDate, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getLocale */
 
 (function () {
   'use strict';
@@ -298,8 +298,7 @@
     window.history.replaceState({}, '', '/dashboard.html');
 
     // Non avviare checkout se l'utente ha gia' quel tier o superiore
-    const hierarchy = { free: 0, pro: 1, vip: 2 };
-    if ((hierarchy[currentTier] || 0) >= (hierarchy[requestedTier] || 0)) return;
+    if ((TIER_LEVELS[currentTier] || 0) >= (TIER_LEVELS[requestedTier] || 0)) return;
 
     startCheckout(requestedTier);
   }

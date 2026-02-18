@@ -12,7 +12,7 @@
  * Caricato prima degli script specifici di ogni pagina.
  */
 
-/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, formatMatchDate */
+/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, formatMatchDate */
 /* global getLocale */
 // Why `var`? This file is loaded as a non-module <script> — `var` declarations
 // become globals, making functions/constants available to other page scripts.
@@ -27,6 +27,12 @@ var TIER_PRICES = {
   pro: { amount: 9.99, currency: '€', display: '€9.99/mese' },
   vip: { amount: 29.99, currency: '€', display: '€29.99/mese' },
 };
+
+// ==========================================
+// TIER LEVELS (shared between pages)
+// ==========================================
+
+var TIER_LEVELS = { free: 0, pro: 1, vip: 2 };
 
 // ==========================================
 // SEASON (computed dynamically)
