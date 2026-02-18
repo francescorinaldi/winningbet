@@ -13,7 +13,7 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
-/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getLocale, t */
+/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale, t */
 
 (function () {
   'use strict';
@@ -316,9 +316,10 @@
   let currentLeague = 'all';
 
   // Build LEAGUE_NAMES from shared LEAGUE_NAMES_MAP (add season + 'all' entry)
-  const LEAGUE_NAMES = { all: { label: 'Tutte le Leghe', season: '2025/26' } };
+  const currentSeason = getCurrentSeasonDisplay();
+  const LEAGUE_NAMES = { all: { label: 'Tutte le Leghe', season: currentSeason } };
   Object.keys(LEAGUE_NAMES_MAP).forEach(function (slug) {
-    LEAGUE_NAMES[slug] = { label: LEAGUE_NAMES_MAP[slug].full, season: '2025/26' };
+    LEAGUE_NAMES[slug] = { label: LEAGUE_NAMES_MAP[slug].full, season: currentSeason };
   });
 
   const ALL_LEAGUE_SLUGS = [
