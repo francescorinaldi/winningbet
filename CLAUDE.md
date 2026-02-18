@@ -60,28 +60,19 @@ CHANGELOG.md            → All changes (always update)
 .github/copilot-instructions.md  → Repo-wide Copilot instructions
 .github/instructions/            → File-type-specific Copilot instructions (JS, CSS, SQL)
 .github/workflows/copilot-setup-steps.yml → Copilot coding agent environment setup
-.github/agents/                  → 5 Copilot custom agents (PM, Dev, Planner, Implementer, Reviewer)
+.github/agents/                  → 2 Copilot custom agents (Coder, Reviewer)
 ```
 
 ## Copilot Agent Team
 
-Five custom agents using the "teammates" paradigm — peer-to-peer communication, no hub-and-spoke bottleneck.
+Two self-contained agents — optimized for GitHub.com's 10-minute coding agent timeout.
 
 | Agent | Role | Entry Point |
 |-------|------|-------------|
-| **PM** | Project Manager — triages issues, orchestrates team | GitHub issues |
-| **WinningBet-Dev** | Fleet Orchestrator — parallel dispatch, local dev | VS Code |
-| **Planner** | Research & architecture — read-only investigation | Invoked by PM/Dev |
-| **Implementer** | Code & build — writes code, runs verification | Invoked by Planner |
-| **Reviewer** | Quality & conventions — drives fixes directly | Invoked by Implementer |
+| **Coder** | All-in-one: plans, implements, verifies, self-reviews | GitHub issues, VS Code |
+| **Reviewer** | Code quality with fix capability — edits code directly | Optional, invoked by Coder for complex changes |
 
-Communication pattern:
-```
-PM / WinningBet-Dev → kicks off first teammate
-Planner ↔ Reviewer (validate plans)
-Implementer ↔ Planner (ask questions)
-Implementer ↔ Reviewer (request checks, iterate fixes)
-```
+Coder handles 95% of work autonomously (understand → plan → implement → verify → update docs). Reviewer is lightweight and fixes issues in-place rather than reporting them back.
 
 ## Key Commands
 

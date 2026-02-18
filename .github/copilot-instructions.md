@@ -96,6 +96,17 @@ Valid: `serie-a`, `champions-league`, `la-liga`, `premier-league`, `ligue-1`, `b
 - `.prettierrc` — `semi: true, singleQuote: true, trailingComma: "all", printWidth: 100`
 - `vercel.json` — deployment config, cache headers, security headers
 
+## Copilot Agents
+
+Two self-contained agents in `.github/agents/`:
+
+| Agent | Role |
+|-------|------|
+| **Coder** | All-in-one: plans, implements, verifies, self-reviews. Primary entry point for all tasks. |
+| **Reviewer** | Code quality with fix capability. Can edit code directly. Optional — invoked for complex multi-file changes. |
+
+Coder handles 95% of work autonomously. Reviewer is lightweight and fixes issues in-place rather than bouncing back.
+
 ## Anti-Patterns to Avoid
 
 - Adding build steps — this is a static site
