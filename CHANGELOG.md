@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Dead canvas in dashboard** — Added `initParticles({ maxParticles: 30, densityDivisor: 25, connections: false })` call in `dashboard.js` so the existing `<canvas id="particles">` element in `dashboard.html` is no longer an invisible empty element. Uses lightweight config (30 particles, no connections) for visual consistency with other pages.
+
 ### Refactored
 
 - **Copilot agents: 5-agent chain → 2-agent architecture** — Replaced PM, Planner, Implementer, WinningBet-Dev, and Reviewer with two self-contained agents: **Coder** (all-in-one: plan, implement, verify, self-review) and **Reviewer** (code quality with direct fix capability). Eliminates ~50% timeout failures on GitHub.com's 10-minute coding agent limit by removing multi-agent handoff overhead. Reviewer now has `edit` and `execute` tools to fix issues directly instead of bouncing back.

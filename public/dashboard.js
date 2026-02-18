@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, formatMatchDate, LEAGUE_NAMES_MAP, TIER_PRICES, getLocale */
+/* global initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, formatMatchDate, LEAGUE_NAMES_MAP, TIER_PRICES, getLocale */
 
 (function () {
   'use strict';
@@ -20,6 +20,9 @@
   // Shared utilities
   initMobileMenu();
   initCookieBanner();
+
+  // Particles (lightweight version for dashboard, no connections)
+  initParticles({ maxParticles: 30, densityDivisor: 25, connections: false });
 
   // ─── CONFIG ───────────────────────────────────────────
   const UI_TEXT = {
