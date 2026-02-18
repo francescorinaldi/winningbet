@@ -349,9 +349,9 @@
 
         currentLeague = league;
         updateLeagueLabels();
-        loadMatches();
-        loadResults().then(loadTrackRecord);
-        loadTipsFromAPI();
+        loadMatches().catch(function (err) { console.warn('[league] loadMatches:', err.message); });
+        loadResults().then(loadTrackRecord).catch(function (err) { console.warn('[league] loadResults/trackRecord:', err.message); });
+        loadTipsFromAPI().catch(function (err) { console.warn('[league] loadTipsFromAPI:', err.message); });
       });
     });
   }
@@ -1018,12 +1018,16 @@
         const session = result && result.data ? result.data.session : null;
         updateNavForAuth(session);
         if (session) {
-          loadHomepageUserTier(session);
+          loadHomepageUserTier(session); // this calls loadTipsFromAPI internally
           updatePricingForAuth();
+        } else {
+          // No session — load tips now (unauthenticated)
+          loadTipsFromAPI().catch(function (err) { console.warn('[init] loadTipsFromAPI:', err.message); });
         }
       })
       .catch(function () {
         updateNavForAuth(null);
+        loadTipsFromAPI().catch(function () { /* already logged */ });
       });
 
     SupabaseConfig.onAuthStateChange(function (_event, session) {
@@ -1360,9 +1364,13 @@
   // Avvia il caricamento dati al ready della pagina
   injectTierPrices();
   initLeagueSelector();
-  loadMatches();
-  loadResults().then(loadTrackRecord);
-  loadTipsFromAPI();
+  loadMatches().catch(function (err) { console.warn('[init] loadMatches:', err.message); });
+  loadResults().then(loadTrackRecord).catch(function (err) { console.warn('[init] loadResults/trackRecord:', err.message); });
+  // Tips loaded after auth check to avoid double fetch (#73).
+  // If SupabaseConfig unavailable, load immediately.
+  if (typeof SupabaseConfig === 'undefined') {
+    loadTipsFromAPI().catch(function (err) { console.warn('[init] loadTipsFromAPI:', err.message); });
+  }
   initCookieBanner();
   initCopyrightYear();
   initLangToggle();
