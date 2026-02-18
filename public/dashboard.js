@@ -50,6 +50,7 @@
   let userPrefs = null;
   let userBetsMap = {};
   let countdownInterval = null;
+  let notifInterval = null;
   let currentLeague = null;
   try { currentLeague = localStorage.getItem('wb_dashboard_league'); } catch (_e) { /* storage unavailable */ }
   currentLeague = currentLeague || 'serie-a';
@@ -1433,8 +1434,22 @@
       });
     }
 
-    // Poll every 60s
-    setInterval(loadNotifications, 60000);
+    // Poll every 60s — pause when tab is hidden, clear on logout
+    notifInterval = setInterval(loadNotifications, 60000);
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        if (notifInterval) {
+          clearInterval(notifInterval);
+          notifInterval = null;
+        }
+      } else {
+        if (!notifInterval && session) {
+          loadNotifications();
+          notifInterval = setInterval(loadNotifications, 60000);
+        }
+      }
+    });
   }
 
   async function markNotificationRead(id) {
@@ -2163,6 +2178,10 @@
   function setupLogout() {
     document.getElementById('logoutBtn').addEventListener('click', async function (e) {
       e.preventDefault();
+      if (notifInterval) {
+        clearInterval(notifInterval);
+        notifInterval = null;
+      }
       await SupabaseConfig.signOut();
       window.location.href = '/';
     });
