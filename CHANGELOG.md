@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Security
+
+- **Stripe error message leak** — Removed `err.message` from client-facing error response in `api/billing.js` checkout handler. Internal Stripe error details (API key issues, rate limits, etc.) are still logged server-side via `console.error` but no longer exposed to the client. Fixes failing billing test.
+
 ### Added (Wave 2 — Polish)
 
 - **2.1 Skeleton loading** — Added `.skeleton`, `.skeleton-card`, `.skeleton-match`, `.skeleton-history` CSS with `@keyframes shimmer` animation. `buildSkeletonCards(container, count, variant)` in `shared.js`. Replaced all initial HTML spinners in `index.html` and `dashboard.html` with skeleton placeholders. JS fetches show skeletons before API calls. Removed `showGridLoading()` from dashboard.js. Respects `prefers-reduced-motion`.
