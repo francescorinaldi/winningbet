@@ -12,7 +12,7 @@
  * Caricato prima degli script specifici di ogni pagina.
  */
 
-/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, formatMatchDate, setErrorState, REDUCED_MOTION, showToast, buildSkeletonCards, buildEmptyState */
+/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, formatMatchDate, setErrorState, REDUCED_MOTION, showToast, buildSkeletonCards, buildEmptyState, setLastUpdated */
 /* global getLocale */
 // Why `var`? This file is loaded as a non-module <script> — `var` declarations
 // become globals, making functions/constants available to other page scripts.
@@ -302,6 +302,38 @@ function buildEmptyState(container, opts) {
   }
 
   container.appendChild(wrapper);
+}
+
+// ==========================================
+// LAST UPDATED TIMESTAMP
+// ==========================================
+
+/**
+ * Mostra un timestamp "Aggiornato alle HH:MM" con icona refresh cliccabile.
+ * @param {string} containerId - ID dell'elemento .last-updated
+ * @param {Function} [refreshFn] - Funzione da chiamare al click refresh
+ */
+function setLastUpdated(containerId, refreshFn) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+
+  var locale = typeof getLocale === 'function' ? getLocale() : 'it-IT';
+  var time = new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+
+  el.textContent = '';
+
+  var text = document.createElement('span');
+  text.textContent = 'Aggiornato alle ' + time;
+  el.appendChild(text);
+
+  if (typeof refreshFn === 'function') {
+    var btn = document.createElement('button');
+    btn.className = 'last-updated-refresh';
+    btn.setAttribute('aria-label', 'Aggiorna');
+    btn.textContent = '\u21BB';
+    btn.addEventListener('click', refreshFn);
+    el.appendChild(btn);
+  }
 }
 
 // ==========================================

@@ -13,7 +13,7 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
-/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale, setErrorState, REDUCED_MOTION, createEl, buildMatchCard, buildResultItem, buildTipResultItem, buildTipCard, canAccessTier, setEmptyState, activateConfidenceBars, showToast, buildSkeletonCards, buildEmptyState */
+/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale, setErrorState, REDUCED_MOTION, createEl, buildMatchCard, buildResultItem, buildTipResultItem, buildTipCard, canAccessTier, setEmptyState, activateConfidenceBars, showToast, buildSkeletonCards, buildEmptyState, setLastUpdated */
 
 (function () {
   'use strict';
@@ -524,6 +524,7 @@
       // Calcola la durata in base al numero di card (3s per card)
       const duration = matches.length * 3;
       track.style.setProperty('--ticker-duration', duration + 's');
+      setLastUpdated('matchesUpdated', loadMatches);
     } catch (err) {
       console.error('loadMatches failed:', err);
       setErrorState(container, 'Impossibile caricare le partite', loadMatches);
@@ -566,6 +567,7 @@
       results.forEach(function (r) {
         container.appendChild(buildResultItem(r));
       });
+      setLastUpdated('resultsUpdated', loadResults);
     } catch (err) {
       console.error('loadResults failed:', err);
       setErrorState(container, 'Impossibile caricare i risultati', loadResults);
@@ -981,6 +983,7 @@
           card.classList.add('visible');
         });
       });
+      setLastUpdated('tipsUpdated', loadTipsFromAPI);
     } catch (err) {
       console.error('loadTipsFromAPI failed:', err);
       // Fallback: genera tips client-side

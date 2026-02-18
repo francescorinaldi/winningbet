@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState, dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, showToast, buildSkeletonCards */
+/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState, dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, showToast, buildSkeletonCards, setLastUpdated */
 
 (function () {
   'use strict';
@@ -434,6 +434,7 @@
       });
 
       renderTipsGrid(grid, tips);
+      setLastUpdated('dashTipsUpdated', loadTodayTips);
     } catch (err) {
       console.warn('[loadTodayTips]', err.message);
       setErrorState(grid, 'Impossibile caricare i pronostici', loadTodayTips);
@@ -653,6 +654,7 @@
 
       renderHistory('all');
       loadDashboardChart();
+      setLastUpdated('dashHistoryUpdated', loadHistory);
     } catch (err) {
       console.warn('[loadHistory]', err.message);
       const histList = document.getElementById('dashHistoryList');
