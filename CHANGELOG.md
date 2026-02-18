@@ -6,7 +6,7 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Changed
 
-- **Dynamic season display** — Replaced hardcoded `'2025/26'` season string in `public/script.js` with dynamic computation via new `getCurrentSeasonDisplay()` in `public/shared.js`. Season now auto-updates based on current date (July = new season boundary).
+- **Dynamic season display** — `public/script.js` now uses `getCurrentSeasonDisplay()` from `shared.js` instead of hardcoded `'2025/26'` string
 
 ### Docs
 

@@ -29,7 +29,10 @@ var TIER_PRICES = {
 // SEASON (computed dynamically)
 // ==========================================
 
-// Football seasons run Aug–May. From July onward → new season.
+// Football seasons span Aug–May, but we switch to displaying the new
+// season from July onward (start of transfer window/pre-season).
+// January–June → previous year, July–December → current year.
+// Example: July 2025 → "2025/26", January 2026 → "2025/26"
 // Returns display format e.g. "2025/26".
 function getCurrentSeasonDisplay() {
   var now = new Date();
