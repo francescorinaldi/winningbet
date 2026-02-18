@@ -84,22 +84,27 @@
    * Verifica autenticazione. Redirect a /auth.html se non loggato.
    */
   async function checkAuth() {
-    const result = await SupabaseConfig.getSession();
-    session = result && result.data ? result.data.session : null;
+    try {
+      const result = await SupabaseConfig.getSession();
+      session = result && result.data ? result.data.session : null;
 
-    if (!session) {
+      if (!session) {
+        window.location.href = '/auth.html';
+        return;
+      }
+
+      await loadProfile();
+      loadTodayTips();
+      loadHistory();
+      loadActivity();
+      loadNotifications();
+      loadPreferences();
+      loadUserBets();
+      loadSchedule();
+    } catch (_err) {
+      // getSession() failed — redirect to auth
       window.location.href = '/auth.html';
-      return;
     }
-
-    await loadProfile();
-    loadTodayTips();
-    loadHistory();
-    loadActivity();
-    loadNotifications();
-    loadPreferences();
-    loadUserBets();
-    loadSchedule();
   }
 
   // ─── PROFILE ────────────────────────────────────────────

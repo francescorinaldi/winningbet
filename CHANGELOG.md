@@ -7,6 +7,7 @@ All notable changes to WinningBet will be documented in this file.
 ### Fixed
 
 - **Unguarded `getSession()` access (H-03)** — `SupabaseConfig.getSession()` result accessed without null-checking `result.data` in `auth.js`, `script.js`, and `dashboard.js`. Added defensive guards (`result && result.data && result.data.session`) and `.catch()` handlers to prevent unhandled promise rejections when Supabase auth service is unavailable.
+- **Dashboard `checkAuth()` error handling** — Wrapped `checkAuth()` body in `dashboard.js` with try-catch so that if `getSession()` throws or rejects, the user is redirected to `/auth.html` instead of leaving an unhandled promise rejection.
 
 ### Docs
 
