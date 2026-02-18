@@ -78,6 +78,23 @@ describe('email module', () => {
       expect(result).toBe(false);
     });
 
+    it('should log SMTP-specific error properties (responseCode, command)', async () => {
+      const smtpError = new Error('RCPT TO failed');
+      smtpError.responseCode = 550;
+      smtpError.command = 'RCPT TO';
+      nodemailer.__sendMailMock.mockRejectedValueOnce(smtpError);
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      await sendEmail({
+        to: 'test@example.com',
+        subject: 'Test',
+        html: '<p>Test</p>',
+      });
+
+      expect(consoleSpy).toHaveBeenCalledWith('SMTP error:', 'RCPT TO failed', 550, 'RCPT TO');
+      consoleSpy.mockRestore();
+    });
+
     it('should set from with name and address', async () => {
       await sendEmail({
         to: 'test@example.com',
