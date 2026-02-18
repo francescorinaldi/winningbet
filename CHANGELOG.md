@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Performance
+
+- **Particle connection rendering optimization** — Replaced O(n²) nested loop in `renderConnections()` (`public/shared.js`) with a spatial grid approach that only checks particles in neighboring cells. With 80 particles, reduces distance calculations per frame from ~3,160 to a fraction of that. Also made `connectionDistance` configurable via `options.connectionDistance` and moved `ctx.lineWidth` assignment outside the inner loop.
+
 ### Docs
 
 - **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.

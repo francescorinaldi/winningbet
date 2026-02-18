@@ -83,6 +83,7 @@ function initMobileMenu() {
  * @param {number} [options.maxParticles=80] — Numero massimo di particelle
  * @param {number} [options.densityDivisor=15] — Divisore per la densita' (larghezza / divisor)
  * @param {boolean} [options.connections=true] — Disegna linee tra particelle vicine
+ * @param {number} [options.connectionDistance=120] — Distanza massima per le connessioni (px)
  */
 function initParticles(options) {
   var canvas = document.getElementById('particles');
@@ -94,6 +95,8 @@ function initParticles(options) {
   var maxParticles = opts.maxParticles || 80;
   var densityDivisor = opts.densityDivisor || 15;
   var drawConnections = opts.connections !== false;
+  var connectionDistance = opts.connectionDistance || 120;
+  var connDistSq = connectionDistance * connectionDistance;
 
   function resizeCanvas() {
     canvas.width = window.innerWidth;
@@ -140,19 +143,49 @@ function initParticles(options) {
   }
 
   function renderConnections() {
-    for (var i = 0; i < particles.length; i++) {
-      for (var j = i + 1; j < particles.length; j++) {
-        var dx = particles[i].x - particles[j].x;
-        var dy = particles[i].y - particles[j].y;
-        var dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 120) {
-          var opacity = (1 - dist / 120) * 0.08;
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = 'rgba(212, 168, 83, ' + opacity + ')';
-          ctx.lineWidth = 0.5;
-          ctx.stroke();
+    var cols = Math.ceil(canvas.width / connectionDistance) || 1;
+    var rows = Math.ceil(canvas.height / connectionDistance) || 1;
+    var grid = new Array(cols * rows);
+    var i, j, k, ci, cj, ni, nj, cellIdx, p, q, dx, dy, distSq, opacity;
+
+    for (i = 0; i < particles.length; i++) {
+      p = particles[i];
+      ci = Math.min(Math.floor(p.x / connectionDistance), cols - 1);
+      cj = Math.min(Math.floor(p.y / connectionDistance), rows - 1);
+      cellIdx = cj * cols + ci;
+      if (!grid[cellIdx]) grid[cellIdx] = [];
+      grid[cellIdx].push(i);
+    }
+
+    ctx.lineWidth = 0.5;
+
+    for (i = 0; i < particles.length; i++) {
+      p = particles[i];
+      ci = Math.min(Math.floor(p.x / connectionDistance), cols - 1);
+      cj = Math.min(Math.floor(p.y / connectionDistance), rows - 1);
+
+      for (ni = ci; ni <= ci + 1 && ni < cols; ni++) {
+        for (nj = cj - 1; nj <= cj + 1 && nj < rows; nj++) {
+          if (nj < 0) continue;
+          cellIdx = nj * cols + ni;
+          if (!grid[cellIdx]) continue;
+          var cell = grid[cellIdx];
+          for (k = 0; k < cell.length; k++) {
+            j = cell[k];
+            if (j <= i) continue;
+            q = particles[j];
+            dx = p.x - q.x;
+            dy = p.y - q.y;
+            distSq = dx * dx + dy * dy;
+            if (distSq < connDistSq) {
+              opacity = (1 - Math.sqrt(distSq) / connectionDistance) * 0.08;
+              ctx.beginPath();
+              ctx.moveTo(p.x, p.y);
+              ctx.lineTo(q.x, q.y);
+              ctx.strokeStyle = 'rgba(212, 168, 83, ' + opacity + ')';
+              ctx.stroke();
+            }
+          }
         }
       }
     }
