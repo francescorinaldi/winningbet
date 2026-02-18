@@ -753,6 +753,8 @@
 
   function setupTabs() {
     const tabs = document.querySelectorAll('.dash-tab');
+    const STORAGE_KEY = 'wb_dashboard_tab';
+
     tabs.forEach(function (tab) {
       tab.addEventListener('click', function () {
         tabs.forEach(function (t) {
@@ -762,24 +764,41 @@
         tab.classList.add('active');
         tab.setAttribute('aria-selected', 'true');
 
-        // Deactivate settings when switching to a tab
         const settingsBtn = document.getElementById('settingsBtn');
         if (settingsBtn) settingsBtn.classList.remove('active');
 
         const target = tab.getAttribute('data-tab');
+
+        try {
+          localStorage.setItem(STORAGE_KEY, target);
+        } catch (_e) {
+          /* storage unavailable */
+        }
+
         document.getElementById('panelTips').style.display = target === 'tips' ? '' : 'none';
         document.getElementById('panelSchedule').style.display =
           target === 'schedine' ? '' : 'none';
         document.getElementById('panelHistory').style.display = target === 'history' ? '' : 'none';
         document.getElementById('panelAccount').style.display = 'none';
 
-        // Show/hide league selector (not relevant for schedine)
         const leagueSelector = document.getElementById('dashLeagueSelector');
         if (leagueSelector) {
           leagueSelector.style.display = target === 'schedine' ? 'none' : '';
         }
       });
     });
+
+    // Restore saved tab (after listeners are attached)
+    let savedTab = null;
+    try {
+      savedTab = localStorage.getItem(STORAGE_KEY);
+    } catch (_e) {
+      /* storage unavailable */
+    }
+    if (savedTab && savedTab !== 'tips') {
+      const target = document.querySelector('.dash-tab[data-tab="' + savedTab + '"]');
+      if (target) target.click();
+    }
   }
 
   /**
