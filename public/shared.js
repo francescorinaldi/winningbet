@@ -10,7 +10,7 @@
  * Caricato prima degli script specifici di ogni pagina.
  */
 
-/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES */
+/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay */
 // Why `var`? This file is loaded as a non-module <script> — `var` declarations
 // become globals, making functions/constants available to other page scripts.
 // Switch to `const`/`let` + `export` when the frontend migrates to ES modules.
@@ -24,6 +24,18 @@ var TIER_PRICES = {
   pro: { amount: 9.99, currency: '€', display: '€9.99/mese' },
   vip: { amount: 29.99, currency: '€', display: '€29.99/mese' },
 };
+
+// ==========================================
+// SEASON (computed dynamically)
+// ==========================================
+
+// Football seasons run Aug–May. From July onward → new season.
+// Returns display format e.g. "2025/26".
+function getCurrentSeasonDisplay() {
+  var now = new Date();
+  var year = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+  return year + '/' + String(year + 1).slice(-2);
+}
 
 // ==========================================
 // LEAGUE NAMES (shared between pages)

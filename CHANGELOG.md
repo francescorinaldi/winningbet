@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- **Dynamic season display** — Replaced hardcoded `'2025/26'` season string in `public/script.js` with dynamic computation via new `getCurrentSeasonDisplay()` in `public/shared.js`. Season now auto-updates based on current date (July = new season boundary).
+
 ### Docs
 
 - **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.
