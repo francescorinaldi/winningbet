@@ -82,7 +82,7 @@
   async function checkAuth() {
     try {
       const result = await SupabaseConfig.getSession();
-      session = result && result.data ? result.data.session : null;
+      session = (result && result.data && result.data.session) || null;
 
       if (!session) {
         window.location.href = '/auth.html';

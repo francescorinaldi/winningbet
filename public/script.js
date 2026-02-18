@@ -1015,7 +1015,7 @@
   if (typeof SupabaseConfig !== 'undefined') {
     SupabaseConfig.getSession()
       .then(function (result) {
-        const session = result && result.data ? result.data.session : null;
+        const session = (result && result.data && result.data.session) || null;
         updateNavForAuth(session);
         if (session) {
           loadHomepageUserTier(session); // this calls loadTipsFromAPI internally

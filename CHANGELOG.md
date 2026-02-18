@@ -42,8 +42,18 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Fixed
 
-- **localStorage access not wrapped in try/catch** — Wrapped all 8 `localStorage.getItem()`/`setItem()` calls in `public/shared.js`, `dashboard.js`, and `i18n.js` with `try/catch` to prevent crashes in Safari private browsing, storage quota exceeded, or restricted iframe contexts. Renamed unused catch parameters to `_e` to comply with linting. Affects `initCookieBanner()` and `initLangToggle()` in shared.js, league persistence in dashboard.js, and `getLang()` in i18n.js.
-- **Hardcoded copyright year** — Replaced static "2026" with dynamic year via new `initCopyrightYear()` in `shared.js`. Applied to all 5 footers (`index.html`, `dashboard.html`, `cookies.html`, `privacy.html`, `terms.html`). Year auto-updates on language toggle.
+- **localStorage access not wrapped in try/catch** — Wrapped all 8 `localStorage.getItem()`/`setItem()` calls in `public/shared.js`, `dashboard.js`, and `i18n.js` with `try/catch` to prevent crashes in Safari private browsing, storage quota exceeded, or restricted iframe contexts.
+- **Hardcoded copyright year** — Replaced static "2026" with dynamic year via new `initCopyrightYear()` in `shared.js`. Applied to all 5 footers.
+- **#58 H-01** — `dashboard.js: checkAuth()` wraps `getSession()` in try/catch with null-safe access
+- **#59 H-02** — `script.js` all floating promises now have `.catch()` handlers
+- **#60 H-03** — `auth.js: getSession()` has `.catch()` handler and null-safe property access
+- **#61 H-04** — `script.js` SupabaseConfig session check uses null-safe access
+- **#63 H-06** — `dashboard.js` notification polling interval stored and cleared on `beforeunload`
+- **#64 H-07** — `shared.js: initParticles()` pauses animation when tab is hidden via `visibilitychange`
+- **#73 M-12** — `script.js` eliminates double tips fetch on homepage init
+- **#76 M-15** — `script.js` season string computed dynamically instead of hardcoded
+- **#80 L-02** — `email.js` SMTP error log includes `err.responseCode` and `err.command`
+- **#81 L-03** — `email.js: buildDailyDigest()` guards `tip.confidence` against null/undefined
 - **Stripe checkout "errore di rete"** — Dashboard upgrade buttons failed silently because `authFetch` swallowed errors. Replaced with direct fetch + explicit error handling.
 - **Stripe connection error on Vercel** — Production `STRIPE_SECRET_KEY` had wrong content (130 chars vs 108). Re-added all 4 Stripe env vars cleanly from local `.env`.
 - **Home pricing redirect loop** — Logged-in users clicking pricing buttons were sent to `/auth.html` instead of checkout. Now redirects to dashboard with auto-checkout param.

@@ -230,16 +230,15 @@ function initParticles(options) {
     animationId = requestAnimationFrame(animate);
   }
 
+  // Pause animation when tab is hidden to save CPU
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
       if (animationId !== null) {
         cancelAnimationFrame(animationId);
         animationId = null;
       }
-    } else {
-      if (animationId === null) {
-        animate();
-      }
+    } else if (animationId === null) {
+      animate();
     }
   });
 

@@ -47,8 +47,8 @@
         location.href = '/dashboard.html';
       }
     })
-    .catch(function () {
-      // Supabase auth service unavailable — stay on auth page
+    .catch(function (err) {
+      console.warn('[auth] getSession failed:', err && err.message);
     });
 
   // Language toggle delegated to shared.js
