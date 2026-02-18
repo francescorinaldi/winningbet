@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Unguarded `getSession()` access (H-03)** — `SupabaseConfig.getSession()` result accessed without null-checking `result.data` in `auth.js`, `script.js`, and `dashboard.js`. Added defensive guards (`result && result.data && result.data.session`) and `.catch()` handlers to prevent unhandled promise rejections when Supabase auth service is unavailable.
+
 ### Docs
 
 - **`shared.js` var rationale comment** — Added explanatory comment above `/* eslint no-var: "off" */` in `public/shared.js` documenting why `var` is intentionally used for global scope in the non-module script pattern.
