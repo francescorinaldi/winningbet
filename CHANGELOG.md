@@ -13,6 +13,15 @@ All notable changes to WinningBet will be documented in this file.
 - **1.5 ARIA labels e live regions** — Added `aria-live="polite"` + `aria-label` on `#matchesScroll`, `#tipsGrid`, `#resultsList`, `#dashTipsGrid`, `#schedineGrid`, `#dashHistoryList`. Added `role="status"` + `aria-label` on all `.loading-spinner` elements. Dashboard tabs: `role="tablist"` on container, `role="tab"` + `aria-selected` + `aria-controls` on each tab, `role="tabpanel"` + `aria-labelledby` on each panel. FAQ: `aria-expanded` on all `.faq-question` buttons (initial `false`, toggled by JS). Hamburger: `aria-expanded` + `aria-controls` managed by `initMobileMenu()`.
 - **1.6 Indicatori status colorblind-safe** — Added `aria-label` with human-readable text to all history status icons in `renderHistory()`: ✓ → `aria-label="Vinto"`, ✗ → `aria-label="Perso"`, — → `aria-label="Annullata"`, ● → `aria-label="In corso"`. Form dots (W/D/L) were already colorblind-safe via letter text content.
 
+### Removed
+
+- **Dead `<canvas id="particles">` in dashboard** — Removed unused particle canvas element from `dashboard.html`. The dashboard never initializes `initParticles()`, so the canvas was a no-op consuming a compositing layer. (#78)
+
+### Refactored
+
+- **Split god file `script.js`** — Extracted 17 pure/stateless builder functions (DOM helpers, card builders, random generators, access control) into new `public/script-builders.js`. Reduces `script.js` from 1398 → ~980 lines (~30% reduction). Functions loaded as global `var` declarations before the main IIFE. (#68)
+- **Split god file `dashboard.js`** — Extracted 5 render functions (`dashRenderTipsGrid`, `dashRenderSchedule`, `dashRenderHistory`, `dashRenderNotifications`, `dashBuildBetTrackingUI`) into new `public/dashboard-renderers.js`. Original functions replaced with thin delegation wrappers that pass closure dependencies via context objects. Reduces `dashboard.js` from 2383 → ~1600 lines (~33% reduction). (#67)
+
 ### Fixed
 
 - **Floating promises in script.js (H-05)** — Added `.catch()` handlers to `loadMatches()`, `loadResults().then(loadTrackRecord)`, and `loadTipsFromAPI()` in both the init section and league selector callback. Unhandled rejections now log warnings instead of silently failing.
