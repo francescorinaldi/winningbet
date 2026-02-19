@@ -912,10 +912,9 @@
     stopLandingCountdown();
     el.style.display = '';
 
-    fetch('/api/fixtures?type=matches&league=' + encodeURIComponent(currentLeague) + '&limit=1')
-      .then(function (r) {
-        return r.json();
-      })
+    const leagueForCountdown = currentLeague === 'all' ? 'serie-a' : currentLeague;
+
+    fetchAPI('fixtures', { type: 'matches', league: leagueForCountdown })
       .then(function (matches) {
         if (!Array.isArray(matches) || matches.length === 0) {
           valEl.textContent = '--:--';
@@ -947,6 +946,13 @@
     const diff = targetDate - now;
     if (diff <= 0) {
       el.textContent = 'A breve!';
+      stopLandingCountdown();
+      // Show the countdown element briefly with "A breve!" before re-checking
+      const countdownEl = document.getElementById('landingCountdown');
+      if (countdownEl) countdownEl.style.display = '';
+      setTimeout(function () {
+        loadTipsFromAPI();
+      }, 120000);
       return;
     }
     const hours = Math.floor(diff / 3600000);
