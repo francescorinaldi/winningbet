@@ -402,6 +402,7 @@ function buildShareDropdown(opts) {
 
   // Share button (SVG share icon)
   var btn = document.createElement('button');
+  btn.type = 'button';
   btn.className = 'share-btn';
   btn.setAttribute('aria-label', 'Condividi');
   btn.setAttribute('aria-expanded', 'false');
@@ -452,17 +453,22 @@ function buildShareDropdown(opts) {
 
   // Copy
   var copyBtn = document.createElement('button');
+  copyBtn.type = 'button';
   copyBtn.className = 'share-option';
   copyBtn.textContent = '\uD83D\uDCCB Copia';
   copyBtn.addEventListener('click', function () {
-    navigator.clipboard
-      .writeText(opts.text)
-      .then(function () {
-        showToast('Pronostico copiato!', 'success');
-      })
-      .catch(function () {
-        showToast('Impossibile copiare', 'error');
-      });
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard
+        .writeText(opts.text)
+        .then(function () {
+          showToast('Pronostico copiato!', 'success');
+        })
+        .catch(function () {
+          showToast('Impossibile copiare', 'error');
+        });
+    } else {
+      showToast('Impossibile copiare', 'error');
+    }
     dropdown.classList.remove('open');
     btn.setAttribute('aria-expanded', 'false');
   });
@@ -523,6 +529,17 @@ document.addEventListener('click', function () {
     var parentBtn = d.parentNode.querySelector('.share-btn');
     if (parentBtn) parentBtn.setAttribute('aria-expanded', 'false');
   });
+});
+
+// Close share dropdowns on Escape key
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.share-dropdown.open').forEach(function (d) {
+      d.classList.remove('open');
+      var parentBtn = d.parentNode.querySelector('.share-btn');
+      if (parentBtn) parentBtn.setAttribute('aria-expanded', 'false');
+    });
+  }
 });
 
 // ==========================================

@@ -367,12 +367,8 @@ var buildTipCard = function (match, tierOrTip, userTier) {
   // Share button (only for accessible tips)
   if (hasAccess) {
     var shareText = '\u26BD ' + match.home + ' vs ' + match.away + '\n';
-    shareText +=
-      '\uD83C\uDFAF Pronostico: ' + (tip ? tip.prediction || '' : randomFrom(PREDICTIONS)) + '\n';
-    shareText +=
-      '\uD83D\uDCCA Quota: ' +
-      (tip ? (tip.odds ? parseFloat(tip.odds).toFixed(2) : '') : randomOdd()) +
-      '\n';
+    shareText += '\uD83C\uDFAF Pronostico: ' + pickText + '\n';
+    shareText += '\uD83D\uDCCA Quota: ' + oddsText + '\n';
     shareText += '\uD83D\uDCC5 ' + formatMatchDate(match.date) + '\n';
     shareText += '\nda WinningBet \u2014 winningbet.it';
 
