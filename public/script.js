@@ -447,9 +447,11 @@
           title: 'Nessun pronostico disponibile',
           subtitle: 'I pronostici vengono pubblicati ogni giorno. Torna più tardi!',
         });
+        startLandingCountdown();
         return;
       }
       container.textContent = '';
+      stopLandingCountdown();
 
       // Card 1: FREE (prima partita)
       container.appendChild(buildTipCard(matches[0], 'free', homepageUserTier));
@@ -473,6 +475,7 @@
     } catch (err) {
       console.error('loadTips failed:', err);
       setErrorState(container, 'Impossibile caricare i pronostici', loadTips);
+      startLandingCountdown();
     }
   }
 
@@ -895,6 +898,68 @@
     return null;
   }
 
+  // ==========================================
+  // COUNTDOWN — Next Tips
+  // ==========================================
+
+  let landingCountdownInterval = null;
+
+  function startLandingCountdown() {
+    const el = document.getElementById('landingCountdown');
+    const valEl = document.getElementById('landingCountdownValue');
+    if (!el || !valEl) return;
+
+    stopLandingCountdown();
+    el.style.display = '';
+
+    const leagueForCountdown = currentLeague === 'all' ? 'serie-a' : currentLeague;
+
+    fetchAPI('fixtures', { type: 'matches', league: leagueForCountdown })
+      .then(function (matches) {
+        if (!Array.isArray(matches) || matches.length === 0) {
+          valEl.textContent = '--:--';
+          return;
+        }
+        const nextDate = new Date(matches[0].date);
+        updateLandingCountdown(valEl, nextDate);
+
+        landingCountdownInterval = setInterval(function () {
+          updateLandingCountdown(valEl, nextDate);
+        }, 60000);
+      })
+      .catch(function () {
+        valEl.textContent = '--:--';
+      });
+  }
+
+  function stopLandingCountdown() {
+    if (landingCountdownInterval) {
+      clearInterval(landingCountdownInterval);
+      landingCountdownInterval = null;
+    }
+    const el = document.getElementById('landingCountdown');
+    if (el) el.style.display = 'none';
+  }
+
+  function updateLandingCountdown(el, targetDate) {
+    const now = new Date();
+    const diff = targetDate - now;
+    if (diff <= 0) {
+      el.textContent = 'A breve!';
+      stopLandingCountdown();
+      // Show the countdown element briefly with "A breve!" before re-checking
+      const countdownEl = document.getElementById('landingCountdown');
+      if (countdownEl) countdownEl.style.display = '';
+      setTimeout(function () {
+        loadTipsFromAPI();
+      }, 120000);
+      return;
+    }
+    const hours = Math.floor(diff / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    el.textContent = hours + 'h ' + (mins < 10 ? '0' : '') + mins + 'm';
+  }
+
   /**
    * Tenta di caricare i tips dal database (API).
    * Mostra sempre tutte e 3 le tier (free, pro, vip) sulla homepage.
@@ -988,6 +1053,7 @@
         });
       });
       setLastUpdated('tipsUpdated', loadTipsFromAPI);
+      stopLandingCountdown();
     } catch (err) {
       console.error('loadTipsFromAPI failed:', err);
       // Fallback: genera tips client-side

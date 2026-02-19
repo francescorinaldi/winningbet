@@ -78,6 +78,7 @@
     setupSettingsToggle();
     setupSchedineDateNav();
     setupRiskProfileInputs();
+    setupBankrollCalculator();
   });
 
   /**
@@ -1769,6 +1770,128 @@
         clearInterval(interval);
       }
     }, 3000);
+  }
+
+  // ─── BANKROLL CALCULATOR ──────────────────────────────
+
+  function setupBankrollCalculator() {
+    const calcBtn = document.getElementById('calcBankrollBtn');
+    if (!calcBtn) return;
+
+    calcBtn.addEventListener('click', calculateBankroll);
+  }
+
+  function calculateBankroll() {
+    const input = document.getElementById('bankrollInput');
+    const resultsEl = document.getElementById('bankrollResults');
+    const summaryEl = document.getElementById('bankrollSummary');
+    const tbodyEl = document.getElementById('bankrollTableBody');
+    if (!input || !resultsEl || !summaryEl || !tbodyEl) return;
+
+    const bankroll = parseFloat(input.value) || 100;
+    if (bankroll < 10) {
+      showToast('Il bankroll minimo \u00E8 10\u20AC', 'error');
+      return;
+    }
+    if (bankroll > 100000) {
+      showToast('Il bankroll massimo \u00E8 100.000\u20AC', 'error');
+      return;
+    }
+
+    // Collect today's pending tips from the already-loaded grid
+    const tipCards = document.querySelectorAll('#dashTipsGrid .tip-card:not(.tip-card--started)');
+    const tips = [];
+
+    tipCards.forEach(function (card) {
+      const predEl = card.querySelector('.pick-value');
+      const oddsEl = card.querySelector('.odds-value');
+      const confEl = card.querySelector('.confidence-value');
+      const teamsEls = card.querySelectorAll('.dash-tip-team');
+
+      if (!predEl || !oddsEl || teamsEls.length < 2) return;
+
+      const confidence = parseInt((confEl && confEl.textContent) || '70', 10);
+      const odds = parseFloat(oddsEl.textContent) || 0;
+      const prediction = predEl.textContent || '';
+      const matchName = teamsEls[0].textContent + ' vs ' + teamsEls[1].textContent;
+
+      if (prediction && odds > 0) {
+        tips.push({
+          matchName: matchName,
+          prediction: prediction,
+          odds: odds,
+          confidence: confidence,
+        });
+      }
+    });
+
+    if (tips.length === 0) {
+      showToast('Nessun pronostico disponibile per il calcolo', 'info');
+      return;
+    }
+
+    // Fixed-percentage staking: 2-5% scaled by confidence
+    // confidence 60% -> 2%, confidence 90% -> 5%
+    const MIN_PCT = 0.02;
+    const MAX_PCT = 0.05;
+    const MIN_CONF = 60;
+    const MAX_CONF = 90;
+
+    let totalStake = 0;
+    tbodyEl.textContent = '';
+
+    tips.forEach(function (tip) {
+      const clampedConf = Math.max(MIN_CONF, Math.min(MAX_CONF, tip.confidence));
+      const pct =
+        MIN_PCT + ((clampedConf - MIN_CONF) / (MAX_CONF - MIN_CONF)) * (MAX_PCT - MIN_PCT);
+      const stake = Math.round(bankroll * pct * 100) / 100;
+      totalStake += stake;
+
+      const tr = document.createElement('tr');
+
+      const tdMatch = document.createElement('td');
+      tdMatch.textContent = tip.matchName;
+      tr.appendChild(tdMatch);
+
+      const tdPred = document.createElement('td');
+      tdPred.textContent = tip.prediction;
+      tr.appendChild(tdPred);
+
+      const tdConf = document.createElement('td');
+      tdConf.textContent = tip.confidence + '%';
+      tr.appendChild(tdConf);
+
+      const tdStake = document.createElement('td');
+      tdStake.className = 'bankroll-stake-cell';
+      tdStake.textContent = stake.toFixed(2) + ' \u20AC';
+      tr.appendChild(tdStake);
+
+      tbodyEl.appendChild(tr);
+    });
+
+    // Summary (using safe DOM methods — no innerHTML)
+    const remainingBankroll = bankroll - totalStake;
+    summaryEl.textContent = '';
+
+    const rows = [
+      { label: 'Investimento totale:', value: totalStake.toFixed(2) + ' \u20AC' },
+      { label: 'Bankroll rimanente:', value: remainingBankroll.toFixed(2) + ' \u20AC' },
+      { label: '% investito:', value: ((totalStake / bankroll) * 100).toFixed(1) + '%' },
+    ];
+
+    rows.forEach(function (row) {
+      const div = document.createElement('div');
+      div.className = 'bankroll-summary-row';
+      const labelSpan = document.createElement('span');
+      labelSpan.textContent = row.label;
+      div.appendChild(labelSpan);
+      const valueStrong = document.createElement('strong');
+      valueStrong.textContent = row.value;
+      div.appendChild(valueStrong);
+      summaryEl.appendChild(div);
+    });
+
+    resultsEl.style.display = '';
   }
 
   // ─── HELPERS ────────────────────────────────────────────

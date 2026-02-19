@@ -4,6 +4,12 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added (Wave 3 — New Features)
+
+- **3.1 Countdown landing page** — "Prossimi pronostici tra Xh Ym" nella sezione tips quando non ci sono pronostici. Usa `fetchAPI` per recuperare il prossimo match, aggiornamento ogni 60s, auto-refresh dopo il countdown. Gestisce `currentLeague === 'all'` con fallback esplicito a Serie A.
+- **3.2 Share prediction** — Bottone condividi su tip card con dropdown Copia/WhatsApp/Telegram. `buildShareDropdown()` centralizzato in `shared.js`, integrato in landing page (`script-builders.js`) e dashboard (`dashboard-renderers.js`). Clipboard API con guard per contesti non-HTTPS, chiusura con Escape e click esterno, ARIA completo.
+- **3.3 Calcolo Bankroll** — Calcolatore stake nel tab Account dashboard. Staking a percentuale fissa (2-5% del bankroll) scalato per confidence (60%→2%, 90%→5%, interpolazione lineare). Esclude tip già iniziate/concluse. Validazione 10-100.000€. Tabella risultati con summary (investimento totale, bankroll rimanente, % investito).
+
 ### Added (Wave 2 — Polish)
 
 - **2.1 Skeleton loading** — Added `.skeleton`, `.skeleton-card`, `.skeleton-match`, `.skeleton-history` CSS with `@keyframes shimmer` animation. `buildSkeletonCards(container, count, variant)` in `shared.js`. Replaced all initial HTML spinners in `index.html` and `dashboard.html` with skeleton placeholders. JS fetches show skeletons before API calls. Removed `showGridLoading()` from dashboard.js. Respects `prefers-reduced-motion`.

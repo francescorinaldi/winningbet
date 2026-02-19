@@ -1,5 +1,5 @@
 /* exported dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, dashBuildBetTrackingUI */
-/* global LEAGUE_NAMES_MAP, formatMatchDate */
+/* global LEAGUE_NAMES_MAP, formatMatchDate, buildShareDropdown */
 /* eslint no-var: "off" */
 
 /**
@@ -264,6 +264,18 @@ var dashRenderTipsGrid = function (container, tips, ctx) {
     });
     card.appendChild(expandBtn);
 
+    // Share button (only for future pending tips)
+    if (!isPast) {
+      var shareText = '\u26BD ' + tip.home_team + ' vs ' + tip.away_team + '\n';
+      shareText += '\uD83C\uDFAF Pronostico: ' + (tip.prediction || '') + '\n';
+      shareText +=
+        '\uD83D\uDCCA Quota: ' + (tip.odds ? parseFloat(tip.odds).toFixed(2) : '') + '\n';
+      shareText += '\uD83D\uDCC5 ' + formatMatchDate(tip.match_date) + '\n';
+      shareText += '\nda WinningBet \u2014 winningbet.it';
+
+      card.appendChild(buildShareDropdown({ text: shareText }));
+    }
+
     container.appendChild(card);
   });
 };
@@ -519,10 +531,19 @@ var dashRenderHistory = function (list, emptyState, allHistory, statusFilter, ct
 
     var statusEl = document.createElement('span');
     statusEl.className = 'dash-history-status dash-history-status--' + tip.status;
-    if (tip.status === 'won') { statusEl.textContent = '\u2713'; statusEl.setAttribute('aria-label', 'Vinto'); }
-    else if (tip.status === 'lost') { statusEl.textContent = '\u2717'; statusEl.setAttribute('aria-label', 'Perso'); }
-    else if (tip.status === 'void') { statusEl.textContent = '\u2014'; statusEl.setAttribute('aria-label', 'Annullata'); }
-    else { statusEl.textContent = '\u25CF'; statusEl.setAttribute('aria-label', 'In corso'); }
+    if (tip.status === 'won') {
+      statusEl.textContent = '\u2713';
+      statusEl.setAttribute('aria-label', 'Vinto');
+    } else if (tip.status === 'lost') {
+      statusEl.textContent = '\u2717';
+      statusEl.setAttribute('aria-label', 'Perso');
+    } else if (tip.status === 'void') {
+      statusEl.textContent = '\u2014';
+      statusEl.setAttribute('aria-label', 'Annullata');
+    } else {
+      statusEl.textContent = '\u25CF';
+      statusEl.setAttribute('aria-label', 'In corso');
+    }
     item.appendChild(statusEl);
 
     var matchInfo = document.createElement('div');
