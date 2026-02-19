@@ -3842,6 +3842,13 @@ img {
   letter-spacing: 2px;
 }
 
+/* Landing page countdown (reuses dashboard pattern) */
+.tips-section .tips-countdown {
+  text-align: center;
+  padding: 1rem 0;
+  margin-top: 1rem;
+}
+
 /* ─── Tip of the Day Highlight ──────────────── */
 
 .tip-card--highlighted {
