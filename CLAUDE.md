@@ -67,9 +67,9 @@ CHANGELOG.md            → All changes (always update)
 
 Two self-contained agents — optimized for GitHub.com's 10-minute coding agent timeout.
 
-| Agent | Role | Entry Point |
-|-------|------|-------------|
-| **Coder** | All-in-one: plans, implements, verifies, self-reviews | GitHub issues, VS Code |
+| Agent        | Role                                                   | Entry Point                                    |
+| ------------ | ------------------------------------------------------ | ---------------------------------------------- |
+| **Coder**    | All-in-one: plans, implements, verifies, self-reviews  | GitHub issues, VS Code                         |
 | **Reviewer** | Code quality with fix capability — edits code directly | Optional, invoked by Coder for complex changes |
 
 Coder handles 95% of work autonomously (understand → plan → implement → verify → update docs). Reviewer is lightweight and fixes issues in-place rather than reporting them back.

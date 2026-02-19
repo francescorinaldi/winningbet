@@ -150,9 +150,7 @@ async function main() {
   // 5. Head-to-head for each match (parallel, api-football only)
   if (result.matches.length > 0) {
     const h2hResults = await Promise.allSettled(
-      result.matches.map((m) =>
-        apiFootball.getHeadToHead(slug, m.home, m.away, 10),
-      ),
+      result.matches.map((m) => apiFootball.getHeadToHead(slug, m.home, m.away, 10)),
     );
     result.matches.forEach((match, i) => {
       if (h2hResults[i].status === 'fulfilled' && h2hResults[i].value) {

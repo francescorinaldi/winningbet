@@ -1,5 +1,5 @@
 ---
-applyTo: "**/*.sql"
+applyTo: '**/*.sql'
 ---
 
 # SQL / Supabase Conventions
@@ -31,16 +31,16 @@ applyTo: "**/*.sql"
 
 ## Core Tables
 
-| Table | Purpose |
-|-------|---------|
-| `profiles` | User profiles (tier, Telegram, streaks) |
-| `tips` | Match predictions (14 types, 3 tiers) |
-| `tip_outcomes` | Settlement results |
-| `subscriptions` | Stripe subscription state |
-| `user_preferences` | League, teams, notification, risk settings |
-| `user_bets` | Followed/unfollowed tips |
-| `notifications` | User notifications |
-| `schedine` + `schedina_tips` | Smart betting slips |
+| Table                        | Purpose                                    |
+| ---------------------------- | ------------------------------------------ |
+| `profiles`                   | User profiles (tier, Telegram, streaks)    |
+| `tips`                       | Match predictions (14 types, 3 tiers)      |
+| `tip_outcomes`               | Settlement results                         |
+| `subscriptions`              | Stripe subscription state                  |
+| `user_preferences`           | League, teams, notification, risk settings |
+| `user_bets`                  | Followed/unfollowed tips                   |
+| `notifications`              | User notifications                         |
+| `schedine` + `schedina_tips` | Smart betting slips                        |
 
 ## Performance
 

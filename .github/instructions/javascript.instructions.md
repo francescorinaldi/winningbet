@@ -1,5 +1,5 @@
 ---
-applyTo: "**/*.js,**/*.mjs"
+applyTo: '**/*.js,**/*.mjs'
 ---
 
 # JavaScript Conventions
@@ -27,16 +27,16 @@ applyTo: "**/*.js,**/*.mjs"
 
 ### Key shared modules
 
-| Module | Import | Purpose |
-|--------|--------|---------|
-| `_lib/supabase.js` | `{ supabase, supabaseAdmin }` | Anon client (RLS) + service role (bypass) |
-| `_lib/cache.js` | `cache` | In-memory Map with TTL |
-| `_lib/auth-middleware.js` | `{ authenticate, requireTier, authenticateCron }` | JWT, tier, cron auth |
-| `_lib/leagues.js` | `{ LEAGUES, resolveLeagueSlug, getLeagueConfig }` | League configuration |
-| `_lib/api-football.js` | Primary football data API client |
-| `_lib/football-data.js` | Fallback football data API client |
-| `_lib/prediction-utils.js` | `{ evaluatePrediction, buildActualResult }` | Shared evaluation |
-| `_lib/telegram.js` | Telegram Bot API client |
+| Module                     | Import                                            | Purpose                                   |
+| -------------------------- | ------------------------------------------------- | ----------------------------------------- |
+| `_lib/supabase.js`         | `{ supabase, supabaseAdmin }`                     | Anon client (RLS) + service role (bypass) |
+| `_lib/cache.js`            | `cache`                                           | In-memory Map with TTL                    |
+| `_lib/auth-middleware.js`  | `{ authenticate, requireTier, authenticateCron }` | JWT, tier, cron auth                      |
+| `_lib/leagues.js`          | `{ LEAGUES, resolveLeagueSlug, getLeagueConfig }` | League configuration                      |
+| `_lib/api-football.js`     | Primary football data API client                  |
+| `_lib/football-data.js`    | Fallback football data API client                 |
+| `_lib/prediction-utils.js` | `{ evaluatePrediction, buildActualResult }`       | Shared evaluation                         |
+| `_lib/telegram.js`         | Telegram Bot API client                           |
 
 ## Frontend (`public/**/*.js`)
 

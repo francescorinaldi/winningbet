@@ -175,6 +175,7 @@ ORDER BY times_predicted DESC;
 ### 9. Generate recommendations
 
 Based on the data, generate actionable recommendations. For each, categorize as:
+
 - `INCREASE` — do more of this (profitable pattern)
 - `DECREASE` — do less of this (unprofitable pattern)
 - `ADJUST` — change parameters (miscalibrated)

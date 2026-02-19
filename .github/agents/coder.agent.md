@@ -1,6 +1,6 @@
 ---
 name: Coder
-description: "All-in-one development agent — plans, implements, verifies, and self-reviews"
+description: 'All-in-one development agent — plans, implements, verifies, and self-reviews'
 tools:
   - agent
   - edit/editFiles
@@ -12,11 +12,11 @@ tools:
   - web/fetch
   - web/githubRepo
 handoffs:
-  - label: "Request Reviewer check"
+  - label: 'Request Reviewer check'
     agent: Reviewer
-    prompt: "Review the completed changes for quality and conventions"
+    prompt: 'Review the completed changes for quality and conventions'
 model: claude-sonnet-4
-argument-hint: "Paste a GitHub issue URL or describe what to build/fix"
+argument-hint: 'Paste a GitHub issue URL or describe what to build/fix'
 ---
 
 # Coder — All-in-One Development Agent
@@ -41,6 +41,7 @@ Skip steps that don't apply. A one-file typo fix doesn't need a plan.
 ## Project Conventions
 
 ### Backend (`api/`)
+
 - CommonJS: `require` / `module.exports`
 - Export single `async function handler(req, res)`
 - Method check first: `if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })`
@@ -51,6 +52,7 @@ Skip steps that don't apply. A one-file typo fix doesn't need a plan.
 - Auth via `api/_lib/auth-middleware.js`
 
 ### Frontend (`public/`)
+
 - IIFE pattern: `(function () { 'use strict'; ... })();`
 - Declare globals: `/* global supabase, SupabaseConfig */`
 - Cache DOM references at top
@@ -59,12 +61,14 @@ Skip steps that don't apply. A one-file typo fix doesn't need a plan.
 - Event listeners: named functions, `{ passive: true }` for scroll/touch
 
 ### Database
+
 - New tables/columns: create migration in `supabase/migrations/`
 - Naming: `NNN_descriptive_name.sql`, incremental only
 - Always enable RLS on new tables
 - Use `TIMESTAMPTZ`, never `TIMESTAMP`
 
 ### Naming
+
 - Files: kebab-case (`api/betting-slips.js`)
 - JS variables/functions: camelCase
 - CSS custom properties: kebab-case (`--bg-primary`)
@@ -87,6 +91,7 @@ Before finishing, verify:
 ## Key Architecture
 
 ### Backend data flow
+
 ```
 Client request -> api/{endpoint}.js -> _lib/auth-middleware.js (auth)
   -> _lib/cache.js (check) -> _lib/api-football.js (primary)
@@ -94,6 +99,7 @@ Client request -> api/{endpoint}.js -> _lib/auth-middleware.js (auth)
 ```
 
 ### Frontend data flow
+
 ```
 public/{page}.html loads public/{page}.js (IIFE)
   -> shared.js (mobile menu, particles, i18n)
@@ -102,6 +108,7 @@ public/{page}.html loads public/{page}.js (IIFE)
 ```
 
 ### Core DB tables
+
 `profiles`, `tips`, `tip_outcomes`, `subscriptions`, `user_preferences`, `user_bets`, `notifications`, `schedine`, `schedina_tips`. RLS enforces tier access (FREE < PRO < VIP).
 
 ## Anti-Patterns to Avoid
@@ -117,6 +124,7 @@ public/{page}.html loads public/{page}.js (IIFE)
 
 ```markdown
 ### [Date] — Brief Description
+
 - **Category**: What changed and why
 ```
 
