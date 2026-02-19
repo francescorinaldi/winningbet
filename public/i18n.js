@@ -156,7 +156,7 @@
         "L'abbonamento e' mensile e si rinnova automaticamente. Puoi cancellare in qualsiasi momento dalla tua area personale. Con il piano PRO hai accesso a tutti i tips giornalieri e le analisi. Con il piano VIP, oltre a tutto cio', ricevi tips esclusivi ad alta quota e accesso al canale Telegram privato.",
       'faq.q4': 'Che bookmaker consigliate?',
       'faq.a4':
-        "Consigliamo esclusivamente bookmaker con licenza ADM (ex AAMS) per operare in totale legalita' in Italia. Tra i principali: bet365, Snai, Sisal, Goldbet e Betflag. Registrandoti tramite i nostri link potrai ottenere bonus di benvenuto esclusivi.",
+        "Consigliamo esclusivamente bookmaker con licenza ADM (ex AAMS) per operare in totale legalita' in Italia. Tra i principali: Bet365, Snai, Sisal, Goldbet e Betflag.",
       'faq.q5': 'Quanto dovrei puntare su ogni tip?',
       'faq.a5':
         'Raccomandiamo di non superare mai il 2-5% del proprio bankroll per singola scommessa. I membri VIP ricevono consigli personalizzati sul bankroll management basati sul proprio budget e profilo di rischio.',
@@ -177,7 +177,7 @@
       'footer.disclaimer':
         "<strong>Disclaimer:</strong> Il gioco d'azzardo puo' causare dipendenza. Gioca responsabilmente. Questo sito fornisce solo pronostici e analisi a scopo informativo. Non raccogliamo ne' gestiamo scommesse. Vietato ai minori di 18 anni. Se hai problemi di gioco, chiama il numero verde 800-558822.",
       'footer.disclaimer2':
-        'I link ai bookmaker presenti su questo sito sono link di affiliazione verso operatori con regolare licenza ADM.',
+        'Raccomandiamo di scommettere esclusivamente su piattaforme con regolare licenza ADM (ex AAMS).',
       'footer.copy': '\u00A9 2026 WinningBet. Tutti i diritti riservati.',
 
       // Cookie banner
@@ -330,7 +330,7 @@
         'The subscription is monthly and renews automatically. You can cancel at any time from your account. The PRO plan gives you access to all daily tips and analysis. With the VIP plan, you also receive exclusive high-odds tips and access to the private Telegram channel.',
       'faq.q4': 'Which bookmakers do you recommend?',
       'faq.a4':
-        'We exclusively recommend bookmakers licensed by ADM (formerly AAMS) for legal operation in Italy. Top picks include bet365, Snai, Sisal, Goldbet and Betflag. By signing up through our links, you can access exclusive welcome bonuses.',
+        'We exclusively recommend bookmakers licensed by ADM (formerly AAMS) for legal operation in Italy. Top picks include Bet365, Snai, Sisal, Goldbet and Betflag.',
       'faq.q5': 'How much should I stake on each tip?',
       'faq.a5':
         'We recommend never exceeding 2-5% of your bankroll per single bet. VIP members receive personalized bankroll management advice based on their budget and risk profile.',
@@ -351,7 +351,7 @@
       'footer.disclaimer':
         '<strong>Disclaimer:</strong> Gambling can be addictive. Please gamble responsibly. This site provides predictions and analysis for informational purposes only. We do not collect or manage bets. Restricted to users over 18. If you have a gambling problem, call 800-558822.',
       'footer.disclaimer2':
-        'Bookmaker links on this site are affiliate links to operators with a valid ADM license.',
+        'We recommend betting exclusively on platforms with a valid ADM (formerly AAMS) license.',
       'footer.copy': '\u00A9 2026 WinningBet. All rights reserved.',
 
       // Cookie banner

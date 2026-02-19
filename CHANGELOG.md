@@ -6,6 +6,8 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Fixed
 
+- **Fix #1 — testo bookmaker fuorviante** — Rimosso "Registrandoti tramite i nostri link potrai ottenere bonus di benvenuto esclusivi" dalla FAQ e "I link ai bookmaker sono link di affiliazione" dal footer, poiché non esistono ancora URL di affiliazione reali. Il testo era potenzialmente fuorviante per gli utenti e non conforme. Aggiornati `public/index.html` e `public/i18n.js` (IT + EN).
+
 - **Fix #70 — domini hardcoded** — Introdotto `SITE_URL = process.env.SITE_URL || 'https://winningbet.it'` in `api/billing.js` (ALLOWED_ORIGINS + getOrigin fallback) e `api/_lib/email.js` (link dashboard nelle email). Aggiunto `SITE_URL` a `.env.example`. Semplifica il deploy su domini custom e ambienti staging.
 
 ### Security
