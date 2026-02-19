@@ -1793,9 +1793,13 @@
       showToast('Il bankroll minimo \u00E8 10\u20AC', 'error');
       return;
     }
+    if (bankroll > 100000) {
+      showToast('Il bankroll massimo \u00E8 100.000\u20AC', 'error');
+      return;
+    }
 
     // Collect today's pending tips from the already-loaded grid
-    const tipCards = document.querySelectorAll('#dashTipsGrid .tip-card');
+    const tipCards = document.querySelectorAll('#dashTipsGrid .tip-card:not(.tip-card--started)');
     const tips = [];
 
     tipCards.forEach(function (card) {

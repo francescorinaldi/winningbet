@@ -604,7 +604,7 @@
                 <line x1="12" y1="1" x2="12" y2="23" />
                 <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
               </svg>
-              Bankroll Calculator
+              Calcolo Bankroll
             </h3>
             <div class="bankroll-calc">
               <div class="bankroll-input-row">
@@ -626,7 +626,11 @@
               <div class="bankroll-results" id="bankrollResults" style="display: none">
                 <div class="bankroll-summary" id="bankrollSummary"></div>
                 <div class="bankroll-table-wrapper">
-                  <table class="bankroll-table" id="bankrollTable">
+                  <table
+                    class="bankroll-table"
+                    id="bankrollTable"
+                    aria-label="Stake consigliati per pronostico"
+                  >
                     <thead>
                       <tr>
                         <th>Partita</th>
