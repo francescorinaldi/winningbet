@@ -14,9 +14,11 @@ const { stripe, PRICE_IDS } = require('./_lib/stripe');
 const { supabase } = require('./_lib/supabase');
 const { authenticate } = require('./_lib/auth-middleware');
 
+const SITE_URL = process.env.SITE_URL || 'https://winningbet.it';
+
 const ALLOWED_ORIGINS = [
-  'https://winningbet.it',
-  'https://www.winningbet.it',
+  SITE_URL,
+  SITE_URL.replace('https://', 'https://www.'),
   'https://winningbet.vercel.app',
 ];
 
@@ -39,7 +41,7 @@ module.exports = async function handler(req, res) {
 
 function getOrigin(req) {
   const rawOrigin = req.headers.origin || req.headers.referer || '';
-  return ALLOWED_ORIGINS.includes(rawOrigin) ? rawOrigin : 'https://winningbet.it';
+  return ALLOWED_ORIGINS.includes(rawOrigin) ? rawOrigin : SITE_URL;
 }
 
 // ─── Checkout Handler ───────────────────────────────────────────────────────

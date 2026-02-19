@@ -14,6 +14,7 @@
 
 const nodemailer = require('nodemailer');
 
+const SITE_URL = process.env.SITE_URL || 'https://winningbet.it';
 const SMTP_HOST = process.env.SMTP_HOST;
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || '465', 10);
 const SMTP_USER = process.env.SMTP_USER;
@@ -139,7 +140,7 @@ function buildDailyDigest(tips) {
     '    </tbody>',
     '  </table>',
     '  <div style="text-align:center;margin-top:32px;">',
-    '    <a href="https://winningbet.it/dashboard.html" ',
+    '    <a href="' + SITE_URL + '/dashboard.html" ',
     '       style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#f0d078,#d4a853);',
     '              color:#0a0a0f;text-decoration:none;border-radius:8px;font-weight:700;">',
     '      Vedi Dashboard',
@@ -173,7 +174,7 @@ function buildDailyDigest(tips) {
         );
       })
       .join('\n') +
-    '\n\nVedi tutti i tips: https://winningbet.it/dashboard.html';
+    '\n\nVedi tutti i tips: ' + SITE_URL + '/dashboard.html';
 
   return { subject: subject, html: html, text: text };
 }

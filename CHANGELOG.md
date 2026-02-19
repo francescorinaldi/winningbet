@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Fix #70 — domini hardcoded** — Introdotto `SITE_URL = process.env.SITE_URL || 'https://winningbet.it'` in `api/billing.js` (ALLOWED_ORIGINS + getOrigin fallback) e `api/_lib/email.js` (link dashboard nelle email). Aggiunto `SITE_URL` a `.env.example`. Semplifica il deploy su domini custom e ambienti staging.
+
 ### Security
 
 - **Stripe error message leak** — Removed `err.message` from client-facing error response in `api/billing.js` checkout handler. Internal Stripe error details (API key issues, rate limits, etc.) are still logged server-side via `console.error` but no longer exposed to the client. Fixes failing billing test.
