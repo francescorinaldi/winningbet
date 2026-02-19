@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Security
+
+- **Stripe error message leak** — Removed `err.message` from client-facing error response in `api/billing.js` checkout handler. Internal Stripe error details (API key issues, rate limits, etc.) are still logged server-side via `console.error` but no longer exposed to the client. Fixes failing billing test.
+
 ### Added (Wave 3 — New Features)
 
 - **3.1 Countdown landing page** — "Prossimi pronostici tra Xh Ym" nella sezione tips quando non ci sono pronostici. Usa `fetchAPI` per recuperare il prossimo match, aggiornamento ogni 60s, auto-refresh dopo il countdown. Gestisce `currentLeague === 'all'` con fallback esplicito a Serie A.

@@ -96,7 +96,7 @@ async function handleCheckout(req, res) {
     console.error('Price IDs:', JSON.stringify(PRICE_IDS));
     return res
       .status(500)
-      .json({ error: 'Errore nella creazione della sessione di pagamento: ' + err.message });
+      .json({ error: 'Errore nella creazione della sessione di pagamento' });
   }
 }
 
