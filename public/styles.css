@@ -215,7 +215,8 @@ img {
 
 .btn-gold:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 40px rgba(212, 168, 83, 0.3);
+  box-shadow: 0 8px 40px rgba(212, 168, 83, 0.45);
+  filter: brightness(1.08);
 }
 
 .btn-outline {
@@ -322,7 +323,7 @@ img {
   transition: color 0.3s;
 }
 
-.nav-links a:hover {
+.nav-links a:not(.btn):hover {
   color: var(--gold);
 }
 
