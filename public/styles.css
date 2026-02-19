@@ -3352,6 +3352,82 @@ img {
   color: var(--green);
 }
 
+/* ── Bankroll Calculator ─────────────────── */
+.bankroll-calc {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bankroll-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.bankroll-results {
+  margin-top: 0.5rem;
+}
+
+.bankroll-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.75rem;
+}
+
+.bankroll-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.bankroll-summary-row strong {
+  color: var(--gold);
+}
+
+.bankroll-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bankroll-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.bankroll-table th,
+.bankroll-table td {
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.bankroll-table th {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bankroll-table td {
+  color: var(--text-secondary);
+}
+
+.bankroll-stake-cell {
+  color: var(--gold);
+  font-weight: 600;
+  font-family: var(--font-display);
+}
+
 /* Dashboard Responsive */
 @media (max-width: 768px) {
   .dash-header {
@@ -3435,6 +3511,20 @@ img {
 
   .upgrade-card {
     padding: 24px 20px;
+  }
+
+  .bankroll-input-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bankroll-table {
+    font-size: 0.75rem;
+  }
+
+  .bankroll-table th,
+  .bankroll-table td {
+    padding: 0.4rem;
   }
 }
 

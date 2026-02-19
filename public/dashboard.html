@@ -589,6 +589,58 @@
               <div class="pref-save-status" id="prefSaveStatus"></div>
             </div>
           </div>
+
+          <!-- Bankroll Calculator -->
+          <div class="dash-account-card bankroll-card">
+            <h3 class="dash-card-title">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <line x1="12" y1="1" x2="12" y2="23" />
+                <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+              </svg>
+              Bankroll Calculator
+            </h3>
+            <div class="bankroll-calc">
+              <div class="bankroll-input-row">
+                <label class="pref-label" for="bankrollInput">Il tuo bankroll</label>
+                <div class="pref-input-group">
+                  <input
+                    type="number"
+                    class="pref-input"
+                    id="bankrollInput"
+                    min="10"
+                    max="100000"
+                    step="10"
+                    value="100"
+                  />
+                  <span class="pref-input-suffix">&euro;</span>
+                </div>
+              </div>
+              <button class="btn btn-outline btn-sm" id="calcBankrollBtn">Calcola stake</button>
+              <div class="bankroll-results" id="bankrollResults" style="display: none">
+                <div class="bankroll-summary" id="bankrollSummary"></div>
+                <div class="bankroll-table-wrapper">
+                  <table class="bankroll-table" id="bankrollTable">
+                    <thead>
+                      <tr>
+                        <th>Partita</th>
+                        <th>Pronostico</th>
+                        <th>Confidence</th>
+                        <th>Stake</th>
+                      </tr>
+                    </thead>
+                    <tbody id="bankrollTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
       </div>
     </main>
