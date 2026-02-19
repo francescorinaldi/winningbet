@@ -12,7 +12,7 @@
  * Caricato prima degli script specifici di ogni pagina.
  */
 
-/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, formatMatchDate, setErrorState, REDUCED_MOTION, showToast, buildSkeletonCards, buildEmptyState, setLastUpdated, retryWithBackoff */
+/* exported initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, TIER_LEVELS, getCurrentSeasonDisplay, formatMatchDate, setErrorState, REDUCED_MOTION, showToast, buildSkeletonCards, buildEmptyState, setLastUpdated, retryWithBackoff, buildShareDropdown */
 /* global getLocale */
 // Why `var`? This file is loaded as a non-module <script> — `var` declarations
 // become globals, making functions/constants available to other page scripts.
@@ -385,6 +385,145 @@ function retryWithBackoff(fn, opts) {
     tryOnce();
   });
 }
+
+// ==========================================
+// SHARE DROPDOWN
+// ==========================================
+
+/**
+ * Costruisce un dropdown di condivisione con Copia, WhatsApp e Telegram.
+ * @param {Object} opts
+ * @param {string} opts.text - Testo formattato da condividere
+ * @returns {HTMLElement} Elemento .share-wrapper con bottone + dropdown
+ */
+function buildShareDropdown(opts) {
+  var wrapper = document.createElement('div');
+  wrapper.className = 'share-wrapper';
+
+  // Share button (SVG share icon)
+  var btn = document.createElement('button');
+  btn.className = 'share-btn';
+  btn.setAttribute('aria-label', 'Condividi');
+  btn.setAttribute('aria-expanded', 'false');
+
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', '16');
+  svg.setAttribute('height', '16');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  var c1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  c1.setAttribute('cx', '18');
+  c1.setAttribute('cy', '5');
+  c1.setAttribute('r', '3');
+  var c2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  c2.setAttribute('cx', '6');
+  c2.setAttribute('cy', '12');
+  c2.setAttribute('r', '3');
+  var c3 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  c3.setAttribute('cx', '18');
+  c3.setAttribute('cy', '19');
+  c3.setAttribute('r', '3');
+  var l1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  l1.setAttribute('x1', '8.59');
+  l1.setAttribute('y1', '13.51');
+  l1.setAttribute('x2', '15.42');
+  l1.setAttribute('y2', '17.49');
+  var l2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  l2.setAttribute('x1', '15.41');
+  l2.setAttribute('y1', '6.51');
+  l2.setAttribute('x2', '8.59');
+  l2.setAttribute('y2', '10.49');
+  svg.appendChild(c1);
+  svg.appendChild(c2);
+  svg.appendChild(c3);
+  svg.appendChild(l1);
+  svg.appendChild(l2);
+  btn.appendChild(svg);
+  wrapper.appendChild(btn);
+
+  // Dropdown
+  var dropdown = document.createElement('div');
+  dropdown.className = 'share-dropdown';
+
+  // Copy
+  var copyBtn = document.createElement('button');
+  copyBtn.className = 'share-option';
+  copyBtn.textContent = '\uD83D\uDCCB Copia';
+  copyBtn.addEventListener('click', function () {
+    navigator.clipboard
+      .writeText(opts.text)
+      .then(function () {
+        showToast('Pronostico copiato!', 'success');
+      })
+      .catch(function () {
+        showToast('Impossibile copiare', 'error');
+      });
+    dropdown.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+  });
+  dropdown.appendChild(copyBtn);
+
+  // WhatsApp
+  var waBtn = document.createElement('a');
+  waBtn.className = 'share-option';
+  waBtn.textContent = '\uD83D\uDCAC WhatsApp';
+  waBtn.href = 'https://wa.me/?text=' + encodeURIComponent(opts.text);
+  waBtn.target = '_blank';
+  waBtn.rel = 'noopener noreferrer';
+  waBtn.addEventListener('click', function () {
+    dropdown.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+  });
+  dropdown.appendChild(waBtn);
+
+  // Telegram
+  var tgBtn = document.createElement('a');
+  tgBtn.className = 'share-option';
+  tgBtn.textContent = '\u2708\uFE0F Telegram';
+  tgBtn.href =
+    'https://t.me/share/url?url=https://winningbet.it&text=' + encodeURIComponent(opts.text);
+  tgBtn.target = '_blank';
+  tgBtn.rel = 'noopener noreferrer';
+  tgBtn.addEventListener('click', function () {
+    dropdown.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+  });
+  dropdown.appendChild(tgBtn);
+
+  wrapper.appendChild(dropdown);
+
+  // Toggle dropdown
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var isOpen = dropdown.classList.contains('open');
+    // Close all other dropdowns first
+    document.querySelectorAll('.share-dropdown.open').forEach(function (d) {
+      d.classList.remove('open');
+      var parentBtn = d.parentNode.querySelector('.share-btn');
+      if (parentBtn) parentBtn.setAttribute('aria-expanded', 'false');
+    });
+    if (!isOpen) {
+      dropdown.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+  });
+
+  return wrapper;
+}
+
+// Close share dropdowns on click outside
+document.addEventListener('click', function () {
+  document.querySelectorAll('.share-dropdown.open').forEach(function (d) {
+    d.classList.remove('open');
+    var parentBtn = d.parentNode.querySelector('.share-btn');
+    if (parentBtn) parentBtn.setAttribute('aria-expanded', 'false');
+  });
+});
 
 // ==========================================
 // MOBILE MENU

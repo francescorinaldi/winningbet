@@ -2029,6 +2029,80 @@ img {
   line-height: 1.4;
 }
 
+/* ─── Share Dropdown ───────────────────────── */
+.share-wrapper {
+  position: relative;
+  display: inline-block;
+  align-self: flex-end;
+  margin-top: 0.5rem;
+}
+
+.share-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.share-btn:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.share-dropdown {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 0.5rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  display: none;
+  flex-direction: column;
+  min-width: 160px;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.share-dropdown.open {
+  display: flex;
+}
+
+.share-option {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.share-option:hover {
+  background: rgba(212, 168, 83, 0.1);
+  color: var(--text-primary);
+}
+
+.share-option + .share-option {
+  border-top: 1px solid var(--border);
+}
+
 /* ─── Error State with Retry ─────────────── */
 .error-state {
   display: flex;
