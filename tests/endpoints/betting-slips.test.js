@@ -224,20 +224,35 @@ describe('GET /api/schedina', () => {
 
     supabase.from.mockReturnValue(mockChain);
 
+    // API computes the Monday of the given week (documented behaviour).
+    // 2026-02-15 is a Sunday → Monday of that week is 2026-02-09.
+    const inputDate = '2026-02-15';
+    const ref = new Date(inputDate + 'T12:00:00Z');
+    const dow = ref.getUTCDay();
+    const offset = dow === 0 ? -6 : 1 - dow;
+    ref.setUTCDate(ref.getUTCDate() + offset);
+    const expectedMonday = ref.toISOString().split('T')[0];
+
     const req = createMockReq({
       method: 'GET',
-      query: { date: '2026-02-15' },
+      query: { date: inputDate },
     });
     const res = createMockRes();
 
     await handler(req, res);
 
-    expect(mockChain.eq).toHaveBeenCalledWith('match_date', '2026-02-15');
+    expect(mockChain.eq).toHaveBeenCalledWith('match_date', expectedMonday);
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('Invalid date uses today', async () => {
-    const today = new Date().toISOString().split('T')[0];
+  test('Invalid date falls back to current week Monday', async () => {
+    // API computes Monday of the current week when date is invalid.
+    const now = new Date();
+    const dow = now.getUTCDay();
+    const offset = dow === 0 ? -6 : 1 - dow;
+    now.setUTCDate(now.getUTCDate() + offset);
+    const expectedMonday = now.toISOString().split('T')[0];
+
     const mockChain = createThenableChain({ data: [], error: null });
 
     supabase.from.mockReturnValue(mockChain);
@@ -250,7 +265,7 @@ describe('GET /api/schedina', () => {
 
     await handler(req, res);
 
-    expect(mockChain.eq).toHaveBeenCalledWith('match_date', today);
+    expect(mockChain.eq).toHaveBeenCalledWith('match_date', expectedMonday);
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
