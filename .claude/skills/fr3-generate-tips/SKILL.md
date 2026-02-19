@@ -225,6 +225,7 @@ If a single league was requested → only 1 analyst.
 Wait for all analyst teammates to report completion. Check TaskList periodically.
 
 If an analyst fails or times out:
+
 - Log the failure: "analyst-{league} FAILED: {reason}"
 - Continue with remaining leagues
 - The reviewer will only see completed analysts' work
@@ -264,6 +265,7 @@ ORDER BY confidence * odds ASC;
 ```
 
 Re-rank by `confidence * odds` and redistribute:
+
 - Combo predictions (containing "+") → always "vip"
 - Bottom 25% → "free"
 - Next 25% → "pro"
@@ -355,7 +357,7 @@ TeamDelete()
 
 Each analyst teammate receives this prompt (filled with league-specific config and SHARED_CONTEXT). Copy this template and substitute the placeholders.
 
-```
+````
 You are a specialist football analyst for {LEAGUE_NAME}. You are part of a team generating predictions for WinningBet.
 
 Your job: fetch data for {LEAGUE_NAME}, research each match via web search, analyze deeply, and insert draft tips into Supabase.
@@ -386,7 +388,7 @@ CRITICAL: You MUST consult this context during every match analysis. If an insig
 Run:
 ```bash
 node .claude/skills/fr3-generate-tips/scripts/fetch-league-data.js {LEAGUE_SLUG}
-```
+````
 
 This outputs JSON with: matches (upcoming fixtures with odds + H2H data), standings (total/home/away tables), recentResults (last 30 matches).
 
@@ -417,36 +419,44 @@ If no fresh research → proceed with full web searches below.
 Use WebSearch to find specific information for THIS matchup:
 
 **Search 1** (xG projections — NEW, highest priority):
+
 - "{home_team} vs {away_team} xG expected goals prediction {date}"
 - Also try: "{home_team} {away_team} understat fbref xg"
 - Extract: pre-match xG projections, shot-based models, FiveThirtyEight/Understat/FBref ratings
 
 **Search 2** (injuries/lineup):
+
 - "{home_team} {away_team} injuries suspensions confirmed lineup transfermarkt {date}"
 - Extract: confirmed absences, expected lineups, late fitness tests, return dates
 
 **Search 3** (tactical preview):
+
 - "{home_team} vs {away_team} tactical preview formation analysis {date}"
 - Extract: expected formations, pressing intensity, key tactical matchups, recent tactical changes
 
 **Search 4** (statistical preview):
+
 - "{home_team} vs {away_team} stats preview shots conversion set pieces"
 - Also try: whoscored, soccerstats, footystats
 - Extract: shot conversion rates, set piece effectiveness, PPDA, defensive actions
 
 **Search 5** (referee stats — NEW, dedicated):
+
 - "{referee_name OR home_team vs away_team} referee stats cards penalties"
 - Extract: avg fouls/cards per game, penalty rate, home bias, historical impact on similar matches
 
 **Search 6** (motivation/context):
+
 - "{home_team} {away_team} season objectives manager pressure derby {date}"
 - Extract: league position implications, cup fatigue, derby factor, manager job security, dead rubber risk
 
 **Search 7** (weather):
+
 - "{home_team} stadium weather {date}"
 - Extract: temperature, precipitation, wind. Relevant for O/U and BTTS markets.
 
 **Data extraction priorities:**
+
 - Injuries and suspensions — which key players are OUT and their specific contribution
 - Expected lineups — any rotation, resting players
 - xG projections — at least ONE quantitative source
@@ -461,6 +471,7 @@ Use WebSearch to find specific information for THIS matchup:
 From the league data already fetched, extract for THIS match:
 
 **From standings (total + home/away):**
+
 - Both teams' league position, points, form string (W/D/L)
 - Home team's HOME record (W/D/L, GF/GA from home standings)
 - Away team's AWAY record (W/D/L, GF/GA from away standings)
@@ -468,6 +479,7 @@ From the league data already fetched, extract for THIS match:
 - Zone: Champions (rank <= 4), Europa (<= 6), Conference (<= 7), Relegation (bottom 3)
 
 **From recent results (filter last 5 per team):**
+
 - Each team's last 5 results with scores
 - BTTS%: % of those matches where BOTH teams scored
 - Clean sheet%: % with 0 goals conceded
@@ -475,6 +487,7 @@ From the league data already fetched, extract for THIS match:
 - **Form momentum (exponential decay)**: Apply 0.95^n weighting over last 6 matches (n=0 for most recent). Classify as RISING (last 3 better than 4-6), FALLING (last 3 worse), or STABLE.
 
 **Expected goals (improved xGoals model):**
+
 ```
 homeAttack  = home team's HOME goals scored per game
 homeDefense = home team's HOME goals conceded per game
@@ -506,6 +519,7 @@ P(home=i, away=j) = (e^(-homeExpGoals) * homeExpGoals^i / i!) * (e^(-awayExpGoal
 ```
 
 From the scoreline grid, derive:
+
 - P(home_win) = sum of all P(i,j) where i > j
 - P(draw) = sum of all P(i,j) where i = j
 - P(away_win) = sum of all P(i,j) where i < j
@@ -532,13 +546,15 @@ P(home_elo) = 1 / (1 + 10^(-elo_diff/400))
 If ELO probability diverges from Poisson probability by more than 15pp for the same outcome, flag it as a conflict that needs explicit resolution in your reasoning.
 
 **From H2H data (match.h2h):**
+
 - Home team wins, away team wins, draws in last 10 meetings
 - Average goals per H2H match
 - Pattern: does one team dominate?
 - Venue-specific trends
 
 **From bookmaker odds (if available):**
-- Implied probabilities: (1/odds) * 100 for home, draw, away, O/U 2.5, BTTS
+
+- Implied probabilities: (1/odds) \* 100 for home, draw, away, O/U 2.5, BTTS
 - DO NOT look at these yet — save for the edge comparison in step 2d
 
 #### 2d. Independent probability assessment + deep reasoning (per match)
@@ -548,11 +564,13 @@ CRITICAL: Analyze ALL data WITHOUT looking at bookmaker odds first. Form your ow
 **Step 1 — Start from Poisson base rates:**
 
 Your probability estimates MUST START from the Poisson distribution computed in step 2c. These are your baseline:
+
 - P(home_win) = Poisson base ± qualitative adjustments
 - P(draw) = Poisson base ± qualitative adjustments
 - P(away_win) = Poisson base ± qualitative adjustments
 
 Qualitative adjustment factors (max +/-10pp each, max +/-20pp total):
+
 - Injuries: +/- based on key player absence impact
 - Motivation asymmetry: +/- based on stakes difference
 - Tactical matchup: +/- based on style interaction
@@ -571,7 +589,7 @@ Based on standings, form, H2H, injuries, xGoals, Poisson, ELO-lite, motivation, 
 
 **Step 2 — Compare against bookmaker implied probabilities:**
 
-- Bookmaker P(home) = (1/odds_home) * 100, etc. (normalize to sum to 100% by dividing each by overround)
+- Bookmaker P(home) = (1/odds_home) \* 100, etc. (normalize to sum to 100% by dividing each by overround)
 - Edge = Your probability - Bookmaker implied probability
 - Identify where your edge is strongest
 
@@ -599,6 +617,7 @@ Think through each match using ALL 10 points:
 **Step 5 — Value-hunting (EV calculation):**
 
 For each potential prediction, compute:
+
 ```
 EV = (predicted_probability / 100) × odds - 1
 ```
@@ -608,6 +627,7 @@ EV = (predicted_probability / 100) × odds - 1
 **Step 6 — Pre-decision checklist (ALL must pass):**
 
 Before generating a tip, verify:
+
 - [ ] Found at least ONE quantitative data point (xG, shots, conversion rate)?
 - [ ] Started from Poisson base rate and documented adjustments?
 - [ ] Explicitly considered why this is NOT a draw (or why draw is the pick)?
@@ -635,21 +655,21 @@ When skipping: "SKIPPED: {home} vs {away} — {reason}"
 
 #### 2f. Generate prediction with reasoning (per match)
 
-| Field | Rules |
-| ----- | ----- |
-| prediction | One of the 14 valid types. Choose the pick with the highest genuine edge. Avoid exotic picks unless data is overwhelming. |
-| confidence | 60-80 (max 80 until 100+ settled tips). Reflects statistical reality. Must be calibrated (see below). |
-| odds | MUST use real bookmaker odds from the fetched data (match.odds). Map prediction type to correct market. NEVER invent odds. If real odds not available, DO NOT generate a tip. |
-| analysis | 2-3 sentences IN ITALIAN citing specific numbers. Must justify the pick. |
-| predicted_probability | Your estimated probability for this prediction (e.g., 72.0). |
-| reasoning | Full structured reasoning (see format below). |
+| Field                 | Rules                                                                                                                                                                         |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| prediction            | One of the 14 valid types. Choose the pick with the highest genuine edge. Avoid exotic picks unless data is overwhelming.                                                     |
+| confidence            | 60-80 (max 80 until 100+ settled tips). Reflects statistical reality. Must be calibrated (see below).                                                                         |
+| odds                  | MUST use real bookmaker odds from the fetched data (match.odds). Map prediction type to correct market. NEVER invent odds. If real odds not available, DO NOT generate a tip. |
+| analysis              | 2-3 sentences IN ITALIAN citing specific numbers. Must justify the pick.                                                                                                      |
+| predicted_probability | Your estimated probability for this prediction (e.g., 72.0).                                                                                                                  |
+| reasoning             | Full structured reasoning (see format below).                                                                                                                                 |
 
 **Confidence calibration:**
 
 1. Start with your raw probability estimate for the chosen prediction
 2. Check the calibration curve from Shared Context — if the relevant band shows a gap > 10pp:
    - calibration_factor = actual_win_rate_for_band / midpoint_of_band
-   - adjusted = raw_probability * calibration_factor
+   - adjusted = raw_probability \* calibration_factor
 3. Clamp to range [60, 80]
 4. This adjusted value is the confidence field
 
@@ -731,6 +751,7 @@ Skipped: {list of skipped matches with reasons}
 8. Consider the draw — in tight matches between similar teams, X or X2/1X may be the most probable outcome. Our biggest error category is draw_blindness. Apply the 20% draw floor.
 9. Be contrarian only when data clearly supports it.
 10. Respect the insights. If the retrospective system flagged a pattern, address it explicitly in your reasoning.
+
 ```
 
 ### League-Specific Tuning Hints
@@ -739,37 +760,51 @@ Insert the appropriate block into each analyst's prompt based on the league:
 
 **Serie A:**
 ```
+
 Italian football has a historically higher draw rate (~27%). Actively consider draws — they are more common here than in other leagues. Defensive football is common, especially in mid-table and lower teams. Home advantage is significant in Italy. Be careful with Under markets as many Italian teams play tactically and low-scoring.
+
 ```
 
 **Champions League:**
 ```
+
 Group stage vs knockout stage have very different dynamics. Underdogs are more motivated in group stage. H2H is critical in knockouts (two-leg ties). Away goals and travel fatigue are real factors. Big clubs sometimes rotate in "dead rubber" group matches. Consider the prestige factor — even small clubs raise their level in UCL. European away form often differs from domestic.
+
 ```
 
 **La Liga:**
 ```
+
 Top-heavy league dominated by Real Madrid, Barcelona, and Atletico Madrid. Be very cautious tipping upsets against these three. Mid-table is competitive and draws are common. Smaller clubs play extremely defensively away from home. La Liga has a lower average goals per game than the Premier League or Bundesliga. Home advantage is strong, especially for Basque and Catalan clubs.
+
 ```
 
 **Premier League:**
 ```
+
 Most competitive and unpredictable league in Europe. Lower confidence ceilings are appropriate. Upsets are MORE common here — any team can beat any team on their day. The "Big Six" are not as dominant as in other leagues. Boxing Day and holiday fixture congestion creates unpredictable results. Weather (rain, wind) affects play. Set pieces are more important in England.
+
 ```
 
 **Ligue 1:**
 ```
+
 PSG dominance skews statistics dramatically. When analyzing non-PSG matches, exclude PSG's results from league averages as they are outliers. The league is physical and defensive. Away wins are less common. Lower-table teams often park the bus. Ligue 1 has a higher red card rate than other top leagues. African Cup of Nations departures in January affect many squads.
+
 ```
 
 **Bundesliga:**
 ```
+
 High-scoring league with an average of ~3.1 goals per game — the highest among top 5 leagues. Over markets tend to perform better here. Bayern Munich dominance is a factor. The 50+1 rule creates passionate home atmospheres — home advantage is strong. Bundesliga teams press aggressively, leading to open, end-to-end matches. Winter break can reset form.
+
 ```
 
 **Eredivisie:**
 ```
+
 Very high-scoring league — even higher than Bundesliga. Over 2.5 hits frequently. Home advantage is stronger here than in most leagues. Ajax, PSV, and Feyenoord dominate but upsets happen against smaller clubs. Smaller clubs are volatile — form can swing wildly week to week. Artificial pitches at some venues affect play. Young players can be inconsistent.
+
 ```
 
 ---
@@ -779,6 +814,7 @@ Very high-scoring league — even higher than Bundesliga. Over 2.5 hits frequent
 The reviewer teammate receives this prompt:
 
 ```
+
 You are a senior prediction quality reviewer for WinningBet. Your job is to catch bad tips before they go live. You have the authority to approve, reject, or adjust any tip.
 
 ## Configuration
@@ -809,7 +845,8 @@ Calculate the average confidence across all draft tips. If average confidence > 
 ### Step 4: Edge consistency check
 
 For each tip, verify:
-- predicted_probability - (1/odds * 100) >= 8pp
+
+- predicted_probability - (1/odds \* 100) >= 8pp
 - If edge < 8pp, REJECT the tip (quality gate failure that slipped through)
 
 ### Step 5: Draw awareness check
@@ -827,6 +864,7 @@ Quick sanity check: compute `EV = (predicted_probability/100 * odds) - 1` for ea
 ### Step 8: Stale odds check (SPOT CHECK — pick 3-5 random tips)
 
 For 3-5 randomly selected tips, WebSearch "{home} vs {away} odds {date}" to check if odds have moved significantly (> 15%). If odds moved:
+
 - If odds shortened (lower) → our edge shrunk → consider rejecting
 - If odds drifted (higher) → our edge grew → note as positive
 
@@ -837,6 +875,7 @@ For each tip, check if the reasoning mentions weather. If a match is predicted O
 ### Step 10: ROI Projection (NEW)
 
 For each tip, calculate expected value:
+
 - EV = (predicted_probability / 100 × odds) - 1
 - **REJECT tips with EV < 0.08** (8% minimum)
 - Calculate portfolio average EV — must exceed 0.10 (10%)
@@ -845,6 +884,7 @@ For each tip, calculate expected value:
 ### Step 11: Odds Distribution Check (NEW)
 
 Count tips by odds band:
+
 - Low value: odds < 1.50
 - Medium value: 1.50 - 2.50
 - High value: > 2.50
@@ -871,20 +911,25 @@ If a tip matches a recently-losing pattern (same league + same prediction type w
 For each tip, take ONE action:
 
 **APPROVE** (tip is solid):
+
 ```sql
 UPDATE tips SET status = 'pending' WHERE id = '{id}';
 ```
 
 **REJECT** (tip fails quality checks):
+
 ```sql
 DELETE FROM tips WHERE id = '{id}';
 ```
+
 Log reason: "REJECTED {home} vs {away}: {reason}"
 
 **ADJUST confidence** (tip is good but confidence is miscalibrated):
+
 ```sql
 UPDATE tips SET confidence = {new_value}, status = 'pending' WHERE id = '{id}';
 ```
+
 Log: "ADJUSTED {home} vs {away}: confidence {old} → {new}, reason: {reason}"
 
 ### Step 14: Report completion
@@ -903,6 +948,7 @@ REVIEW COMPLETE:
 - Historical pattern flags: N tips matched recent losing patterns
 - Flags: [any cross-correlation, diversity, or draw awareness flags]
 ```
+
 ```
 
 ---
@@ -920,3 +966,4 @@ REVIEW COMPLETE:
 - **Confidence max lowered to 80** (from 85) — until we prove accuracy.
 - **Draft → Pending workflow**: Analysts insert as draft, reviewer promotes to pending. No tip reaches users without review.
 - **Clean up always**: After review, `DELETE FROM tips WHERE status = 'draft'` ensures no orphaned drafts.
+```

@@ -108,9 +108,7 @@ function buildDailyDigest(tips) {
         '  <td style="padding: 12px; text-align: center;">',
         '    ' +
           escapeHtml(
-            tip.confidence !== null && tip.confidence !== undefined
-              ? tip.confidence + '%'
-              : '—',
+            tip.confidence !== null && tip.confidence !== undefined ? tip.confidence + '%' : '—',
           ),
         '  </td>',
         '</tr>',
@@ -170,9 +168,7 @@ function buildDailyDigest(tips) {
           ' @ ' +
           (tip.odds ? parseFloat(tip.odds).toFixed(2) : '—') +
           ' (' +
-          (tip.confidence !== null && tip.confidence !== undefined
-            ? tip.confidence + '%'
-            : '—') +
+          (tip.confidence !== null && tip.confidence !== undefined ? tip.confidence + '%' : '—') +
           ')'
         );
       })

@@ -64,6 +64,7 @@ For each match needing research, perform ALL searches below. Extract structured 
 - `"{home_team} {away_team} transfermarkt injuries {date}"`
 
 Extract:
+
 ```json
 {
   "lineups": {
@@ -87,13 +88,14 @@ Extract:
 - `"{home_team} vs {away_team} tactical preview formation analysis"`
 
 Extract:
+
 ```json
 {
   "home_style": "high press, possession-based",
   "away_style": "counter-attack, low block",
   "key_matchup": "Home's overlapping fullbacks vs Away's wing-backs",
   "recent_tactical_changes": "Home switched from 4-3-3 to 3-4-3 last 2 games",
-  "pressing_intensity": {"home": "high", "away": "medium"}
+  "pressing_intensity": { "home": "high", "away": "medium" }
 }
 ```
 
@@ -102,16 +104,17 @@ Extract:
 - `"{home_team} {away_team} xG expected goals understat fbref stats"`
 
 Extract:
+
 ```json
 {
   "home_xg_per_game": 1.45,
   "away_xg_per_game": 1.12,
   "home_xga_per_game": 0.98,
   "away_xga_per_game": 1.35,
-  "pre_match_xg_projection": {"home": 1.6, "away": 0.9},
+  "pre_match_xg_projection": { "home": 1.6, "away": 0.9 },
   "source": "understat|fbref|fivethirtyeight",
-  "ppda": {"home": 8.5, "away": 12.3},
-  "shot_conversion": {"home": "12%", "away": "9%"}
+  "ppda": { "home": 8.5, "away": 12.3 },
+  "shot_conversion": { "home": "12%", "away": "9%" }
 }
 ```
 
@@ -120,6 +123,7 @@ Extract:
 - `"{referee_name} referee stats cards penalties average" OR "{home_team} vs {away_team} referee"`
 
 Extract:
+
 ```json
 {
   "referee_name": "Name",
@@ -136,6 +140,7 @@ Extract:
 - `"{city} weather {date} forecast"`
 
 Extract:
+
 ```json
 {
   "temperature_c": 12,
@@ -151,6 +156,7 @@ Extract:
 - `"{home_team} {away_team} season objectives manager pressure must win {date}"`
 
 Extract:
+
 ```json
 {
   "home_objective": "Title race, 2 points behind leader",
@@ -158,7 +164,7 @@ Extract:
   "motivation_asymmetry": "HIGH — home must win, away relaxed",
   "derby_factor": false,
   "cup_fatigue": "Away played midweek Champions League, possible rotation",
-  "manager_pressure": {"home": "low", "away": "medium — 3 losses in a row"}
+  "manager_pressure": { "home": "low", "away": "medium — 3 losses in a row" }
 }
 ```
 
@@ -167,10 +173,11 @@ Extract:
 - `"{home_team} vs {away_team} odds movement betting market {date}"`
 
 Extract:
+
 ```json
 {
-  "opening_odds": {"home": 1.85, "draw": 3.50, "away": 4.20},
-  "current_odds": {"home": 1.75, "draw": 3.60, "away": 4.50},
+  "opening_odds": { "home": 1.85, "draw": 3.5, "away": 4.2 },
+  "current_odds": { "home": 1.75, "draw": 3.6, "away": 4.5 },
   "movement": "Home odds shortening (1.85→1.75), money on home win",
   "sharp_money_indicator": "Significant movement suggests smart money on home",
   "over_under_movement": "Over 2.5 steady at 1.90"
@@ -180,6 +187,7 @@ Extract:
 ### 4. Calculate research completeness
 
 Score each research category:
+
 - Lineups: 20 points (confirmed=20, probable=15, speculative=10, missing=0)
 - Injuries: 15 points (detailed with impact=15, basic list=10, missing=0)
 - Tactical preview: 15 points (formations+style=15, basic=8, missing=0)

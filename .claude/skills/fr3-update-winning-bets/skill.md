@@ -21,22 +21,23 @@ Designed to minimize token usage: pre-check each phase, skip what's not needed, 
 
 From `$ARGUMENTS`:
 
-| Flag | Effect |
-|------|--------|
-| *(none)* | Full auto — checks everything, runs what's needed, sends to Telegram |
-| `--skip-analytics` | Skip Phase 0 (performance analytics) |
-| `--skip-optimize` | Skip Phase 1 (strategy optimization) |
-| `--skip-settle` | Skip Phase 2 (settlement) |
-| `--skip-research` | Skip Phase 3 (pre-match research) |
-| `--skip-generate` | Skip Phase 4 (tip generation) |
-| `--skip-schedine` | Skip Phase 5 (betting slips) |
-| `--force` | Force ALL phases regardless of smart checks |
-| `--no-send` | Don't send to Telegram (default is to send) |
-| `--dry-run` | Show what each phase WOULD do without executing anything |
+| Flag               | Effect                                                               |
+| ------------------ | -------------------------------------------------------------------- |
+| _(none)_           | Full auto — checks everything, runs what's needed, sends to Telegram |
+| `--skip-analytics` | Skip Phase 0 (performance analytics)                                 |
+| `--skip-optimize`  | Skip Phase 1 (strategy optimization)                                 |
+| `--skip-settle`    | Skip Phase 2 (settlement)                                            |
+| `--skip-research`  | Skip Phase 3 (pre-match research)                                    |
+| `--skip-generate`  | Skip Phase 4 (tip generation)                                        |
+| `--skip-schedine`  | Skip Phase 5 (betting slips)                                         |
+| `--force`          | Force ALL phases regardless of smart checks                          |
+| `--no-send`        | Don't send to Telegram (default is to send)                          |
+| `--dry-run`        | Show what each phase WOULD do without executing anything             |
 
 Flags can be combined: `--skip-settle --no-send`, `--force --dry-run`, etc.
 
 Derive `SEND_FLAG`:
+
 - If `--no-send` → `SEND_FLAG = ""`
 - Otherwise → `SEND_FLAG = " --send"`
 
@@ -58,6 +59,7 @@ Settle BEFORE generating (settlement updates the track record used for calibrati
 Analytics and Optimize BEFORE generate (they feed shared context into analysts).
 
 **Phase failure handling:** If a phase fails (skill error, timeout, unexpected output):
+
 - Log the failure: "Phase N: FAILED — {error details}"
 - Record `PHASE_RESULT = "FAILED: {reason}"`
 - **Continue to the next phase** — phases are independent enough that one failure should not block the entire pipeline
@@ -100,6 +102,7 @@ If `RUN_ANALYTICS = true`:
 - Record result: `ANALYTICS_RESULT = "done (snapshot stored)"`
 
 If `RUN_ANALYTICS = false`:
+
 - `ANALYTICS_RESULT = "skipped (snapshot exists today or insufficient data)"`
 
 ## Phase 1: Optimize
@@ -129,6 +132,7 @@ If `RUN_OPTIMIZE = true`:
 - Record result: `OPTIMIZE_RESULT = "done (N directives generated)"`
 
 If `RUN_OPTIMIZE = false`:
+
 - `OPTIMIZE_RESULT = "skipped (directives fresh or insufficient data)"`
 
 ## Phase 2: Settle
@@ -163,6 +167,7 @@ If `RUN_SETTLE = true`:
 - Record result: `SETTLE_RESULT = "done (N settled)"`
 
 If `RUN_SETTLE = false`:
+
 - `SETTLE_RESULT = "skipped (no finished matches)"`
 
 ## Phase 3: Research
@@ -197,6 +202,7 @@ If `RUN_RESEARCH = true`:
 - Record result: `RESEARCH_RESULT = "done (N matches researched)"`
 
 If `RUN_RESEARCH = false`:
+
 - `RESEARCH_RESULT = "skipped (no upcoming matches or fresh research exists)"`
 
 **Note:** Phase 3 (Research) can conceptually run in parallel with Phase 2 (Settle) since they operate on different data sets. However, since we invoke skills sequentially via the Skill tool, they run one after another. The key ordering constraint is: both must complete BEFORE Phase 4 (Generate).
@@ -243,6 +249,7 @@ If `RUN_GENERATE = true`:
 **Note:** `/fr3-generate-tips` already invokes `/fr3-generate-betting-slips` automatically at the end. So if generation runs, Phase 5 can often be skipped. However, Phase 5 still runs its own check to catch edge cases.
 
 If `RUN_GENERATE = false`:
+
 - `GENERATE_RESULT = "skipped (enough tips or no matches)"`
 
 ## Phase 5: Schedine (Betting Slips)
@@ -293,6 +300,7 @@ If `RUN_SCHEDINE = true`:
 - Record result: `SCHEDINE_RESULT = "done (N schedine generated)"`
 
 If `RUN_SCHEDINE = false`:
+
 - `SCHEDINE_RESULT = "skipped (already exist or not enough tips)"`
 
 ## Phase 6: Summary

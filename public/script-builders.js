@@ -1,5 +1,5 @@
 /* exported createEl, formatResultDate, teamAbbr, buildLockSvg, randomFrom, randomOdd, randomConfidence, canAccessTier, setEmptyState, buildMatchCard, buildResultItem, buildTipResultItem, buildLockedOverlay, buildTipCard, activateConfidenceBars, PREDICTIONS, ANALYSES */
-/* global formatMatchDate, TIER_PRICES, TIER_LEVELS */
+/* global formatMatchDate, TIER_PRICES, TIER_LEVELS, buildShareDropdown */
 /* eslint no-var: "off" */
 
 /**
@@ -94,10 +94,7 @@ var buildResultItem = function (r) {
  */
 var buildTipResultItem = function (tip) {
   var isWin = tip.status === 'won';
-  var item = createEl(
-    'div',
-    'result-item ' + (isWin ? 'result-item--win' : 'result-item--loss'),
-  );
+  var item = createEl('div', 'result-item ' + (isWin ? 'result-item--win' : 'result-item--loss'));
   item.appendChild(createEl('span', 'result-status', isWin ? '\u2713' : '\u2717'));
   item.appendChild(createEl('span', 'result-date', formatResultDate(tip.match_date)));
   item.appendChild(createEl('span', 'result-match', tip.home_team + ' vs ' + tip.away_team));
@@ -234,11 +231,7 @@ var buildLockedOverlay = function (cardTier, userTier) {
         'Canale Telegram VIP privato',
         'Bankroll management personalizzato',
       ]
-    : [
-        'Tutti i tips giornalieri',
-        'Analisi pre-partita dettagliate',
-        'Storico completo risultati',
-      ];
+    : ['Tutti i tips giornalieri', 'Analisi pre-partita dettagliate', 'Storico completo risultati'];
 
   benefitItems.forEach(function (text) {
     var li = createEl('li', null, '\u2713 ' + text);
@@ -369,6 +362,17 @@ var buildTipCard = function (match, tierOrTip, userTier) {
     var locked = createEl('div', 'tip-analysis tip-analysis--locked');
     locked.appendChild(buildLockedOverlay(tier, userTier));
     card.appendChild(locked);
+  }
+
+  // Share button (only for accessible tips)
+  if (hasAccess) {
+    var shareText = '\u26BD ' + match.home + ' vs ' + match.away + '\n';
+    shareText += '\uD83C\uDFAF Pronostico: ' + pickText + '\n';
+    shareText += '\uD83D\uDCCA Quota: ' + oddsText + '\n';
+    shareText += '\uD83D\uDCC5 ' + formatMatchDate(match.date) + '\n';
+    shareText += '\nda WinningBet \u2014 winningbet.it';
+
+    card.appendChild(buildShareDropdown({ text: shareText }));
   }
 
   return card;

@@ -38,15 +38,15 @@ Unified reference for WinningBet's AI prediction engine. All operational, statis
 
 WinningBet has two independent prediction engines. The Claude Code skill is the primary engine; the serverless API is the legacy fallback.
 
-|                    | Claude Code Skill (Primary)                                                                | Serverless API (Legacy)                                   |
-| ------------------ | ------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| **Entry point**    | `/generate-tips` slash command                                                             | `POST /api/generate-tips`                                 |
-| **AI model**       | Claude Code itself (zero API cost)                                                         | Opus 4.6 via Anthropic API                                |
-| **Analysis style** | Decoupled per-match with web research                                                      | Batched per-league in one API call                        |
+|                    | Claude Code Skill (Primary)                                                                    | Serverless API (Legacy)                                   |
+| ------------------ | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| **Entry point**    | `/generate-tips` slash command                                                                 | `POST /api/generate-tips`                                 |
+| **AI model**       | Claude Code itself (zero API cost)                                                             | Opus 4.6 via Anthropic API                                |
+| **Analysis style** | Decoupled per-match with web research                                                          | Batched per-league in one API call                        |
 | **Data fetch**     | [`fetch-league-data.js`](.claude/skills/fr3-generate-tips/scripts/fetch-league-data.js) script | [`generate-tips.js:218-311`](api/generate-tips.js) inline |
-| **Storage**        | Supabase MCP `execute_sql`                                                                 | Supabase JS client                                        |
-| **Invocation**     | Manual via Claude Code CLI                                                                 | Manual (`POST /api/generate-tips`), cron removed          |
-| **Web research**   | Pre-match research cache + 7 targeted WebSearches per match                                | Haiku 4.5 + web_search tool per league (up to 3 searches) |
+| **Storage**        | Supabase MCP `execute_sql`                                                                     | Supabase JS client                                        |
+| **Invocation**     | Manual via Claude Code CLI                                                                     | Manual (`POST /api/generate-tips`), cron removed          |
+| **Web research**   | Pre-match research cache + 7 targeted WebSearches per match                                    | Haiku 4.5 + web_search tool per league (up to 3 searches) |
 
 **Why two engines?** The skill is preferred because Claude Code IS the analyst — no API cost, deeper per-match analysis, and web research per match instead of per league. The serverless API remains available for manual triggering via `POST /api/generate-tips` but the automatic cron schedule has been removed (too expensive for the Hobby plan).
 
@@ -158,6 +158,7 @@ Actions: APPROVE (draft → pending), REJECT (delete), ADJUST (modify confidence
 ### Phase 6: Post-Review Cleanup & Tier Rebalancing
 
 Team Lead cleans up remaining drafts, then rebalances tiers globally:
+
 - Combo predictions ("+") → always "vip"
 - Bottom 25% by value → "free"
 - Next 25% → "pro"
@@ -474,23 +475,23 @@ Triggered when a league has 3+ tips but any tier has 0 members:
 
 Defined in [`001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql) + [`002_add_league_column.sql`](supabase/migrations/002_add_league_column.sql) + [`010_retrospective_system.sql`](supabase/migrations/010_retrospective_system.sql) + [`011_draft_status.sql`](supabase/migrations/011_draft_status.sql):
 
-| Column                  | Type         | Constraints                                                      |
-| ----------------------- | ------------ | ---------------------------------------------------------------- |
-| `id`                    | UUID         | PK, auto-generated                                               |
-| `match_id`              | TEXT         | NOT NULL                                                         |
-| `home_team`             | TEXT         | NOT NULL                                                         |
-| `away_team`             | TEXT         | NOT NULL                                                         |
-| `match_date`            | TIMESTAMPTZ  | NOT NULL                                                         |
-| `prediction`            | TEXT         | NOT NULL                                                         |
-| `odds`                  | NUMERIC(5,2) | —                                                                |
-| `confidence`            | INTEGER      | CHECK 0-100                                                      |
-| `analysis`              | TEXT         | —                                                                |
-| `tier`                  | TEXT         | NOT NULL, DEFAULT 'free', CHECK IN (free, pro, vip)              |
+| Column                  | Type         | Constraints                                                             |
+| ----------------------- | ------------ | ----------------------------------------------------------------------- |
+| `id`                    | UUID         | PK, auto-generated                                                      |
+| `match_id`              | TEXT         | NOT NULL                                                                |
+| `home_team`             | TEXT         | NOT NULL                                                                |
+| `away_team`             | TEXT         | NOT NULL                                                                |
+| `match_date`            | TIMESTAMPTZ  | NOT NULL                                                                |
+| `prediction`            | TEXT         | NOT NULL                                                                |
+| `odds`                  | NUMERIC(5,2) | —                                                                       |
+| `confidence`            | INTEGER      | CHECK 0-100                                                             |
+| `analysis`              | TEXT         | —                                                                       |
+| `tier`                  | TEXT         | NOT NULL, DEFAULT 'free', CHECK IN (free, pro, vip)                     |
 | `status`                | TEXT         | NOT NULL, DEFAULT 'pending', CHECK IN (pending, won, lost, void, draft) |
-| `league`                | TEXT         | NOT NULL, DEFAULT 'serie-a'                                      |
-| `reasoning`             | TEXT         | Structured chain-of-thought analysis (added in 010)              |
-| `predicted_probability` | NUMERIC(5,2) | Raw analyst probability estimate (added in 010)                  |
-| `created_at`            | TIMESTAMPTZ  | NOT NULL, DEFAULT now()                                          |
+| `league`                | TEXT         | NOT NULL, DEFAULT 'serie-a'                                             |
+| `reasoning`             | TEXT         | Structured chain-of-thought analysis (added in 010)                     |
+| `predicted_probability` | NUMERIC(5,2) | Raw analyst probability estimate (added in 010)                         |
+| `created_at`            | TIMESTAMPTZ  | NOT NULL, DEFAULT now()                                                 |
 
 **Indexes:**
 
@@ -515,23 +516,23 @@ Defined in [`001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql
 
 Defined in [`010_retrospective_system.sql`](supabase/migrations/010_retrospective_system.sql). One row per settled tip — contains post-mortem analysis.
 
-| Column                          | Type         | Constraints                                                      |
-| ------------------------------- | ------------ | ---------------------------------------------------------------- |
-| `id`                            | UUID         | PK, auto-generated                                               |
-| `tip_id`                        | UUID         | NOT NULL, FK → tips(id) CASCADE, UNIQUE                          |
-| `actual_score`                  | TEXT         | NOT NULL (e.g., "2-1")                                           |
-| `actual_result_category`        | TEXT         | NOT NULL ("1", "X", or "2")                                      |
-| `actual_goals_total`            | INTEGER      | NOT NULL                                                         |
-| `actual_btts`                   | BOOLEAN      | NOT NULL                                                         |
-| `predicted_probability`         | NUMERIC(5,2) | Our probability at generation time                               |
-| `bookmaker_implied_probability` | NUMERIC(5,2) | 1/odds × 100                                                     |
-| `edge_at_prediction`            | NUMERIC(5,2) | predicted - bookmaker implied                                    |
-| `outcome_surprise`              | TEXT         | NOT NULL, CHECK IN (expected, mild_surprise, major_surprise)     |
-| `what_happened`                 | TEXT         | NOT NULL, 2-3 sentence match narrative                           |
-| `what_we_missed`                | TEXT         | Signal we failed to catch (NULL for won tips)                    |
-| `lesson_learned`                | TEXT         | Actionable insight for future                                    |
+| Column                          | Type         | Constraints                                                                                                                                                                           |
+| ------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                            | UUID         | PK, auto-generated                                                                                                                                                                    |
+| `tip_id`                        | UUID         | NOT NULL, FK → tips(id) CASCADE, UNIQUE                                                                                                                                               |
+| `actual_score`                  | TEXT         | NOT NULL (e.g., "2-1")                                                                                                                                                                |
+| `actual_result_category`        | TEXT         | NOT NULL ("1", "X", or "2")                                                                                                                                                           |
+| `actual_goals_total`            | INTEGER      | NOT NULL                                                                                                                                                                              |
+| `actual_btts`                   | BOOLEAN      | NOT NULL                                                                                                                                                                              |
+| `predicted_probability`         | NUMERIC(5,2) | Our probability at generation time                                                                                                                                                    |
+| `bookmaker_implied_probability` | NUMERIC(5,2) | 1/odds × 100                                                                                                                                                                          |
+| `edge_at_prediction`            | NUMERIC(5,2) | predicted - bookmaker implied                                                                                                                                                         |
+| `outcome_surprise`              | TEXT         | NOT NULL, CHECK IN (expected, mild_surprise, major_surprise)                                                                                                                          |
+| `what_happened`                 | TEXT         | NOT NULL, 2-3 sentence match narrative                                                                                                                                                |
+| `what_we_missed`                | TEXT         | Signal we failed to catch (NULL for won tips)                                                                                                                                         |
+| `lesson_learned`                | TEXT         | Actionable insight for future                                                                                                                                                         |
 | `error_category`                | TEXT         | CHECK IN (none, overconfidence, form_reversal, injury_impact, h2h_ignored, motivation_miss, tactical_shift, goal_pattern_miss, referee_factor, underdog_upset, draw_blindness, other) |
-| `created_at`                    | TIMESTAMPTZ  | NOT NULL, DEFAULT now()                                          |
+| `created_at`                    | TIMESTAMPTZ  | NOT NULL, DEFAULT now()                                                                                                                                                               |
 
 **Indexes:** `tip_id`, `error_category`, `outcome_surprise`, `created_at DESC`
 
@@ -539,21 +540,21 @@ Defined in [`010_retrospective_system.sql`](supabase/migrations/010_retrospectiv
 
 Defined in [`010_retrospective_system.sql`](supabase/migrations/010_retrospective_system.sql). Aggregate patterns detected from analyzing multiple retrospectives.
 
-| Column               | Type         | Constraints                                                      |
-| -------------------- | ------------ | ---------------------------------------------------------------- |
-| `id`                 | UUID         | PK, auto-generated                                               |
-| `scope`              | TEXT         | NOT NULL, CHECK IN (global, league, prediction_type, context)    |
-| `scope_value`        | TEXT         | e.g., "serie-a", "1", "relegation_battle"                       |
-| `insight_type`       | TEXT         | NOT NULL, CHECK IN (bias_detected, weak_spot, strong_spot, calibration_drift, pattern_warning) |
-| `insight_text`       | TEXT         | NOT NULL, human-readable insight                                 |
-| `evidence`           | JSONB        | NOT NULL, supporting data (tip_ids, win rates, sample size)      |
-| `sample_size`        | INTEGER      | NOT NULL                                                         |
-| `confidence_level`   | NUMERIC(5,2) | Statistical confidence in the insight                            |
-| `is_active`          | BOOLEAN      | NOT NULL, DEFAULT true                                           |
-| `first_detected_at`  | TIMESTAMPTZ  | NOT NULL, DEFAULT now()                                          |
-| `last_validated_at`  | TIMESTAMPTZ  | NOT NULL, DEFAULT now()                                          |
-| `expires_at`         | TIMESTAMPTZ  | Auto-expire after 60 days if not re-validated                    |
-| `created_at`         | TIMESTAMPTZ  | NOT NULL, DEFAULT now()                                          |
+| Column              | Type         | Constraints                                                                                    |
+| ------------------- | ------------ | ---------------------------------------------------------------------------------------------- |
+| `id`                | UUID         | PK, auto-generated                                                                             |
+| `scope`             | TEXT         | NOT NULL, CHECK IN (global, league, prediction_type, context)                                  |
+| `scope_value`       | TEXT         | e.g., "serie-a", "1", "relegation_battle"                                                      |
+| `insight_type`      | TEXT         | NOT NULL, CHECK IN (bias_detected, weak_spot, strong_spot, calibration_drift, pattern_warning) |
+| `insight_text`      | TEXT         | NOT NULL, human-readable insight                                                               |
+| `evidence`          | JSONB        | NOT NULL, supporting data (tip_ids, win rates, sample size)                                    |
+| `sample_size`       | INTEGER      | NOT NULL                                                                                       |
+| `confidence_level`  | NUMERIC(5,2) | Statistical confidence in the insight                                                          |
+| `is_active`         | BOOLEAN      | NOT NULL, DEFAULT true                                                                         |
+| `first_detected_at` | TIMESTAMPTZ  | NOT NULL, DEFAULT now()                                                                        |
+| `last_validated_at` | TIMESTAMPTZ  | NOT NULL, DEFAULT now()                                                                        |
+| `expires_at`        | TIMESTAMPTZ  | Auto-expire after 60 days if not re-validated                                                  |
+| `created_at`        | TIMESTAMPTZ  | NOT NULL, DEFAULT now()                                                                        |
 
 **Indexes:** `is_active` (partial, WHERE true), `(scope, scope_value)`, `insight_type`
 
@@ -561,23 +562,23 @@ Defined in [`010_retrospective_system.sql`](supabase/migrations/010_retrospectiv
 
 Defined in [`012_performance_snapshots.sql`](supabase/migrations/012_performance_snapshots.sql). Stores periodic track record analysis with breakdowns and recommendations.
 
-| Column                        | Type         | Constraints                                  |
-| ----------------------------- | ------------ | -------------------------------------------- |
-| `id`                          | UUID         | PK, auto-generated                           |
-| `snapshot_date`               | DATE         | NOT NULL                                     |
-| `period_days`                 | INTEGER      | NOT NULL                                     |
-| `total_tips`                  | INTEGER      | NOT NULL                                     |
-| `won`                         | INTEGER      | NOT NULL                                     |
-| `lost`                        | INTEGER      | NOT NULL                                     |
-| `hit_rate`                    | NUMERIC(5,2) | NOT NULL                                     |
-| `roi_flat`                    | NUMERIC(8,2) | NOT NULL                                     |
-| `avg_odds`                    | NUMERIC(5,2) | NOT NULL                                     |
-| `league_breakdown`            | JSONB        | NOT NULL (per-league win rate, ROI, count)   |
-| `prediction_type_breakdown`   | JSONB        | NOT NULL (per-type win rate, ROI, count)     |
-| `confidence_calibration`      | JSONB        | NOT NULL (claimed vs actual per band)        |
-| `odds_band_breakdown`         | JSONB        | NOT NULL (per-range win rate, ROI)           |
-| `recommendations`             | JSONB        | NOT NULL (actionable directives)             |
-| `created_at`                  | TIMESTAMPTZ  | NOT NULL, DEFAULT now()                      |
+| Column                      | Type         | Constraints                                |
+| --------------------------- | ------------ | ------------------------------------------ |
+| `id`                        | UUID         | PK, auto-generated                         |
+| `snapshot_date`             | DATE         | NOT NULL                                   |
+| `period_days`               | INTEGER      | NOT NULL                                   |
+| `total_tips`                | INTEGER      | NOT NULL                                   |
+| `won`                       | INTEGER      | NOT NULL                                   |
+| `lost`                      | INTEGER      | NOT NULL                                   |
+| `hit_rate`                  | NUMERIC(5,2) | NOT NULL                                   |
+| `roi_flat`                  | NUMERIC(8,2) | NOT NULL                                   |
+| `avg_odds`                  | NUMERIC(5,2) | NOT NULL                                   |
+| `league_breakdown`          | JSONB        | NOT NULL (per-league win rate, ROI, count) |
+| `prediction_type_breakdown` | JSONB        | NOT NULL (per-type win rate, ROI, count)   |
+| `confidence_calibration`    | JSONB        | NOT NULL (claimed vs actual per band)      |
+| `odds_band_breakdown`       | JSONB        | NOT NULL (per-range win rate, ROI)         |
+| `recommendations`           | JSONB        | NOT NULL (actionable directives)           |
+| `created_at`                | TIMESTAMPTZ  | NOT NULL, DEFAULT now()                    |
 
 **Constraint:** UNIQUE on `(snapshot_date, period_days)`
 
@@ -585,18 +586,18 @@ Defined in [`012_performance_snapshots.sql`](supabase/migrations/012_performance
 
 Defined in [`013_strategy_directives.sql`](supabase/migrations/013_strategy_directives.sql). Prescriptive strategy rules generated by `/fr3-strategy-optimizer`.
 
-| Column            | Type        | Constraints                                  |
-| ----------------- | ----------- | -------------------------------------------- |
-| `id`              | UUID        | PK, auto-generated                           |
+| Column            | Type        | Constraints                                           |
+| ----------------- | ----------- | ----------------------------------------------------- |
+| `id`              | UUID        | PK, auto-generated                                    |
 | `directive_type`  | TEXT        | NOT NULL (e.g., avoid_prediction_type, prefer_league) |
-| `directive_text`  | TEXT        | NOT NULL (human-readable directive)          |
-| `parameters`      | JSONB       | Machine-readable params                      |
-| `evidence`        | JSONB       | NOT NULL (supporting data)                   |
-| `impact_estimate` | TEXT        | CHECK IN (HIGH, MEDIUM, LOW)                 |
-| `is_active`       | BOOLEAN     | NOT NULL, DEFAULT true                       |
-| `applied_at`      | TIMESTAMPTZ | When directive was first applied             |
-| `expires_at`      | TIMESTAMPTZ | DEFAULT now() + 30 days                      |
-| `created_at`      | TIMESTAMPTZ | NOT NULL, DEFAULT now()                      |
+| `directive_text`  | TEXT        | NOT NULL (human-readable directive)                   |
+| `parameters`      | JSONB       | Machine-readable params                               |
+| `evidence`        | JSONB       | NOT NULL (supporting data)                            |
+| `impact_estimate` | TEXT        | CHECK IN (HIGH, MEDIUM, LOW)                          |
+| `is_active`       | BOOLEAN     | NOT NULL, DEFAULT true                                |
+| `applied_at`      | TIMESTAMPTZ | When directive was first applied                      |
+| `expires_at`      | TIMESTAMPTZ | DEFAULT now() + 30 days                               |
+| `created_at`      | TIMESTAMPTZ | NOT NULL, DEFAULT now()                               |
 
 **Indexes:** partial on `is_active` WHERE true, partial on `expires_at` WHERE active
 
@@ -604,27 +605,27 @@ Defined in [`013_strategy_directives.sql`](supabase/migrations/013_strategy_dire
 
 Defined in [`014_match_research.sql`](supabase/migrations/014_match_research.sql). Caches pre-match research data for reuse by tip generation analysts.
 
-| Column                   | Type        | Constraints                                   |
-| ------------------------ | ----------- | --------------------------------------------- |
-| `id`                     | UUID        | PK, auto-generated                            |
-| `match_id`               | TEXT        | NOT NULL                                      |
-| `league`                 | TEXT        | NOT NULL                                      |
-| `home_team`              | TEXT        | NOT NULL                                      |
-| `away_team`              | TEXT        | NOT NULL                                      |
-| `match_date`             | TIMESTAMPTZ | NOT NULL                                      |
-| `lineups`                | JSONB       | Expected XI, formations, lineup confidence    |
-| `injuries`               | JSONB       | Injured players with role, severity, impact   |
-| `tactical_preview`       | JSONB       | Formations, pressing style, key matchups      |
-| `xg_data`                | JSONB       | Pre-match xG projections, PPDA, shot conversion |
-| `referee_data`           | JSONB       | Avg fouls/cards, penalty rate, home bias      |
-| `weather`                | JSONB       | Temperature, wind, precipitation, pitch       |
-| `motivation`             | JSONB       | Season objectives, manager pressure, derby    |
-| `market_intelligence`    | JSONB       | Opening vs current odds, sharp money          |
-| `research_completeness`  | INTEGER     | NOT NULL, CHECK 0-100 (scoring system)        |
-| `data_sources`           | TEXT[]      | List of sources used                          |
-| `status`                 | TEXT        | NOT NULL, DEFAULT 'fresh'                     |
-| `created_at`             | TIMESTAMPTZ | NOT NULL, DEFAULT now()                       |
-| `expires_at`             | TIMESTAMPTZ | NOT NULL, DEFAULT now() + 24 hours            |
+| Column                  | Type        | Constraints                                     |
+| ----------------------- | ----------- | ----------------------------------------------- |
+| `id`                    | UUID        | PK, auto-generated                              |
+| `match_id`              | TEXT        | NOT NULL                                        |
+| `league`                | TEXT        | NOT NULL                                        |
+| `home_team`             | TEXT        | NOT NULL                                        |
+| `away_team`             | TEXT        | NOT NULL                                        |
+| `match_date`            | TIMESTAMPTZ | NOT NULL                                        |
+| `lineups`               | JSONB       | Expected XI, formations, lineup confidence      |
+| `injuries`              | JSONB       | Injured players with role, severity, impact     |
+| `tactical_preview`      | JSONB       | Formations, pressing style, key matchups        |
+| `xg_data`               | JSONB       | Pre-match xG projections, PPDA, shot conversion |
+| `referee_data`          | JSONB       | Avg fouls/cards, penalty rate, home bias        |
+| `weather`               | JSONB       | Temperature, wind, precipitation, pitch         |
+| `motivation`            | JSONB       | Season objectives, manager pressure, derby      |
+| `market_intelligence`   | JSONB       | Opening vs current odds, sharp money            |
+| `research_completeness` | INTEGER     | NOT NULL, CHECK 0-100 (scoring system)          |
+| `data_sources`          | TEXT[]      | List of sources used                            |
+| `status`                | TEXT        | NOT NULL, DEFAULT 'fresh'                       |
+| `created_at`            | TIMESTAMPTZ | NOT NULL, DEFAULT now()                         |
+| `expires_at`            | TIMESTAMPTZ | NOT NULL, DEFAULT now() + 24 hours              |
 
 **Constraint:** UNIQUE on `(match_id, league)`
 **Indexes:** `league`, partial on `status='fresh'`, `match_date DESC` (note: `match_id` standalone index omitted -- the UNIQUE composite index covers it)
@@ -632,28 +633,34 @@ Defined in [`014_match_research.sql`](supabase/migrations/014_match_research.sql
 ### RLS Policies
 
 **tips:**
+
 - **Free tips**: visible to all (`tier = 'free'`)
 - **Pro tips**: visible to users with `profiles.tier IN ('pro', 'vip')`
 - **VIP tips**: visible to users with `profiles.tier = 'vip'`
 - **Service role**: full access (backend operations)
 
 **tip_retrospectives:**
+
 - **Public**: SELECT (read-only for all)
 - **Service role**: full access (ALL)
 
 **prediction_insights:**
+
 - **Public**: SELECT (read-only for all)
 - **Service role**: full access (ALL)
 
 **performance_snapshots:**
+
 - **Public**: SELECT (read-only for all)
 - **Service role**: full access (ALL)
 
 **strategy_directives:**
+
 - **Public**: SELECT (read-only for all)
 - **Service role**: full access (ALL)
 
 **match_research:**
+
 - **Public**: SELECT (read-only for all)
 - **Service role**: full access (ALL)
 
@@ -773,20 +780,20 @@ NEXT CYCLE: Analytics → Optimize → Research → Generate → Settle → ...
 
 ### Error Category Taxonomy
 
-| Category | Description | Example |
-| --- | --- | --- |
-| `none` | Prediction was correct | — |
-| `draw_blindness` | Predicted win (1/2), got draw | Predicted "1" for Napoli, match ended 1-1 |
-| `overconfidence` | High confidence (75%+), lost | Claimed 82% for "1X", team lost 0-2 |
-| `form_reversal` | Team broke form trend | 5-match winning streak team suddenly lost |
-| `injury_impact` | Key absence missed/underweighted | Star striker out, attack collapsed |
-| `h2h_ignored` | H2H pattern we should have heeded | Away team always wins at this venue |
-| `motivation_miss` | Misjudged motivation/stakes | Dead rubber for one team, played reserves |
-| `tactical_shift` | Manager changed tactics unexpectedly | Switched from 4-3-3 to 5-4-1 defensively |
-| `goal_pattern_miss` | Got O/U or BTTS wrong | Predicted Over 2.5, match was 0-0 |
-| `referee_factor` | Referee heavily influenced outcome | Two penalties awarded, red card at 30' |
-| `underdog_upset` | Clear underdog won against odds | Bottom team beat title contender |
-| `other` | None of the above fit | Unusual circumstances |
+| Category            | Description                          | Example                                   |
+| ------------------- | ------------------------------------ | ----------------------------------------- |
+| `none`              | Prediction was correct               | —                                         |
+| `draw_blindness`    | Predicted win (1/2), got draw        | Predicted "1" for Napoli, match ended 1-1 |
+| `overconfidence`    | High confidence (75%+), lost         | Claimed 82% for "1X", team lost 0-2       |
+| `form_reversal`     | Team broke form trend                | 5-match winning streak team suddenly lost |
+| `injury_impact`     | Key absence missed/underweighted     | Star striker out, attack collapsed        |
+| `h2h_ignored`       | H2H pattern we should have heeded    | Away team always wins at this venue       |
+| `motivation_miss`   | Misjudged motivation/stakes          | Dead rubber for one team, played reserves |
+| `tactical_shift`    | Manager changed tactics unexpectedly | Switched from 4-3-3 to 5-4-1 defensively  |
+| `goal_pattern_miss` | Got O/U or BTTS wrong                | Predicted Over 2.5, match was 0-0         |
+| `referee_factor`    | Referee heavily influenced outcome   | Two penalties awarded, red card at 30'    |
+| `underdog_upset`    | Clear underdog won against odds      | Bottom team beat title contender          |
+| `other`             | None of the above fit                | Unusual circumstances                     |
 
 ### Confidence Calibration Methodology
 
@@ -800,14 +807,14 @@ NEXT CYCLE: Analytics → Optimize → Research → Generate → Settle → ...
 
 Skip a match (no tip generated) if ANY condition applies:
 
-| Condition | Rationale |
-| --- | --- |
-| No prediction has edge > 8pp over bookmaker | No value — bookmaker is equally or more accurate (raised from 5pp) |
-| Either team has < 10 matches played this season | Insufficient data for reliable analysis |
-| No prediction reaches 62% estimated probability | Too uncertain — all outcomes roughly equally likely |
-| Both teams on 3+ match losing streaks | Chaotic, unpredictable conditions |
-| No prediction has EV >= +8% | Negative or near-zero expected value — mathematically unprofitable |
-| Odds < 1.50 for selected prediction (exception: 1X/X2 at >= 1.30) | Low-value odds yield insufficient return for the risk taken |
+| Condition                                                         | Rationale                                                          |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------ |
+| No prediction has edge > 8pp over bookmaker                       | No value — bookmaker is equally or more accurate (raised from 5pp) |
+| Either team has < 10 matches played this season                   | Insufficient data for reliable analysis                            |
+| No prediction reaches 62% estimated probability                   | Too uncertain — all outcomes roughly equally likely                |
+| Both teams on 3+ match losing streaks                             | Chaotic, unpredictable conditions                                  |
+| No prediction has EV >= +8%                                       | Negative or near-zero expected value — mathematically unprofitable |
+| Odds < 1.50 for selected prediction (exception: 1X/X2 at >= 1.30) | Low-value odds yield insufficient return for the risk taken        |
 
 ### Tip Reasoning Format
 
@@ -853,13 +860,13 @@ QUALITY_GATE: edge [x]pp > 8pp ✓, EV [x]% > 8% ✓, odds [x] > 1.50 ✓ → PA
 
 Run after each settlement batch. Generates `prediction_insights` entries:
 
-| Condition | Insight Type | Scope |
-| --- | --- | --- |
-| Error category > 25% of losses (60 days) | `bias_detected` | global |
-| Confidence band gap > 10pp (90 days) | `calibration_drift` | global |
-| Prediction type win rate dropped > 15pp (30d vs prev 30d) | `pattern_warning` | prediction_type |
-| League win rate < 50% with 10+ tips (90 days) | `weak_spot` | league |
-| League win rate > 75% with 10+ tips (90 days) | `strong_spot` | league |
+| Condition                                                 | Insight Type        | Scope           |
+| --------------------------------------------------------- | ------------------- | --------------- |
+| Error category > 25% of losses (60 days)                  | `bias_detected`     | global          |
+| Confidence band gap > 10pp (90 days)                      | `calibration_drift` | global          |
+| Prediction type win rate dropped > 15pp (30d vs prev 30d) | `pattern_warning`   | prediction_type |
+| League win rate < 50% with 10+ tips (90 days)             | `weak_spot`         | league          |
+| League win rate > 75% with 10+ tips (90 days)             | `strong_spot`       | league          |
 
 Insights auto-expire after 60 days if not re-validated by a subsequent settlement run.
 
@@ -923,30 +930,30 @@ Phase 6: Summary report
 
 Each analyst receives league-specific tuning hints that reflect the statistical characteristics of their league:
 
-| League | Key Tuning | Impact |
-| --- | --- | --- |
-| Serie A | Higher draw rate (~27%), defensive football | More draw predictions |
-| Champions League | Group vs knockout dynamics, travel fatigue | Context-aware staging |
-| La Liga | Top-heavy (Real/Barca/Atletico), defensive away | Cautious upset tipping |
-| Premier League | Most competitive, lower confidence ceilings | Conservative predictions |
-| Ligue 1 | PSG dominance skews stats, physical league | Exclude PSG from averages |
-| Bundesliga | Highest scoring (~3.1 GPG), strong home advantage | Favor Over markets |
-| Eredivisie | Very high scoring, volatile smaller clubs | Strong Over/home bias |
+| League           | Key Tuning                                        | Impact                    |
+| ---------------- | ------------------------------------------------- | ------------------------- |
+| Serie A          | Higher draw rate (~27%), defensive football       | More draw predictions     |
+| Champions League | Group vs knockout dynamics, travel fatigue        | Context-aware staging     |
+| La Liga          | Top-heavy (Real/Barca/Atletico), defensive away   | Cautious upset tipping    |
+| Premier League   | Most competitive, lower confidence ceilings       | Conservative predictions  |
+| Ligue 1          | PSG dominance skews stats, physical league        | Exclude PSG from averages |
+| Bundesliga       | Highest scoring (~3.1 GPG), strong home advantage | Favor Over markets        |
+| Eredivisie       | Very high scoring, volatile smaller clubs         | Strong Over/home bias     |
 
 ### Reviewer Validation Rules
 
 The reviewer runs 8 checks on all draft tips before promoting them to pending:
 
-| # | Check | Action |
-| --- | --- | --- |
-| 1 | Cross-league correlation (3+ correlated tips) | Flag, don't auto-reject |
-| 2 | Confidence inflation (avg > 72%) | Adjust downward |
-| 3 | Edge consistency (< 8pp) | Reject |
-| 4 | Draw awareness (< 15% draw-inclusive) | Flag home-win bias |
-| 5 | Prediction type diversity (> 40% same type) | Flag |
-| 6 | Portfolio expected value (EV < 0.05) | Flag low value |
-| 7 | Stale odds (> 15% movement, spot check) | Consider rejecting |
-| 8 | Weather impact (missing from reasoning) | Note gap |
+| #   | Check                                         | Action                  |
+| --- | --------------------------------------------- | ----------------------- |
+| 1   | Cross-league correlation (3+ correlated tips) | Flag, don't auto-reject |
+| 2   | Confidence inflation (avg > 72%)              | Adjust downward         |
+| 3   | Edge consistency (< 8pp)                      | Reject                  |
+| 4   | Draw awareness (< 15% draw-inclusive)         | Flag home-win bias      |
+| 5   | Prediction type diversity (> 40% same type)   | Flag                    |
+| 6   | Portfolio expected value (EV < 0.05)          | Flag low value          |
+| 7   | Stale odds (> 15% movement, spot check)       | Consider rejecting      |
+| 8   | Weather impact (missing from reasoning)       | Note gap                |
 
 ### Draft → Pending Workflow
 
@@ -967,28 +974,28 @@ Team Lead: Tier rebalancing across all leagues
 
 ### Accuracy Improvements (Embedded in Team)
 
-| # | Improvement | Location | Impact |
-| --- | --- | --- | --- |
-| 1 | League-specific tuning hints | Analyst prompt | Counters generic analysis |
-| 2 | 7 targeted web searches per match | Analyst step 2b | Deep data per match |
-| 3 | Pre-match research cache | Analyst step 2a | Consistent data, fewer tokens |
-| 4 | Poisson goal distribution (mandatory) | Analyst step 2c+ | Probabilistic base rates |
-| 5 | ELO-lite power rating cross-check | Analyst step 2c+ | Independent validation |
-| 6 | Exponential decay momentum (0.95^n) | Analyst form analysis | More responsive to trends |
-| 7 | Minimum odds 1.50 + EV >= 8% | Analyst quality gate | Higher-value portfolio |
-| 8 | Pre-decision checklist (7 checks) | Analyst step 2e+ | Systematic quality control |
-| 9 | Strategy directives compliance | Analyst prompt | Data-driven constraints |
-| 10 | Edge threshold raised to 8pp | Analyst quality gate | Fewer, higher-quality tips |
-| 11 | Conservative confidence (max 80) | Analyst calibration | Until accuracy is proven |
-| 12 | Draw probability floor of 20% | Analyst probability assessment | Counters draw blindness |
-| 13 | Cross-league correlation detection | Reviewer step 2 | Portfolio risk reduction |
-| 14 | ROI projection (EV < 8% → reject) | Reviewer step 10 | Eliminates negative EV tips |
-| 15 | Odds distribution check | Reviewer step 11 | Prevents low-value clustering |
-| 16 | Historical pattern cross-reference | Reviewer step 12 | Learns from recent losses |
-| 17 | Performance analytics → recommendations | Shared context | Data-driven guardrails |
-| 18 | Stale odds detection | Reviewer step 8 | Catches line movement |
-| 19 | Draw awareness enforcement | Reviewer step 5 | Counters home-win bias |
-| 20 | Portfolio EV sanity check | Reviewer step 7 (detail in step 10) | Better overall returns |
+| #   | Improvement                             | Location                            | Impact                        |
+| --- | --------------------------------------- | ----------------------------------- | ----------------------------- |
+| 1   | League-specific tuning hints            | Analyst prompt                      | Counters generic analysis     |
+| 2   | 7 targeted web searches per match       | Analyst step 2b                     | Deep data per match           |
+| 3   | Pre-match research cache                | Analyst step 2a                     | Consistent data, fewer tokens |
+| 4   | Poisson goal distribution (mandatory)   | Analyst step 2c+                    | Probabilistic base rates      |
+| 5   | ELO-lite power rating cross-check       | Analyst step 2c+                    | Independent validation        |
+| 6   | Exponential decay momentum (0.95^n)     | Analyst form analysis               | More responsive to trends     |
+| 7   | Minimum odds 1.50 + EV >= 8%            | Analyst quality gate                | Higher-value portfolio        |
+| 8   | Pre-decision checklist (7 checks)       | Analyst step 2e+                    | Systematic quality control    |
+| 9   | Strategy directives compliance          | Analyst prompt                      | Data-driven constraints       |
+| 10  | Edge threshold raised to 8pp            | Analyst quality gate                | Fewer, higher-quality tips    |
+| 11  | Conservative confidence (max 80)        | Analyst calibration                 | Until accuracy is proven      |
+| 12  | Draw probability floor of 20%           | Analyst probability assessment      | Counters draw blindness       |
+| 13  | Cross-league correlation detection      | Reviewer step 2                     | Portfolio risk reduction      |
+| 14  | ROI projection (EV < 8% → reject)       | Reviewer step 10                    | Eliminates negative EV tips   |
+| 15  | Odds distribution check                 | Reviewer step 11                    | Prevents low-value clustering |
+| 16  | Historical pattern cross-reference      | Reviewer step 12                    | Learns from recent losses     |
+| 17  | Performance analytics → recommendations | Shared context                      | Data-driven guardrails        |
+| 18  | Stale odds detection                    | Reviewer step 8                     | Catches line movement         |
+| 19  | Draw awareness enforcement              | Reviewer step 5                     | Counters home-win bias        |
+| 20  | Portfolio EV sanity check               | Reviewer step 7 (detail in step 10) | Better overall returns        |
 
 ---
 
@@ -1000,15 +1007,15 @@ Deep track record analysis answering: "Where are we profitable? Where are we los
 
 ### Metrics
 
-| Tier | Metrics |
-|------|---------|
-| Core | Hit rate, ROI (flat), avg odds, yield — overall |
-| League | Per-league hit rate, ROI, count, best/worst identification |
-| Prediction Type | Per-type hit rate, ROI, units, breakeven analysis |
-| Calibration | Confidence bands (60-69, 70-79, 80+) → actual win rates, gap detection |
-| Odds Bands | 1.20-1.50, 1.50-2.00, 2.00-3.00, 3.00+ → win rate, ROI per band |
-| Trends | Rolling 20-tip hit rate, monthly trajectory, edge decay |
-| Bias | Home/draw/away prediction distribution vs outcomes |
+| Tier            | Metrics                                                                |
+| --------------- | ---------------------------------------------------------------------- |
+| Core            | Hit rate, ROI (flat), avg odds, yield — overall                        |
+| League          | Per-league hit rate, ROI, count, best/worst identification             |
+| Prediction Type | Per-type hit rate, ROI, units, breakeven analysis                      |
+| Calibration     | Confidence bands (60-69, 70-79, 80+) → actual win rates, gap detection |
+| Odds Bands      | 1.20-1.50, 1.50-2.00, 2.00-3.00, 3.00+ → win rate, ROI per band        |
+| Trends          | Rolling 20-tip hit rate, monthly trajectory, edge decay                |
+| Bias            | Home/draw/away prediction distribution vs outcomes                     |
 
 ### Recommendations
 
@@ -1028,16 +1035,16 @@ Goes beyond analytics ("what happened") to prescribe "what to change."
 
 ### Directive Types
 
-| Type | Description | Example |
-|------|-------------|---------|
-| `avoid_prediction_type` | Stop using a prediction type | "Avoid '1' — 55% hit rate, -2.10 ROI" |
-| `prefer_prediction_type` | Prioritize a prediction type | "Prefer '1X' — 78% hit rate, +1.20 ROI" |
-| `avoid_league` | Reduce exposure to a league | "Avoid Ligue 1 — 40% hit rate" |
-| `prefer_league` | Increase exposure to a league | "Prefer Serie A — 72% hit rate" |
-| `adjust_confidence_band` | Change confidence thresholds | "Raise min confidence to 68% for home wins" |
-| `adjust_odds_range` | Change target odds | "Target odds 1.70-2.50 for best ROI" |
-| `adjust_edge_threshold` | Change edge requirements | "Raise edge to 10pp for away wins" |
-| `general_strategy` | Broad strategic guidance | "Shift portfolio toward Over/Under markets" |
+| Type                     | Description                   | Example                                     |
+| ------------------------ | ----------------------------- | ------------------------------------------- |
+| `avoid_prediction_type`  | Stop using a prediction type  | "Avoid '1' — 55% hit rate, -2.10 ROI"       |
+| `prefer_prediction_type` | Prioritize a prediction type  | "Prefer '1X' — 78% hit rate, +1.20 ROI"     |
+| `avoid_league`           | Reduce exposure to a league   | "Avoid Ligue 1 — 40% hit rate"              |
+| `prefer_league`          | Increase exposure to a league | "Prefer Serie A — 72% hit rate"             |
+| `adjust_confidence_band` | Change confidence thresholds  | "Raise min confidence to 68% for home wins" |
+| `adjust_odds_range`      | Change target odds            | "Target odds 1.70-2.50 for best ROI"        |
+| `adjust_edge_threshold`  | Change edge requirements      | "Raise edge to 10pp for away wins"          |
+| `general_strategy`       | Broad strategic guidance      | "Shift portfolio toward Over/Under markets" |
 
 ### Directive Lifecycle
 
@@ -1056,15 +1063,15 @@ Dedicated deep research engine that runs BEFORE tip generation. Separates "resea
 
 ### Data Gathered Per Match (7-8 web searches)
 
-| Category | Key Data Points | Completeness Score |
-|----------|----------------|--------------------|
-| Lineups & injuries | Expected XI, formations, injured players with role + severity | 20 pts (confirmed=20, probable=15, speculative=10) |
-| Tactical preview | Pressing style, key matchups, recent tactical changes | 15 pts |
-| xG & advanced stats | Pre-match xG projections, PPDA, shot conversion | 15 pts |
-| Referee stats | Avg fouls/cards, penalty rate, home bias | 10 pts |
-| Weather | Temperature, wind, precipitation, pitch condition | 10 pts |
-| Motivation & context | League position implications, cup fatigue, derby factor | 10 pts |
-| Market intelligence | Line movement, sharp money indicators | 5 pts |
+| Category             | Key Data Points                                               | Completeness Score                                 |
+| -------------------- | ------------------------------------------------------------- | -------------------------------------------------- |
+| Lineups & injuries   | Expected XI, formations, injured players with role + severity | 20 pts (confirmed=20, probable=15, speculative=10) |
+| Tactical preview     | Pressing style, key matchups, recent tactical changes         | 15 pts                                             |
+| xG & advanced stats  | Pre-match xG projections, PPDA, shot conversion               | 15 pts                                             |
+| Referee stats        | Avg fouls/cards, penalty rate, home bias                      | 10 pts                                             |
+| Weather              | Temperature, wind, precipitation, pitch condition             | 10 pts                                             |
+| Motivation & context | League position implications, cup fatigue, derby factor       | 10 pts                                             |
+| Market intelligence  | Line movement, sharp money indicators                         | 5 pts                                              |
 
 Total: 100 points. `research_completeness` = sum of scored categories.
 
@@ -1100,14 +1107,14 @@ Phase 6: SUMMARY     → Final report                           (always runs)
 
 ### Smart Pre-Checks
 
-| Phase | Skip If |
-|-------|---------|
-| Analytics | Snapshot exists from today, or < 10 settled tips |
-| Optimize | Active directives < 7 days old, or < 20 settled tips |
-| Settle | No pending tips with match_date > 2 hours ago |
-| Research | No upcoming matches in 48h, or fresh research covers them |
-| Generate | 5+ future pending tips exist, or no upcoming matches |
-| Schedine | Already built this week, or < 3 pending tips this week |
+| Phase     | Skip If                                                   |
+| --------- | --------------------------------------------------------- |
+| Analytics | Snapshot exists from today, or < 10 settled tips          |
+| Optimize  | Active directives < 7 days old, or < 20 settled tips      |
+| Settle    | No pending tips with match_date > 2 hours ago             |
+| Research  | No upcoming matches in 48h, or fresh research covers them |
+| Generate  | 5+ future pending tips exist, or no upcoming matches      |
+| Schedine  | Already built this week, or < 3 pending tips this week    |
 
 ### Flags
 

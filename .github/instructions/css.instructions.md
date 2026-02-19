@@ -1,5 +1,5 @@
 ---
-applyTo: "**/*.css"
+applyTo: '**/*.css'
 ---
 
 # CSS Conventions
@@ -23,20 +23,20 @@ Single CSS file (`public/styles.css`) with design tokens via custom properties. 
 
 ```css
 :root {
-  --bg-primary: #0a0a0f;      /* Main background */
-  --bg-secondary: #12121a;    /* Section backgrounds */
-  --bg-card: #16161f;         /* Card backgrounds */
-  --gold: #d4a853;            /* Primary accent */
-  --gold-light: #f0d078;      /* Hover/highlight */
-  --gold-dark: #a67c2e;       /* Active/pressed */
-  --red: #e74c3c;             /* Error/loss */
-  --green: #2ecc71;           /* Success/win */
+  --bg-primary: #0a0a0f; /* Main background */
+  --bg-secondary: #12121a; /* Section backgrounds */
+  --bg-card: #16161f; /* Card backgrounds */
+  --gold: #d4a853; /* Primary accent */
+  --gold-light: #f0d078; /* Hover/highlight */
+  --gold-dark: #a67c2e; /* Active/pressed */
+  --red: #e74c3c; /* Error/loss */
+  --green: #2ecc71; /* Success/win */
   --font-display: 'Space Grotesk'; /* Headings */
-  --font-body: 'Inter';       /* Body text */
-  --radius-sm: 8px;           /* Buttons */
-  --radius-md: 12px;          /* Small cards */
-  --radius-lg: 20px;          /* Tip cards */
-  --radius-xl: 28px;          /* Pricing cards */
+  --font-body: 'Inter'; /* Body text */
+  --radius-sm: 8px; /* Buttons */
+  --radius-md: 12px; /* Small cards */
+  --radius-lg: 20px; /* Tip cards */
+  --radius-xl: 28px; /* Pricing cards */
 }
 ```
 
