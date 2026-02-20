@@ -190,6 +190,18 @@ img {
   margin: 0 auto;
 }
 
+.section-meta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  max-width: 580px;
+  margin: 8px auto 0;
+}
+
+.section-meta:empty {
+  display: none;
+}
+
 /* --- Buttons --- */
 .btn {
   display: inline-flex;

@@ -13,7 +13,7 @@
    (Canvas, Fetch, IntersectionObserver, requestAnimationFrame).
    ============================================ */
 
-/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLocale, setErrorState, REDUCED_MOTION, createEl, buildMatchCard, buildResultItem, buildTipResultItem, buildTipCard, canAccessTier, setEmptyState, activateConfidenceBars, showToast, buildSkeletonCards, buildEmptyState, setLastUpdated, retryWithBackoff */
+/* global initParticles, initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, LEAGUE_NAMES_MAP, TIER_PRICES, getCurrentSeasonDisplay, getLang, getLocale, setErrorState, REDUCED_MOTION, createEl, buildMatchCard, buildResultItem, buildTipResultItem, buildTipCard, canAccessTier, setEmptyState, activateConfidenceBars, showToast, buildSkeletonCards, buildEmptyState, setLastUpdated, retryWithBackoff */
 
 (function () {
   'use strict';
@@ -738,6 +738,10 @@
       roiEl.setAttribute('data-count', '0');
       roiEl.textContent = '\u2014';
     }
+
+    // Track record since metadata
+    const sinceEl = document.getElementById('trackRecordSince');
+    if (sinceEl) sinceEl.textContent = '';
   }
 
   /**
@@ -873,6 +877,20 @@
         const roiVal = Math.round(data.roi || 0);
         roiEl.setAttribute('data-count', roiVal);
         animateCounter(roiEl);
+      }
+
+      // Track record since date
+      const sinceEl = document.getElementById('trackRecordSince');
+      if (sinceEl && data.track_record_since) {
+        const sinceDate = new Date(data.track_record_since + 'T00:00:00');
+        const formatted = sinceDate.toLocaleDateString(getLocale(), {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        });
+        const label = getLang() === 'en' ? 'Track record since' : 'Track record dal';
+        const tipsLabel = getLang() === 'en' ? 'verified predictions' : 'pronostici verificati';
+        sinceEl.textContent = label + ' ' + formatted + ' \u2014 ' + settled + ' ' + tipsLabel;
       }
     } catch (err) {
       console.error('loadTrackRecord failed:', err);

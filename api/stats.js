@@ -173,6 +173,9 @@ async function handleTrackRecord(req, res) {
     const matchesAnalyzed = matchIds.size;
     const dataPoints = matchesAnalyzed * 147;
 
+    const oldestTip = allTips.length > 0 ? allTips[allTips.length - 1] : null;
+    const trackRecordSince = oldestTip ? oldestTip.created_at.split('T')[0] : null;
+
     const result = {
       total_tips: allTips.length + (pendingCount || 0),
       won: won,
@@ -186,6 +189,7 @@ async function handleTrackRecord(req, res) {
       data_points: dataPoints,
       recent: recent,
       monthly: monthly,
+      track_record_since: trackRecordSince,
     };
 
     cache.set(CACHE_KEY, result, CACHE_TTL);

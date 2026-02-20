@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- **#153 — Track record start date transparency** — After removing 33 pre-calibration tips (7-8 Feb), the track record section now shows the exact start date of verified tracking. API `GET /api/stats?type=track-record` returns new `track_record_since` field (ISO date of oldest settled tip). Landing page displays "Track record dal {date} — N pronostici verificati" below the section header, with locale-aware formatting (IT/EN). New `.section-meta` CSS class for secondary metadata text.
+
 ### Fixed
 
 - **Fix #1 — testo bookmaker fuorviante** — Rimosso "Registrandoti tramite i nostri link potrai ottenere bonus di benvenuto esclusivi" dalla FAQ e "I link ai bookmaker sono link di affiliazione" dal footer, poiché non esistono ancora URL di affiliazione reali. Il testo era potenzialmente fuorviante per gli utenti e non conforme. Aggiornati `public/index.html` e `public/i18n.js` (IT + EN).
