@@ -625,6 +625,39 @@ EV = (predicted_probability / 100) × odds - 1
 
 **Minimum EV per tip: +0.08 (8%).** A 65% probability at odds 2.00 (EV = +30%) is ALWAYS better than 80% at odds 1.25 (EV = 0%). Hunt for VALUE, not certainty.
 
+**Step 5b — Market Waterfall (MANDATORY when primary market fails):**
+
+When your initial market choice fails any quality gate (especially: favorite odds < 1.50, edge < 8pp on 1X2), do NOT skip the match immediately. Run the full market waterfall before giving up.
+
+**Why:** Short odds on the favorite = the bookmaker is certain about the winner — but often *less* efficient on secondary markets (BTTS, goal totals, combos). That's where hidden edge lives.
+
+**Waterfall order** — evaluate all 14 valid markets, pick the one with highest EV that passes all gates:
+
+| Priority | Markets | When to consider |
+|---|---|---|
+| 1 | `1X`, `X2`, `12` (double chance) | Favorite odds too short but draw/both plausible; ≥1.30 minimum |
+| 2 | `Over 1.5`, `Under 3.5` | Goals likely but direction uncertain; defensive/cautious matches |
+| 3 | `Goal` (BTTS), `No Goal` | Both/neither teams have strong scoring records or clean sheet form |
+| 4 | `Over 2.5`, `Under 2.5` | Standard total — use xGoals: Over if >2.8, Under if <2.2 |
+| 5 | `1`, `2` (exact win) | Only if P ≥ 70% AND odds ≥ 1.50 |
+| 6 | `X` (draw) | Strong tactical/form evidence of stalemate |
+| 7 | `1 + Over 1.5`, `2 + Over 1.5` | Combo — only if BOTH conditions are independently high-confidence |
+
+For each market in the waterfall:
+1. Estimate P for that outcome using your Poisson model + qualitative adjustments
+2. Find the bookmaker odds for that market from the fetched data (NEVER invent odds)
+3. Compute: `edge = your_P - bookmaker_implied_P` and `EV = (your_P/100 × odds) - 1`
+4. If EV ≥ 8% AND edge ≥ 8pp AND odds ≥ 1.50 (or ≥ 1.30 for double chance) → CANDIDATE
+
+Select the candidate with the highest EV. If multiple pass, prefer the one with the cleaner narrative and highest edge.
+
+**Context-specific lateral thinking for common scenarios:**
+- **Favorite odds < 1.35 (very short)**: the winner is settled — focus waterfall on HOW the game plays out. Will the favorite manage conservatively (`Under 2.5`, `No Goal`) or attack aggressively (`Over 1.5`, `Goal`)?
+- **Second-leg knockout, team WITH aggregate lead**: expect game management → `Under 2.5`, `No Goal` candidates
+- **Second-leg knockout, team CHASING aggregate**: desperation attack → `Goal` (BTTS), `Over 1.5`, `Over 2.5` candidates
+- **Rotation/dead-rubber match (tie decided)**: starters rested, weaker lineup → `Goal` can be value if underdog has scoring form
+- **Derby or high-stakes emotional clash**: higher intensity → `Over 1.5`, `Goal`
+
 **Step 6 — Pre-decision checklist (ALL must pass):**
 
 Before generating a tip, verify:
@@ -645,10 +678,12 @@ Only THEN select your prediction. Choose the option with the highest EV AND genu
 
 #### 2e. Quality gate (per match)
 
-SKIP the match (no tip) if ANY of these conditions apply:
+SKIP the match (no tip) only **after completing the full Market Waterfall** (Step 5b). Skip if ALL of the following apply across the entire waterfall:
 
-- No prediction type has edge > 8 percentage points over the bookmaker
-- No prediction has EV >= +8% (predicted_probability × odds - 1 >= 0.08)
+- **No market in the waterfall** has edge > 8 percentage points over the bookmaker
+- **No market in the waterfall** has EV >= +8% (predicted_probability × odds - 1 >= 0.08)
+
+⚠️ **Never skip a match just because the favorite's 1X2 odds are too short.** Short odds = known winner = potentially inefficient secondary markets. Always run the waterfall first.
 - Fewer than 10 matches played by either team this season
 - No prediction reaches 62% estimated probability
 - Both teams on 3+ match losing streaks
@@ -759,6 +794,7 @@ Skipped: {list of skipped matches with reasons}
 10. Respect the insights. If the retrospective system flagged a pattern, address it explicitly in your reasoning.
 11. **Exact win ('1' or '2') requires P ≥ 70%.** Below 70%, the double chance (1X or X2) is the only correct market. At P=62% a draw or the opposite outcome is 38% likely — that is not a "guaranteed" tip, it is a 62/38 gamble on an exact outcome. The 1X or X2 EV often beats the exact win EV even at lower odds. Choose the market that maximizes EV AND minimizes unnecessary risk.
 12. **Confidence must reflect probability — not optimism.** Confidence ≤ predicted_probability + 5pp. If P=59%, max confidence is 64 — not 73. If you feel the confidence "should be" much higher than the probability allows, that is a signal the probability estimate is wrong, not a reason to inflate confidence. Fix the probability or skip the tip.
+13. **Never skip on short favorite odds without running the Market Waterfall first.** If the favorite is @1.20, the bookmaker has settled the winner — but NOT the goals, the BTTS, or the game style. Run the waterfall: the chasing team needs to score (`Goal`), the protecting team manages conservatively (`Under 2.5`), both attack in a wild second leg (`Over 1.5`). Short 1X2 odds = underexplored secondary markets = your edge opportunity. A match with a 1.20 favorite ALWAYS deserves a waterfall scan before being skipped.
 
 ```
 

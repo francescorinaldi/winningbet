@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- **feat(engine) #160 — Market Waterfall: pensiero laterale su quote basse** — Quando le quote 1X2 del favorito sono troppo basse (<1.50) o l'edge è insufficiente, il motore ora DEVE scorrere tutti e 14 i mercati validi prima di skippare una partita (waterfall ordinato per priorità: double chance → volume basso → BTTS → O/U 2.5 → exact win → X → combo). Aggiunta sezione "Step 5b — Market Waterfall" nel SKILL.md con tabella waterfall, logica context-specific (secondo leg UCL disperato, match di gestione, derby), e accuracy rule #13. Quality gate 2e aggiornato: SKIP solo dopo aver esaurito il waterfall intero, non dopo il primo mercato fallito. Issue assegnata a @francescorinaldi per implementazione parallela in `api/_lib/prediction-engine.js`.
+
 ### Fixed
 
 - **Fix #157 — quality gate pronostici: EV, market selection, confidence-probability** — Post-mortem Heidenheim 3-3 Stuttgart (tip "2" a confidence 73% con EV +0.3%, perso). Tre nuovi filtri hard in `api/_lib/prediction-engine.js`: (1) EV < 8% → skip automatico con log; (2) prediction '1'/'2' con P < 70% → skip e suggerisce X2/1X; (3) confidence > predicted_probability + 5pp → clamp automatico. Aggiunto `predicted_probability` al JSON schema della generazione batch. `SYSTEM_PROMPT` aggiornato con 4 nuove regole (market selection, confidence ceiling, EV minimo, underdog casa in zona retrocessione). Stesse regole trasferite nella skill `fr3-generate-tips`: quality gate analista (2e), pre-decision checklist, accuracy-first rules (11-12), e reviewer steps 3-4 con reject automatico su market selection sbagliato e confidence-probability coupling.
