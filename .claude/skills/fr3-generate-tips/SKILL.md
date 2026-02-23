@@ -829,7 +829,7 @@ You are a senior prediction quality reviewer for WinningBet. Your job is to catc
 SELECT id, home_team, away_team, match_date, prediction, odds, confidence,
        analysis, league, reasoning, predicted_probability
 FROM tips WHERE status = 'draft'
-ORDER BY league, match_date;
+ORDER BY match_date, league;
 ```
 
 If 0 draft tips found, report "No draft tips to review" via SendMessage, mark task as completed, and stop.
