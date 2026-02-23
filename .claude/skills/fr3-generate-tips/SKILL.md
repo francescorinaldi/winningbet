@@ -424,10 +424,15 @@ Use WebSearch to find specific information for THIS matchup:
 - Also try: "{home_team} {away_team} understat fbref xg"
 - Extract: pre-match xG projections, shot-based models, FiveThirtyEight/Understat/FBref ratings
 
-**Search 2** (injuries/lineup):
+**Search 2** (injuries/lineup — SKIP if `match.injuries` data available from fetch):
 
+⚡ **Check `match.injuries` first.** The fetch script already called `GET /injuries?fixture={id}` from API Football and computed structured impact data per player (availability, position, impactLevel, backupQuality, xGoalsHint). If `match.injuries` has entries → **skip this web search entirely** and use the structured API data. This saves tokens and is more reliable than web scraping.
+
+Only run this search as **fallback** if `match.injuries` is empty (API returned no data for this fixture):
 - "{home_team} {away_team} injuries suspensions confirmed lineup transfermarkt {date}"
 - Extract: confirmed absences, expected lineups, late fitness tests, return dates
+
+In either case, also look for **rotation signals**: cup fatigue, fixture congestion, coach press conference quotes about resting players.
 
 **Search 3** (tactical preview):
 
@@ -527,6 +532,24 @@ From the scoreline grid, derive:
 - P(btts) = 1 - P(home=0,any) - P(any,away=0) + P(0,0)
 
 These Poisson base rates are your STARTING POINT. You then adjust +/- for qualitative factors (injuries, motivation, tactical matchup, weather) with a maximum of +/-10 percentage points per factor and +/-20pp total adjustment from the Poisson base.
+
+**Injury impact on xGoals (MANDATORY when match.injuries has entries):**
+
+For each player with `availability = "CONFIRMED_OUT"` or `"SUSPENDED"`:
+
+| impactLevel | Position | Effect | Backup modifier |
+|---|---|---|---|
+| `HIGH` | Attacker/Midfielder | team_xGoals × 0.80 (–20%) | if `backupQuality = "ADEQUATE"`: × 0.90 instead (–10%) |
+| `HIGH_GK` | Goalkeeper | opponent_xGoals × 1.15 (+15% shots against) | if `"ADEQUATE"`: × 1.07 instead |
+| `MEDIUM` | Any | team_xGoals × 0.90 (–10%) | if `"ADEQUATE"`: × 0.95 instead (–5%) |
+| `LOW` | Any | No adjustment unless 3+ LOW players absent (then –5%) | — |
+| `UNKNOWN` | Any | Note the absence in reasoning, no formula applied | — |
+
+For `availability = "DOUBTFUL"` (if returned by API): apply **half** the penalty above.
+
+Stacking rule: if multiple CONFIRMED_OUT players exist on the same team, apply penalties multiplicatively, but cap total at × 0.65 (no team xGoals goes below 65% of original).
+
+After applying injury adjustments, re-run the Poisson model with the adjusted xGoals. These injury-adjusted Poisson rates become your new baseline for probability assessment.
 
 **ELO-lite power rating:**
 
@@ -721,8 +744,12 @@ DATA_SUMMARY:
 - Home: [team], [position], [points], [form], home record [W-D-L], home GF/GA per game [x/y]
 - Away: [team], [position], [points], [form], away record [W-D-L], away GF/GA per game [x/y]
 - H2H last [N]: [home wins]W, [away wins]W, [draws]D, avg goals [x]
-- xGoals: [total] (home [x], away [y])
-- Key absences: [list with impact assessment]
+- xGoals (raw): [total] (home [x], away [y])
+- Key absences (from match.injuries API data):
+    [HOME] [playerName] — [position], [gAndA] G+A in [appearances] apps ([participationRate]%) → [impactLevel] / backup [backupQuality] → [xGoalsHint]
+    [AWAY] [playerName] — [position], [gAndA] G+A → [impactLevel] / backup [backupQuality]
+    Source: API Football injuries endpoint (data ~24-48h pre-match, covers ~97% of absences; true last-minute changes affect <3% of matches)
+- xGoals (injury-adjusted): [total] (home [x], away [y]) — adjustments applied: [list penalties]
 - Motivation: [home context] vs [away context]
 - Weather: [conditions and impact assessment]
 

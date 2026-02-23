@@ -66,8 +66,10 @@ async function getUpcomingMatches(leagueSlug, count = 10) {
     date: item.fixture.date,
     status: item.fixture.status.short,
     home: item.teams.home.name,
+    homeId: item.teams.home.id,
     homeLogo: item.teams.home.logo,
     away: item.teams.away.name,
+    awayId: item.teams.away.id,
     awayLogo: item.teams.away.logo,
     goalsHome: item.goals.home,
     goalsAway: item.goals.away,
@@ -412,6 +414,48 @@ async function getHeadToHead(leagueSlug, homeTeamName, awayTeamName, lastN = 10)
   };
 }
 
+/**
+ * Recupera infortuni e squalifiche per una specifica partita.
+ * @param {number|string} fixtureId - ID della partita
+ * @returns {Promise<Array<Object>>} Array di giocatori out/dubbi con tipo e motivo
+ */
+async function getFixtureInjuries(fixtureId) {
+  const data = await request('/injuries', { fixture: fixtureId });
+  return (data || []).map((item) => ({
+    playerId: item.player.id,
+    playerName: item.player.name,
+    teamId: item.team.id,
+    teamName: item.team.name,
+    type: item.type, // "Injury" | "Suspension"
+    reason: item.reason || null,
+  }));
+}
+
+/**
+ * Recupera le statistiche stagionali dei giocatori di una squadra.
+ * Restituisce solo page=1 (top ~20 giocatori per presenze) per efficienza.
+ * @param {number|string} teamId - ID della squadra
+ * @param {number|string} season - Anno stagione (es. 2025)
+ * @param {number} topN - Numero massimo di giocatori da restituire (default: 20)
+ * @returns {Promise<Array<Object>>} Array di giocatori con statistiche
+ */
+async function getTeamPlayerStats(teamId, season, topN = 20) {
+  const data = await request('/players', { team: teamId, season, page: 1 });
+  return (data || []).slice(0, topN).map((item) => {
+    const stats = item.statistics?.[0] || {};
+    return {
+      id: item.player.id,
+      name: item.player.name,
+      position: stats.games?.position || 'Unknown',
+      appearances: stats.games?.appearences || 0,
+      minutes: stats.games?.minutes || 0,
+      goals: stats.goals?.total || 0,
+      assists: stats.goals?.assists || 0,
+      rating: parseFloat(stats.games?.rating || 0) || 0,
+    };
+  });
+}
+
 module.exports = {
   getUpcomingMatches,
   getRecentResults,
@@ -421,4 +465,6 @@ module.exports = {
   getStandings,
   getFullStandings,
   getHeadToHead,
+  getFixtureInjuries,
+  getTeamPlayerStats,
 };
