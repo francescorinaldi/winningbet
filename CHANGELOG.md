@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Fix #156 — ordinamento cronologico tip su Telegram** — I messaggi Telegram mostravano i tip in ordine di confidenza (criterio di selezione) invece che per orario della partita. Fix in `api/_lib/telegram.js`: `formatDigest` ora ordina i tip per `match_date ASC` prima di raggrupparli per lega; l'ordine delle leghe nel messaggio rispecchia l'orario del primo match di ciascuna. Fix anche nella skill `fr3-generate-tips` (SKILL.md): la query del reviewer ora usa `ORDER BY match_date, league` invece di `ORDER BY league, match_date`.
+
 ### Changed
 
 - **#153 — Track record start date transparency** — After removing 33 pre-calibration tips (7-8 Feb), the track record section now shows the exact start date of verified tracking. API `GET /api/stats?type=track-record` returns new `track_record_since` field (ISO date of oldest settled tip). Landing page displays "Track record dal {date} — N pronostici verificati" below the section header, with locale-aware formatting (IT/EN). New `.section-meta` CSS class for secondary metadata text.
