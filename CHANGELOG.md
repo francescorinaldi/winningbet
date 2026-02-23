@@ -6,6 +6,8 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Fixed
 
+- **Fix #157 — quality gate pronostici: EV, market selection, confidence-probability** — Post-mortem Heidenheim 3-3 Stuttgart (tip "2" a confidence 73% con EV +0.3%, perso). Tre nuovi filtri hard in `api/_lib/prediction-engine.js`: (1) EV < 8% → skip automatico con log; (2) prediction '1'/'2' con P < 70% → skip e suggerisce X2/1X; (3) confidence > predicted_probability + 5pp → clamp automatico. Aggiunto `predicted_probability` al JSON schema della generazione batch. `SYSTEM_PROMPT` aggiornato con 4 nuove regole (market selection, confidence ceiling, EV minimo, underdog casa in zona retrocessione). Stesse regole trasferite nella skill `fr3-generate-tips`: quality gate analista (2e), pre-decision checklist, accuracy-first rules (11-12), e reviewer steps 3-4 con reject automatico su market selection sbagliato e confidence-probability coupling.
+
 - **Fix #156 — ordinamento cronologico tip su Telegram** — I messaggi Telegram mostravano i tip in ordine di confidenza (criterio di selezione) invece che per orario della partita. Fix in `api/_lib/telegram.js`: `formatDigest` ora ordina i tip per `match_date ASC` prima di raggrupparli per lega; l'ordine delle leghe nel messaggio rispecchia l'orario del primo match di ciascuna. Fix anche nella skill `fr3-generate-tips` (SKILL.md): la query del reviewer ora usa `ORDER BY match_date, league` invece di `ORDER BY league, match_date`.
 
 ### Changed

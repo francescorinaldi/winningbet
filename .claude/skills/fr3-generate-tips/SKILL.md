@@ -576,6 +576,7 @@ Qualitative adjustment factors (max +/-10pp each, max +/-20pp total):
 - Tactical matchup: +/- based on style interaction
 - Weather/pitch: +/- for extreme conditions
 - Recent form momentum: +/- based on RISING/FALLING/STABLE
+- **Relegation home pressure**: +5 to +8pp on P(home win or draw) when the home team is in the bottom 3 AND it is the second half of the season (matchday > 17). Survival stakes at home are systematically underpriced by bookmakers — these teams fight disproportionately harder in front of their own crowd.
 
 Cross-check against ELO-lite: if divergence > 15pp, resolve the conflict explicitly.
 
@@ -633,7 +634,9 @@ Before generating a tip, verify:
 - [ ] Explicitly considered why this is NOT a draw (or why draw is the pick)?
 - [ ] Edge driven by information bookmaker might not have (injuries, tactical shift, motivation)?
 - [ ] Would still predict this if odds were 10% lower?
-- [ ] EV >= +8%?
+- [ ] EV >= +8%? (EV = (predicted_probability/100) × odds - 1 ≥ 0.08)
+- [ ] If prediction is '1' or '2': P >= 70%? If P is 60–69%, is the EV of 1X/X2 at least as good? Exact win below 70% is almost never the right market.
+- [ ] Confidence ≤ predicted_probability + 5pp? (P=59% → max confidence=64; P=65% → max confidence=70)
 - [ ] No HIGH-impact strategy directive contradicts this pick?
 
 If any check fails, either adjust the prediction or skip the match.
@@ -650,6 +653,9 @@ SKIP the match (no tip) if ANY of these conditions apply:
 - No prediction reaches 62% estimated probability
 - Both teams on 3+ match losing streaks
 - Odds < 1.50 for the selected prediction (exception: double chance 1X/X2 at >= 1.30)
+- **Prediction is '2' and P(away win) < 70%** — use X2 instead or skip entirely. An exact away win at 62% still has a 38% chance of not winning: unacceptable under our brand promise.
+- **Prediction is '1' and P(home win) < 70%** — use 1X instead or skip entirely. Same reasoning.
+- **Confidence > predicted_probability + 5pp** — fundamental miscalibration. Lower confidence to `predicted_probability + 5` or reject. A confidence label that exceeds the actual probability is a lie, not an analysis.
 
 When skipping: "SKIPPED: {home} vs {away} — {reason}"
 
@@ -751,6 +757,8 @@ Skipped: {list of skipped matches with reasons}
 8. Consider the draw — in tight matches between similar teams, X or X2/1X may be the most probable outcome. Our biggest error category is draw_blindness. Apply the 20% draw floor.
 9. Be contrarian only when data clearly supports it.
 10. Respect the insights. If the retrospective system flagged a pattern, address it explicitly in your reasoning.
+11. **Exact win ('1' or '2') requires P ≥ 70%.** Below 70%, the double chance (1X or X2) is the only correct market. At P=62% a draw or the opposite outcome is 38% likely — that is not a "guaranteed" tip, it is a 62/38 gamble on an exact outcome. The 1X or X2 EV often beats the exact win EV even at lower odds. Choose the market that maximizes EV AND minimizes unnecessary risk.
+12. **Confidence must reflect probability — not optimism.** Confidence ≤ predicted_probability + 5pp. If P=59%, max confidence is 64 — not 73. If you feel the confidence "should be" much higher than the probability allows, that is a signal the probability estimate is wrong, not a reason to inflate confidence. Fix the probability or skip the tip.
 
 ```
 
@@ -838,16 +846,28 @@ If 0 draft tips found, report "No draft tips to review" via SendMessage, mark ta
 
 Flag if 3+ tips depend on the same team or related outcomes (e.g., if Team A appears in both a league tip and a Champions League tip, the outcomes are correlated). Note correlated tips but don't auto-reject — just flag for awareness in the portfolio.
 
-### Step 3: Confidence inflation check
+### Step 3: Confidence inflation + probability coupling check
 
 Calculate the average confidence across all draft tips. If average confidence > 72%, flag as likely overconfident. Consider adjusting the highest-confidence tips downward.
 
-### Step 4: Edge consistency check
+**Per-tip coupling check** — for each tip verify: `confidence ≤ predicted_probability + 5`.
+
+- Gap ≤ 10pp: **ADJUST** confidence down to `predicted_probability + 5`. Log: "CONFIDENCE ADJUSTED {home} vs {away}: {old}% → {new}% (P={prob}%)"
+- Gap > 10pp: **REJECT** the tip — fundamental miscalibration that cannot be patched. Log: "REJECTED {home} vs {away}: confidence {old}% vs probability {prob}% — gap too large"
+
+### Step 4: Edge consistency + market selection check
 
 For each tip, verify:
 
-- predicted_probability - (1/odds \* 100) >= 8pp
-- If edge < 8pp, REJECT the tip (quality gate failure that slipped through)
+- `predicted_probability - (1/odds * 100) >= 8pp`
+- If edge < 8pp, **REJECT** the tip — quality gate failure that slipped through the analyst
+
+**Market selection audit** — for exact win tips:
+
+- prediction is `'2'` and predicted_probability < 70%: **REJECT** — log "USE X2: exact away win at {X}% not justified"
+- prediction is `'1'` and predicted_probability < 70%: **REJECT** — log "USE 1X: exact home win at {X}% not justified"
+
+When rejecting for market selection, always suggest the correct alternative market (1X or X2) in the log so the analyst understands what to do next time.
 
 ### Step 5: Draw awareness check
 
