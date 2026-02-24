@@ -6,7 +6,7 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Added
 
-- **#17 — CLAUDE.md: Workflow Orchestration & Task Management** — Integrati insights da CLAUDE.md di riferimento: nuova sezione `## Workflow Orchestration` con 6 sottosezioni (Plan Node Default, Subagent Strategy, Self-Improvement Loop, Verification Before Done, Demand Elegance, Autonomous Bug Fixing); nuova sezione `## Task Management` con workflow a 6 step e riferimenti a `tasks/todo.md` / `tasks/lessons.md`; `## Code Quality Principles` arricchita con "Minimal impact" e "No laziness".
+- **CLAUDE.md: Workflow Orchestration & Task Management** — Integrati insights da CLAUDE.md di riferimento: nuova sezione `## Workflow Orchestration` con 6 sottosezioni (Plan Node Default, Subagent Strategy, Self-Improvement Loop, Verification Before Done, Demand Elegance, Autonomous Bug Fixing); nuova sezione `## Task Management` con workflow a 6 step e riferimenti a `tasks/todo.md` / `tasks/lessons.md`; `## Code Quality Principles` consolidata con "Simplicity with minimal impact". `tasks/` aggiunto a `.gitignore`.
 
 - **#16 — Business Plan & Market Analysis** — Documento BUSINESS_PLAN.md con analisi di mercato (mercato scommesse sportive IT ~€20B, 3.5M utenti attivi), modello di business (TAM/SAM/SOM, unit economics, revenue projections), panorama competitivo, stack tecnologico, roadmap Q1-Q3 2026, opportunità partnership centro scommesse (3 opzioni: white-label, revenue share, investimento).
 

@@ -288,9 +288,7 @@ Valid slugs: `serie-a`, `champions-league`, `la-liga`, `premier-league`, `ligue-
 
 ## Code Quality Principles
 
-- **Simplicity is paramount** — Every change should impact minimal code
-- **Minimal impact** — Changes should only touch what's necessary; avoid introducing bugs
-- **No laziness** — Find root causes. No temporary fixes. Senior developer standards
+- **Simplicity with minimal impact** — Every change should touch only what's necessary and impact minimal code to reduce the risk of introducing bugs
 - **Reduce technical debt** — Every change should leave the codebase cleaner
 - **Remove dead code** — Delete unused functions, commented code, unreachable branches
 - **No duplicate functions** — Consolidate similar logic
