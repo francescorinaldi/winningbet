@@ -6,6 +6,8 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Added
 
+- **#17 — CLAUDE.md: Workflow Orchestration & Task Management** — Integrati insights da CLAUDE.md di riferimento: nuova sezione `## Workflow Orchestration` con 6 sottosezioni (Plan Node Default, Subagent Strategy, Self-Improvement Loop, Verification Before Done, Demand Elegance, Autonomous Bug Fixing); nuova sezione `## Task Management` con workflow a 6 step e riferimenti a `tasks/todo.md` / `tasks/lessons.md`; `## Code Quality Principles` arricchita con "Minimal impact" e "No laziness".
+
 - **#16 — Business Plan & Market Analysis** — Documento BUSINESS_PLAN.md con analisi di mercato (mercato scommesse sportive IT ~€20B, 3.5M utenti attivi), modello di business (TAM/SAM/SOM, unit economics, revenue projections), panorama competitivo, stack tecnologico, roadmap Q1-Q3 2026, opportunità partnership centro scommesse (3 opzioni: white-label, revenue share, investimento).
 
 - **#13 — Legal upgrade: multi-campionato, Telegram, trasferimenti internazionali, terminazione** — Aggiornate tutte e 3 le pagine legali al 24 febbraio 2026: `terms.html` — sezione 2 ora copre tutti e 7 i campionati (prima diceva solo Serie A), aggiunta sezione terminazione account (10) e trasferimenti dati internazionali con SCC/PCI-DSS (11), rinumerazione sezioni 10→12 e 11→13→14; `privacy.html` — aggiunta voce Telegram nei dati raccolti (User ID, username, chat ID — opzionali, revocabili), nuova sezione 5bis sui trasferimenti internazionali (Supabase/Stripe/Vercel con garanzie SCC), fornitori rinominati con sede USA; `cookies.html` — aggiornamento data.
