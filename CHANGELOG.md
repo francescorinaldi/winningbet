@@ -4,6 +4,12 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **#16 — Business Plan & Market Analysis** — Documento BUSINESS_PLAN.md con analisi di mercato (mercato scommesse sportive IT ~€20B, 3.5M utenti attivi), modello di business (TAM/SAM/SOM, unit economics, revenue projections), panorama competitivo, stack tecnologico, roadmap Q1-Q3 2026, opportunità partnership centro scommesse (3 opzioni: white-label, revenue share, investimento).
+
+- **#13 — Legal upgrade: multi-campionato, Telegram, trasferimenti internazionali, terminazione** — Aggiornate tutte e 3 le pagine legali al 24 febbraio 2026: `terms.html` — sezione 2 ora copre tutti e 7 i campionati (prima diceva solo Serie A), aggiunta sezione terminazione account (10) e trasferimenti dati internazionali con SCC/PCI-DSS (11), rinumerazione sezioni 10→12 e 11→13→14; `privacy.html` — aggiunta voce Telegram nei dati raccolti (User ID, username, chat ID — opzionali, revocabili), nuova sezione 5bis sui trasferimenti internazionali (Supabase/Stripe/Vercel con garanzie SCC), fornitori rinominati con sede USA; `cookies.html` — aggiornamento data.
+
 ### Changed
 
 - **feat(engine): injury intelligence — rosa titolare, impatto giocatori, qualità backup** — Il motore ora recupera infortuni e squalifiche direttamente dall'API Football (`GET /injuries?fixture={id}`) come dati strutturati — zero web search, zero token aggiuntivi. Per ogni partita: (1) infortuni confermati/squalifiche/dubbi con tipo e motivo; (2) statistiche stagionali dei giocatori coinvolti (`GET /players?team={id}&season`, cache in-memory per efficienza); (3) calcolo automatico di `impactLevel` (HIGH/HIGH_GK/MEDIUM/LOW) basato su G+A% del team e participation rate; (4) `backupQuality` (ADEQUATE/PARTIAL/WEAK) basato sulla qualità del sostituto naturale nella stessa posizione; (5) `xGoalsHint` con la rettifica percentuale da applicare al modello xGoals. SKILL.md aggiornato: Search #2 ora skippata se `match.injuries` disponibile da API; nuova formula "Injury impact on xGoals" nel step 2c (tabella HIGH/MEDIUM/LOW × backup quality); DATA_SUMMARY con sezione infortuni strutturata. Copertura: ~97% degli assenti reali (presenze confermate 24-48h prima); cambi last-minute (<3%) non mitigabili con dati pre-match.
