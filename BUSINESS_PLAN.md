@@ -270,7 +270,7 @@ Il proprietario di un centro scommesse affiliato ha espresso interesse nella pia
 | Accuracy engine <60% | Media | Alto | Quality gate rigorosi, retrospettive automatiche, max confidence 80% |
 | Churn alto per scarsi risultati | Media | Alto | Track record trasparente crea aspettative realistiche |
 | Regolatorio (ADM) | Bassa | Alto | Non siamo un bookmaker, ma un servizio informativo — esente da licenza ADM |
-| Concorrenza grossa player | Bassa | Media | Focus su nichia Italian market + trasparenza track record come moat |
+| Concorrenza grossa player | Bassa | Media | Focus su nicchia Italian market + trasparenza track record come moat |
 | API Football outage | Media | Bassa | Fallback a Football-Data.org già implementato |
 | Stripe ban (gambling) | Bassa | Alto | Siamo un servizio "informativo" non di gioco — categorizzazione corretta necessaria |
 
