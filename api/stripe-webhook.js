@@ -162,6 +162,32 @@ async function handleSubscriptionUpdated(subscription) {
     return;
   }
 
+  // Se cancel_at_period_end è true il portale ha schedulato la cancellazione
+  // a fine periodo: trattiamo come cancellazione immediata per semplicità
+  // (l'utente ha espresso l'intento di disdire e lo stato Stripe diventerà
+  // "canceled" a fine periodo — il webhook customer.subscription.deleted
+  // lo confermerà, ma aggiorniamo già qui per UX coerente).
+  if (subscription.cancel_at_period_end) {
+    await supabase
+      .from('subscriptions')
+      .update({ status: 'cancelled' })
+      .eq('stripe_subscription_id', subscription.id);
+
+    const { data: activeSubs } = await supabase
+      .from('subscriptions')
+      .select('tier')
+      .eq('user_id', userId)
+      .eq('status', 'active');
+
+    if (!activeSubs || activeSubs.length === 0) {
+      await supabase.from('profiles').update({ tier: 'free' }).eq('user_id', userId);
+      await manageTelegramAccess(userId, 'revoke');
+    }
+
+    console.log(`Subscription cancel_at_period_end: user=${userId}, treated as cancelled`);
+    return;
+  }
+
   const status = mapStripeStatus(subscription.status);
 
   // Aggiorna il record di abbonamento
