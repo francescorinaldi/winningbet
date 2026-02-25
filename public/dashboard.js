@@ -205,24 +205,23 @@
       const subTier = document.getElementById('subTier');
       const subStatus = document.getElementById('subStatus');
 
-      // Setup upgrade buttons
-      upgradeProBtn.onclick = function () {
-        startCheckout('pro');
-      };
-      upgradeVipBtn.onclick = function () {
-        startCheckout('vip');
-      };
+      // Setup upgrade buttons (guard against missing elements)
+      if (upgradeProBtn) upgradeProBtn.onclick = function () { startCheckout('pro'); };
+      if (upgradeVipBtn) upgradeVipBtn.onclick = function () { startCheckout('vip'); };
 
       // Update tier badge
-      subTierBadge.textContent = tier.toUpperCase();
-      subTierBadge.className = 'profile-hero__badge';
-      if (tier === 'pro') subTierBadge.classList.add('profile-hero__badge--pro');
-      if (tier === 'vip') subTierBadge.classList.add('profile-hero__badge--vip');
+      if (subTierBadge) {
+        subTierBadge.textContent = tier.toUpperCase();
+        subTierBadge.className = 'profile-hero__badge';
+        if (tier === 'pro') subTierBadge.classList.add('profile-hero__badge--pro');
+        if (tier === 'vip') subTierBadge.classList.add('profile-hero__badge--vip');
+      }
 
       // Update avatar initials
       const initials = document.getElementById('userInitials');
-      const name = document.getElementById('userDisplayName').textContent || '';
-      if (name && name !== '\u2014') {
+      const nameEl = document.getElementById('userDisplayName');
+      const name = (nameEl && nameEl.textContent) || '';
+      if (initials && name && name !== '\u2014') {
         const parts = name.trim().split(/\s+/);
         initials.textContent =
           parts.length > 1
@@ -231,20 +230,21 @@
       }
 
       if (tier === 'free') {
-        subTier.textContent = 'Free';
-        subStatus.textContent = 'Gratuito';
-        upgradeSection.style.display = '';
-        manageSubRow.style.display = 'none';
+        if (subTier) subTier.textContent = 'Free';
+        if (subStatus) subStatus.textContent = 'Gratuito';
+        if (upgradeSection) upgradeSection.style.display = '';
+        if (manageSubRow) manageSubRow.style.display = 'none';
 
-        // Show both plans for free users
-        document.querySelector('.upgrade-card--pro').style.display = '';
-        document.querySelector('.upgrade-card--vip').style.display = '';
+        const proCard = document.querySelector('.upgrade-card--pro');
+        const vipCard = document.querySelector('.upgrade-card--vip');
+        if (proCard) proCard.style.display = '';
+        if (vipCard) vipCard.style.display = '';
 
         handleAutoCheckout(tier);
         return;
       }
 
-      subTier.textContent = tier.toUpperCase() + ' \u2014 ' + TIER_PRICES[tier].display;
+      if (subTier) subTier.textContent = tier.toUpperCase() + ' \u2014 ' + TIER_PRICES[tier].display;
 
       const subResult = await SupabaseConfig.client
         .from('subscriptions')
@@ -260,26 +260,31 @@
       }
 
       if (subResult.data) {
-        subStatus.textContent = 'Attivo';
-        manageSubRow.style.display = '';
-        subStatusDisplay.textContent = tier.toUpperCase() + ' Attivo';
-        subRenewalDisplay.textContent = 'Rinnovo: ' + formatDate(subResult.data.current_period_end);
+        if (subStatus) subStatus.textContent = 'Attivo';
+        if (manageSubRow) manageSubRow.style.display = '';
+        if (subStatusDisplay) subStatusDisplay.textContent = tier.toUpperCase() + ' Attivo';
+        if (subRenewalDisplay) subRenewalDisplay.textContent = 'Rinnovo: ' + formatDate(subResult.data.current_period_end);
       } else {
-        subStatus.textContent = 'Non attivo';
+        if (subStatus) subStatus.textContent = 'Non attivo';
       }
 
       if (tier === 'pro') {
         // PRO user: show only VIP upgrade
-        upgradeSection.style.display = '';
-        upgradeSection.querySelector('.upgrade-section__title').textContent = 'Passa a VIP';
-        document.querySelector('.upgrade-card--pro').style.display = 'none';
-        document.querySelector('.upgrade-card--vip').style.display = '';
+        if (upgradeSection) {
+          upgradeSection.style.display = '';
+          const upgradeTitle = upgradeSection.querySelector('.upgrade-section__title');
+          if (upgradeTitle) upgradeTitle.textContent = 'Passa a VIP';
+        }
+        const proCard = document.querySelector('.upgrade-card--pro');
+        const vipCard = document.querySelector('.upgrade-card--vip');
+        if (proCard) proCard.style.display = 'none';
+        if (vipCard) vipCard.style.display = '';
       } else {
         // VIP user: hide upgrade section
-        upgradeSection.style.display = 'none';
+        if (upgradeSection) upgradeSection.style.display = 'none';
       }
 
-      if (profile && profile.stripe_customer_id) {
+      if (profile && profile.stripe_customer_id && manageSubBtn) {
         manageSubBtn.style.display = '';
         manageSubBtn.onclick = openCustomerPortal;
       }
@@ -287,7 +292,6 @@
       handleAutoCheckout(tier);
     } catch (err) {
       console.error('[updateSubscriptionUI]', err.message || err);
-      showAlert('Errore di connessione. Ricarica la pagina.', 'error');
     }
   }
 
