@@ -216,12 +216,25 @@ describe('prediction-engine', () => {
       expect(MARKET_WATERFALL_ORDER.slice(-2)).toEqual(['1 + Over 1.5', '2 + Over 1.5']);
     });
 
-    test('exact win markets come after BTTS and O/U', () => {
-      const exactWinIndex = MARKET_WATERFALL_ORDER.indexOf('1');
+    test('exact win markets come after BTTS and all O/U markets', () => {
+      const exactWin1Index = MARKET_WATERFALL_ORDER.indexOf('1');
+      const exactWin2Index = MARKET_WATERFALL_ORDER.indexOf('2');
       const bttsIndex = MARKET_WATERFALL_ORDER.indexOf('Goal');
-      const ouIndex = MARKET_WATERFALL_ORDER.indexOf('Over 2.5');
-      expect(exactWinIndex).toBeGreaterThan(bttsIndex);
-      expect(exactWinIndex).toBeGreaterThan(ouIndex);
+      const noGoalIndex = MARKET_WATERFALL_ORDER.indexOf('No Goal');
+      const over25Index = MARKET_WATERFALL_ORDER.indexOf('Over 2.5');
+      const under25Index = MARKET_WATERFALL_ORDER.indexOf('Under 2.5');
+      const over15Index = MARKET_WATERFALL_ORDER.indexOf('Over 1.5');
+      const under35Index = MARKET_WATERFALL_ORDER.indexOf('Under 3.5');
+
+      // Both exact wins come after all BTTS and O/U markets
+      for (const exactIdx of [exactWin1Index, exactWin2Index]) {
+        expect(exactIdx).toBeGreaterThan(bttsIndex);
+        expect(exactIdx).toBeGreaterThan(noGoalIndex);
+        expect(exactIdx).toBeGreaterThan(over25Index);
+        expect(exactIdx).toBeGreaterThan(under25Index);
+        expect(exactIdx).toBeGreaterThan(over15Index);
+        expect(exactIdx).toBeGreaterThan(under35Index);
+      }
     });
   });
 

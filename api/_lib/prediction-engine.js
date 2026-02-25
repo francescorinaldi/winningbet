@@ -439,12 +439,12 @@ function deduplicateByBestEV(predictions) {
     const ev = pred.predicted_probability * pred.odds - 1;
     const existing = bestByMatch.get(pred.match_id);
 
-    if (!existing || ev > existing.predicted_probability * existing.odds - 1) {
-      bestByMatch.set(pred.match_id, pred);
+    if (!existing || ev > existing.ev) {
+      bestByMatch.set(pred.match_id, { prediction: pred, ev });
     }
   }
 
-  return [...bestByMatch.values()];
+  return [...bestByMatch.values()].map((entry) => entry.prediction);
 }
 
 // ─── Batch Generation ───────────────────────────────────────────────────────
