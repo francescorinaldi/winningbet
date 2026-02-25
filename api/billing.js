@@ -118,7 +118,7 @@ async function handlePortal(req, res) {
     const origin = getOrigin(req);
     const session = await stripe.billingPortal.sessions.create({
       customer: profile.stripe_customer_id,
-      return_url: origin + '/dashboard.html',
+      return_url: origin + '/dashboard.html?from=portal',
     });
 
     return res.status(200).json({ url: session.url });

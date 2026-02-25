@@ -51,6 +51,7 @@
   let userBetsMap = {};
   let countdownInterval = null;
   let notifInterval = null;
+  let checkoutJustCompleted = false;
   let currentLeague = null;
   try {
     currentLeague = localStorage.getItem('wb_dashboard_league');
@@ -177,6 +178,18 @@
 
       updateSubscriptionUI(tier);
       loadTelegramStatus();
+
+      // Se l'utente torna da un checkout appena completato ma il tier è ancora free,
+      // il webhook potrebbe non aver ancora sparato: esegui polling finché non si aggiorna.
+      if (checkoutJustCompleted) {
+        checkoutJustCompleted = false;
+        if (tier !== 'free') {
+          showAlert('Abbonamento attivato con successo! Benvenuto.', 'success');
+        } else {
+          showAlert('Stiamo attivando il tuo abbonamento\u2026', 'success');
+          pollForSubscriptionUpgrade(user.id);
+        }
+      }
 
       // Show notification bell for authenticated users
       const notifBell = document.getElementById('notifBell');
@@ -1649,14 +1662,58 @@
   function handleCheckoutFeedback() {
     const params = new URLSearchParams(window.location.search);
     const checkout = params.get('checkout');
+    const fromPortal = params.get('from') === 'portal';
 
     if (checkout === 'success') {
-      showAlert('Abbonamento attivato con successo! Benvenuto.', 'success');
+      // Imposta il flag — loadProfile mostrerà l'alert e avvierà il polling se necessario
+      checkoutJustCompleted = true;
       window.history.replaceState({}, '', '/dashboard.html');
     } else if (checkout === 'cancelled') {
       showAlert('Pagamento annullato. Puoi riprovare quando vuoi.', 'error');
       window.history.replaceState({}, '', '/dashboard.html');
+    } else if (fromPortal) {
+      // Ritorno dal Customer Portal: ripeti loadProfile dopo 3s per recepire
+      // eventuali aggiornamenti al tier arrivati via webhook (es. cancellazione).
+      window.history.replaceState({}, '', '/dashboard.html');
+      setTimeout(function () {
+        if (session) loadProfile();
+      }, 3000);
     }
+  }
+
+  /**
+   * Polling su Supabase finché il tier non passa da free a pro/vip.
+   * Serve quando il webhook di Stripe è leggermente in ritardo rispetto al redirect.
+   * @param {string} userId
+   */
+  async function pollForSubscriptionUpgrade(userId) {
+    const MAX_ATTEMPTS = 8;
+    const INTERVAL_MS = 2000;
+
+    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+      await new Promise(function (resolve) { setTimeout(resolve, INTERVAL_MS); });
+
+      const result = await SupabaseConfig.client
+        .from('profiles')
+        .select('tier')
+        .eq('user_id', userId)
+        .single();
+
+      const freshTier = result.data && result.data.tier;
+      if (freshTier && freshTier !== 'free') {
+        profile.tier = freshTier;
+        const tierLabel = document.getElementById('tierLabel');
+        const tierBadge = document.getElementById('tierBadge');
+        if (tierLabel) tierLabel.textContent = freshTier.toUpperCase();
+        if (tierBadge) tierBadge.className = 'dash-tier-badge dash-tier-badge--' + freshTier;
+        await updateSubscriptionUI(freshTier);
+        showAlert('Abbonamento attivato con successo! Benvenuto.', 'success');
+        return;
+      }
+    }
+
+    // Webhook in forte ritardo: mostra messaggio con suggerimento di ricarica
+    showAlert('Abbonamento attivato! Se il badge non si aggiorna, ricarica la pagina.', 'success');
   }
 
   function showAlert(message, type) {
