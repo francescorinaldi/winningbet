@@ -808,7 +808,7 @@
 
         const leagueSelector = document.getElementById('dashLeagueSelector');
         if (leagueSelector) {
-          leagueSelector.style.display = target === 'schedine' ? 'none' : '';
+          leagueSelector.style.display = target === 'account' ? 'none' : '';
         }
       });
     });
@@ -840,10 +840,13 @@
       const panelHistory = document.getElementById('panelHistory');
       const isAccountVisible = panelAccount.style.display !== 'none';
 
+      const leagueSelector = document.getElementById('dashLeagueSelector');
+
       if (isAccountVisible) {
         // Chiudi account, torna alla tab attiva
         panelAccount.style.display = 'none';
         settingsBtn.classList.remove('active');
+        if (leagueSelector) leagueSelector.style.display = '';
 
         const activeTab = document.querySelector('.dash-tab.active');
         const activePanel = activeTab ? activeTab.getAttribute('data-tab') : 'tips';
@@ -851,12 +854,13 @@
         panelSchedule.style.display = activePanel === 'schedine' ? '' : 'none';
         panelHistory.style.display = activePanel === 'history' ? '' : 'none';
       } else {
-        // Apri account, nascondi gli altri pannelli
+        // Apri account, nascondi gli altri pannelli e il selettore campionato
         panelTips.style.display = 'none';
         panelSchedule.style.display = 'none';
         panelHistory.style.display = 'none';
         panelAccount.style.display = '';
         settingsBtn.classList.add('active');
+        if (leagueSelector) leagueSelector.style.display = 'none';
       }
     });
   }
