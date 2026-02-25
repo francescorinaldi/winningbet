@@ -77,6 +77,7 @@ async function handleCheckout(req, res) {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
+      payment_method_types: ['card'],
       line_items: [{ price: PRICE_IDS[tier], quantity: 1 }],
       success_url: origin + '/dashboard.html?checkout=success',
       cancel_url: origin + '/dashboard.html?checkout=cancelled',
