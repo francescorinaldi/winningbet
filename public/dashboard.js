@@ -1712,8 +1712,20 @@
       }
     }
 
-    // Webhook in forte ritardo: mostra messaggio con suggerimento di ricarica
-    showAlert('Abbonamento attivato! Se il badge non si aggiorna, ricarica la pagina.', 'success');
+    // Polling esaurito senza aggiornamento tier — verifica se esiste una subscription attiva.
+    // Se sì: webhook lento, invita a ricaricare. Se no: pagamento fallito.
+    const subCheck = await SupabaseConfig.client
+      .from('subscriptions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .limit(1);
+
+    if (subCheck.data && subCheck.data.length > 0) {
+      showAlert('Abbonamento attivato! Se il badge non si aggiorna, ricarica la pagina.', 'success');
+    } else {
+      showAlert('Il pagamento non è andato a buon fine. Riprova o contatta il supporto.', 'error');
+    }
   }
 
   function showAlert(message, type) {
