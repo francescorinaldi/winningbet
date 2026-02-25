@@ -82,10 +82,10 @@ module.exports = async function handler(req, res) {
         console.log('Unhandled webhook event:', event.type);
     }
   } catch (err) {
-    console.error('Webhook handler error:', err.message);
+    console.error('Webhook handler error [' + event.type + ']:', err.message, err.stack);
     // Restituisci 500 per errori transitori cosi' Stripe riprova.
     // Stripe ha un backoff esponenziale fino a 3 giorni di retry.
-    return res.status(500).json({ error: 'Webhook handler failed' });
+    return res.status(500).json({ error: 'Webhook handler failed', details: err.message });
   }
 
   return res.status(200).json({ received: true });
@@ -191,13 +191,18 @@ async function handleSubscriptionUpdated(subscription) {
   const status = mapStripeStatus(subscription.status);
 
   // Aggiorna il record di abbonamento
+  const updatePayload = {
+    status: status,
+    tier: tier || undefined,
+  };
+  if (subscription.current_period_end) {
+    updatePayload.current_period_end = new Date(
+      subscription.current_period_end * 1000,
+    ).toISOString();
+  }
   await supabase
     .from('subscriptions')
-    .update({
-      status: status,
-      tier: tier || undefined,
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-    })
+    .update(updatePayload)
     .eq('stripe_subscription_id', subscription.id);
 
   // Aggiorna il tier del profilo solo se l'abbonamento e' attivo
