@@ -115,17 +115,16 @@ async function handleCheckoutCompleted(session) {
     return;
   }
 
-  // Recupera i dettagli dell'abbonamento
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-
-  // Crea il record di abbonamento
+  // Crea il record di abbonamento.
+  // Non recuperiamo i dettagli da Stripe qui per evitare una chiamata API extra
+  // che potrebbe fallire con certi SDK/API version. current_period_end viene
+  // impostato dal successivo evento customer.subscription.updated.
   const { error: subError } = await supabase.from('subscriptions').upsert(
     {
       user_id: userId,
       stripe_subscription_id: subscriptionId,
       tier: tier,
       status: 'active',
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
     },
     { onConflict: 'stripe_subscription_id' },
   );
