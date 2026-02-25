@@ -900,6 +900,10 @@
       const btn = e.target.closest('.league-btn');
       if (!btn) return;
 
+      // On the Schedine tab, league filter has no effect — do nothing
+      const activeTab = document.querySelector('.dash-tab.active');
+      if (activeTab && activeTab.getAttribute('data-tab') === 'schedine') return;
+
       const league = btn.getAttribute('data-league');
       if (league === currentLeague) return;
 
