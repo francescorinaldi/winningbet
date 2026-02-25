@@ -27,14 +27,6 @@ const { supabase } = require('./_lib/supabase');
 const telegram = require('./_lib/telegram');
 
 /**
- * Vercel config: disabilita il body parsing per ricevere il raw body.
- * Necessario per la verifica della firma Stripe.
- */
-module.exports.config = {
-  api: { bodyParser: false },
-};
-
-/**
  * Legge il body raw dalla request stream.
  * @param {Object} req - Request object
  * @returns {Promise<Buffer>}
@@ -97,6 +89,15 @@ module.exports = async function handler(req, res) {
   }
 
   return res.status(200).json({ received: true });
+};
+
+/**
+ * Vercel config: disabilita il body parsing per ricevere il raw body.
+ * DEVE stare dopo module.exports = handler, altrimenti viene sovrascritta.
+ * Necessario per la verifica della firma Stripe.
+ */
+module.exports.config = {
+  api: { bodyParser: false },
 };
 
 /**
