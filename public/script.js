@@ -308,7 +308,7 @@
         setTimeout(function () {
           const navHeight = navbar.offsetHeight;
           const targetPos = target.getBoundingClientRect().top + window.scrollY - navHeight;
-          window.scrollTo({ top: targetPos, behavior: 'smooth' });
+          window.scrollTo({ top: targetPos, behavior: REDUCED_MOTION ? 'auto' : 'smooth' });
         }, 50);
       }
     });
