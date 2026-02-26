@@ -6,7 +6,7 @@
   "outputDirectory": "public",
   "headers": [
     {
-      "source": "/api/(generate-tips|cron-tasks|billing|stripe-webhook|tips|telegram|user-settings|user-bets|betting-slips)",
+      "source": "/api/(generate-tips|cron-tasks|billing|stripe-webhook|tips|telegram|user-settings|user-bets|betting-slips|fantacalcio)",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     },
     {

@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **feat(fantacalcio): DB migration + API endpoint — Fantacalcio Hub foundation** — Implementato lo scheletro del modulo Fantacalcio Hub: (1) migrazione `015_create_fantacalcio_picks.sql` con tabella `fantacalcio_picks` (captain, differential, buy, sell; campi: player_name, team_name, role, reasoning, tier, confidence, expected_points, ownership_pct, rank, week_date); RLS a 4 livelli (captain=free, differential=pro, buy/sell=vip, service_role=tutto); indici su league+week_date e pick_type. (2) endpoint `GET /api/fantacalcio?league=serie-a` con auth JWT, tier filtering, calcolo lunedì di settimana corrente, risposta strutturata (captains/differentials/transfers), cache `private s-maxage=21600`. (3) `vercel.json` aggiornato con `/api/fantacalcio` nella lista no-store. Prossimi step: dashboard tab + render UI (PR #177), skill `/fr3-generate-fantacalcio` per generazione settimanale AI.
+
 ### Fixed
 
 - **fix(ui): rimozione bordo grigio su scroll alla sezione Piani** — Lo scroll verso sezioni anchor usava un offset `navHeight + 20px`, che lasciava 20px dello sfondo di `.stats-section` (`#12121a`) visibile sotto la navbar quando si navigava a `#pricing`. Rimosso i 20px extra: la sezione ora si posiziona esattamente sotto la navbar, eliminando la striscia grigia.
