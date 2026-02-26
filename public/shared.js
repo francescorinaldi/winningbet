@@ -906,7 +906,7 @@ function initLangToggle() {
 
   var langs = [
     { code: 'IT', flag: '\uD83C\uDDEE\uD83C\uDDF9' },
-    { code: 'EN', flag: '\uD83C\uDDEC\uD83C\uDDE7' },
+    { code: 'EN', flag: '\uD83C\uDF10' },
   ];
   var savedLang = null;
   try {

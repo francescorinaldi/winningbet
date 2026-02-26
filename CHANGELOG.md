@@ -4,6 +4,12 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **fix(ui): rimozione bordo grigio su scroll alla sezione Piani** — Lo scroll verso sezioni anchor usava un offset `navHeight + 20px`, che lasciava 20px dello sfondo di `.stats-section` (`#12121a`) visibile sotto la navbar quando si navigava a `#pricing`. Rimosso i 20px extra: la sezione ora si posiziona esattamente sotto la navbar, eliminando la striscia grigia.
+
+- **fix(ui): lingua inglese mostra globe 🌐 invece della bandiera 🇬🇧** — Il toggle lingua usava la bandiera del Regno Unito per rappresentare la lingua inglese, ma l'inglese non è lingua esclusiva della Gran Bretagna. Sostituita con l'emoji 🌐 (globe), soluzione adottata da Notion, Vercel, Linear, Stripe e altri. Nessuna modifica all'HTML (la label "EN" rimane invariata).
+
 ### Added
 
 - **CLAUDE.md: Workflow Orchestration & Task Management** — Integrati insights da CLAUDE.md di riferimento: nuova sezione `## Workflow Orchestration` con 6 sottosezioni (Plan Node Default, Subagent Strategy, Self-Improvement Loop, Verification Before Done, Demand Elegance, Autonomous Bug Fixing); nuova sezione `## Task Management` con workflow a 6 step e riferimenti a `tasks/todo.md` / `tasks/lessons.md`; `## Code Quality Principles` consolidata con "Simplicity with minimal impact". `tasks/` aggiunto a `.gitignore`.

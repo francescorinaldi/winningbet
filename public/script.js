@@ -305,7 +305,7 @@
       if (target) {
         e.preventDefault();
         const navHeight = navbar.offsetHeight;
-        const targetPos = target.getBoundingClientRect().top + window.scrollY - navHeight - 20;
+        const targetPos = target.getBoundingClientRect().top + window.scrollY - navHeight;
         window.scrollTo({ top: targetPos, behavior: 'smooth' });
       }
     });
