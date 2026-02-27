@@ -6,6 +6,9 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Changed
 
+- **config(vercel): disable preview deployments on PRs** — Added `git.deploymentEnabled` to `vercel.json`: `preview: false`, `production: true`. Vercel now only deploys on merges to `main`, skipping PR preview builds.
+- **config(copilot): set Claude Opus 4.6 as default model for both agents** — Updated `coder.agent.md` from `claude-sonnet-4` to `claude-opus-4-6`, added `model: claude-opus-4-6` to `reviewer.agent.md`.
+
 - **refactor(api): consolidate serverless functions to fit Vercel Hobby 12-function limit** — Merged `match-insights.js` (h2h + form) and `odds-compare.js` (multi-bookmaker comparator) into `fixtures.js`, which now handles 6 types: `matches`, `results`, `odds`, `h2h`, `form`, `odds-compare`. Frontend URLs updated in `dashboard.js` (`/api/match-insights?type=...` → `/api/fixtures?type=...`, `/api/odds-compare?league=...` → `/api/fixtures?type=odds-compare&league=...`). `odds-compare` retains its JWT + partner role auth internally. Tests updated. Function count: 14 → 12.
 
 ### Added

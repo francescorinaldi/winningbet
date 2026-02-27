@@ -15,7 +15,7 @@ handoffs:
   - label: 'Request Reviewer check'
     agent: Reviewer
     prompt: 'Review the completed changes for quality and conventions'
-model: claude-sonnet-4
+model: claude-opus-4-6
 argument-hint: 'Paste a GitHub issue URL or describe what to build/fix'
 ---
 
