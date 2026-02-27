@@ -204,8 +204,10 @@ describe('prediction-engine', () => {
   });
 
   describe('MARKET_WATERFALL_ORDER', () => {
-    test('contains all 14 prediction types', () => {
+    test('contains all 14 prediction types with no duplicates', () => {
       expect(MARKET_WATERFALL_ORDER).toHaveLength(14);
+      const uniqueMarkets = new Set(MARKET_WATERFALL_ORDER);
+      expect(uniqueMarkets.size).toBe(14);
     });
 
     test('starts with double chance markets (highest priority)', () => {
@@ -289,6 +291,18 @@ describe('prediction-engine', () => {
       ];
       const result = deduplicateByBestEV(input);
       expect(result[0]).toEqual(input[1]);
+    });
+
+    test('normalizes predicted_probability when given as percentage (0–100)', () => {
+      const input = [
+        { match_id: '100', prediction: '1', odds: 1.22, predicted_probability: 85, confidence: 80, tier: 'free' },
+        { match_id: '100', prediction: 'Goal', odds: 1.70, predicted_probability: 72, confidence: 70, tier: 'pro' },
+      ];
+      const result = deduplicateByBestEV(input);
+      expect(result).toHaveLength(1);
+      // EV for '1': (85/100) * 1.22 - 1 = 0.037
+      // EV for 'Goal': (72/100) * 1.70 - 1 = 0.224
+      expect(result[0].prediction).toBe('Goal');
     });
   });
 });

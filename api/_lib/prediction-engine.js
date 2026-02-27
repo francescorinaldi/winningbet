@@ -429,14 +429,16 @@ function balanceTiers(predictions) {
  * Il waterfall puo' produrre multiple prediction candidate per la stessa partita
  * (stesso match_id); questa funzione seleziona la migliore.
  *
- * @param {Array<Object>} predictions - Array di pronostici (puo' avere duplicati per match_id)
+ * @param {Array<Object>} predictions - Array di pronostici (puo' avere duplicati per match_id).
+ *   predicted_probability puo' essere decimale (0–1) o percentuale (0–100); viene normalizzata automaticamente.
  * @returns {Array<Object>} Array deduplicato (max 1 pronostico per match_id)
  */
 function deduplicateByBestEV(predictions) {
   const bestByMatch = new Map();
 
   for (const pred of predictions) {
-    const ev = pred.predicted_probability * pred.odds - 1;
+    const prob = pred.predicted_probability > 1 ? pred.predicted_probability / 100 : pred.predicted_probability;
+    const ev = prob * pred.odds - 1;
     const existing = bestByMatch.get(pred.match_id);
 
     if (!existing || ev > existing.ev) {
