@@ -13,6 +13,7 @@ handoffs:
   - label: 'Hand off to Coder'
     agent: Coder
     prompt: 'This needs deeper investigation or architectural changes'
+model: claude-opus-4-6
 argument-hint: 'Describe what to review or paste file paths'
 ---
 

@@ -3,10 +3,16 @@
     "api/generate-tips.js": { "maxDuration": 60 },
     "api/cron-tasks.js": { "maxDuration": 60 }
   },
+  "git": {
+    "deploymentEnabled": {
+      "preview": false,
+      "production": true
+    }
+  },
   "outputDirectory": "public",
   "headers": [
     {
-      "source": "/api/(generate-tips|cron-tasks|billing|stripe-webhook|tips|telegram|user-settings|user-bets|betting-slips|fantacalcio|odds-compare)",
+      "source": "/api/(generate-tips|cron-tasks|billing|stripe-webhook|tips|telegram|user-settings|user-bets|betting-slips|fantacalcio)",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     },
     {

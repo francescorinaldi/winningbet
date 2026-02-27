@@ -952,7 +952,7 @@ var dashRenderFantacalcio = function (container, data, ctx) {
  *
  * @param {HTMLElement} container - The #centroHubGrid element.
  * @param {HTMLElement} emptyEl - The #centroHubEmpty element.
- * @param {Object} data - Response from GET /api/odds-compare
+ * @param {Object} data - Response from GET /api/fixtures?type=odds-compare
  *   { league, fixtures: [{ fixtureId, date, home, away, tip, bookmakers, bestOdds }] }
  */
 var dashRenderCentroHub = function (container, emptyEl, data) {
