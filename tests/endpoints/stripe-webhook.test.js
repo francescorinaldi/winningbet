@@ -96,11 +96,6 @@ describe('POST /api/stripe-webhook', () => {
     };
 
     stripe.webhooks.constructEvent.mockReturnValue(event);
-    stripe.subscriptions.retrieve.mockResolvedValue({
-      id: 'sub_123',
-      status: 'active',
-      current_period_end: 1735689600,
-    });
 
     const mockUpsertChain = {
       upsert: jest.fn().mockResolvedValue({ data: null, error: null }),
@@ -118,7 +113,6 @@ describe('POST /api/stripe-webhook', () => {
 
     await handler(req, res);
 
-    expect(stripe.subscriptions.retrieve).toHaveBeenCalledWith('sub_123');
     expect(supabase.from).toHaveBeenCalledWith('subscriptions');
     expect(mockUpsertChain.upsert).toHaveBeenCalledWith(
       {
@@ -126,7 +120,6 @@ describe('POST /api/stripe-webhook', () => {
         stripe_subscription_id: 'sub_123',
         tier: 'pro',
         status: 'active',
-        current_period_end: new Date(1735689600 * 1000).toISOString(),
       },
       { onConflict: 'stripe_subscription_id' },
     );
@@ -202,6 +195,99 @@ describe('POST /api/stripe-webhook', () => {
       status: 'active',
       tier: 'vip',
       current_period_end: new Date(1735689600 * 1000).toISOString(),
+    });
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('should handle cancel_at_period_end by treating as cancellation', async () => {
+    const event = {
+      type: 'customer.subscription.updated',
+      data: {
+        object: {
+          id: 'sub_123',
+          customer: 'cus_123',
+          status: 'active',
+          cancel_at_period_end: true,
+          current_period_end: 1735689600,
+          metadata: { supabase_user_id: 'u1', tier: 'pro' },
+        },
+      },
+    };
+
+    stripe.webhooks.constructEvent.mockReturnValue(event);
+
+    const mockSubUpdateChain = {
+      update: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      then: jest.fn((r) => r({ data: null, error: null })),
+    };
+
+    const mockSelectChain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      then: jest.fn((r) => r({ data: [], error: null })),
+    };
+
+    const mockProfileUpdateChain = {
+      update: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      then: jest.fn((r) => r({ data: null, error: null })),
+    };
+
+    const mockProfileSelectChain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+    };
+
+    supabase.from
+      .mockReturnValueOnce(mockSubUpdateChain) // subscriptions update (cancelled)
+      .mockReturnValueOnce(mockSelectChain) // subscriptions select (active check)
+      .mockReturnValueOnce(mockProfileUpdateChain) // profiles update (tier=free)
+      .mockReturnValueOnce(mockProfileSelectChain); // profiles select (telegram)
+
+    const req = createStreamReq(JSON.stringify(event));
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(mockSubUpdateChain.update).toHaveBeenCalledWith({ status: 'cancelled' });
+    expect(mockProfileUpdateChain.update).toHaveBeenCalledWith({ tier: 'free' });
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('should handle subscription.updated without current_period_end', async () => {
+    const event = {
+      type: 'customer.subscription.updated',
+      data: {
+        object: {
+          id: 'sub_123',
+          customer: 'cus_123',
+          status: 'active',
+          metadata: { supabase_user_id: 'u1', tier: 'pro' },
+        },
+      },
+    };
+
+    stripe.webhooks.constructEvent.mockReturnValue(event);
+
+    const mockChain = {
+      select: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      then: jest.fn((r) => r({ data: null, error: null })),
+    };
+    supabase.from.mockReturnValue(mockChain);
+
+    const req = createStreamReq(JSON.stringify(event));
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(mockChain.update).toHaveBeenCalledWith({
+      status: 'active',
+      tier: 'pro',
     });
     expect(res.status).toHaveBeenCalledWith(200);
   });
@@ -364,7 +450,7 @@ describe('POST /api/stripe-webhook', () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Webhook handler failed' });
+    expect(res.json).toHaveBeenCalledWith({ error: 'Webhook handler failed', details: 'Database error' });
 
     consoleErrorSpy.mockRestore();
   });
@@ -382,11 +468,6 @@ describe('POST /api/stripe-webhook', () => {
     };
 
     stripe.webhooks.constructEvent.mockReturnValue(event);
-    stripe.subscriptions.retrieve.mockResolvedValue({
-      id: 'sub_123',
-      status: 'active',
-      current_period_end: 1735689600,
-    });
 
     const mockUpsertChain = {
       upsert: jest.fn().mockResolvedValue({ data: null, error: null }),

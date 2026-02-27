@@ -98,6 +98,7 @@ describe('POST /api/billing', () => {
     expect(stripe.checkout.sessions.create).toHaveBeenCalledWith({
       customer: 'cus_new',
       mode: 'subscription',
+      payment_method_types: ['card'],
       line_items: [{ price: PRICE_IDS.pro, quantity: 1 }],
       success_url: 'https://winningbet.it/dashboard.html?checkout=success',
       cancel_url: 'https://winningbet.it/dashboard.html?checkout=cancelled',
@@ -135,6 +136,7 @@ describe('POST /api/billing', () => {
     expect(stripe.checkout.sessions.create).toHaveBeenCalledWith({
       customer: 'cus_existing',
       mode: 'subscription',
+      payment_method_types: ['card'],
       line_items: [{ price: PRICE_IDS.vip, quantity: 1 }],
       success_url: 'https://winningbet.it/dashboard.html?checkout=success',
       cancel_url: 'https://winningbet.it/dashboard.html?checkout=cancelled',
@@ -237,7 +239,7 @@ describe('POST /api/billing', () => {
 
     expect(stripe.billingPortal.sessions.create).toHaveBeenCalledWith({
       customer: 'cus_existing',
-      return_url: 'https://winningbet.it/dashboard.html',
+      return_url: 'https://winningbet.it/dashboard.html?from=portal',
     });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
