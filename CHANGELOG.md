@@ -43,6 +43,8 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Fixed
 
+- **fix(ux): smooth scroll e transizioni tab** — (1) Aggiunto `scroll-margin-top: 80px` alle sezioni target (`#tips`, `#stats`, `#pricing`, `#faq`) per compensare la navbar fissa durante lo scroll; (2) Lo smooth scroll JS ora rispetta `prefers-reduced-motion` usando `behavior: 'auto'` quando l'utente ha disabilitato le animazioni; (3) Aggiunta animazione fade-in (`dashFadeIn`) ai pannelli tab del dashboard per transizioni fluide al cambio tab. Tutte le animazioni sono automaticamente disabilitate dal media query `prefers-reduced-motion: reduce` esistente.
+
 - **fix(dashboard): click sul selettore campionati nel tab Schedine è ora no-op** — Sul tab "Schedine" il selettore campionati è visibile ma un click non deve produrre alcun effetto (le schedine sono cross-league). Aggiunto early-return nel click handler di `setupLeagueSelector`: se il tab attivo è `schedine`, il click viene ignorato — nessun cambio di `currentLeague`, nessuna chiamata API, nessun aggiornamento visuale.
 
 - **fix(dashboard): league selector visibile su tutti i tab incluso Schedine** — Il selettore campionati veniva nascosto quando l'utente cliccava sul tab "Schedine", causando un layout instabile. La condizione `target === 'schedine' ? 'none' : ''` è stata corretta in `target === 'account' ? 'none' : ''` — il selector rimane sempre visibile su Tips, Schedine e Storico, e viene nascosto solo quando si apre il pannello account (⚙️). Aggiunta anche gestione coerente nel `setupSettingsToggle`: il selector viene nascosto all'apertura del pannello account e ripristinato alla chiusura.

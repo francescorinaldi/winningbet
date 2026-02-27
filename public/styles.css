@@ -121,6 +121,14 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Offset anchored sections below fixed navbar (height ~60px + 20px padding) */
+.tips-section,
+.stats-section,
+.pricing-section,
+.faq-section {
+  scroll-margin-top: 80px;
+}
+
 body {
   font-family: var(--font-body);
   background: var(--bg-primary);
@@ -2773,6 +2781,20 @@ img {
 .dash-tab.active {
   background: linear-gradient(135deg, var(--gold-light), var(--gold));
   color: var(--bg-primary);
+}
+
+/* Smooth fade-in for dashboard tab panels */
+.dash-panel {
+  animation: dashFadeIn 0.2s ease-out;
+}
+
+@keyframes dashFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Dashboard Tips Grid */
