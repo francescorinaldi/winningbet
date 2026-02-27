@@ -232,12 +232,13 @@ describe('initMobileMenu — iOS scroll lock pattern', () => {
 });
 
 describe('CSS mobile nav link color fix', () => {
-  it('styles.css has color: #ffffff for .nav-links a:not(.btn) in mobile media query', () => {
+  it('styles.css has color: #ffffff for .nav-links a:not(.btn) inside a mobile media query', () => {
     const css = fs.readFileSync(path.join(__dirname, '../../public/styles.css'), 'utf8');
 
-    // Find the mobile media query section with .nav-links a:not(.btn)
-    const mobileNavLinkRule = /\.nav-links\s+a:not\(\.btn\)\s*\{[^}]*color:\s*#ffffff/;
-    expect(css).toMatch(mobileNavLinkRule);
+    // Match @media block containing .nav-links a:not(.btn) { … color: #ffffff }
+    const mediaWithNavLink =
+      /@media[^{]*\{[^]*?\.nav-links\s+a:not\(\.btn\)\s*\{[^}]*color:\s*#ffffff/;
+    expect(css).toMatch(mediaWithNavLink);
   });
 });
 
@@ -245,9 +246,9 @@ describe('script.js anchor scroll setTimeout fix', () => {
   it('script.js wraps scrollTo in setTimeout for iOS position:fixed teardown', () => {
     const scriptSource = fs.readFileSync(path.join(__dirname, '../../public/script.js'), 'utf8');
 
-    // Verify the setTimeout wrapper exists around scrollTo for anchor links
-    expect(scriptSource).toContain('setTimeout(function');
-    expect(scriptSource).toContain('getBoundingClientRect');
-    expect(scriptSource).toContain("behavior: 'smooth'");
+    // Verify setTimeout wraps getBoundingClientRect + scrollTo together
+    const setTimeoutWithScroll =
+      /setTimeout\(function\s*\(\)\s*\{[^}]*getBoundingClientRect[^}]*scrollTo[^}]*\}/s;
+    expect(scriptSource).toMatch(setTimeoutWithScroll);
   });
 });
