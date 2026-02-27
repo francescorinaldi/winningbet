@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pannello Admin — WinningBet</title>
+    <meta
+      name="description"
+      content="Pannello di amministrazione WinningBet. Gestione candidature partner e utenti."
+    />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Pannello Admin — WinningBet" />
+    <meta
+      property="og:description"
+      content="Pannello di amministrazione WinningBet. Gestione candidature partner e utenti."
+    />
+    <meta property="og:image" content="https://winningbet.it/og-image.png" />
+    <meta property="og:url" content="https://winningbet.it/admin.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="it_IT" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Pannello Admin — WinningBet" />
+    <meta
+      name="twitter:description"
+      content="Pannello di amministrazione WinningBet. Gestione candidature partner e utenti."
+    />
+    <meta name="twitter:image" content="https://winningbet.it/og-image.png" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar scrolled" id="navbar">
+      <div class="container nav-content">
+        <a href="/" class="logo">
+          <span class="logo-icon">&#9824;</span>
+          <span class="logo-text">WinningBet</span>
+        </a>
+        <div class="nav-links" id="navLinks">
+          <a href="/dashboard.html">Dashboard</a>
+          <a href="#" class="btn btn-outline btn-sm" id="logoutBtn">Esci</a>
+        </div>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Admin Content -->
+    <main class="dash-main">
+      <div class="container">
+        <!-- Header -->
+        <div class="dash-header">
+          <div>
+            <h1 class="dash-title">Pannello Amministrazione</h1>
+            <p class="dash-subtitle">Gestione partner e utenti WinningBet</p>
+          </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="dash-tabs" role="tablist" aria-label="Sezioni admin">
+          <button
+            class="dash-tab active"
+            data-tab="applications"
+            role="tab"
+            aria-selected="true"
+            aria-controls="panelApplications"
+            id="tabApplications"
+          >
+            Candidature Partner
+          </button>
+          <button
+            class="dash-tab"
+            data-tab="users"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panelUsers"
+            id="tabUsers"
+          >
+            Gestione Utenti
+          </button>
+        </div>
+
+        <!-- TAB: Partner Applications -->
+        <section
+          class="dash-panel"
+          id="panelApplications"
+          role="tabpanel"
+          aria-labelledby="tabApplications"
+        >
+          <!-- Filter bar -->
+          <div class="admin-filter-bar">
+            <button class="admin-filter-btn admin-filter-btn--active" data-status="all">
+              Tutte
+            </button>
+            <button class="admin-filter-btn" data-status="pending">In Attesa</button>
+            <button class="admin-filter-btn" data-status="approved">Approvate</button>
+            <button class="admin-filter-btn" data-status="rejected">Rifiutate</button>
+            <button class="admin-filter-btn" data-status="revoked">Revocate</button>
+          </div>
+
+          <!-- Applications list -->
+          <div id="applicationsList" class="admin-list"></div>
+
+          <!-- Loading state -->
+          <div id="applicationsLoading" class="admin-loading">
+            <span class="loading-spinner"></span>
+            <span>Caricamento candidature...</span>
+          </div>
+
+          <!-- Empty state -->
+          <div id="applicationsEmpty" class="admin-empty" style="display: none">
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="2" y="3" width="20" height="18" rx="2" />
+              <path d="M8 7h8M8 11h5M8 15h8" />
+            </svg>
+            <p>Nessuna candidatura trovata.</p>
+          </div>
+        </section>
+
+        <!-- TAB: Users -->
+        <section
+          class="dash-panel"
+          id="panelUsers"
+          role="tabpanel"
+          aria-labelledby="tabUsers"
+          style="display: none"
+        >
+          <!-- Stats bar -->
+          <div id="userStats" class="admin-stats-bar"></div>
+
+          <!-- Search -->
+          <div class="admin-search">
+            <input
+              type="text"
+              id="userSearch"
+              placeholder="Cerca per nome..."
+              class="admin-search-input"
+            />
+          </div>
+
+          <!-- Users list -->
+          <div id="usersList" class="admin-list"></div>
+
+          <!-- Loading state -->
+          <div id="usersLoading" class="admin-loading" style="display: none">
+            <span class="loading-spinner"></span>
+            <span>Caricamento utenti...</span>
+          </div>
+
+          <!-- Pagination -->
+          <div id="usersPagination" class="admin-pagination" style="display: none"></div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Rejection reason modal -->
+    <div id="rejectModal" class="admin-modal" style="display: none">
+      <div class="admin-modal-content">
+        <h3>Motivo del Rifiuto</h3>
+        <p class="admin-modal-desc">
+          Il motivo verr&agrave; comunicato al richiedente via email.
+        </p>
+        <textarea id="rejectReason" placeholder="Inserisci il motivo del rifiuto..." rows="4"></textarea>
+        <div class="admin-modal-actions">
+          <button id="rejectCancel" class="admin-btn admin-btn--secondary">Annulla</button>
+          <button id="rejectConfirm" class="admin-btn admin-btn--danger">Rifiuta</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer minimal -->
+    <footer class="footer dash-footer">
+      <div class="container">
+        <div class="footer-copy">
+          <span>&copy; 2026 WinningBet. Tutti i diritti riservati.</span>
+          <div class="footer-age">
+            <span class="age-badge">18+</span>
+            <span>ADM</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="shared.js"></script>
+    <script src="admin.js"></script>
+  </body>
+</html>
