@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
   var resource = req.query.resource;
 
   if (resource === 'apply') {
-    return handleApply(req, res, user, profile);
+    return handleApply(req, res, user);
   }
   if (resource === 'applications') {
     if (!profile || profile.role !== 'admin') {
@@ -89,7 +89,7 @@ async function validateVies(vatNumber) {
 
 // ─── Apply ──────────────────────────────────────────────────────────────────
 
-async function handleApply(req, res, user, profile) {
+async function handleApply(req, res, user) {
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
