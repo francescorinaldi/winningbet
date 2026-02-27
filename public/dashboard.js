@@ -518,7 +518,7 @@
   async function loadTeamForm(container, homeTeam, awayTeam, league) {
     try {
       const data = await authFetch(
-        '/api/match-insights?type=form&teams=' +
+        '/api/fixtures?type=form&teams=' +
           encodeURIComponent(homeTeam + ',' + awayTeam) +
           '&league=' +
           encodeURIComponent(league),
@@ -563,7 +563,7 @@
   async function loadH2H(container, homeTeam, awayTeam, league) {
     try {
       const data = await authFetch(
-        '/api/match-insights?type=h2h&home=' +
+        '/api/fixtures?type=h2h&home=' +
           encodeURIComponent(homeTeam) +
           '&away=' +
           encodeURIComponent(awayTeam) +
@@ -1597,7 +1597,7 @@
     try {
       buildSkeletonCards(grid, 3, 'card');
       const data = await retryWithBackoff(function () {
-        return authFetch('/api/odds-compare?league=' + encodeURIComponent(currentLeague));
+        return authFetch('/api/fixtures?type=odds-compare&league=' + encodeURIComponent(currentLeague));
       });
       dashRenderCentroHub(grid, emptyEl, data);
     } catch (err) {

@@ -1,9 +1,16 @@
-const handler = require('../../api/match-insights');
+const handler = require('../../api/fixtures');
 const { createMockReq, createMockRes } = require('../__helpers__/mock-req-res');
 
 jest.mock('../../api/_lib/api-football', () => ({
   getHeadToHead: jest.fn(),
   getStandings: jest.fn(),
+  getUpcomingMatches: jest.fn(),
+  getRecentResults: jest.fn(),
+  getOdds: jest.fn(),
+}));
+jest.mock('../../api/_lib/football-data', () => ({
+  getUpcomingMatches: jest.fn(),
+  getRecentResults: jest.fn(),
 }));
 jest.mock('../../api/_lib/cache', () => ({
   get: jest.fn().mockReturnValue(null),
@@ -12,11 +19,24 @@ jest.mock('../../api/_lib/cache', () => ({
 jest.mock('../../api/_lib/leagues', () => ({
   resolveLeagueSlug: jest.fn((s) => s || 'serie-a'),
 }));
+jest.mock('../../api/_lib/supabase', () => ({
+  supabase: { from: jest.fn().mockReturnThis(), select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), lt: jest.fn().mockReturnThis(), in: jest.fn().mockResolvedValue({ data: [] }) },
+}));
+jest.mock('../../api/_lib/prediction-utils', () => ({
+  evaluatePrediction: jest.fn(),
+  buildActualResult: jest.fn(),
+}));
+jest.mock('../../api/_lib/auth-middleware', () => ({
+  authenticate: jest.fn(),
+}));
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => ({ from: jest.fn().mockReturnThis(), select: jest.fn().mockReturnThis() })),
+}));
 
 const { getHeadToHead, getStandings } = require('../../api/_lib/api-football');
 const cache = require('../../api/_lib/cache');
 
-describe('GET /api/match-insights', () => {
+describe('GET /api/fixtures (h2h + form types)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -39,7 +59,7 @@ describe('GET /api/match-insights', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Parametro type richiesto: h2h o form',
+      error: 'Parametro type richiesto: matches, results, odds, h2h, form o odds-compare',
     });
   });
 

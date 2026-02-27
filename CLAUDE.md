@@ -21,18 +21,16 @@ Premium multi-league betting predictions platform (Serie A, Champions League, La
 ## Project Structure
 
 ```
-api/                    → Vercel serverless functions (12 endpoints)
+api/                    → Vercel serverless functions (12 functions, Hobby plan limit)
 api/_lib/               → Shared backend utilities (11 modules)
 api/_lib/leagues.js     → Centralized league configuration (IDs, codes, seasons)
 api/_lib/prediction-utils.js → Shared prediction evaluation (evaluatePrediction, buildActualResult)
 api/_lib/telegram.js    → Telegram Bot API client (send tips, invite, kick, DM)
 api/billing.js          → Stripe billing (checkout + portal)
 api/cron-tasks.js       → Cron tasks (settle tips + schedine + send)
-api/fixtures.js         → Matches + results + odds (by league)
+api/fixtures.js         → Matches + results + odds + H2H + form + odds-compare (by league)
 api/generate-tips.js    → Cron orchestrator + single-league generation
-api/match-insights.js   → H2H + team form
 api/betting-slips.js    → Smart betting slips (schedine della settimana)
-api/odds-compare.js     → Multi-bookmaker odds comparator (JWT auth, partner role only)
 api/stats.js            → Standings + track record
 api/stripe-webhook.js   → Stripe webhook handler
 api/telegram.js         → Telegram webhook + account linking
@@ -171,11 +169,9 @@ Valid slugs: `serie-a`, `champions-league`, `la-liga`, `premier-league`, `ligue-
 
 - `POST /api/billing` — Body: `{ action: "checkout", tier }` or `{ action: "portal" }`
 - `POST /api/cron-tasks?task=settle|send` — Settle tips or send tips (CRON_SECRET auth)
-- `GET /api/fixtures?type=matches|results|odds&league={slug}` — Matches (2h), results (1h), or odds (30min, requires &fixture={id})
+- `GET /api/fixtures?type=matches|results|odds|h2h|form|odds-compare&league={slug}` — Matches (2h), results (1h), odds (30min, requires &fixture={id}), H2H (24h, requires &home&away), form (6h, requires &teams), odds-compare (30min, JWT + partner role)
 - `GET/POST /api/generate-tips` — Cron orchestrator (GET) or single-league generation (POST)
-- `GET /api/match-insights?type=h2h|form` — Head-to-head (24h) or team form (6h)
 - `GET /api/betting-slips?date={YYYY-MM-DD}&status={status}` — Smart betting slips (JWT auth, PRO+VIP only)
-- `GET /api/odds-compare?league={slug}` — Multi-bookmaker odds comparator (JWT auth, role=partner only, 30min cache)
 - `GET /api/stats?type=standings|track-record&league={slug}` — League standings (6h) or track record (1h)
 - `POST /api/stripe-webhook` — Stripe event handler (+ auto Telegram invite/kick)
 - `POST /api/telegram` — Telegram webhook (with secret header) or account linking (with JWT)

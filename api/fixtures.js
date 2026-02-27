@@ -1,11 +1,14 @@
 /**
- * GET /api/fixtures?type=matches|results|odds&league={slug}
+ * GET /api/fixtures?type=matches|results|odds|h2h|form|odds-compare&league={slug}
  *
- * Endpoint unificato per partite, risultati e quote.
+ * Endpoint unificato per partite, risultati, quote e analisi.
  *
- * type=matches — Prossime 10 partite (cache 2h)
- * type=results — Ultimi 10 risultati (cache 1h)
- * type=odds    — Quote per una partita (cache 30min, richiede &fixture={id})
+ * type=matches      — Prossime 10 partite (cache 2h)
+ * type=results      — Ultimi 10 risultati (cache 1h)
+ * type=odds         — Quote per una partita (cache 30min, richiede &fixture={id})
+ * type=h2h          — Head-to-head storico (cache 24h, richiede &home, &away, &league)
+ * type=form         — Form recente delle squadre (cache 6h, richiede &teams, &league)
+ * type=odds-compare — Quote multi-bookmaker (cache 30min, JWT + role=partner)
  *
  * Default league: serie-a se omesso.
  *
@@ -19,6 +22,10 @@ const footballData = require('./_lib/football-data');
 const { resolveLeagueSlug } = require('./_lib/leagues');
 const { supabase } = require('./_lib/supabase');
 const { evaluatePrediction, buildActualResult } = require('./_lib/prediction-utils');
+const { authenticate } = require('./_lib/auth-middleware');
+const { createClient } = require('@supabase/supabase-js');
+
+const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SECRET_KEY);
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -36,8 +43,19 @@ module.exports = async function handler(req, res) {
   if (type === 'odds') {
     return handleOdds(req, res);
   }
+  if (type === 'h2h') {
+    return handleH2H(req, res);
+  }
+  if (type === 'form') {
+    return handleForm(req, res);
+  }
+  if (type === 'odds-compare') {
+    return handleOddsCompare(req, res);
+  }
 
-  return res.status(400).json({ error: 'Parametro type richiesto: matches, results o odds' });
+  return res
+    .status(400)
+    .json({ error: 'Parametro type richiesto: matches, results, odds, h2h, form o odds-compare' });
 };
 
 // ─── Matches ────────────────────────────────────────────────────────────────
@@ -140,6 +158,173 @@ async function handleOdds(req, res) {
   } catch (err) {
     console.error('API-Football odds failed:', err.message);
     return res.status(502).json({ error: 'Unable to fetch odds' });
+  }
+}
+
+// ─── Head-to-Head ──────────────────────────────────────────────────────────
+
+async function handleH2H(req, res) {
+  const homeTeam = req.query.home;
+  const awayTeam = req.query.away;
+  const leagueSlug = resolveLeagueSlug(req.query.league);
+
+  if (!homeTeam || !awayTeam) {
+    return res.status(400).json({ error: 'Parametri home e away richiesti' });
+  }
+
+  const cacheKey =
+    'h2h:' + leagueSlug + ':' + homeTeam.toLowerCase() + ':' + awayTeam.toLowerCase();
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=3600');
+    return res.status(200).json(cached);
+  }
+
+  try {
+    const data = await apiFootball.getHeadToHead(leagueSlug, homeTeam, awayTeam, 10);
+    cache.set(cacheKey, data, 86400); // 24h
+    res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=3600');
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(500).json({ error: 'Errore nel recupero H2H: ' + err.message });
+  }
+}
+
+// ─── Team Form ─────────────────────────────────────────────────────────────
+
+async function handleForm(req, res) {
+  const teamsParam = req.query.teams;
+  const leagueSlug = resolveLeagueSlug(req.query.league);
+
+  if (!teamsParam) {
+    return res.status(400).json({ error: 'Parametro teams richiesto' });
+  }
+
+  const requestedTeams = teamsParam.split(',').map(function (t) {
+    return t.trim();
+  });
+
+  const cacheKey = 'team-form:' + leagueSlug;
+  let standings = cache.get(cacheKey);
+
+  if (!standings) {
+    try {
+      standings = await apiFootball.getStandings(leagueSlug);
+      cache.set(cacheKey, standings, 21600); // 6h
+    } catch (err) {
+      return res.status(500).json({ error: 'Errore nel recupero classifica: ' + err.message });
+    }
+  }
+
+  const result = {};
+  requestedTeams.forEach(function (teamName) {
+    const teamLC = teamName.toLowerCase();
+    const team = standings.find(function (s) {
+      return s.name.toLowerCase() === teamLC;
+    });
+
+    if (team && team.form) {
+      result[teamName] = {
+        form: team.form,
+        rank: team.rank,
+        points: team.points,
+      };
+    }
+  });
+
+  res.setHeader('Cache-Control', 's-maxage=21600, stale-while-revalidate=3600');
+  return res.status(200).json(result);
+}
+
+// ─── Odds Compare (JWT + partner role) ─────────────────────────────────────
+
+const ODDS_COMPARE_CACHE_TTL = 1800; // 30 minuti
+const DAYS_AHEAD = 7;
+const ODDS_KEYS = ['home', 'draw', 'away', 'over25', 'under25', 'btts_yes', 'btts_no'];
+
+async function handleOddsCompare(req, res) {
+  const { user, profile, error: authError } = await authenticate(req);
+  if (authError || !user) {
+    return res.status(401).json({ error: 'Autenticazione richiesta' });
+  }
+
+  if (!profile || profile.role !== 'partner') {
+    return res.status(403).json({ error: 'Accesso riservato — solo partner Centro Scommesse' });
+  }
+
+  const leagueSlug = resolveLeagueSlug(req.query.league);
+
+  const cachedCompare = cache.get('odds_compare_' + leagueSlug);
+  if (cachedCompare) {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json(cachedCompare);
+  }
+
+  try {
+    const upcoming = await apiFootball.getUpcomingMatches(leagueSlug, 15);
+    const cutoff = new Date(Date.now() + DAYS_AHEAD * 86400_000);
+    const fixtures = (upcoming || []).filter((f) => new Date(f.date) <= cutoff);
+
+    // Recupera tips Supabase per i fixture in arrivo
+    const matchIds = fixtures.map((f) => String(f.id));
+    const tipsMap = {};
+    if (matchIds.length > 0) {
+      const { data: tips } = await supabaseAdmin
+        .from('tips')
+        .select('match_id, prediction, odds, confidence')
+        .in('match_id', matchIds)
+        .eq('status', 'pending')
+        .eq('league', leagueSlug);
+
+      (tips || []).forEach((t) => {
+        if (!tipsMap[t.match_id] || t.confidence > tipsMap[t.match_id].confidence) {
+          tipsMap[t.match_id] = t;
+        }
+      });
+    }
+
+    // Recupera odds multi-bookmaker in parallelo
+    const oddsResults = await Promise.allSettled(
+      fixtures.map((f) => apiFootball.getMultipleBookmakerOdds(f.id)),
+    );
+
+    const compareResult = {
+      league: leagueSlug,
+      fixtures: fixtures.map((f, i) => {
+        const multi = oddsResults[i].status === 'fulfilled' ? oddsResults[i].value : null;
+        const bookmakers = (multi && multi.bookmakers) || [];
+
+        // Calcola best odds per ogni mercato
+        const bestOdds = {};
+        ODDS_KEYS.forEach((k) => {
+          let best = null;
+          bookmakers.forEach((bk) => {
+            const v = bk.odds[k];
+            if (v !== null && (best === null || parseFloat(v) > parseFloat(best))) {
+              best = v;
+            }
+          });
+          bestOdds[k] = best;
+        });
+
+        return {
+          fixtureId: f.id,
+          date: f.date,
+          home: f.home,
+          away: f.away,
+          tip: tipsMap[String(f.id)] || null,
+          bookmakers,
+          bestOdds,
+        };
+      }),
+    };
+
+    cache.set('odds_compare_' + leagueSlug, compareResult, ODDS_COMPARE_CACHE_TTL);
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json(compareResult);
+  } catch (err) {
+    console.error('[odds-compare]', err.message);
+    return res.status(502).json({ error: 'Impossibile recuperare le quote' });
   }
 }
 
