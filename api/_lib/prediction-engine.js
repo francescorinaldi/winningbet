@@ -43,6 +43,29 @@ const PREDICTION_TYPES = [
 ];
 
 /**
+ * Ordine di waterfall per mercati alternativi.
+ * Quando il mercato principale fallisce i quality gate, l'analista deve esplorare
+ * tutti i mercati in questo ordine prima di skippare la partita.
+ * @type {string[]}
+ */
+const MARKET_WATERFALL_ORDER = [
+  '1X',
+  'X2',
+  '12',
+  'Over 1.5',
+  'Under 3.5',
+  'Goal',
+  'No Goal',
+  'Over 2.5',
+  'Under 2.5',
+  '1',
+  '2',
+  'X',
+  '1 + Over 1.5',
+  '2 + Over 1.5',
+];
+
+/**
  * System prompt per l'analista AI (Fase 2 — Prediction).
  * @type {string}
  */
@@ -61,7 +84,8 @@ REGOLE:
 9. MARKET SELECTION — NON NEGOZIABILE: gioca '1' SOLO se P(home win) >= 70%. Gioca '2' SOLO se P(away win) >= 70%. Se la probabilita' e' tra 60% e 69%, usa il doppio chance (1X o X2) — e' il mercato matematicamente corretto. Con P=62% il pareggio o l'esito opposto e' ancora al 38%: non e' un favorito schiacciante, e' un rischio inaccettabile per un esito esatto.
 10. CONFIDENCE <= PROBABILITA' + 5pp: se P(esito)=59%, confidence massima=64. Se P=65%, confidence massima=70. Dichiarare 73% di confidence su un esito con 59% di probabilita' e' una contraddizione che compromette la calibrazione e inganna l'utente.
 11. EV MINIMO +8%: EV = (predicted_probability / 100) * odds - 1. Se EV < 0.08 su tutti i mercati disponibili, NON generare il tip — skippa la partita. Un edge di 0.2pp non e' un edge, e' rumore statistico.
-12. UNDERDOG IN CASA IN ZONA RETROCESSIONE: aggiungi +5 a +8pp a P(home win o draw) quando la squadra di casa e' nelle ultime 3 posizioni in classifica. La pressione salvezza davanti al proprio pubblico e' reale e sistematicamente sottoprezzata dai bookmaker — le squadre in zona retrocessione sovraperformano in casa rispetto alle aspettative statistiche pure.`;
+12. UNDERDOG IN CASA IN ZONA RETROCESSIONE: aggiungi +5 a +8pp a P(home win o draw) quando la squadra di casa e' nelle ultime 3 posizioni in classifica. La pressione salvezza davanti al proprio pubblico e' reale e sistematicamente sottoprezzata dai bookmaker — le squadre in zona retrocessione sovraperformano in casa rispetto alle aspettative statistiche pure.
+13. MARKET WATERFALL — NON NEGOZIABILE: quando la quota 1X2 del favorito e' < 1.50 o l'edge e' insufficiente su un mercato, NON skippare la partita. Esplora TUTTI i 14 mercati validi in ordine di waterfall prima di decidere: (1) Double chance: 1X, X2, 12; (2) Goal volume basso: Over 1.5, Under 3.5; (3) BTTS: Goal, No Goal; (4) Goal volume medio: Over 2.5, Under 2.5; (5) Exact win: 1, 2 — solo se P >= 70%; (6) Draw: X; (7) Combo: 1 + Over 1.5, 2 + Over 1.5. Per ogni mercato calcola P, EV, edge. Se QUALCUNO supera i gate (EV >= +8%), seleziona quello con EV massimo. Skippa la partita SOLO se nessun mercato supera tutti i gate. Puoi fornire fino a 2 prediction candidate per la stessa partita (stesso match_index, mercati diversi) — il sistema selezionera' automaticamente la migliore.`;
 
 /**
  * Schema JSON per structured output batch (Opus 4.6).
@@ -398,6 +422,33 @@ function balanceTiers(predictions) {
   return predictions;
 }
 
+// ─── Deduplication ──────────────────────────────────────────────────────────
+
+/**
+ * Deduplica pronostici per partita, mantenendo quello con EV massimo.
+ * Il waterfall puo' produrre multiple prediction candidate per la stessa partita
+ * (stesso match_id); questa funzione seleziona la migliore.
+ *
+ * @param {Array<Object>} predictions - Array di pronostici (puo' avere duplicati per match_id).
+ *   predicted_probability puo' essere decimale (0–1) o percentuale (0–100); viene normalizzata automaticamente.
+ * @returns {Array<Object>} Array deduplicato (max 1 pronostico per match_id)
+ */
+function deduplicateByBestEV(predictions) {
+  const bestByMatch = new Map();
+
+  for (const pred of predictions) {
+    const prob = pred.predicted_probability > 1 ? pred.predicted_probability / 100 : pred.predicted_probability;
+    const ev = prob * pred.odds - 1;
+    const existing = bestByMatch.get(pred.match_id);
+
+    if (!existing || ev > existing.ev) {
+      bestByMatch.set(pred.match_id, { prediction: pred, ev });
+    }
+  }
+
+  return [...bestByMatch.values()].map((entry) => entry.prediction);
+}
+
 // ─── Batch Generation ───────────────────────────────────────────────────────
 
 /**
@@ -483,6 +534,8 @@ ${accuracyContext ? `\n${accuracyContext}` : ''}
 
 TIPI DI PRONOSTICO VALIDI: ${PREDICTION_TYPES.join(', ')}
 
+MARKET WATERFALL: Se il mercato principale (es. 1X2 del favorito) ha quote troppo basse (<1.50) o edge insufficiente (EV < +8%), esplora TUTTI i mercati alternativi in ordine: ${MARKET_WATERFALL_ORDER.join(', ')}. Per ogni mercato calcola P e EV. Se un mercato supera i gate, usalo. Puoi fornire fino a 2 prediction candidate per la stessa partita (stesso match_index, mercati diversi) — il sistema selezionera' automaticamente quella con EV massimo.
+
 Per ogni partita, la confidence deve essere tra 60 e 95. Le quote verranno prese automaticamente dal bookmaker (Bet365) — NON inserire odds nel risultato.`;
 
   const response = await anthropic.messages.create({
@@ -522,7 +575,7 @@ Per ogni partita, la confidence deve essere tra 60 e 95. Le quote verranno prese
     const ev = (probPct / 100) * realOdds - 1;
     if (ev < 0.08) {
       console.warn(
-        `[prediction-engine] SKIP ${matchLabel} — EV ${(ev * 100).toFixed(1)}% below 8% threshold (prob=${probPct}%, odds=${realOdds})`,
+        `[prediction-engine] SKIP ${matchLabel} — EV ${(ev * 100).toFixed(1)}% below 8% threshold (prob=${probPct}%, odds=${realOdds}, market=${pred.prediction})`,
       );
       continue;
     }
@@ -557,7 +610,10 @@ Per ogni partita, la confidence deve essere tra 60 e 95. Le quote verranno prese
     });
   }
 
-  return balanceTiers(results);
+  // ── Dedup: keep best EV per match (waterfall may produce multiple candidates) ─
+  const deduped = deduplicateByBestEV(results);
+
+  return balanceTiers(deduped);
 }
 
 /**
@@ -585,7 +641,9 @@ module.exports = {
   researchLeagueContext,
   assignTier,
   balanceTiers,
+  deduplicateByBestEV,
   computeDerivedStats,
   getTeamRecentMatches,
   formatRecentResults,
+  MARKET_WATERFALL_ORDER,
 };
