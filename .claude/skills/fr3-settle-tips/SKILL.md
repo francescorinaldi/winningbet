@@ -80,36 +80,77 @@ Use **WebSearch** to find the actual match result:
 If a match was **postponed, cancelled, or abandoned** → mark as `void`.
 If the score cannot be found reliably → skip that tip and report it.
 
+**For corner/card tips** (prediction starts with "Corners" or "Cards"):
+
+These tips cannot be settled from the goal score alone. You MUST search for the specific statistic:
+
+- Corners: `"<home_team> vs <away_team> total corners statistics <date>"`
+  - Also try: `"<home_team> vs <away_team> match stats corners"`
+  - Sources: SofaScore, WhoScored, FlashScore match stats tab
+  - Extract: total corner count for the full match (both teams combined)
+
+- Cards: `"<home_team> vs <away_team> bookings cards yellow red <date>"`
+  - Also try: `"<home_team> vs <away_team> disciplinary statistics <date>"`
+  - Sources: SofaScore, BBC Sport, FlashScore match stats
+  - Extract: total yellow + red cards (count each red card as 1, not 2 — it's one booking event)
+
+If corner/card statistics cannot be found reliably after 2 searches → mark as `void` (not lost — data unavailable is not a loss). Report in summary as "VOID (statistics unavailable)".
+
 ### 3. Determine outcome
 
 Apply settlement logic based on the prediction type and the real score:
 
-| Prediction     | Won if...                                 |
-| -------------- | ----------------------------------------- |
-| `1`            | home goals > away goals                   |
-| `X`            | home goals = away goals                   |
-| `2`            | away goals > home goals                   |
-| `1X`           | home goals >= away goals                  |
-| `X2`           | away goals >= home goals                  |
-| `12`           | home goals != away goals                  |
-| `Over 2.5`     | total goals > 2.5                         |
-| `Under 2.5`    | total goals < 2.5                         |
-| `Over 1.5`     | total goals > 1.5                         |
-| `Under 3.5`    | total goals < 3.5                         |
-| `Goal`         | both teams scored (home > 0 AND away > 0) |
-| `No Goal`      | at least one team scored 0                |
-| `1 + Over 1.5` | home win AND total goals > 1.5            |
-| `2 + Over 1.5` | away win AND total goals > 1.5            |
+| Prediction             | Won if...                                        |
+| ---------------------- | ------------------------------------------------ |
+| `1`                    | home goals > away goals                          |
+| `X`                    | home goals = away goals                          |
+| `2`                    | away goals > home goals                          |
+| `1X`                   | home goals >= away goals                         |
+| `X2`                   | away goals >= home goals                         |
+| `12`                   | home goals != away goals                         |
+| `Over 2.5`             | total goals > 2.5                                |
+| `Under 2.5`            | total goals < 2.5                                |
+| `Over 1.5`             | total goals > 1.5                                |
+| `Under 3.5`            | total goals < 3.5                                |
+| `Goal`                 | both teams scored (home > 0 AND away > 0)        |
+| `No Goal`              | at least one team scored 0                       |
+| `1 + Over 1.5`         | home win AND total goals > 1.5                   |
+| `2 + Over 1.5`         | away win AND total goals > 1.5                   |
+| `Corners Over X.5`     | total corners > X (e.g., Over 9.5 → corners ≥ 10) |
+| `Corners Under X.5`    | total corners < X (e.g., Under 8.5 → corners ≤ 8) |
+| `Cards Over X.5`       | total bookings > X (yellow=1, red=1 per event)  |
+| `Cards Under X.5`      | total bookings < X                               |
+
+**Corner/card counting rules:**
+- Corners: count ALL corners in the full 90 minutes (plus injury time). If the match goes to extra time (cup/knockout), use 90-minute total only (bookmaker standard).
+- Cards: count yellow cards + red cards as separate events. A yellow-then-red = 2 events. A straight red = 1 event. Do NOT use "yellow card equivalents" — count raw booking events.
 
 ### 4. Update database
 
 For each settled tip:
 
+For **goal-based tips** (standard markets):
 ```sql
 UPDATE tips
 SET status = '<won|lost|void>', result = '<homeGoals>-<awayGoals>'
 WHERE id = '<tip_id>';
 ```
+
+For **corner tips** (prediction contains "Corners"):
+```sql
+UPDATE tips
+SET status = '<won|lost|void>', result = '<homeGoals>-<awayGoals>, C:<totalCorners>'
+WHERE id = '<tip_id>';
+```
+
+For **card tips** (prediction contains "Cards"):
+```sql
+UPDATE tips
+SET status = '<won|lost|void>', result = '<homeGoals>-<awayGoals>, K:<totalCards>'
+WHERE id = '<tip_id>';
+```
+
+(If both goal score and corner/card stats are available, always include both in the result string.)
 
 If `--dry-run` was passed, do NOT execute the updates — only show the table.
 
@@ -302,6 +343,7 @@ Display a formatted table:
 Settled: N tips | Won: N | Lost: N | Void: N
 Win rate: XX%
 Skipped: N (score not found)
+Corner/Card tips: N settled manually (C: X won, Y lost, Z void — stats unavailable)
 
 === RETROSPECTIVE INSIGHTS ===
 - [NEW] draw_blindness accounts for 30% of losses (N=X)
@@ -319,3 +361,5 @@ Skipped: N (score not found)
 - **Retrospectives are critical** — They feed the learning loop. Even for WON tips, note if the win was clean or lucky.
 - **Be honest in post-mortems** — The value of retrospectives comes from accurately identifying what went wrong, not from excusing losses.
 - **Insights auto-expire** after 60 days if not re-validated. Each settlement run re-validates existing insights or creates new ones.
+- **Corner/card tips require manual search** — The cron job cannot auto-settle these. During each settlement run, explicitly search for corner/card stats for any pending tip with "Corners" or "Cards" in the prediction field. SofaScore and FlashScore are the most reliable sources for match statistics.
+- **Corner/card void policy** — If statistics are genuinely unavailable after 2 searches, mark as `void`. Do NOT mark as lost just because you couldn't find the data. Void tips are not counted in the win rate.

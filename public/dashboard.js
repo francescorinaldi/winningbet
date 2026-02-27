@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState, dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, showToast, buildSkeletonCards, setLastUpdated, retryWithBackoff */
+/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState, dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, dashRenderFantacalcio, showToast, buildSkeletonCards, setLastUpdated, retryWithBackoff */
 
 (function () {
   'use strict';
@@ -804,11 +804,20 @@
         document.getElementById('panelSchedule').style.display =
           target === 'schedine' ? '' : 'none';
         document.getElementById('panelHistory').style.display = target === 'history' ? '' : 'none';
+        document.getElementById('panelFantacalcio').style.display =
+          target === 'fantacalcio' ? '' : 'none';
         document.getElementById('panelAccount').style.display = 'none';
+
+        // Lazy-load Fantacalcio on first open
+        if (target === 'fantacalcio') {
+          loadFantacalcio();
+        }
 
         const leagueSelector = document.getElementById('dashLeagueSelector');
         if (leagueSelector) {
-          leagueSelector.style.display = target === 'account' ? 'none' : '';
+          // Hide league selector for tabs where it has no effect
+          leagueSelector.style.display =
+            target === 'account' || target === 'fantacalcio' ? 'none' : '';
         }
       });
     });
@@ -838,6 +847,7 @@
       const panelTips = document.getElementById('panelTips');
       const panelSchedule = document.getElementById('panelSchedule');
       const panelHistory = document.getElementById('panelHistory');
+      const panelFantacalcio = document.getElementById('panelFantacalcio');
       const isAccountVisible = panelAccount.style.display !== 'none';
 
       const leagueSelector = document.getElementById('dashLeagueSelector');
@@ -846,18 +856,23 @@
         // Chiudi account, torna alla tab attiva
         panelAccount.style.display = 'none';
         settingsBtn.classList.remove('active');
-        if (leagueSelector) leagueSelector.style.display = '';
 
         const activeTab = document.querySelector('.dash-tab.active');
         const activePanel = activeTab ? activeTab.getAttribute('data-tab') : 'tips';
         panelTips.style.display = activePanel === 'tips' ? '' : 'none';
         panelSchedule.style.display = activePanel === 'schedine' ? '' : 'none';
         panelHistory.style.display = activePanel === 'history' ? '' : 'none';
+        if (panelFantacalcio)
+          panelFantacalcio.style.display = activePanel === 'fantacalcio' ? '' : 'none';
+        if (leagueSelector)
+          leagueSelector.style.display =
+            activePanel === 'fantacalcio' ? 'none' : '';
       } else {
         // Apri account, nascondi gli altri pannelli e il selettore campionato
         panelTips.style.display = 'none';
         panelSchedule.style.display = 'none';
         panelHistory.style.display = 'none';
+        if (panelFantacalcio) panelFantacalcio.style.display = 'none';
         panelAccount.style.display = '';
         settingsBtn.classList.add('active');
         if (leagueSelector) leagueSelector.style.display = 'none';
@@ -900,9 +915,10 @@
       const btn = e.target.closest('.league-btn');
       if (!btn) return;
 
-      // On the Schedine tab, league filter has no effect — do nothing
+      // On the Schedine/Fantacalcio tabs, league filter has no effect — do nothing
       const activeTab = document.querySelector('.dash-tab.active');
-      if (activeTab && activeTab.getAttribute('data-tab') === 'schedine') return;
+      const activeTabName = activeTab ? activeTab.getAttribute('data-tab') : '';
+      if (activeTabName === 'schedine' || activeTabName === 'fantacalcio') return;
 
       const league = btn.getAttribute('data-league');
       if (league === currentLeague) return;
@@ -1511,6 +1527,34 @@
 
   function renderSchedule(container, schedine) {
     dashRenderSchedule(container, schedine);
+  }
+
+  // ─── FANTACALCIO HUB ──────────────────────────────────
+
+  let fantacalcioLoaded = false;
+
+  async function loadFantacalcio() {
+    if (fantacalcioLoaded) return; // Already loaded — no need to re-fetch
+    const grid = document.getElementById('fantacalcioGrid');
+    if (!grid) return;
+
+    try {
+      buildSkeletonCards(grid, 3, 'card');
+      const data = await retryWithBackoff(function () {
+        return authFetch('/api/fantacalcio?league=serie-a');
+      });
+      fantacalcioLoaded = true;
+      dashRenderFantacalcio(grid, data, {
+        tier: (profile && profile.tier) || 'free',
+        onUpgrade: startCheckout,
+      });
+    } catch (err) {
+      console.warn('[loadFantacalcio]', err.message);
+      setErrorState(grid, 'Impossibile caricare i consigli Fantacalcio', function () {
+        fantacalcioLoaded = false;
+        loadFantacalcio();
+      });
+    }
   }
 
   function setupSchedineDateNav() {

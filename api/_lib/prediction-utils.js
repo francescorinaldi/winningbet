@@ -27,9 +27,18 @@ function buildActualResult(result) {
 
 /**
  * Evaluate a prediction against the actual result.
- * Returns 'won', 'lost', or 'void' (for unrecognised prediction types).
+ *
+ * @param {string} prediction - Tipo di pronostico
+ * @param {Object} result - { goalsHome, goalsAway }
+ * @param {number} totalGoals - Somma gol
+ * @param {Object} [extras] - Dati extra per mercati non-goal
+ *   extras.corners {number} — corner totali partita (per previsioni Corner)
+ *   extras.cards   {number} — cartellini totali partita (per previsioni Cards)
+ *
+ * Returns 'won', 'lost', null (non valutabile senza extras — cron skippa),
+ * o 'void' (tipo non riconosciuto).
  */
-function evaluatePrediction(prediction, result, totalGoals) {
+function evaluatePrediction(prediction, result, totalGoals, extras) {
   const homeWin = result.goalsHome > result.goalsAway;
   const draw = result.goalsHome === result.goalsAway;
   const awayWin = result.goalsAway > result.goalsHome;
@@ -64,8 +73,33 @@ function evaluatePrediction(prediction, result, totalGoals) {
       return homeWin && totalGoals > 1 ? 'won' : 'lost';
     case '2 + Over 1.5':
       return awayWin && totalGoals > 1 ? 'won' : 'lost';
-    default:
+    default: {
+      // Corner predictions: "Corners Over X.5" / "Corners Under X.5"
+      const cornersMatch = prediction.match(/^Corners\s+(Over|Under)\s+(\d+(?:\.\d+)?)$/i);
+      if (cornersMatch) {
+        if (!extras || extras.corners === undefined || extras.corners === null) {
+          return null; // Not evaluable via cron — skip (needs fr3-settle-tips skill)
+        }
+        const threshold = parseFloat(cornersMatch[2]);
+        const over = cornersMatch[1].toLowerCase() === 'over';
+        return over ? extras.corners > threshold ? 'won' : 'lost'
+                    : extras.corners < threshold ? 'won' : 'lost';
+      }
+
+      // Card predictions: "Cards Over X.5" / "Cards Under X.5"
+      const cardsMatch = prediction.match(/^Cards\s+(Over|Under)\s+(\d+(?:\.\d+)?)$/i);
+      if (cardsMatch) {
+        if (!extras || extras.cards === undefined || extras.cards === null) {
+          return null; // Not evaluable via cron — skip
+        }
+        const threshold = parseFloat(cardsMatch[2]);
+        const over = cardsMatch[1].toLowerCase() === 'over';
+        return over ? extras.cards > threshold ? 'won' : 'lost'
+                    : extras.cards < threshold ? 'won' : 'lost';
+      }
+
       return 'void';
+    }
   }
 }
 

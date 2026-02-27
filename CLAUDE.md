@@ -51,6 +51,7 @@ supabase/migrations/    → Database schema migrations (14 files)
 .claude/skills/fr3-performance-analytics/ → /fr3-performance-analytics (track record analysis)
 .claude/skills/fr3-strategy-optimizer/ → /fr3-strategy-optimizer (prescriptive strategy engine)
 .claude/skills/fr3-pre-match-research/ → /fr3-pre-match-research (deep research engine)
+.claude/skills/fr3-generate-fantacalcio/ → /fr3-generate-fantacalcio (weekly fantasy football picks)
 .claude/skills/fr3-update-winning-bets/ → /fr3-update-winning-bets (master pipeline orchestrator)
 ~/.claude/skills/fr3-code-review/      → /fr3-code-review (global, multi-agent code analysis)
 eslint.config.mjs       → ESLint flat config
@@ -127,6 +128,13 @@ All custom skills use the `fr3-` prefix for easy identification.
 /fr3-pre-match-research                 # Research all leagues with matches in next 48h
 /fr3-pre-match-research serie-a         # Research one league only
 /fr3-pre-match-research --force         # Re-research even if fresh data exists
+```
+
+```bash
+/fr3-generate-fantacalcio               # Generate weekly Fantacalcio picks (Serie A)
+/fr3-generate-fantacalcio premier-league # Generate for Premier League FPL
+/fr3-generate-fantacalcio --force       # Regenerate even if picks for this week exist
+/fr3-generate-fantacalcio --dry-run     # Preview picks without inserting in DB
 ```
 
 ```bash

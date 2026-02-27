@@ -1,4 +1,4 @@
-/* exported dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, dashBuildBetTrackingUI */
+/* exported dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, dashBuildBetTrackingUI, dashRenderFantacalcio */
 /* global LEAGUE_NAMES_MAP, formatMatchDate, buildShareDropdown */
 /* eslint no-var: "off" */
 
@@ -153,6 +153,14 @@ var dashRenderTipsGrid = function (container, tips, ctx) {
     pickValue.className = 'pick-value';
     pickValue.textContent = tip.prediction || '\u2014';
     pickGroup.appendChild(pickValue);
+    // Marketing label (Italian name shown below the technical code)
+    var marketingName = PREDICTION_LABELS[tip.prediction];
+    if (marketingName) {
+      var mktLabel = document.createElement('span');
+      mktLabel.className = 'pick-label-marketing';
+      mktLabel.textContent = marketingName;
+      pickGroup.appendChild(mktLabel);
+    }
     predRow.appendChild(pickGroup);
 
     var oddsGroup = document.createElement('div');
@@ -684,4 +692,257 @@ var dashBuildBetTrackingUI = function (container, tipId, existingBet, onSave) {
   section.appendChild(notesInput);
   section.appendChild(saveBtn);
   container.appendChild(section);
+};
+
+// ─── PREDICTION LABELS (marketing names) ───────────────────────────────────
+
+/** Maps technical prediction codes to Italian marketing display names. */
+var PREDICTION_LABELS = {
+  '1': 'Vittoria Casa',
+  'X': 'Pareggio',
+  '2': 'Vittoria Ospite',
+  '1X': 'No Sconfitta Casa',
+  'X2': 'No Sconfitta Ospite',
+  '12': 'Nessun Pareggio',
+  'Over 2.5': 'Festival dei Gol',
+  'Under 2.5': 'Gara Equilibrata',
+  'Over 1.5': 'Almeno 2 Gol',
+  'Under 3.5': 'Partita Misurata',
+  'Goal': 'Entrambe a Segno',
+  'No Goal': 'Porta Inviolata',
+  '1 + Over 1.5': 'Vittoria con Gol',
+  '2 + Over 1.5': 'Rimonta con Gol',
+  'Corners Over 8.5': 'Corner Show',
+  'Corners Over 9.5': 'Corner Show',
+  'Corners Over 10.5': 'Corner Spettacolo',
+  'Corners Under 8.5': 'Gara Tattica',
+  'Corners Under 9.5': 'Gara Tattica',
+  'Cards Over 3.5': 'Partita Nervosa',
+  'Cards Over 4.5': 'Gara Bollente',
+  'Cards Under 3.5': 'Partita Pulita',
+  'Cards Under 4.5': 'Fair Play',
+};
+
+// ─── FANTACALCIO HUB RENDERER ───────────────────────────────────────────────
+
+/**
+ * dashRenderFantacalcio — Renders the Fantacalcio Hub panel.
+ *
+ * @param {HTMLElement} container - The #fantacalcioGrid element.
+ * @param {Object} data - Response from /api/fantacalcio.
+ * @param {Object} ctx - { tier: string, onUpgrade: function(tierName) }
+ */
+var dashRenderFantacalcio = function (container, data, ctx) {
+  container.textContent = '';
+
+  if (!data || data.error) {
+    var errP = document.createElement('p');
+    errP.className = 'dash-empty-text';
+    errP.textContent = 'Impossibile caricare i consigli Fantacalcio.';
+    container.appendChild(errP);
+    return;
+  }
+
+  var onUpgrade = (ctx && ctx.onUpgrade) || function () {};
+
+  // Header
+  var header = document.createElement('div');
+  header.className = 'fantacalcio-header';
+  var title = document.createElement('h2');
+  title.className = 'fantacalcio-title';
+  title.textContent = '\u26bd Fanta Hub';
+  var weekBadge = document.createElement('span');
+  weekBadge.className = 'fantacalcio-week-badge';
+  weekBadge.textContent = 'Gameweek ' + (data.week || '\u2014');
+  header.appendChild(title);
+  header.appendChild(weekBadge);
+  container.appendChild(header);
+
+  // Section renderer helper
+  function renderPickSection(sectionTitle, picks, tierRequired, iconClass) {
+    var section = document.createElement('section');
+    section.className = 'fantacalcio-section';
+
+    var sectionHeader = document.createElement('h3');
+    sectionHeader.className = 'fantacalcio-section-title';
+    var icon = document.createElement('span');
+    icon.className = iconClass;
+    sectionHeader.appendChild(icon);
+    sectionHeader.appendChild(document.createTextNode(' ' + sectionTitle));
+
+    var tierBadge = document.createElement('span');
+    tierBadge.className = 'tier-badge tier-badge--' + tierRequired;
+    tierBadge.textContent = tierRequired.toUpperCase();
+    sectionHeader.appendChild(tierBadge);
+    section.appendChild(sectionHeader);
+
+    // Upgrade gate
+    if (picks && picks.upgrade_required) {
+      var gate = document.createElement('div');
+      gate.className = 'fantacalcio-upgrade-gate';
+      var lockIcon = document.createElement('span');
+      lockIcon.textContent = '\ud83d\udd12';
+      lockIcon.setAttribute('aria-hidden', 'true');
+      var gateText = document.createElement('p');
+      gateText.textContent = 'Sblocca con ' + picks.tier_needed.toUpperCase() + ' per accedere.';
+      var upgradeBtn = document.createElement('button');
+      upgradeBtn.className = 'btn btn-gold';
+      upgradeBtn.textContent = 'Upgrade a ' + picks.tier_needed.toUpperCase();
+      upgradeBtn.addEventListener('click', function () {
+        onUpgrade(picks.tier_needed);
+      });
+      gate.appendChild(lockIcon);
+      gate.appendChild(gateText);
+      gate.appendChild(upgradeBtn);
+      section.appendChild(gate);
+      container.appendChild(section);
+      return;
+    }
+
+    var list = Array.isArray(picks) ? picks : [];
+    if (list.length === 0) {
+      var emptyMsg = document.createElement('p');
+      emptyMsg.className = 'dash-empty-text';
+      emptyMsg.textContent = 'Nessun consiglio disponibile per questa settimana.';
+      section.appendChild(emptyMsg);
+      container.appendChild(section);
+      return;
+    }
+
+    var grid = document.createElement('div');
+    grid.className = 'fantacalcio-picks-grid';
+
+    list.forEach(function (pick, idx) {
+      var card = document.createElement('div');
+      card.className = 'fantacalcio-pick-card';
+
+      // Rank badge
+      var rank = document.createElement('span');
+      rank.className = 'fantacalcio-rank';
+      rank.textContent = '#' + (idx + 1);
+      card.appendChild(rank);
+
+      // Role badge
+      if (pick.role) {
+        var roleBadge = document.createElement('span');
+        roleBadge.className = 'fantacalcio-role fantacalcio-role--' + pick.role.toLowerCase();
+        roleBadge.textContent = pick.role;
+        card.appendChild(roleBadge);
+      }
+
+      // Player name
+      var nameEl = document.createElement('h4');
+      nameEl.className = 'fantacalcio-player-name';
+      nameEl.textContent = pick.player_name || '\u2014';
+      card.appendChild(nameEl);
+
+      // Team
+      var teamEl = document.createElement('p');
+      teamEl.className = 'fantacalcio-team';
+      teamEl.textContent = pick.team_name || '';
+      card.appendChild(teamEl);
+
+      // Ownership badge (differentials)
+      if (pick.ownership_pct !== null && pick.ownership_pct !== undefined) {
+        var own = document.createElement('span');
+        own.className = 'fantacalcio-ownership';
+        own.textContent = pick.ownership_pct + '% possesso';
+        card.appendChild(own);
+      }
+
+      // Expected points
+      if (pick.expected_points !== null && pick.expected_points !== undefined) {
+        var pts = document.createElement('span');
+        pts.className = 'fantacalcio-expected-pts';
+        pts.textContent = pick.expected_points + ' FM attesi';
+        card.appendChild(pts);
+      }
+
+      // Confidence bar
+      if (pick.confidence !== null && pick.confidence !== undefined) {
+        var confWrap = document.createElement('div');
+        confWrap.className = 'fantacalcio-conf-wrap';
+        var confBar = document.createElement('div');
+        confBar.className = 'fantacalcio-conf-bar';
+        confBar.style.width = pick.confidence + '%';
+        confBar.setAttribute('aria-label', 'Fiducia ' + pick.confidence + '%');
+        confWrap.appendChild(confBar);
+        card.appendChild(confWrap);
+      }
+
+      // Reasoning
+      if (pick.reasoning) {
+        var reason = document.createElement('p');
+        reason.className = 'fantacalcio-reasoning';
+        reason.textContent = pick.reasoning;
+        card.appendChild(reason);
+      }
+
+      grid.appendChild(card);
+    });
+
+    section.appendChild(grid);
+    container.appendChild(section);
+  }
+
+  // Captain section (FREE)
+  renderPickSection('Capitano della Settimana', data.captains, 'free', 'fantacalcio-icon-captain');
+
+  // Differentials section (PRO+VIP)
+  renderPickSection('Colpi a Sorpresa', data.differentials, 'pro', 'fantacalcio-icon-diff');
+
+  // Transfers section (VIP) — buy + sell
+  var transfers = data.transfers;
+  if (transfers && transfers.upgrade_required) {
+    renderPickSection('Mercato Settimanale', transfers, 'vip', 'fantacalcio-icon-market');
+  } else if (transfers) {
+    var marketSection = document.createElement('section');
+    marketSection.className = 'fantacalcio-section';
+    var marketHeader = document.createElement('h3');
+    marketHeader.className = 'fantacalcio-section-title';
+    marketHeader.textContent = '\ud83d\udcb0 Mercato Settimanale';
+    var vipBadge = document.createElement('span');
+    vipBadge.className = 'tier-badge tier-badge--vip';
+    vipBadge.textContent = 'VIP';
+    marketHeader.appendChild(vipBadge);
+    marketSection.appendChild(marketHeader);
+
+    var marketGrid = document.createElement('div');
+    marketGrid.className = 'fantacalcio-market-grid';
+
+    function renderMarketColumn(label, items, colClass) {
+      var col = document.createElement('div');
+      col.className = 'fantacalcio-market-col ' + colClass;
+      var colTitle = document.createElement('h4');
+      colTitle.className = 'fantacalcio-market-col-title';
+      colTitle.textContent = label;
+      col.appendChild(colTitle);
+      (items || []).forEach(function (pick) {
+        var item = document.createElement('div');
+        item.className = 'fantacalcio-market-item';
+        var nameEl = document.createElement('strong');
+        nameEl.textContent = pick.player_name;
+        item.appendChild(nameEl);
+        if (pick.team_name) {
+          var teamEl = document.createElement('span');
+          teamEl.className = 'fantacalcio-team';
+          teamEl.textContent = ' (' + pick.team_name + ')';
+          item.appendChild(teamEl);
+        }
+        if (pick.reasoning) {
+          var reason = document.createElement('p');
+          reason.className = 'fantacalcio-reasoning';
+          reason.textContent = pick.reasoning;
+          item.appendChild(reason);
+        }
+        col.appendChild(item);
+      });
+      return col;
+    }
+
+    marketGrid.appendChild(renderMarketColumn('\ud83d\udfe2 Da Comprare', transfers.buy, 'fantacalcio-market-buy'));
+    marketGrid.appendChild(renderMarketColumn('\ud83d\udd34 Da Cedere', transfers.sell, 'fantacalcio-market-sell'));
+    marketSection.appendChild(marketGrid);
+    container.appendChild(marketSection);
+  }
 };

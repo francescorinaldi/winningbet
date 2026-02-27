@@ -200,6 +200,16 @@
           >
             Storico
           </button>
+          <button
+            class="dash-tab"
+            data-tab="fantacalcio"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panelFantacalcio"
+            id="tabFantacalcio"
+          >
+            ⚽ Fanta
+          </button>
         </div>
 
         <!-- TAB: Today's Tips -->
@@ -374,6 +384,25 @@
               <polyline points="14 2 14 8 20 8" />
             </svg>
             <p>Nessun risultato trovato.</p>
+          </div>
+        </section>
+
+        <!-- TAB: Fantacalcio Hub -->
+        <section
+          class="dash-panel"
+          id="panelFantacalcio"
+          role="tabpanel"
+          aria-labelledby="tabFantacalcio"
+          style="display: none"
+        >
+          <div
+            id="fantacalcioGrid"
+            aria-live="polite"
+            aria-label="Consigli Fantacalcio"
+          >
+            <div class="skeleton skeleton-card" aria-hidden="true"></div>
+            <div class="skeleton skeleton-card" aria-hidden="true"></div>
+            <div class="skeleton skeleton-card" aria-hidden="true"></div>
           </div>
         </section>
 

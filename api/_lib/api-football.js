@@ -170,6 +170,31 @@ async function getAllOdds(fixtureId) {
     }));
   }
 
+  // Corners Over/Under (name-based: market names vary by bookmaker version)
+  const cornersMarket = bookmaker.bets.find(
+    (b) => b.id === 45 || b.name.toLowerCase().includes('corner'),
+  );
+  if (cornersMarket) {
+    result.corners = cornersMarket.values.map((v) => ({
+      outcome: v.value,
+      odd: v.odd,
+    }));
+  }
+
+  // Cards/Bookings Over/Under
+  const cardsMarket = bookmaker.bets.find(
+    (b) =>
+      b.id === 75 ||
+      b.name.toLowerCase().includes('card') ||
+      b.name.toLowerCase().includes('booking'),
+  );
+  if (cardsMarket) {
+    result.cards = cardsMarket.values.map((v) => ({
+      outcome: v.value,
+      odd: v.odd,
+    }));
+  }
+
   return result;
 }
 
@@ -230,6 +255,30 @@ function findOddsForPrediction(allOdds, prediction) {
   if (pred === 'No Goal' && allOdds.bothTeamsScore) {
     const no = allOdds.bothTeamsScore.find((v) => v.outcome === 'No');
     return no ? parseFloat(no.odd) : null;
+  }
+
+  // Corner predictions: "Corners Over X.5", "Corners Under X.5"
+  const cornersMatch = pred.match(/^Corners\s+(Over|Under)\s+(\d+(?:\.\d+)?)$/i);
+  if (cornersMatch && allOdds.corners) {
+    const direction = cornersMatch[1]; // "Over" or "Under"
+    const threshold = cornersMatch[2]; // "9.5", "8.5", etc.
+    const outcome = `${direction} ${threshold}`;
+    const found = allOdds.corners.find(
+      (v) => v.outcome.toLowerCase() === outcome.toLowerCase(),
+    );
+    return found ? parseFloat(found.odd) : null;
+  }
+
+  // Card predictions: "Cards Over X.5", "Cards Under X.5"
+  const cardsMatch = pred.match(/^Cards\s+(Over|Under)\s+(\d+(?:\.\d+)?)$/i);
+  if (cardsMatch && allOdds.cards) {
+    const direction = cardsMatch[1];
+    const threshold = cardsMatch[2];
+    const outcome = `${direction} ${threshold}`;
+    const found = allOdds.cards.find(
+      (v) => v.outcome.toLowerCase() === outcome.toLowerCase(),
+    );
+    return found ? parseFloat(found.odd) : null;
   }
 
   // Combo predictions: "1 + Over 1.5", "2 + Over 1.5"
@@ -456,6 +505,64 @@ async function getTeamPlayerStats(teamId, season, topN = 20) {
   });
 }
 
+/**
+ * Recupera le statistiche stagionali di una squadra per corner e cartellini.
+ * Utile per il modello di previsione Corner/Cards betting markets.
+ *
+ * Dati restituiti:
+ *   - cards: cartellini gialli/rossi medi per partita
+ *   - shots: tiri totali medi per partita (proxy per corner)
+ *   - corners_estimate: stima corner per partita (shots × 0.42)
+ *
+ * Il coefficiente 0.42 è derivato da correlazione empirica shots→corners
+ * per i principali campionati europei (media ~10.5 corner/match ÷ ~25 shots/match).
+ *
+ * @param {number|string} teamId - ID della squadra (api-football)
+ * @param {number|string} leagueId - ID della lega (api-football)
+ * @param {number|string} season - Anno stagione (es. 2025)
+ * @returns {Promise<Object|null>} Statistiche o null se non disponibili
+ */
+async function getTeamStatistics(teamId, leagueId, season) {
+  // /teams/statistics returns a single object (not an array) in json.response
+  const data = await request('/teams/statistics', { team: teamId, league: leagueId, season });
+  // api-football wraps the response: could be object or single-element array
+  const stats = Array.isArray(data) ? data[0] : data;
+  if (!stats || !stats.fixtures) return null;
+
+  const played = stats.fixtures.played?.total || 1;
+
+  const yellowTotal = Object.values(stats.cards?.yellow || {}).reduce(
+    (sum, v) => sum + (Number(v.total) || 0),
+    0,
+  );
+  const redTotal = Object.values(stats.cards?.red || {}).reduce(
+    (sum, v) => sum + (Number(v.total) || 0),
+    0,
+  );
+
+  const shotsOnTotal = stats.shots?.on?.total || 0;
+  const shotsOffTotal = stats.shots?.off?.total || 0;
+  const shotsTotal = shotsOnTotal + shotsOffTotal;
+
+  return {
+    played,
+    cards: {
+      yellow_total: yellowTotal,
+      red_total: redTotal,
+      total_per_game: parseFloat(((yellowTotal + redTotal) / played).toFixed(2)),
+      yellow_per_game: parseFloat((yellowTotal / played).toFixed(2)),
+    },
+    shots: {
+      total: shotsTotal,
+      per_game: parseFloat((shotsTotal / played).toFixed(2)),
+    },
+    // Corner estimate: ~0.42 shots → corners (empirical coefficient for top 5 leagues)
+    corners_estimate: {
+      per_game: parseFloat(((shotsTotal / played) * 0.42).toFixed(2)),
+    },
+  };
+}
+
 module.exports = {
   getUpcomingMatches,
   getRecentResults,
@@ -467,4 +574,5 @@ module.exports = {
   getHeadToHead,
   getFixtureInjuries,
   getTeamPlayerStats,
+  getTeamStatistics,
 };

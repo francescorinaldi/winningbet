@@ -18,9 +18,9 @@ You are the **Team Lead**. You orchestrate a team of specialist analysts (one pe
 
 - **Supabase project_id**: `xqrxfnovlukbbuvhbavj`
 - **Leagues**: serie-a, champions-league, la-liga, premier-league, ligue-1, bundesliga, eredivisie
-- **Valid predictions**: 1, X, 2, 1X, X2, 12, Over 2.5, Under 2.5, Over 1.5, Under 3.5, Goal, No Goal, 1 + Over 1.5, 2 + Over 1.5
+- **Valid predictions**: 1, X, 2, 1X, X2, 12, Over 2.5, Under 2.5, Over 1.5, Under 3.5, Goal, No Goal, 1 + Over 1.5, 2 + Over 1.5, Corners Over 8.5, Corners Under 8.5, Corners Over 9.5, Corners Under 9.5, Corners Over 10.5, Cards Over 3.5, Cards Under 3.5, Cards Over 4.5, Cards Under 4.5
 - **Confidence range**: 60–80 (strict; max 80 until 100+ settled tips, then up to 90)
-- **Odds range**: 1.50–5.00 (exception: double chance 1X/X2 at 1.30 minimum)
+- **Odds range**: 1.50–5.00 (exception: double chance 1X/X2 at 1.30 minimum; corner/card markets may have lower odds)
 - **Minimum EV per tip**: +8% (EV = predicted_probability × odds - 1)
 
 ## Parse Arguments
@@ -366,9 +366,9 @@ Your job: fetch data for {LEAGUE_NAME}, research each match via web search, anal
 
 - **Supabase project_id**: xqrxfnovlukbbuvhbavj
 - **League slug**: {LEAGUE_SLUG}
-- **Valid predictions**: 1, X, 2, 1X, X2, 12, Over 2.5, Under 2.5, Over 1.5, Under 3.5, Goal, No Goal, 1 + Over 1.5, 2 + Over 1.5
+- **Valid predictions**: 1, X, 2, 1X, X2, 12, Over 2.5, Under 2.5, Over 1.5, Under 3.5, Goal, No Goal, 1 + Over 1.5, 2 + Over 1.5, Corners Over 8.5, Corners Under 8.5, Corners Over 9.5, Corners Under 9.5, Corners Over 10.5, Cards Over 3.5, Cards Under 3.5, Cards Over 4.5, Cards Under 4.5
 - **Confidence range**: 60–80 (max 80 until we have 100+ settled tips)
-- **Odds range**: 1.50–5.00 (exception: double chance 1X/X2 at 1.30 minimum)
+- **Odds range**: 1.50–5.00 (exception: double chance 1X/X2 at 1.30 minimum; corner/card markets may have lower odds)
 - **Minimum EV per tip**: +8% (EV = predicted_probability × odds - 1)
 
 ## League-Specific Intelligence
@@ -568,6 +568,44 @@ P(home_elo) = 1 / (1 + 10^(-elo_diff/400))
 
 If ELO probability diverges from Poisson probability by more than 15pp for the same outcome, flag it as a conflict that needs explicit resolution in your reasoning.
 
+**Corner / Card expected values (when match.homeStats and match.awayStats are available):**
+
+Use the team statistics attached to each match by fetch-league-data (from `/teams/statistics`):
+
+```
+expected_corners_home = match.homeStats.corners_estimate.per_game  (estimated via shots × 0.42)
+expected_corners_away = match.awayStats.corners_estimate.per_game
+expected_corners_total = expected_corners_home + expected_corners_away
+
+expected_cards_home = match.homeStats.cards.total_per_game
+expected_cards_away = match.awayStats.cards.total_per_game
+expected_cards_total = expected_cards_home + expected_cards_away
+```
+
+**Corner threshold selection** — pick the threshold with the highest EV:
+- If expected_corners_total < 8.5 → consider `Corners Under 8.5`
+- If expected_corners_total > 9.5 → consider `Corners Over 9.5`
+- If expected_corners_total > 10.5 → consider `Corners Over 10.5` instead
+- In ambiguous zone (8.5–9.5) → check bookmaker odds for best EV; prefer Under if corner-shy styles
+
+**Card threshold selection:**
+- If expected_cards_total < 3.5 → consider `Cards Under 3.5`
+- If expected_cards_total > 4.5 → consider `Cards Over 4.5`
+- If between 3.5–4.5 → compare EV on Over 3.5 vs Under 4.5; prefer the one with wider margin to threshold
+
+**Mandatory EV check** (same as goals markets): corner/card tip must have EV ≥ +8% and genuine edge ≥ 8pp over bookmaker implied probability before being considered.
+
+**Style adjustments** (max ±1.5 corners or ±0.5 cards):
+- High-pressing team (PPDA < 8) → +0.5 corners for opponent team
+- Counter-attack specialist (low shots, fast transitions) → −0.5 corners for that team
+- Derby / high-stakes → +0.5–1.0 cards (increased intensity)
+- Defensive match (both teams conceding < 0.8 GA/game) → −0.5 corners, −0.3 cards
+- Referee with high cards average (from Search 5 data) → +0.5 cards adjustment
+
+**Settlement caveat (MANDATORY in reasoning):** Corner/card tips CANNOT be auto-settled by the cron job — they require manual settlement via `/fr3-settle-tips` after the match. Include this note in analysis so operations team knows to check these tips post-match.
+
+If `match.homeStats` or `match.awayStats` is null → skip all corner/card markets for this match (insufficient data). Do NOT invent corner/card estimates without API data.
+
 **From H2H data (match.h2h):**
 
 - Home team wins, away team wins, draws in last 10 meetings
@@ -665,6 +703,7 @@ When your initial market choice fails any quality gate (especially: favorite odd
 | 5 | `1`, `2` (exact win) | Only if P ≥ 70% AND odds ≥ 1.50 |
 | 6 | `X` (draw) | Strong tactical/form evidence of stalemate |
 | 7 | `1 + Over 1.5`, `2 + Over 1.5` | Combo — only if BOTH conditions are independently high-confidence |
+| 8 | `Corners Over/Under X.5`, `Cards Over/Under X.5` | Only if match.homeStats and match.awayStats available; expected total clearly above/below threshold (≥1.0 margin) |
 
 For each market in the waterfall:
 1. Estimate P for that outcome using your Poisson model + qualitative adjustments
@@ -721,7 +760,7 @@ When skipping: "SKIPPED: {home} vs {away} — {reason}"
 
 | Field                 | Rules                                                                                                                                                                         |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| prediction            | One of the 14 valid types. Choose the pick with the highest genuine edge. Avoid exotic picks unless data is overwhelming.                                                     |
+| prediction            | One of the valid prediction types (see Configuration). Choose the pick with the highest genuine edge. Avoid exotic picks unless data is overwhelming. Corner/card tips only if homeStats/awayStats available. |
 | confidence            | 60-80 (max 80 until 100+ settled tips). Reflects statistical reality. Must be calibrated (see below).                                                                         |
 | odds                  | MUST use real bookmaker odds from the fetched data (match.odds). Map prediction type to correct market. NEVER invent odds. If real odds not available, DO NOT generate a tip. |
 | analysis              | 2-3 sentences IN ITALIAN citing specific numbers. Must justify the pick.                                                                                                      |
@@ -763,6 +802,15 @@ POISSON_BASE_RATES:
 - P(home_win)=[x]%, P(draw)=[y]%, P(away_win)=[z]% (from Poisson)
 - Adjustments: [+/-Xpp injuries, +/-Ypp motivation, ...]
 - ELO cross-check: P(home_elo)=[x]% — [consistent/divergent by Xpp]
+
+CORNER_CARD_MODEL (only if homeStats/awayStats available):
+- Expected corners: home [x] + away [y] = total [z] (shots-based estimate)
+- Style adjustments: [+/- adjustments with reasons]
+- Adjusted expected corners: [z]
+- Corner threshold selected: [X.5] → P(Over/Under) = [x]% | Bookmaker implied [y]% | Edge [+/-z]pp
+- Expected cards: home [x] + away [y] = total [z]
+- Card threshold selected: [X.5] → P(Over/Under) = [x]% | Bookmaker implied [y]% | Edge [+/-z]pp
+- ⚠️ Manual settlement required post-match (cron cannot auto-settle corner/card tips)
 
 EDGE_ANALYSIS:
 - Best edge: [prediction type] at +[x]pp over bookmaker, EV=[+x%]
@@ -822,6 +870,8 @@ Skipped: {list of skipped matches with reasons}
 11. **Exact win ('1' or '2') requires P ≥ 70%.** Below 70%, the double chance (1X or X2) is the only correct market. At P=62% a draw or the opposite outcome is 38% likely — that is not a "guaranteed" tip, it is a 62/38 gamble on an exact outcome. The 1X or X2 EV often beats the exact win EV even at lower odds. Choose the market that maximizes EV AND minimizes unnecessary risk.
 12. **Confidence must reflect probability — not optimism.** Confidence ≤ predicted_probability + 5pp. If P=59%, max confidence is 64 — not 73. If you feel the confidence "should be" much higher than the probability allows, that is a signal the probability estimate is wrong, not a reason to inflate confidence. Fix the probability or skip the tip.
 13. **Never skip on short favorite odds without running the Market Waterfall first.** If the favorite is @1.20, the bookmaker has settled the winner — but NOT the goals, the BTTS, or the game style. Run the waterfall: the chasing team needs to score (`Goal`), the protecting team manages conservatively (`Under 2.5`), both attack in a wild second leg (`Over 1.5`). Short 1X2 odds = underexplored secondary markets = your edge opportunity. A match with a 1.20 favorite ALWAYS deserves a waterfall scan before being skipped.
+14. **Corner tips require hard data.** Only generate `Corners Over/Under X.5` if `match.homeStats` and `match.awayStats` are both available. The expected total must differ from the threshold by ≥ 1.0 corner (e.g., expected 11.2 → only consider Over 10.5, not Under 10.5 or Under 9.5). Never tip corners based on intuition alone — the data must be conclusive.
+15. **Card tips require tactical/referee context.** Only generate `Cards Over/Under X.5` if team card averages are available AND at least one qualitative factor supports the pick (derby = more cards, defensive slog = fewer, aggressive referee = more). Without both data AND context, skip the card market.
 
 ```
 

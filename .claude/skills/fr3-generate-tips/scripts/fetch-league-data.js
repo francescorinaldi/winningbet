@@ -288,6 +288,43 @@ async function main() {
     });
   }
 
+  // 8. Team statistics for corner/card predictions — one call per unique team (parallel)
+  // Uses shots-per-game as proxy for corners (coefficient 0.42) and direct cards data.
+  if (result.matches.length > 0) {
+    const league = getLeague(slug);
+    const teamStatsCache = new Map(); // teamId → stats
+
+    async function fetchTeamStatsWithCache(teamId) {
+      if (!teamStatsCache.has(teamId)) {
+        try {
+          const stats = await apiFootball.getTeamStatistics(teamId, league.apiFootballId, league.season);
+          teamStatsCache.set(teamId, stats || null);
+        } catch (_err) {
+          teamStatsCache.set(teamId, null);
+        }
+      }
+      return teamStatsCache.get(teamId);
+    }
+
+    // Collect unique team IDs from all upcoming matches
+    const uniqueTeamIds = new Set();
+    result.matches.forEach((m) => {
+      if (m.homeId) uniqueTeamIds.add(m.homeId);
+      if (m.awayId) uniqueTeamIds.add(m.awayId);
+    });
+
+    // Fetch in parallel (one call per unique team)
+    await Promise.allSettled(
+      [...uniqueTeamIds].map((teamId) => fetchTeamStatsWithCache(teamId)),
+    );
+
+    // Attach to each match
+    result.matches.forEach((match) => {
+      match.homeStats = teamStatsCache.get(match.homeId) || null;
+      match.awayStats = teamStatsCache.get(match.awayId) || null;
+    });
+  }
+
   // Strip logo URLs to reduce output size
   result.matches = stripLogos(result.matches);
   result.standings.total = stripLogos(result.standings.total);
