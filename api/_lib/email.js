@@ -180,6 +180,285 @@ function buildDailyDigest(tips) {
 }
 
 /**
+ * Genera il template HTML per notifica admin di nuova candidatura partner.
+ *
+ * @param {Object} application - Oggetto candidatura partner
+ * @param {string} userEmail - Email dell'utente che ha inviato la candidatura
+ * @returns {Object} { subject: string, html: string, text: string }
+ */
+function buildPartnerApplicationNotification(application, userEmail) {
+  var businessName = escapeHtml(application.business_name || '\u2014');
+  var vatNumber = escapeHtml(application.vat_number || '\u2014');
+  var city = escapeHtml(application.city || '\u2014');
+  var province = escapeHtml(application.province || '\u2014');
+  var website = escapeHtml(application.website || '\u2014');
+  var email = escapeHtml(userEmail || '\u2014');
+  var createdAt = application.created_at
+    ? new Date(application.created_at).toLocaleDateString(EMAIL_LOCALE, {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : '\u2014';
+
+  var viesLabel = '\u2014';
+  if (application.vies_valid === true) {
+    viesLabel = '\u2705 Validata';
+    if (application.vies_company_name) {
+      viesLabel += ' (' + escapeHtml(application.vies_company_name) + ')';
+    }
+  } else if (application.vies_valid === false) {
+    viesLabel = '\u274C Non valida';
+  }
+
+  var subject =
+    '\uD83C\uDFE2 Nuova Candidatura Partner \u2014 ' +
+    (application.business_name || 'N/D');
+
+  var html = [
+    '<!DOCTYPE html>',
+    '<html><head><meta charset="utf-8"></head>',
+    '<body style="margin:0;padding:0;background:#0a0a0f;color:#f0f0f5;font-family:Arial,sans-serif;">',
+    '<div style="max-width:600px;margin:0 auto;padding:32px 24px;">',
+    '  <div style="text-align:center;margin-bottom:32px;">',
+    '    <h1 style="color:#d4a853;font-size:24px;margin:0;">\u26BD WinningBet</h1>',
+    '    <p style="color:#8a8a9a;margin-top:8px;">Nuova Candidatura Partner</p>',
+    '  </div>',
+    '  <table style="width:100%;border-collapse:collapse;background:#16161f;border-radius:12px;">',
+    '    <tbody>',
+    '      <tr style="border-bottom: 1px solid #2a2a3a;">',
+    '        <td style="padding:12px;color:#8a8a9a;font-size:12px;font-weight:600;width:40%;">RAGIONE SOCIALE</td>',
+    '        <td style="padding:12px;font-weight:600;">' + businessName + '</td>',
+    '      </tr>',
+    '      <tr style="border-bottom: 1px solid #2a2a3a;">',
+    '        <td style="padding:12px;color:#8a8a9a;font-size:12px;font-weight:600;">PARTITA IVA</td>',
+    '        <td style="padding:12px;">' + vatNumber + '</td>',
+    '      </tr>',
+    '      <tr style="border-bottom: 1px solid #2a2a3a;">',
+    '        <td style="padding:12px;color:#8a8a9a;font-size:12px;font-weight:600;">VERIFICA VIES</td>',
+    '        <td style="padding:12px;">' + viesLabel + '</td>',
+    '      </tr>',
+    '      <tr style="border-bottom: 1px solid #2a2a3a;">',
+    "        <td style=\"padding:12px;color:#8a8a9a;font-size:12px;font-weight:600;\">CITTA'</td>",
+    '        <td style="padding:12px;">' +
+      city +
+      (province !== '\u2014' ? ' (' + province + ')' : '') +
+      '</td>',
+    '      </tr>',
+    '      <tr style="border-bottom: 1px solid #2a2a3a;">',
+    '        <td style="padding:12px;color:#8a8a9a;font-size:12px;font-weight:600;">SITO WEB</td>',
+    '        <td style="padding:12px;">' + website + '</td>',
+    '      </tr>',
+    '      <tr>',
+    '        <td style="padding:12px;color:#8a8a9a;font-size:12px;font-weight:600;">EMAIL</td>',
+    '        <td style="padding:12px;">' + email + '</td>',
+    '      </tr>',
+    '    </tbody>',
+    '  </table>',
+    '  <p style="color:#8a8a9a;font-size:13px;text-align:center;margin-top:16px;">',
+    '    Inviata il ' + escapeHtml(createdAt),
+    '  </p>',
+    '  <div style="text-align:center;margin-top:32px;">',
+    '    <a href="' + SITE_URL + '/admin.html" ',
+    '       style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#f0d078,#d4a853);',
+    '              color:#0a0a0f;text-decoration:none;border-radius:8px;font-weight:700;">',
+    '      Vai al Pannello Admin',
+    '    </a>',
+    '  </div>',
+    '  <div style="text-align:center;margin-top:32px;color:#55556a;font-size:12px;">',
+    '    <p>WinningBet \u2014 Pronostici Calcio Premium</p>',
+    "    <p>Il gioco d'azzardo puo' causare dipendenza. Gioca responsabilmente. 18+</p>",
+    '  </div>',
+    '</div>',
+    '</body></html>',
+  ].join('\n');
+
+  var text =
+    'Nuova Candidatura Partner \u2014 WinningBet\n\n' +
+    'Ragione Sociale: ' +
+    (application.business_name || '\u2014') +
+    '\n' +
+    'Partita IVA: ' +
+    (application.vat_number || '\u2014') +
+    '\n' +
+    'Verifica VIES: ' +
+    (application.vies_valid === true
+      ? 'Validata'
+      : application.vies_valid === false
+        ? 'Non valida'
+        : '\u2014') +
+    '\n' +
+    "Citta': " +
+    (application.city || '\u2014') +
+    (application.province ? ' (' + application.province + ')' : '') +
+    '\n' +
+    'Sito Web: ' +
+    (application.website || '\u2014') +
+    '\n' +
+    'Email: ' +
+    (userEmail || '\u2014') +
+    '\n\n' +
+    'Vai al Pannello Admin: ' +
+    SITE_URL +
+    '/admin.html';
+
+  return { subject: subject, html: html, text: text };
+}
+
+/**
+ * Genera il template HTML per email di approvazione partner.
+ *
+ * @param {Object} application - Oggetto candidatura partner
+ * @returns {Object} { subject: string, html: string, text: string }
+ */
+function buildPartnerApprovalEmail(application) {
+  var businessName = escapeHtml(application.business_name || '');
+
+  var subject = 'Candidatura Approvata \u2014 Benvenuto Partner WinningBet';
+
+  var html = [
+    '<!DOCTYPE html>',
+    '<html><head><meta charset="utf-8"></head>',
+    '<body style="margin:0;padding:0;background:#0a0a0f;color:#f0f0f5;font-family:Arial,sans-serif;">',
+    '<div style="max-width:600px;margin:0 auto;padding:32px 24px;">',
+    '  <div style="text-align:center;margin-bottom:32px;">',
+    '    <h1 style="color:#d4a853;font-size:24px;margin:0;">\u26BD WinningBet</h1>',
+    '    <p style="color:#8a8a9a;margin-top:8px;">Programma Partner</p>',
+    '  </div>',
+    '  <div style="background:#16161f;border-radius:12px;padding:24px;">',
+    '    <h2 style="color:#d4a853;font-size:20px;margin:0 0 16px 0;">Benvenuto, ' +
+      businessName +
+      '!</h2>',
+    '    <p style="color:#f0f0f5;line-height:1.6;margin:0 0 16px 0;">',
+    '      La tua candidatura al Programma Partner WinningBet \u00e8 stata <strong style="color:#d4a853;">approvata</strong>.',
+    '    </p>',
+    '    <p style="color:#f0f0f5;line-height:1.6;margin:0 0 24px 0;">',
+    '      Da oggi hai accesso esclusivo a:',
+    '    </p>',
+    '    <table style="width:100%;border-collapse:collapse;">',
+    '      <tr>',
+    '        <td style="padding:12px;border-bottom:1px solid #2a2a3a;">',
+    '          <span style="color:#d4a853;font-weight:700;font-size:18px;">\uD83D\uDCCA</span>',
+    '          <strong style="margin-left:8px;">Comparatore Quote</strong>',
+    '          <p style="color:#8a8a9a;font-size:13px;margin:4px 0 0 0;">Confronta le quote dei principali bookmaker in tempo reale</p>',
+    '        </td>',
+    '      </tr>',
+    '      <tr>',
+    '        <td style="padding:12px;border-bottom:1px solid #2a2a3a;">',
+    '          <span style="color:#d4a853;font-weight:700;font-size:18px;">\uD83E\uDD16</span>',
+    '          <strong style="margin-left:8px;">Pronostici AI Premium</strong>',
+    '          <p style="color:#8a8a9a;font-size:13px;margin:4px 0 0 0;">Accesso completo ai pronostici generati dalla nostra intelligenza artificiale</p>',
+    '        </td>',
+    '      </tr>',
+    '      <tr>',
+    '        <td style="padding:12px;">',
+    '          <span style="color:#d4a853;font-weight:700;font-size:18px;">\uD83D\uDCC8</span>',
+    '          <strong style="margin-left:8px;">Pannello Statistiche Dedicato</strong>',
+    '          <p style="color:#8a8a9a;font-size:13px;margin:4px 0 0 0;">Statistiche avanzate e track record esclusivi per la tua attivit\u00e0</p>',
+    '        </td>',
+    '      </tr>',
+    '    </table>',
+    '  </div>',
+    '  <div style="text-align:center;margin-top:32px;">',
+    '    <a href="' + SITE_URL + '/dashboard.html" ',
+    '       style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#f0d078,#d4a853);',
+    '              color:#0a0a0f;text-decoration:none;border-radius:8px;font-weight:700;">',
+    '      Accedi alla Dashboard',
+    '    </a>',
+    '  </div>',
+    '  <div style="text-align:center;margin-top:32px;color:#55556a;font-size:12px;">',
+    '    <p>WinningBet \u2014 Pronostici Calcio Premium</p>',
+    "    <p>Il gioco d'azzardo puo' causare dipendenza. Gioca responsabilmente. 18+</p>",
+    '  </div>',
+    '</div>',
+    '</body></html>',
+  ].join('\n');
+
+  var text =
+    'Candidatura Approvata \u2014 Benvenuto Partner WinningBet\n\n' +
+    'Ciao ' +
+    (application.business_name || '') +
+    ',\n\n' +
+    "La tua candidatura al Programma Partner WinningBet e' stata approvata.\n\n" +
+    'Da oggi hai accesso esclusivo a:\n' +
+    '- Comparatore Quote: confronta le quote dei principali bookmaker in tempo reale\n' +
+    '- Pronostici AI Premium: accesso completo ai pronostici generati dalla nostra AI\n' +
+    '- Pannello Statistiche Dedicato: statistiche avanzate e track record esclusivi\n\n' +
+    'Accedi alla Dashboard: ' +
+    SITE_URL +
+    '/dashboard.html';
+
+  return { subject: subject, html: html, text: text };
+}
+
+/**
+ * Genera il template HTML per email di rifiuto candidatura partner.
+ *
+ * @param {Object} application - Oggetto candidatura partner
+ * @param {string} reason - Motivo del rifiuto
+ * @returns {Object} { subject: string, html: string, text: string }
+ */
+function buildPartnerRejectionEmail(application, reason) {
+  var businessName = escapeHtml(application.business_name || '');
+  var safeReason = escapeHtml(reason || 'Requisiti non soddisfatti');
+
+  var subject = 'Aggiornamento Candidatura \u2014 WinningBet';
+
+  var html = [
+    '<!DOCTYPE html>',
+    '<html><head><meta charset="utf-8"></head>',
+    '<body style="margin:0;padding:0;background:#0a0a0f;color:#f0f0f5;font-family:Arial,sans-serif;">',
+    '<div style="max-width:600px;margin:0 auto;padding:32px 24px;">',
+    '  <div style="text-align:center;margin-bottom:32px;">',
+    '    <h1 style="color:#d4a853;font-size:24px;margin:0;">\u26BD WinningBet</h1>',
+    '    <p style="color:#8a8a9a;margin-top:8px;">Programma Partner</p>',
+    '  </div>',
+    '  <div style="background:#16161f;border-radius:12px;padding:24px;">',
+    '    <p style="color:#f0f0f5;line-height:1.6;margin:0 0 16px 0;">',
+    '      Gentile ' + businessName + ',',
+    '    </p>',
+    '    <p style="color:#f0f0f5;line-height:1.6;margin:0 0 16px 0;">',
+    "      Dopo un'attenta valutazione, non ci \u00e8 possibile approvare la tua candidatura al Programma Partner WinningBet in questo momento.",
+    '    </p>',
+    '    <div style="background:#1e1e2a;border-left:3px solid #d4a853;padding:12px 16px;border-radius:4px;margin:0 0 16px 0;">',
+    '      <p style="color:#8a8a9a;font-size:12px;margin:0 0 4px 0;">MOTIVAZIONE</p>',
+    '      <p style="color:#f0f0f5;margin:0;">' + safeReason + '</p>',
+    '    </div>',
+    '    <p style="color:#f0f0f5;line-height:1.6;margin:0 0 16px 0;">',
+    '      Se ritieni ci sia stato un errore o desideri maggiori informazioni, non esitare a contattarci rispondendo a questa email.',
+    '    </p>',
+    '    <p style="color:#8a8a9a;line-height:1.6;margin:0;">',
+    "      Ti ringraziamo per l'interesse e ti auguriamo il meglio.",
+    '    </p>',
+    '  </div>',
+    '  <div style="text-align:center;margin-top:32px;color:#55556a;font-size:12px;">',
+    '    <p>WinningBet \u2014 Pronostici Calcio Premium</p>',
+    "    <p>Il gioco d'azzardo puo' causare dipendenza. Gioca responsabilmente. 18+</p>",
+    '  </div>',
+    '</div>',
+    '</body></html>',
+  ].join('\n');
+
+  var text =
+    'Aggiornamento Candidatura \u2014 WinningBet\n\n' +
+    'Gentile ' +
+    (application.business_name || '') +
+    ',\n\n' +
+    "Dopo un'attenta valutazione, non ci e' possibile approvare la tua candidatura al " +
+    'Programma Partner WinningBet in questo momento.\n\n' +
+    'Motivazione: ' +
+    (reason || 'Requisiti non soddisfatti') +
+    '\n\n' +
+    'Se ritieni ci sia stato un errore o desideri maggiori informazioni, ' +
+    'non esitare a contattarci rispondendo a questa email.\n\n' +
+    "Ti ringraziamo per l'interesse e ti auguriamo il meglio.";
+
+  return { subject: subject, html: html, text: text };
+}
+
+/**
  * Escape caratteri speciali per HTML.
  * @param {string} str
  * @returns {string}
@@ -193,4 +472,10 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-module.exports = { sendEmail, buildDailyDigest };
+module.exports = {
+  sendEmail,
+  buildDailyDigest,
+  buildPartnerApplicationNotification,
+  buildPartnerApprovalEmail,
+  buildPartnerRejectionEmail,
+};
