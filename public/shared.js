@@ -557,20 +557,31 @@ function initMobileMenu() {
   backdrop.setAttribute('aria-hidden', 'true');
   document.body.appendChild(backdrop);
 
+  // iOS Safari does not honour body overflow:hidden — use position:fixed trick instead
+  var savedScrollY = 0;
+
   function closeMenu() {
     hamburger.classList.remove('active');
     hamburger.setAttribute('aria-expanded', 'false');
     navLinks.classList.remove('open');
     backdrop.classList.remove('open');
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
     document.body.style.overflow = '';
+    window.scrollTo(0, savedScrollY);
   }
 
   function openMenu() {
+    savedScrollY = window.scrollY;
     hamburger.classList.add('active');
     hamburger.setAttribute('aria-expanded', 'true');
     navLinks.classList.add('open');
     backdrop.classList.add('open');
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = '-' + savedScrollY + 'px';
+    document.body.style.width = '100%';
   }
 
   // Set initial aria state

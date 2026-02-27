@@ -2332,9 +2332,10 @@ img {
     visibility: visible;
   }
 
-  .nav-links a {
+  .nav-links a:not(.btn) {
     font-size: 1.3rem;
     padding: 8px 16px;
+    color: #ffffff;
   }
 
   .nav-links .btn {

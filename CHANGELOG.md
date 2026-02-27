@@ -12,6 +12,8 @@ All notable changes to WinningBet will be documented in this file.
 
 ### Fixed
 
+- **fix(mobile): menu hamburger iOS — testo bianco, scroll sezione corretto, no page-jump al chiusura** — 3 bug risolti: (1) colore testo link nav mobile troppo scuro: aggiunto `color: #ffffff` sui link `.nav-links a:not(.btn)` nel media query mobile; (2) clic su voce menu non scrollava alla sezione: wrappato `window.scrollTo` in `setTimeout(50ms)` in `script.js` così il calcolo `getBoundingClientRect` avviene dopo che il menu è chiuso; (3) secondo tap hamburger mostrava la home invece di chiudere il menu — causa: iOS Safari ignora `body.overflow:hidden` e resetta lo scroll a 0 → implementato iOS scroll lock pattern in `shared.js`: `position:fixed + top:-scrollY` su body all'apertura, ripristino con `window.scrollTo(0, savedScrollY)` alla chiusura.
+
 - **fix(ui): rimozione bordo grigio su scroll alla sezione Piani** — Lo scroll verso sezioni anchor usava un offset `navHeight + 20px`, che lasciava 20px dello sfondo di `.stats-section` (`#12121a`) visibile sotto la navbar quando si navigava a `#pricing`. Rimosso i 20px extra: la sezione ora si posiziona esattamente sotto la navbar, eliminando la striscia grigia.
 
 - **fix(ui): lingua inglese mostra globe 🌐 invece della bandiera 🇬🇧** — Il toggle lingua usava la bandiera del Regno Unito per rappresentare la lingua inglese, ma l'inglese non è lingua esclusiva della Gran Bretagna. Sostituita con l'emoji 🌐 (globe), soluzione adottata da Notion, Vercel, Linear, Stripe e altri. Nessuna modifica all'HTML (la label "EN" rimane invariata).

@@ -304,9 +304,12 @@
       const target = document.querySelector(targetId);
       if (target) {
         e.preventDefault();
-        const navHeight = navbar.offsetHeight;
-        const targetPos = target.getBoundingClientRect().top + window.scrollY - navHeight;
-        window.scrollTo({ top: targetPos, behavior: 'smooth' });
+        // Delay scroll so iOS position:fixed teardown in closeMenu() completes first
+        setTimeout(function () {
+          const navHeight = navbar.offsetHeight;
+          const targetPos = target.getBoundingClientRect().top + window.scrollY - navHeight;
+          window.scrollTo({ top: targetPos, behavior: 'smooth' });
+        }, 50);
       }
     });
   });
