@@ -161,12 +161,20 @@ function formatDigest(tips) {
     '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501',
   ];
 
-  // Group tips by league
+  // Sort tips chronologically before grouping so leagues appear
+  // in the order of their earliest match (not insertion order).
+  const sorted = tips.slice().sort(function (a, b) {
+    return new Date(a.match_date) - new Date(b.match_date);
+  });
+
+  // Group by league preserving chronological league order
   const byLeague = {};
-  for (const tip of tips) {
+  const leagueOrder = [];
+  for (const tip of sorted) {
     const league = tip.league || 'serie-a';
     if (!byLeague[league]) {
       byLeague[league] = [];
+      leagueOrder.push(league);
     }
     byLeague[league].push(tip);
   }
@@ -174,7 +182,7 @@ function formatDigest(tips) {
   let comboOdds = 1;
   let tipCount = 0;
 
-  for (const leagueSlug of Object.keys(byLeague)) {
+  for (const leagueSlug of leagueOrder) {
     const leagueTips = byLeague[leagueSlug];
     const flag = LEAGUE_FLAGS[leagueSlug] || '\u26BD';
     const name = LEAGUE_NAMES[leagueSlug] || leagueSlug.toUpperCase();

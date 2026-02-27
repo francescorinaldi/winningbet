@@ -115,6 +115,7 @@ ORDER BY roi_per_tip DESC;
 ```
 
 Compute recommended mix:
+
 - Types with ROI per tip > 0 → INCREASE allocation
 - Types with ROI per tip < -0.15 → DECREASE or AVOID
 - Types with < 3 samples → INSUFFICIENT DATA
@@ -134,6 +135,7 @@ ORDER BY confidence;
 ```
 
 Find the minimum confidence at which cumulative ROI turns positive:
+
 - Start from highest confidence, cumulate downward
 - The breakpoint where cumulative ROI crosses zero = minimum profitable confidence
 
@@ -157,6 +159,7 @@ ORDER BY roi DESC;
 ### 7. Generate strategy directives
 
 Based on the analysis, generate directives. Each directive has:
+
 - `directive_type`: one of `avoid_prediction_type`, `prefer_prediction_type`, `avoid_league`, `prefer_league`, `adjust_confidence_band`, `adjust_odds_range`, `adjust_edge_threshold`, `general_strategy`
 - `directive_text`: human-readable instruction
 - `parameters`: JSONB with specifics

@@ -69,6 +69,7 @@ export default [
         Stripe: 'readonly',
         URLSearchParams: 'readonly',
         Promise: 'readonly',
+        AbortController: 'readonly',
       },
     },
   },

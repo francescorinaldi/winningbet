@@ -66,8 +66,10 @@ async function getUpcomingMatches(leagueSlug, count = 10) {
     date: item.fixture.date,
     status: item.fixture.status.short,
     home: item.teams.home.name,
+    homeId: item.teams.home.id,
     homeLogo: item.teams.home.logo,
     away: item.teams.away.name,
+    awayId: item.teams.away.id,
     awayLogo: item.teams.away.logo,
     goalsHome: item.goals.home,
     goalsAway: item.goals.away,
@@ -168,6 +170,31 @@ async function getAllOdds(fixtureId) {
     }));
   }
 
+  // Corners Over/Under (name-based: market names vary by bookmaker version)
+  const cornersMarket = bookmaker.bets.find(
+    (b) => b.id === 45 || b.name.toLowerCase().includes('corner'),
+  );
+  if (cornersMarket) {
+    result.corners = cornersMarket.values.map((v) => ({
+      outcome: v.value,
+      odd: v.odd,
+    }));
+  }
+
+  // Cards/Bookings Over/Under
+  const cardsMarket = bookmaker.bets.find(
+    (b) =>
+      b.id === 75 ||
+      b.name.toLowerCase().includes('card') ||
+      b.name.toLowerCase().includes('booking'),
+  );
+  if (cardsMarket) {
+    result.cards = cardsMarket.values.map((v) => ({
+      outcome: v.value,
+      odd: v.odd,
+    }));
+  }
+
   return result;
 }
 
@@ -228,6 +255,30 @@ function findOddsForPrediction(allOdds, prediction) {
   if (pred === 'No Goal' && allOdds.bothTeamsScore) {
     const no = allOdds.bothTeamsScore.find((v) => v.outcome === 'No');
     return no ? parseFloat(no.odd) : null;
+  }
+
+  // Corner predictions: "Corners Over X.5", "Corners Under X.5"
+  const cornersMatch = pred.match(/^Corners\s+(Over|Under)\s+(\d+(?:\.\d+)?)$/i);
+  if (cornersMatch && allOdds.corners) {
+    const direction = cornersMatch[1]; // "Over" or "Under"
+    const threshold = cornersMatch[2]; // "9.5", "8.5", etc.
+    const outcome = `${direction} ${threshold}`;
+    const found = allOdds.corners.find(
+      (v) => v.outcome.toLowerCase() === outcome.toLowerCase(),
+    );
+    return found ? parseFloat(found.odd) : null;
+  }
+
+  // Card predictions: "Cards Over X.5", "Cards Under X.5"
+  const cardsMatch = pred.match(/^Cards\s+(Over|Under)\s+(\d+(?:\.\d+)?)$/i);
+  if (cardsMatch && allOdds.cards) {
+    const direction = cardsMatch[1];
+    const threshold = cardsMatch[2];
+    const outcome = `${direction} ${threshold}`;
+    const found = allOdds.cards.find(
+      (v) => v.outcome.toLowerCase() === outcome.toLowerCase(),
+    );
+    return found ? parseFloat(found.odd) : null;
   }
 
   // Combo predictions: "1 + Over 1.5", "2 + Over 1.5"
@@ -412,13 +463,166 @@ async function getHeadToHead(leagueSlug, homeTeamName, awayTeamName, lastN = 10)
   };
 }
 
+/**
+ * Recupera infortuni e squalifiche per una specifica partita.
+ * @param {number|string} fixtureId - ID della partita
+ * @returns {Promise<Array<Object>>} Array di giocatori out/dubbi con tipo e motivo
+ */
+async function getFixtureInjuries(fixtureId) {
+  const data = await request('/injuries', { fixture: fixtureId });
+  return (data || []).map((item) => ({
+    playerId: item.player.id,
+    playerName: item.player.name,
+    teamId: item.team.id,
+    teamName: item.team.name,
+    type: item.type, // "Injury" | "Suspension"
+    reason: item.reason || null,
+  }));
+}
+
+/**
+ * Recupera le statistiche stagionali dei giocatori di una squadra.
+ * Restituisce solo page=1 (top ~20 giocatori per presenze) per efficienza.
+ * @param {number|string} teamId - ID della squadra
+ * @param {number|string} season - Anno stagione (es. 2025)
+ * @param {number} topN - Numero massimo di giocatori da restituire (default: 20)
+ * @returns {Promise<Array<Object>>} Array di giocatori con statistiche
+ */
+async function getTeamPlayerStats(teamId, season, topN = 20) {
+  const data = await request('/players', { team: teamId, season, page: 1 });
+  return (data || []).slice(0, topN).map((item) => {
+    const stats = item.statistics?.[0] || {};
+    return {
+      id: item.player.id,
+      name: item.player.name,
+      position: stats.games?.position || 'Unknown',
+      appearances: stats.games?.appearences || 0,
+      minutes: stats.games?.minutes || 0,
+      goals: stats.goals?.total || 0,
+      assists: stats.goals?.assists || 0,
+      rating: parseFloat(stats.games?.rating || 0) || 0,
+    };
+  });
+}
+
+/**
+ * Recupera le statistiche stagionali di una squadra per corner e cartellini.
+ * Utile per il modello di previsione Corner/Cards betting markets.
+ *
+ * Dati restituiti:
+ *   - cards: cartellini gialli/rossi medi per partita
+ *   - shots: tiri totali medi per partita (proxy per corner)
+ *   - corners_estimate: stima corner per partita (shots × 0.42)
+ *
+ * Il coefficiente 0.42 è derivato da correlazione empirica shots→corners
+ * per i principali campionati europei (media ~10.5 corner/match ÷ ~25 shots/match).
+ *
+ * @param {number|string} teamId - ID della squadra (api-football)
+ * @param {number|string} leagueId - ID della lega (api-football)
+ * @param {number|string} season - Anno stagione (es. 2025)
+ * @returns {Promise<Object|null>} Statistiche o null se non disponibili
+ */
+async function getTeamStatistics(teamId, leagueId, season) {
+  // /teams/statistics returns a single object (not an array) in json.response
+  const data = await request('/teams/statistics', { team: teamId, league: leagueId, season });
+  // api-football wraps the response: could be object or single-element array
+  const stats = Array.isArray(data) ? data[0] : data;
+  if (!stats || !stats.fixtures) return null;
+
+  const played = stats.fixtures.played?.total || 1;
+
+  const yellowTotal = Object.values(stats.cards?.yellow || {}).reduce(
+    (sum, v) => sum + (Number(v.total) || 0),
+    0,
+  );
+  const redTotal = Object.values(stats.cards?.red || {}).reduce(
+    (sum, v) => sum + (Number(v.total) || 0),
+    0,
+  );
+
+  const shotsOnTotal = stats.shots?.on?.total || 0;
+  const shotsOffTotal = stats.shots?.off?.total || 0;
+  const shotsTotal = shotsOnTotal + shotsOffTotal;
+
+  return {
+    played,
+    cards: {
+      yellow_total: yellowTotal,
+      red_total: redTotal,
+      total_per_game: parseFloat(((yellowTotal + redTotal) / played).toFixed(2)),
+      yellow_per_game: parseFloat((yellowTotal / played).toFixed(2)),
+    },
+    shots: {
+      total: shotsTotal,
+      per_game: parseFloat((shotsTotal / played).toFixed(2)),
+    },
+    // Corner estimate: ~0.42 shots → corners (empirical coefficient for top 5 leagues)
+    corners_estimate: {
+      per_game: parseFloat(((shotsTotal / played) * 0.42).toFixed(2)),
+    },
+  };
+}
+
+/**
+ * Recupera le quote per una partita da tutti i bookmaker disponibili.
+ * Utile per il comparatore quote del Centro Scommesse B2B.
+ *
+ * @param {number|string} fixtureId - ID della partita
+ * @returns {Promise<{fixtureId: number, bookmakers: Array}|null>}
+ */
+async function getMultipleBookmakerOdds(fixtureId) {
+  const data = await request('/odds', { fixture: fixtureId });
+  // omettere bookmaker= restituisce tutti i bookmaker disponibili
+  if (!data || data.length === 0) return null;
+  if (!data[0].bookmakers || data[0].bookmakers.length === 0) return null;
+
+  const FIELDS = [
+    { key: 'home', betId: 1, outcome: 'Home' },
+    { key: 'draw', betId: 1, outcome: 'Draw' },
+    { key: 'away', betId: 1, outcome: 'Away' },
+    { key: 'over25', betId: 5, outcome: 'Over 2.5' },
+    { key: 'under25', betId: 5, outcome: 'Under 2.5' },
+    { key: 'btts_yes', betId: 8, outcome: 'Yes' },
+    { key: 'btts_no', betId: 8, outcome: 'No' },
+  ];
+
+  const bookmakers = data[0].bookmakers
+    .slice(0, 8)
+    .map((bk) => {
+      const betsById = {};
+      bk.bets.forEach((b) => {
+        betsById[b.id] = b;
+      });
+      const odds = {};
+      FIELDS.forEach(({ key, betId, outcome }) => {
+        const market = betsById[betId];
+        if (!market) {
+          odds[key] = null;
+          return;
+        }
+        const v = market.values.find((x) => x.value === outcome);
+        odds[key] = v ? v.odd : null;
+      });
+      return { id: bk.id, name: bk.name, odds };
+    })
+    .filter(
+      (bk) => bk.odds.home !== null || bk.odds.draw !== null || bk.odds.over25 !== null,
+    );
+
+  return bookmakers.length === 0 ? null : { fixtureId: Number(fixtureId), bookmakers };
+}
+
 module.exports = {
   getUpcomingMatches,
   getRecentResults,
   getOdds,
   getAllOdds,
   findOddsForPrediction,
+  getMultipleBookmakerOdds,
   getStandings,
   getFullStandings,
   getHeadToHead,
+  getFixtureInjuries,
+  getTeamPlayerStats,
+  getTeamStatistics,
 };

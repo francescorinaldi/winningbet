@@ -14,9 +14,11 @@ const { stripe, PRICE_IDS } = require('./_lib/stripe');
 const { supabase } = require('./_lib/supabase');
 const { authenticate } = require('./_lib/auth-middleware');
 
+const SITE_URL = process.env.SITE_URL || 'https://winningbet.it';
+
 const ALLOWED_ORIGINS = [
-  'https://winningbet.it',
-  'https://www.winningbet.it',
+  SITE_URL,
+  SITE_URL.replace('https://', 'https://www.'),
   'https://winningbet.vercel.app',
 ];
 
@@ -39,7 +41,7 @@ module.exports = async function handler(req, res) {
 
 function getOrigin(req) {
   const rawOrigin = req.headers.origin || req.headers.referer || '';
-  return ALLOWED_ORIGINS.includes(rawOrigin) ? rawOrigin : 'https://winningbet.it';
+  return ALLOWED_ORIGINS.includes(rawOrigin) ? rawOrigin : SITE_URL;
 }
 
 // ─── Checkout Handler ───────────────────────────────────────────────────────
@@ -75,6 +77,7 @@ async function handleCheckout(req, res) {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
+      payment_method_types: ['card'],
       line_items: [{ price: PRICE_IDS[tier], quantity: 1 }],
       success_url: origin + '/dashboard.html?checkout=success',
       cancel_url: origin + '/dashboard.html?checkout=cancelled',
@@ -96,7 +99,7 @@ async function handleCheckout(req, res) {
     console.error('Price IDs:', JSON.stringify(PRICE_IDS));
     return res
       .status(500)
-      .json({ error: 'Errore nella creazione della sessione di pagamento: ' + err.message });
+      .json({ error: 'Errore nella creazione della sessione di pagamento' });
   }
 }
 
@@ -116,7 +119,7 @@ async function handlePortal(req, res) {
     const origin = getOrigin(req);
     const session = await stripe.billingPortal.sessions.create({
       customer: profile.stripe_customer_id,
-      return_url: origin + '/dashboard.html',
+      return_url: origin + '/dashboard.html?from=portal',
     });
 
     return res.status(200).json({ url: session.url });

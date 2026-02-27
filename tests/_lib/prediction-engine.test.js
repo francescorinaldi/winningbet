@@ -9,6 +9,8 @@ const {
   computeDerivedStats,
   getTeamRecentMatches,
   formatRecentResults,
+  deduplicateByBestEV,
+  MARKET_WATERFALL_ORDER,
 } = require('../../api/_lib/prediction-engine');
 
 // Mock api-football module
@@ -198,6 +200,109 @@ describe('prediction-engine', () => {
         { home: 'Juventus', away: 'Inter', goalsHome: 0, goalsAway: 1 },
       ];
       expect(formatRecentResults('Inter', matches)).toBe('Inter 2-1 Milan, Juventus 0-1 Inter');
+    });
+  });
+
+  describe('MARKET_WATERFALL_ORDER', () => {
+    test('contains all 14 prediction types with no duplicates', () => {
+      expect(MARKET_WATERFALL_ORDER).toHaveLength(14);
+      const uniqueMarkets = new Set(MARKET_WATERFALL_ORDER);
+      expect(uniqueMarkets.size).toBe(14);
+    });
+
+    test('starts with double chance markets (highest priority)', () => {
+      expect(MARKET_WATERFALL_ORDER.slice(0, 3)).toEqual(['1X', 'X2', '12']);
+    });
+
+    test('ends with combo markets (lowest priority)', () => {
+      expect(MARKET_WATERFALL_ORDER.slice(-2)).toEqual(['1 + Over 1.5', '2 + Over 1.5']);
+    });
+
+    test('exact win markets come after BTTS and all O/U markets', () => {
+      const exactWin1Index = MARKET_WATERFALL_ORDER.indexOf('1');
+      const exactWin2Index = MARKET_WATERFALL_ORDER.indexOf('2');
+      const bttsIndex = MARKET_WATERFALL_ORDER.indexOf('Goal');
+      const noGoalIndex = MARKET_WATERFALL_ORDER.indexOf('No Goal');
+      const over25Index = MARKET_WATERFALL_ORDER.indexOf('Over 2.5');
+      const under25Index = MARKET_WATERFALL_ORDER.indexOf('Under 2.5');
+      const over15Index = MARKET_WATERFALL_ORDER.indexOf('Over 1.5');
+      const under35Index = MARKET_WATERFALL_ORDER.indexOf('Under 3.5');
+
+      // Both exact wins come after all BTTS and O/U markets
+      for (const exactIdx of [exactWin1Index, exactWin2Index]) {
+        expect(exactIdx).toBeGreaterThan(bttsIndex);
+        expect(exactIdx).toBeGreaterThan(noGoalIndex);
+        expect(exactIdx).toBeGreaterThan(over25Index);
+        expect(exactIdx).toBeGreaterThan(under25Index);
+        expect(exactIdx).toBeGreaterThan(over15Index);
+        expect(exactIdx).toBeGreaterThan(under35Index);
+      }
+    });
+  });
+
+  describe('deduplicateByBestEV', () => {
+    test('empty array → empty array', () => {
+      expect(deduplicateByBestEV([])).toEqual([]);
+    });
+
+    test('single prediction → returns as-is', () => {
+      const input = [
+        { match_id: '100', prediction: '1X', odds: 1.5, predicted_probability: 0.75, confidence: 72, tier: 'free' },
+      ];
+      expect(deduplicateByBestEV(input)).toEqual(input);
+    });
+
+    test('different matches → keeps all', () => {
+      const input = [
+        { match_id: '100', prediction: '1X', odds: 1.5, predicted_probability: 0.75, confidence: 72, tier: 'free' },
+        { match_id: '200', prediction: 'Over 2.5', odds: 2.0, predicted_probability: 0.65, confidence: 68, tier: 'pro' },
+      ];
+      expect(deduplicateByBestEV(input)).toHaveLength(2);
+    });
+
+    test('same match, two predictions → keeps higher EV', () => {
+      const input = [
+        { match_id: '100', prediction: '1', odds: 1.22, predicted_probability: 0.85, confidence: 80, tier: 'free' },
+        { match_id: '100', prediction: 'Goal', odds: 1.70, predicted_probability: 0.72, confidence: 70, tier: 'pro' },
+      ];
+      const result = deduplicateByBestEV(input);
+      expect(result).toHaveLength(1);
+      // EV for '1': 0.85 * 1.22 - 1 = 0.037
+      // EV for 'Goal': 0.72 * 1.70 - 1 = 0.224
+      expect(result[0].prediction).toBe('Goal');
+    });
+
+    test('same match, three predictions → keeps highest EV', () => {
+      const input = [
+        { match_id: '100', prediction: '1X', odds: 1.30, predicted_probability: 0.90, confidence: 85, tier: 'free' },
+        { match_id: '100', prediction: 'Under 3.5', odds: 1.45, predicted_probability: 0.82, confidence: 78, tier: 'free' },
+        { match_id: '100', prediction: 'Goal', odds: 1.80, predicted_probability: 0.70, confidence: 70, tier: 'pro' },
+      ];
+      const result = deduplicateByBestEV(input);
+      expect(result).toHaveLength(1);
+      // EV for 'Goal': 0.70 * 1.80 - 1 = 0.26 (highest)
+      expect(result[0].prediction).toBe('Goal');
+    });
+
+    test('preserves all fields of the winning prediction', () => {
+      const input = [
+        { match_id: '100', prediction: '1', odds: 1.22, predicted_probability: 0.85, confidence: 80, tier: 'free', analysis: 'low EV', home_team: 'Inter', away_team: 'Bodø/Glimt' },
+        { match_id: '100', prediction: 'Goal', odds: 1.70, predicted_probability: 0.72, confidence: 70, tier: 'pro', analysis: 'BTTS value', home_team: 'Inter', away_team: 'Bodø/Glimt' },
+      ];
+      const result = deduplicateByBestEV(input);
+      expect(result[0]).toEqual(input[1]);
+    });
+
+    test('normalizes predicted_probability when given as percentage (0–100)', () => {
+      const input = [
+        { match_id: '100', prediction: '1', odds: 1.22, predicted_probability: 85, confidence: 80, tier: 'free' },
+        { match_id: '100', prediction: 'Goal', odds: 1.70, predicted_probability: 72, confidence: 70, tier: 'pro' },
+      ];
+      const result = deduplicateByBestEV(input);
+      expect(result).toHaveLength(1);
+      // EV for '1': (85/100) * 1.22 - 1 = 0.037
+      // EV for 'Goal': (72/100) * 1.70 - 1 = 0.224
+      expect(result[0].prediction).toBe('Goal');
     });
   });
 });

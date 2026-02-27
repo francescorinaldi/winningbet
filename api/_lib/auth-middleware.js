@@ -10,6 +10,7 @@
  */
 
 const { supabase } = require('./supabase');
+const { TIER_LEVELS } = require('./tiers');
 
 /**
  * Estrae e verifica il JWT dall'header Authorization.
@@ -39,7 +40,7 @@ async function authenticate(req) {
   // Recupera il profilo con il tier
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, display_name, tier, stripe_customer_id')
+    .select('id, display_name, tier, stripe_customer_id, role')
     .eq('user_id', user.id)
     .single();
 
@@ -62,8 +63,7 @@ async function authenticate(req) {
  * @returns {boolean}
  */
 function hasAccess(userTier, requiredTier) {
-  const tierLevels = { free: 0, pro: 1, vip: 2 };
-  return (tierLevels[userTier] || 0) >= (tierLevels[requiredTier] || 0);
+  return (TIER_LEVELS[userTier] || 0) >= (TIER_LEVELS[requiredTier] || 0);
 }
 
 /**

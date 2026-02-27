@@ -64,13 +64,14 @@ const SupabaseConfig = (function () {
     /**
      * Login con provider OAuth (es. Google).
      * @param {string} provider - Nome provider ('google', 'github', ecc.)
+     * @param {string} [redirectPath] - Path opzionale dopo /dashboard.html (es. '?upgrade=pro')
      * @returns {Promise<{data: Object, error: Object|null}>}
      */
-    signInWithOAuth: function (provider) {
+    signInWithOAuth: function (provider, redirectPath) {
       return client.auth.signInWithOAuth({
         provider: provider,
         options: {
-          redirectTo: window.location.origin + '/dashboard.html',
+          redirectTo: window.location.origin + '/dashboard.html' + (redirectPath || ''),
         },
       });
     },

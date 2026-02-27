@@ -43,6 +43,29 @@ const PREDICTION_TYPES = [
 ];
 
 /**
+ * Ordine di waterfall per mercati alternativi.
+ * Quando il mercato principale fallisce i quality gate, l'analista deve esplorare
+ * tutti i mercati in questo ordine prima di skippare la partita.
+ * @type {string[]}
+ */
+const MARKET_WATERFALL_ORDER = [
+  '1X',
+  'X2',
+  '12',
+  'Over 1.5',
+  'Under 3.5',
+  'Goal',
+  'No Goal',
+  'Over 2.5',
+  'Under 2.5',
+  '1',
+  '2',
+  'X',
+  '1 + Over 1.5',
+  '2 + Over 1.5',
+];
+
+/**
  * System prompt per l'analista AI (Fase 2 — Prediction).
  * @type {string}
  */
@@ -54,10 +77,15 @@ REGOLE:
 2. La confidence deve riflettere la realta' statistica — mai ottimistica.
 3. Per Over/Under: analizza media gol fatti+subiti di entrambe.
 4. Per Goal/No Goal: considera % partite con entrambe a segno.
-5. Non superare confidence 90 senza evidenze schiaccianti.
+5. Non superare confidence 85 senza evidenze schiaccianti su tutti e 10 i fattori.
 6. L'analisi deve citare dati specifici, in italiano, 2-3 frasi.
-7. Il reasoning deve contenere il processo logico completo.
-8. Considera il contesto della partita: obiettivi stagionali, rivalita', fattore campo.`;
+7. Il reasoning deve contenere il processo logico completo incluso il calcolo EV.
+8. Considera il contesto della partita: obiettivi stagionali, rivalita', fattore campo.
+9. MARKET SELECTION — NON NEGOZIABILE: gioca '1' SOLO se P(home win) >= 70%. Gioca '2' SOLO se P(away win) >= 70%. Se la probabilita' e' tra 60% e 69%, usa il doppio chance (1X o X2) — e' il mercato matematicamente corretto. Con P=62% il pareggio o l'esito opposto e' ancora al 38%: non e' un favorito schiacciante, e' un rischio inaccettabile per un esito esatto.
+10. CONFIDENCE <= PROBABILITA' + 5pp: se P(esito)=59%, confidence massima=64. Se P=65%, confidence massima=70. Dichiarare 73% di confidence su un esito con 59% di probabilita' e' una contraddizione che compromette la calibrazione e inganna l'utente.
+11. EV MINIMO +8%: EV = (predicted_probability / 100) * odds - 1. Se EV < 0.08 su tutti i mercati disponibili, NON generare il tip — skippa la partita. Un edge di 0.2pp non e' un edge, e' rumore statistico.
+12. UNDERDOG IN CASA IN ZONA RETROCESSIONE: aggiungi +5 a +8pp a P(home win o draw) quando la squadra di casa e' nelle ultime 3 posizioni in classifica. La pressione salvezza davanti al proprio pubblico e' reale e sistematicamente sottoprezzata dai bookmaker — le squadre in zona retrocessione sovraperformano in casa rispetto alle aspettative statistiche pure.
+13. MARKET WATERFALL — NON NEGOZIABILE: quando la quota 1X2 del favorito e' < 1.50 o l'edge e' insufficiente su un mercato, NON skippare la partita. Esplora TUTTI i 14 mercati validi in ordine di waterfall prima di decidere: (1) Double chance: 1X, X2, 12; (2) Goal volume basso: Over 1.5, Under 3.5; (3) BTTS: Goal, No Goal; (4) Goal volume medio: Over 2.5, Under 2.5; (5) Exact win: 1, 2 — solo se P >= 70%; (6) Draw: X; (7) Combo: 1 + Over 1.5, 2 + Over 1.5. Per ogni mercato calcola P, EV, edge. Se QUALCUNO supera i gate (EV >= +8%), seleziona quello con EV massimo. Skippa la partita SOLO se nessun mercato supera tutti i gate. Puoi fornire fino a 2 prediction candidate per la stessa partita (stesso match_index, mercati diversi) — il sistema selezionera' automaticamente la migliore.`;
 
 /**
  * Schema JSON per structured output batch (Opus 4.6).
@@ -91,10 +119,15 @@ const BATCH_PREDICTION_SCHEMA = {
           },
           reasoning: {
             type: 'string',
-            description: 'Chain-of-thought interna con il processo logico completo',
+            description: 'Chain-of-thought interna con il processo logico completo, include calcolo EV esplicito',
+          },
+          predicted_probability: {
+            type: 'number',
+            description:
+              "Probabilita' stimata per questo pronostico in percentuale (es. 72.0). DEVE essere coerente con confidence: confidence <= predicted_probability + 5. Se P=59%, confidence max=64.",
           },
         },
-        required: ['match_index', 'prediction', 'confidence', 'analysis', 'reasoning'],
+        required: ['match_index', 'prediction', 'confidence', 'analysis', 'reasoning', 'predicted_probability'],
         additionalProperties: false,
       },
     },
@@ -389,6 +422,33 @@ function balanceTiers(predictions) {
   return predictions;
 }
 
+// ─── Deduplication ──────────────────────────────────────────────────────────
+
+/**
+ * Deduplica pronostici per partita, mantenendo quello con EV massimo.
+ * Il waterfall puo' produrre multiple prediction candidate per la stessa partita
+ * (stesso match_id); questa funzione seleziona la migliore.
+ *
+ * @param {Array<Object>} predictions - Array di pronostici (puo' avere duplicati per match_id).
+ *   predicted_probability puo' essere decimale (0–1) o percentuale (0–100); viene normalizzata automaticamente.
+ * @returns {Array<Object>} Array deduplicato (max 1 pronostico per match_id)
+ */
+function deduplicateByBestEV(predictions) {
+  const bestByMatch = new Map();
+
+  for (const pred of predictions) {
+    const prob = pred.predicted_probability > 1 ? pred.predicted_probability / 100 : pred.predicted_probability;
+    const ev = prob * pred.odds - 1;
+    const existing = bestByMatch.get(pred.match_id);
+
+    if (!existing || ev > existing.ev) {
+      bestByMatch.set(pred.match_id, { prediction: pred, ev });
+    }
+  }
+
+  return [...bestByMatch.values()].map((entry) => entry.prediction);
+}
+
 // ─── Batch Generation ───────────────────────────────────────────────────────
 
 /**
@@ -474,6 +534,8 @@ ${accuracyContext ? `\n${accuracyContext}` : ''}
 
 TIPI DI PRONOSTICO VALIDI: ${PREDICTION_TYPES.join(', ')}
 
+MARKET WATERFALL: Se il mercato principale (es. 1X2 del favorito) ha quote troppo basse (<1.50) o edge insufficiente (EV < +8%), esplora TUTTI i mercati alternativi in ordine: ${MARKET_WATERFALL_ORDER.join(', ')}. Per ogni mercato calcola P e EV. Se un mercato supera i gate, usalo. Puoi fornire fino a 2 prediction candidate per la stessa partita (stesso match_index, mercati diversi) — il sistema selezionera' automaticamente quella con EV massimo.
+
 Per ogni partita, la confidence deve essere tra 60 e 95. Le quote verranno prese automaticamente dal bookmaker (Bet365) — NON inserire odds nel risultato.`;
 
   const response = await anthropic.messages.create({
@@ -504,6 +566,34 @@ Per ogni partita, la confidence deve essere tra 60 e 95. Le quote verranno prese
     const realOdds = findOddsForPrediction(allOdds, pred.prediction);
     if (!realOdds) continue; // Skip tip if no real bookmaker odds available
 
+    const matchLabel = `${match.home} vs ${match.away}`;
+
+    // predicted_probability from AI (percentage, e.g. 72.0)
+    const probPct = pred.predicted_probability || pred.confidence;
+
+    // ── Quality gate 1: EV minimum +8% ──────────────────────────────────
+    const ev = (probPct / 100) * realOdds - 1;
+    if (ev < 0.08) {
+      console.warn(
+        `[prediction-engine] SKIP ${matchLabel} — EV ${(ev * 100).toFixed(1)}% below 8% threshold (prob=${probPct}%, odds=${realOdds}, market=${pred.prediction})`,
+      );
+      continue;
+    }
+
+    // ── Quality gate 2: exact win only at P >= 70% ───────────────────────
+    const isExactWin = pred.prediction === '1' || pred.prediction === '2';
+    if (isExactWin && probPct < 70) {
+      console.warn(
+        `[prediction-engine] SKIP ${matchLabel} — exact '${pred.prediction}' at ${probPct}% (requires >= 70%; use X2/1X instead)`,
+      );
+      continue;
+    }
+
+    // ── Quality gate 3: confidence-probability alignment ─────────────────
+    // confidence must not exceed predicted_probability + 5pp
+    const maxAllowedConfidence = Math.round(probPct + 5);
+    const clampedConfidence = Math.min(maxAllowedConfidence, Math.min(95, Math.max(60, pred.confidence)));
+
     const tier = assignTier({ ...pred, odds: realOdds });
 
     results.push({
@@ -513,13 +603,17 @@ Per ogni partita, la confidence deve essere tra 60 e 95. Le quote verranno prese
       match_date: match.date,
       prediction: pred.prediction,
       odds: realOdds,
-      confidence: Math.min(95, Math.max(60, pred.confidence)),
+      confidence: clampedConfidence,
+      predicted_probability: probPct / 100, // store as decimal (0–1) per DB schema
       analysis: pred.analysis,
       tier,
     });
   }
 
-  return balanceTiers(results);
+  // ── Dedup: keep best EV per match (waterfall may produce multiple candidates) ─
+  const deduped = deduplicateByBestEV(results);
+
+  return balanceTiers(deduped);
 }
 
 /**
@@ -547,7 +641,9 @@ module.exports = {
   researchLeagueContext,
   assignTier,
   balanceTiers,
+  deduplicateByBestEV,
   computeDerivedStats,
   getTeamRecentMatches,
   formatRecentResults,
+  MARKET_WATERFALL_ORDER,
 };

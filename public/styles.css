@@ -99,10 +99,34 @@
   box-sizing: border-box;
 }
 
+/* ============================================
+   ACCESSIBILITY — FOCUS VISIBLE
+   ============================================
+   Keyboard-visible focus ring: gold outline.
+   Hidden for mouse/touch users via :focus:not(:focus-visible).
+   ============================================ */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Offset anchored sections below fixed navbar (height ~60px + 20px padding) */
+.tips-section,
+.stats-section,
+.pricing-section,
+.faq-section {
+  scroll-margin-top: 80px;
 }
 
 body {
@@ -174,6 +198,18 @@ img {
   margin: 0 auto;
 }
 
+.section-meta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  max-width: 580px;
+  margin: 8px auto 0;
+}
+
+.section-meta:empty {
+  display: none;
+}
+
 /* --- Buttons --- */
 .btn {
   display: inline-flex;
@@ -199,7 +235,8 @@ img {
 
 .btn-gold:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 40px rgba(212, 168, 83, 0.3);
+  box-shadow: 0 8px 40px rgba(212, 168, 83, 0.45);
+  filter: brightness(1.08);
 }
 
 .btn-outline {
@@ -306,7 +343,7 @@ img {
   transition: color 0.3s;
 }
 
-.nav-links a:hover {
+.nav-links a:not(.btn):hover {
   color: var(--gold);
 }
 
@@ -908,6 +945,17 @@ img {
   font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 700;
+}
+
+.pick-label-marketing {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  display: block;
+  margin-top: 2px;
 }
 
 .odds-value {
@@ -1794,6 +1842,327 @@ img {
   width: 100%;
 }
 
+/* ─── Skeleton Loading ─────────────────────── */
+.skeleton {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-card {
+  height: 180px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+
+.skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+  background: var(--bg-card);
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-line--short {
+  width: 60%;
+}
+
+.skeleton-line--medium {
+  width: 80%;
+}
+
+.skeleton-match {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  min-width: 200px;
+  flex-shrink: 0;
+}
+
+.skeleton-history {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ─── Empty State ──────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 24px;
+  text-align: center;
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.empty-state svg {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.empty-state-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  max-width: 300px;
+}
+
+.empty-state .btn {
+  margin-top: 4px;
+}
+
+/* ─── Last Updated Timestamp ───────────────── */
+.last-updated {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+.last-updated-refresh {
+  cursor: pointer;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  padding: 2px;
+  font-size: 0.85rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.last-updated-refresh:hover {
+  color: var(--gold);
+}
+
+/* ─── Toast Notifications ──────────────────── */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transform: translateX(120%);
+  opacity: 0;
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease;
+  max-width: 360px;
+}
+
+.toast.visible {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.toast--success {
+  border-color: rgba(46, 204, 113, 0.3);
+}
+
+.toast--success .toast-icon {
+  color: var(--green);
+}
+
+.toast--error {
+  border-color: rgba(231, 76, 60, 0.3);
+}
+
+.toast--error .toast-icon {
+  color: var(--red);
+}
+
+.toast--info {
+  border-color: rgba(212, 168, 83, 0.3);
+}
+
+.toast--info .toast-icon {
+  color: var(--gold);
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+}
+
+.toast-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* ─── Share Dropdown ───────────────────────── */
+.share-wrapper {
+  position: relative;
+  display: inline-block;
+  align-self: flex-end;
+  margin-top: 0.5rem;
+}
+
+.share-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.share-btn:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.share-dropdown {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 0.5rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  display: none;
+  flex-direction: column;
+  min-width: 160px;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.share-dropdown.open {
+  display: flex;
+}
+
+.share-option {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.share-option:hover {
+  background: rgba(212, 168, 83, 0.1);
+  color: var(--text-primary);
+}
+
+.share-option + .share-option {
+  border-top: 1px solid var(--border);
+}
+
+/* ─── Error State with Retry ─────────────── */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--text-muted);
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.error-state svg {
+  color: var(--red);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.error-state-message {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.error-state-retry {
+  margin-top: 4px;
+}
+
 /* Result date (for dynamic results) */
 .result-date {
   font-size: 0.75rem;
@@ -1838,6 +2207,54 @@ img {
 }
 
 /* ============================================
+   ACCESSIBILITY — PREFERS-REDUCED-MOTION
+   ============================================
+   Disabilita tutte le animazioni/transizioni per utenti
+   che hanno richiesto movimento ridotto nelle impostazioni OS.
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .confidence-fill {
+    transition: none;
+  }
+
+  .matches-track {
+    animation: none;
+  }
+
+  #particles {
+    display: none;
+  }
+
+  .toast {
+    transition: none;
+  }
+
+  .skeleton::after,
+  .skeleton-line::after {
+    animation: none;
+  }
+
+  .notif-badge {
+    animation: none;
+  }
+}
+
+/* ============================================
    RESPONSIVE
    ============================================
    3 breakpoint principali:
@@ -1876,14 +2293,32 @@ img {
   }
 }
 
+/* Nav backdrop overlay (created dynamically by shared.js) */
+.nav-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1001;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
+}
+
+.nav-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+}
+
 @media (max-width: 768px) {
   .nav-links {
-    display: none;
+    display: flex;
     position: fixed;
     top: 0;
-    left: 0;
     right: 0;
     bottom: 0;
+    width: min(320px, 85vw);
     background: rgba(10, 10, 15, 0.98);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -1893,15 +2328,22 @@ img {
     gap: 24px;
     z-index: 1002;
     padding: 80px 24px 40px;
+    transform: translateX(100%);
+    visibility: hidden;
+    transition:
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      visibility 0.3s;
   }
 
   .nav-links.open {
-    display: flex;
+    transform: translateX(0);
+    visibility: visible;
   }
 
-  .nav-links a {
+  .nav-links a:not(.btn) {
     font-size: 1.3rem;
     padding: 8px 16px;
+    color: #ffffff;
   }
 
   .nav-links .btn {
@@ -1974,6 +2416,16 @@ img {
 
   .chart {
     height: 150px;
+  }
+
+  .toast-container {
+    right: 12px;
+    left: 12px;
+    bottom: 16px;
+  }
+
+  .toast {
+    max-width: 100%;
   }
 }
 
@@ -2331,6 +2783,20 @@ img {
   color: var(--bg-primary);
 }
 
+/* Smooth fade-in for dashboard tab panels */
+.dash-panel {
+  animation: dashFadeIn 0.2s ease-out;
+}
+
+@keyframes dashFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* Dashboard Tips Grid */
 .dash-tips-grid {
   display: grid;
@@ -2676,7 +3142,9 @@ img {
   padding: 28px 24px;
   display: flex;
   flex-direction: column;
-  transition: border-color 0.3s, transform 0.2s;
+  transition:
+    border-color 0.3s,
+    transform 0.2s;
 }
 
 .upgrade-card:hover {
@@ -2931,6 +3399,82 @@ img {
   color: var(--green);
 }
 
+/* ── Bankroll Calculator ─────────────────── */
+.bankroll-calc {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bankroll-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.bankroll-results {
+  margin-top: 0.5rem;
+}
+
+.bankroll-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.75rem;
+}
+
+.bankroll-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.bankroll-summary-row strong {
+  color: var(--gold);
+}
+
+.bankroll-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bankroll-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.bankroll-table th,
+.bankroll-table td {
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.bankroll-table th {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bankroll-table td {
+  color: var(--text-secondary);
+}
+
+.bankroll-stake-cell {
+  color: var(--gold);
+  font-weight: 600;
+  font-family: var(--font-display);
+}
+
 /* Dashboard Responsive */
 @media (max-width: 768px) {
   .dash-header {
@@ -3014,6 +3558,20 @@ img {
 
   .upgrade-card {
     padding: 24px 20px;
+  }
+
+  .bankroll-input-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bankroll-table {
+    font-size: 0.75rem;
+  }
+
+  .bankroll-table th,
+  .bankroll-table td {
+    padding: 0.4rem;
   }
 }
 
@@ -3310,8 +3868,8 @@ img {
   position: absolute;
   top: -4px;
   right: -4px;
-  background: var(--gold);
-  color: var(--bg-primary);
+  background: var(--red);
+  color: #fff;
   font-size: 0.65rem;
   font-weight: 700;
   min-width: 16px;
@@ -3321,6 +3879,17 @@ img {
   align-items: center;
   justify-content: center;
   padding: 0 4px;
+  animation: notif-pulse 2s ease-in-out infinite;
+}
+
+@keyframes notif-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(231, 76, 60, 0);
+  }
 }
 
 /* ─── Notification Dropdown ─────────────────── */
@@ -3482,6 +4051,13 @@ img {
   font-weight: 700;
   color: var(--gold);
   letter-spacing: 2px;
+}
+
+/* Landing page countdown (reuses dashboard pattern) */
+.tips-section .tips-countdown {
+  text-align: center;
+  padding: 1rem 0;
+  margin-top: 1rem;
 }
 
 /* ─── Tip of the Day Highlight ──────────────── */
@@ -5017,4 +5593,403 @@ img {
   .budget-stat-value {
     font-size: 1.1rem;
   }
+}
+
+/* ─── Fantacalcio Hub ──────────────────────────────────────────────────────── */
+
+.fantacalcio-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.fantacalcio-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.fantacalcio-week-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gold);
+  background: rgba(212, 168, 83, 0.12);
+  border: 1px solid rgba(212, 168, 83, 0.25);
+  border-radius: 20px;
+  padding: 2px 10px;
+  letter-spacing: 0.04em;
+}
+
+.fantacalcio-section {
+  margin-bottom: 32px;
+}
+
+.fantacalcio-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fantacalcio-picks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.fantacalcio-pick-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.fantacalcio-pick-card:hover {
+  border-color: rgba(212, 168, 83, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.fantacalcio-rank {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+}
+
+.fantacalcio-role {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.fantacalcio-role--p { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+.fantacalcio-role--d { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+.fantacalcio-role--c { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+.fantacalcio-role--a { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+
+.fantacalcio-player-name {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.fantacalcio-team {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.fantacalcio-ownership {
+  font-size: 0.72rem;
+  color: var(--gold);
+  background: rgba(212, 168, 83, 0.1);
+  border-radius: 10px;
+  padding: 2px 8px;
+  width: fit-content;
+}
+
+.fantacalcio-expected-pts {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.fantacalcio-conf-wrap {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.fantacalcio-conf-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), #f5c84a);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.fantacalcio-reasoning {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 4px 0 0;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+/* Upgrade gate inside Fantacalcio */
+.fantacalcio-upgrade-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.fantacalcio-upgrade-gate p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Market grid (buy/sell) */
+.fantacalcio-market-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.fantacalcio-market-col {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+
+.fantacalcio-market-col-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 10px;
+}
+
+.fantacalcio-market-buy .fantacalcio-market-col-title { color: #34d399; }
+.fantacalcio-market-sell .fantacalcio-market-col-title { color: #f87171; }
+
+.fantacalcio-market-item {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.fantacalcio-market-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* Tier badges inside Fantacalcio */
+.tier-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-left: auto;
+}
+
+.tier-badge--free { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+.tier-badge--pro  { background: rgba(212, 168, 83, 0.15);  color: var(--gold); }
+.tier-badge--vip  { background: rgba(139, 92, 246, 0.15);  color: #a78bfa; }
+
+@media (max-width: 640px) {
+  .fantacalcio-picks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fantacalcio-market-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   CENTRO SCOMMESSE HUB (Partner B2B)
+   ============================================ */
+
+/* Badge partner */
+.dash-tier-badge--partner {
+  background: linear-gradient(135deg, #1a6b3a, #27ae60);
+  color: #fff;
+}
+
+/* Header sezione */
+.centro-hub-header {
+  margin-bottom: 1.5rem;
+}
+
+.centro-hub-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem;
+}
+
+.centro-hub-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Stato vuoto */
+.centro-hub-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Card singola partita */
+.centro-fixture-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.centro-fixture-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.centro-fixture-teams {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.centro-fixture-date {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Badge tip WinningBet */
+.centro-fixture-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(212, 168, 83, 0.08);
+  border: 1px solid var(--border-gold);
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.825rem;
+}
+
+.centro-tip-label {
+  color: var(--gold);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.centro-tip-value {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Wrapper scrollabile per la tabella */
+.centro-odds-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* Tabella quote */
+.centro-odds-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 480px;
+  font-size: 0.85rem;
+}
+
+.centro-odds-th {
+  padding: 0.5rem 0.6rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.centro-odds-th:first-child {
+  text-align: left;
+  min-width: 120px;
+}
+
+.centro-odds-td {
+  padding: 0.45rem 0.6rem;
+  text-align: center;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.centro-odds-td--name {
+  text-align: left;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.centro-odds-td--empty {
+  color: var(--text-muted, rgba(255, 255, 255, 0.25));
+}
+
+/* Cella con la quota migliore */
+.centro-odds-best {
+  color: var(--green);
+  font-weight: 700;
+  background: var(--green-glow);
+}
+
+/* Riga "Best" riepilogativa */
+.centro-odds-best-row td {
+  background: rgba(46, 204, 113, 0.05);
+  border-top: 1px solid rgba(46, 204, 113, 0.2);
+  font-weight: 600;
+}
+
+.centro-odds-best-row .centro-odds-td--name {
+  color: var(--green);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Ultima riga senza bordo in fondo */
+.centro-odds-table tbody tr:last-child td {
+  border-bottom: none;
 }

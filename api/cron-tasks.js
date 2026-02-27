@@ -107,7 +107,10 @@ async function handleSettle(_req, res) {
         const totalGoals = result.goalsHome + result.goalsAway;
         const actualResult = buildActualResult(result);
         const score = result.goalsHome + '-' + result.goalsAway;
+        // null = prediction requires extras (corners/cards) not available via cron
+        // These tips must be settled manually via /fr3-settle-tips skill
         const status = evaluatePrediction(tip.prediction, result, totalGoals);
+        if (status === null) continue;
 
         tipUpdates.push({ id: tip.id, status: status, result: score });
         outcomeUpserts.push({ tip_id: tip.id, actual_result: actualResult });

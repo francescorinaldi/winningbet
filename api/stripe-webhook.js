@@ -27,14 +27,6 @@ const { supabase } = require('./_lib/supabase');
 const telegram = require('./_lib/telegram');
 
 /**
- * Vercel config: disabilita il body parsing per ricevere il raw body.
- * Necessario per la verifica della firma Stripe.
- */
-module.exports.config = {
-  api: { bodyParser: false },
-};
-
-/**
  * Legge il body raw dalla request stream.
  * @param {Object} req - Request object
  * @returns {Promise<Buffer>}
@@ -90,13 +82,22 @@ module.exports = async function handler(req, res) {
         console.log('Unhandled webhook event:', event.type);
     }
   } catch (err) {
-    console.error('Webhook handler error:', err.message);
+    console.error('Webhook handler error [' + event.type + ']:', err.message, err.stack);
     // Restituisci 500 per errori transitori cosi' Stripe riprova.
     // Stripe ha un backoff esponenziale fino a 3 giorni di retry.
-    return res.status(500).json({ error: 'Webhook handler failed' });
+    return res.status(500).json({ error: 'Webhook handler failed', details: err.message });
   }
 
   return res.status(200).json({ received: true });
+};
+
+/**
+ * Vercel config: disabilita il body parsing per ricevere il raw body.
+ * DEVE stare dopo module.exports = handler, altrimenti viene sovrascritta.
+ * Necessario per la verifica della firma Stripe.
+ */
+module.exports.config = {
+  api: { bodyParser: false },
 };
 
 /**
@@ -115,17 +116,16 @@ async function handleCheckoutCompleted(session) {
     return;
   }
 
-  // Recupera i dettagli dell'abbonamento
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-
-  // Crea il record di abbonamento
+  // Crea il record di abbonamento.
+  // Non recuperiamo i dettagli da Stripe qui per evitare una chiamata API extra
+  // che potrebbe fallire con certi SDK/API version. current_period_end viene
+  // impostato dal successivo evento customer.subscription.updated.
   const { error: subError } = await supabase.from('subscriptions').upsert(
     {
       user_id: userId,
       stripe_subscription_id: subscriptionId,
       tier: tier,
       status: 'active',
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
     },
     { onConflict: 'stripe_subscription_id' },
   );
@@ -162,16 +162,47 @@ async function handleSubscriptionUpdated(subscription) {
     return;
   }
 
+  // Se cancel_at_period_end è true il portale ha schedulato la cancellazione
+  // a fine periodo: trattiamo come cancellazione immediata per semplicità
+  // (l'utente ha espresso l'intento di disdire e lo stato Stripe diventerà
+  // "canceled" a fine periodo — il webhook customer.subscription.deleted
+  // lo confermerà, ma aggiorniamo già qui per UX coerente).
+  if (subscription.cancel_at_period_end) {
+    await supabase
+      .from('subscriptions')
+      .update({ status: 'cancelled' })
+      .eq('stripe_subscription_id', subscription.id);
+
+    const { data: activeSubs } = await supabase
+      .from('subscriptions')
+      .select('tier')
+      .eq('user_id', userId)
+      .eq('status', 'active');
+
+    if (!activeSubs || activeSubs.length === 0) {
+      await supabase.from('profiles').update({ tier: 'free' }).eq('user_id', userId);
+      await manageTelegramAccess(userId, 'revoke');
+    }
+
+    console.log(`Subscription cancel_at_period_end: user=${userId}, treated as cancelled`);
+    return;
+  }
+
   const status = mapStripeStatus(subscription.status);
 
   // Aggiorna il record di abbonamento
+  const updatePayload = {
+    status: status,
+    tier: tier || undefined,
+  };
+  if (subscription.current_period_end) {
+    updatePayload.current_period_end = new Date(
+      subscription.current_period_end * 1000,
+    ).toISOString();
+  }
   await supabase
     .from('subscriptions')
-    .update({
-      status: status,
-      tier: tier || undefined,
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-    })
+    .update(updatePayload)
     .eq('stripe_subscription_id', subscription.id);
 
   // Aggiorna il tier del profilo solo se l'abbonamento e' attivo

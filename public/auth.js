@@ -31,8 +31,14 @@
   // ==========================================
   // GOOGLE OAUTH
   // ==========================================
+
+  // If user came from a pricing button (e.g. /auth.html?plan=pro), preserve the
+  // checkout intent through the OAuth redirect so dashboard auto-starts checkout.
+  const pendingPlan = new URLSearchParams(window.location.search).get('plan');
+  const oauthRedirectPath = pendingPlan ? '?upgrade=' + encodeURIComponent(pendingPlan) : '';
+
   document.getElementById('googleAuth').addEventListener('click', async function () {
-    const { error } = await SupabaseConfig.signInWithOAuth('google');
+    const { error } = await SupabaseConfig.signInWithOAuth('google', oauthRedirectPath);
     if (error) {
       showMessage("Errore nell'accesso con Google: " + error.message, 'error');
     }
@@ -44,11 +50,12 @@
   SupabaseConfig.getSession()
     .then(function (result) {
       if (result && result.data && result.data.session) {
-        location.href = '/dashboard.html';
+        // Preserve checkout intent if redirected from a pricing button
+        location.href = '/dashboard.html' + oauthRedirectPath;
       }
     })
-    .catch(function () {
-      // Supabase auth service unavailable — stay on auth page
+    .catch(function (err) {
+      console.warn('[auth] getSession failed:', err && err.message);
     });
 
   // Language toggle delegated to shared.js

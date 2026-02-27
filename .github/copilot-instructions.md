@@ -100,9 +100,9 @@ Valid: `serie-a`, `champions-league`, `la-liga`, `premier-league`, `ligue-1`, `b
 
 Two self-contained agents in `.github/agents/`:
 
-| Agent | Role |
-|-------|------|
-| **Coder** | All-in-one: plans, implements, verifies, self-reviews. Primary entry point for all tasks. |
+| Agent        | Role                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------ |
+| **Coder**    | All-in-one: plans, implements, verifies, self-reviews. Primary entry point for all tasks.                    |
 | **Reviewer** | Code quality with fix capability. Can edit code directly. Optional — invoked for complex multi-file changes. |
 
 Coder handles 95% of work autonomously. Reviewer is lightweight and fixes issues in-place rather than bouncing back.

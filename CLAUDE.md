@@ -21,16 +21,15 @@ Premium multi-league betting predictions platform (Serie A, Champions League, La
 ## Project Structure
 
 ```
-api/                    → Vercel serverless functions (12 endpoints)
+api/                    → Vercel serverless functions (12 functions, Hobby plan limit)
 api/_lib/               → Shared backend utilities (11 modules)
 api/_lib/leagues.js     → Centralized league configuration (IDs, codes, seasons)
 api/_lib/prediction-utils.js → Shared prediction evaluation (evaluatePrediction, buildActualResult)
 api/_lib/telegram.js    → Telegram Bot API client (send tips, invite, kick, DM)
 api/billing.js          → Stripe billing (checkout + portal)
 api/cron-tasks.js       → Cron tasks (settle tips + schedine + send)
-api/fixtures.js         → Matches + results + odds (by league)
+api/fixtures.js         → Matches + results + odds + H2H + form + odds-compare (by league)
 api/generate-tips.js    → Cron orchestrator + single-league generation
-api/match-insights.js   → H2H + team form
 api/betting-slips.js    → Smart betting slips (schedine della settimana)
 api/stats.js            → Standings + track record
 api/stripe-webhook.js   → Stripe webhook handler
@@ -51,6 +50,7 @@ supabase/migrations/    → Database schema migrations (14 files)
 .claude/skills/fr3-performance-analytics/ → /fr3-performance-analytics (track record analysis)
 .claude/skills/fr3-strategy-optimizer/ → /fr3-strategy-optimizer (prescriptive strategy engine)
 .claude/skills/fr3-pre-match-research/ → /fr3-pre-match-research (deep research engine)
+.claude/skills/fr3-generate-fantacalcio/ → /fr3-generate-fantacalcio (weekly fantasy football picks)
 .claude/skills/fr3-update-winning-bets/ → /fr3-update-winning-bets (master pipeline orchestrator)
 ~/.claude/skills/fr3-code-review/      → /fr3-code-review (global, multi-agent code analysis)
 eslint.config.mjs       → ESLint flat config
@@ -67,9 +67,9 @@ CHANGELOG.md            → All changes (always update)
 
 Two self-contained agents — optimized for GitHub.com's 10-minute coding agent timeout.
 
-| Agent | Role | Entry Point |
-|-------|------|-------------|
-| **Coder** | All-in-one: plans, implements, verifies, self-reviews | GitHub issues, VS Code |
+| Agent        | Role                                                   | Entry Point                                    |
+| ------------ | ------------------------------------------------------ | ---------------------------------------------- |
+| **Coder**    | All-in-one: plans, implements, verifies, self-reviews  | GitHub issues, VS Code                         |
 | **Reviewer** | Code quality with fix capability — edits code directly | Optional, invoked by Coder for complex changes |
 
 Coder handles 95% of work autonomously (understand → plan → implement → verify → update docs). Reviewer is lightweight and fixes issues in-place rather than reporting them back.
@@ -130,6 +130,13 @@ All custom skills use the `fr3-` prefix for easy identification.
 ```
 
 ```bash
+/fr3-generate-fantacalcio               # Generate weekly Fantacalcio picks (Serie A)
+/fr3-generate-fantacalcio premier-league # Generate for Premier League FPL
+/fr3-generate-fantacalcio --force       # Regenerate even if picks for this week exist
+/fr3-generate-fantacalcio --dry-run     # Preview picks without inserting in DB
+```
+
+```bash
 /fr3-update-winning-bets                # Master pipeline: analytics → optimize → settle → research → generate → schedine (auto)
 /fr3-update-winning-bets --force        # Force all phases regardless of checks
 /fr3-update-winning-bets --no-send      # Run pipeline without sending to Telegram
@@ -162,9 +169,8 @@ Valid slugs: `serie-a`, `champions-league`, `la-liga`, `premier-league`, `ligue-
 
 - `POST /api/billing` — Body: `{ action: "checkout", tier }` or `{ action: "portal" }`
 - `POST /api/cron-tasks?task=settle|send` — Settle tips or send tips (CRON_SECRET auth)
-- `GET /api/fixtures?type=matches|results|odds&league={slug}` — Matches (2h), results (1h), or odds (30min, requires &fixture={id})
+- `GET /api/fixtures?type=matches|results|odds|h2h|form|odds-compare&league={slug}` — Matches (2h), results (1h), odds (30min, requires &fixture={id}), H2H (24h, requires &home&away), form (6h, requires &teams), odds-compare (30min, JWT + partner role)
 - `GET/POST /api/generate-tips` — Cron orchestrator (GET) or single-league generation (POST)
-- `GET /api/match-insights?type=h2h|form` — Head-to-head (24h) or team form (6h)
 - `GET /api/betting-slips?date={YYYY-MM-DD}&status={status}` — Smart betting slips (JWT auth, PRO+VIP only)
 - `GET /api/stats?type=standings|track-record&league={slug}` — League standings (6h) or track record (1h)
 - `POST /api/stripe-webhook` — Stripe event handler (+ auto Telegram invite/kick)
@@ -216,6 +222,61 @@ Valid slugs: `serie-a`, `champions-league`, `la-liga`, `premier-league`, `ligue-
 
 ---
 
+## Workflow Orchestration
+
+### 1. Plan Node Default
+
+- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
+- If something goes sideways, STOP and re-plan immediately — don't keep pushing
+- Use plan mode for verification steps, not just building
+- Write detailed specs upfront to reduce ambiguity
+
+### 2. Subagent Strategy
+
+- Use subagents liberally to keep the main context window clean
+- Offload research, exploration, and parallel analysis to subagents
+- For complex problems, throw more compute at it via subagents
+- One task per subagent for focused execution
+
+### 3. Self-Improvement Loop
+
+- After ANY correction from the user: update `tasks/lessons.md` with the pattern
+- Write rules for yourself that prevent the same mistake
+- Ruthlessly iterate on these lessons until mistake rate drops
+- Review `tasks/lessons.md` at session start for relevant context
+
+### 4. Verification Before Done
+
+- Never mark a task complete without proving it works
+- Diff behavior between main and your changes when relevant
+- Ask yourself: "Would a staff engineer approve this?"
+- Run tests, check logs, demonstrate correctness
+
+### 5. Demand Elegance (Balanced)
+
+- For non-trivial changes: pause and ask "is there a more elegant way?"
+- If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
+- Skip this for simple, obvious fixes — don't over-engineer
+- Challenge your own work before presenting it
+
+### 6. Autonomous Bug Fixing
+
+- When given a bug report: just fix it. Don't ask for hand-holding
+- Point at logs, errors, failing tests — then resolve them
+- Zero context switching required from the user
+- Go fix failing CI tests without being told how
+
+## Task Management
+
+1. **Plan First** — Write plan to `tasks/todo.md` with checkable items
+2. **Verify Plan** — Check in before starting implementation
+3. **Track Progress** — Mark items complete as you go
+4. **Explain Changes** — High-level summary at each step
+5. **Document Results** — Add review section to `tasks/todo.md`
+6. **Capture Lessons** — Update `tasks/lessons.md` after any correction from the user
+
+---
+
 ## Working Style (Non-Negotiable)
 
 1. **Think first, act second** — Read codebase for relevant files before making changes
@@ -233,7 +294,7 @@ Valid slugs: `serie-a`, `champions-league`, `la-liga`, `premier-league`, `ligue-
 
 ## Code Quality Principles
 
-- **Simplicity is paramount** — Every change should impact minimal code
+- **Simplicity with minimal impact** — Every change should touch only what's necessary and impact minimal code to reduce the risk of introducing bugs
 - **Reduce technical debt** — Every change should leave the codebase cleaner
 - **Remove dead code** — Delete unused functions, commented code, unreachable branches
 - **No duplicate functions** — Consolidate similar logic

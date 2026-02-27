@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, formatMatchDate, LEAGUE_NAMES_MAP, TIER_PRICES, getLocale */
+/* global initMobileMenu, initParticles, initLangToggle, initCookieBanner, initCopyrightYear, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState, dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, dashRenderFantacalcio, dashRenderCentroHub, showToast, buildSkeletonCards, setLastUpdated, retryWithBackoff */
 
 (function () {
   'use strict';
@@ -54,8 +54,13 @@
   let userBetsMap = {};
   let countdownInterval = null;
   let notifInterval = null;
+  let checkoutJustCompleted = false;
   let currentLeague = null;
-  try { currentLeague = localStorage.getItem('wb_dashboard_league'); } catch (_e) { /* storage unavailable */ }
+  try {
+    currentLeague = localStorage.getItem('wb_dashboard_league');
+  } catch (_e) {
+    /* storage unavailable */
+  }
   currentLeague = currentLeague || 'serie-a';
 
   // ─── INIT ───────────────────────────────────────────────
@@ -77,6 +82,7 @@
     setupSettingsToggle();
     setupSchedineDateNav();
     setupRiskProfileInputs();
+    setupBankrollCalculator();
   });
 
   /**
@@ -85,7 +91,7 @@
   async function checkAuth() {
     try {
       const result = await SupabaseConfig.getSession();
-      session = result && result.data ? result.data.session : null;
+      session = (result && result.data && result.data.session) || null;
 
       if (!session) {
         window.location.href = '/auth.html';
@@ -117,7 +123,7 @@
 
       const result = await SupabaseConfig.client
         .from('profiles')
-        .select('display_name, tier, stripe_customer_id')
+        .select('display_name, tier, stripe_customer_id, role')
         .eq('user_id', user.id)
         .single();
 
@@ -174,7 +180,33 @@
       }
 
       updateSubscriptionUI(tier);
+
+      // Partner B2B: attiva tab Centro, nasconde billing/upgrade, cambia badge
+      const isPartner = profile && profile.role === 'partner';
+      const tabCentro = document.getElementById('tabCentro');
+      if (tabCentro) tabCentro.style.display = isPartner ? '' : 'none';
+      if (isPartner) {
+        tierLabel.textContent = 'PARTNER';
+        tierBadge.className = 'dash-tier-badge dash-tier-badge--partner';
+        const upgradeSection = document.getElementById('upgradeSection');
+        if (upgradeSection) upgradeSection.style.display = 'none';
+        const billingSection = document.getElementById('billingSection');
+        if (billingSection) billingSection.style.display = 'none';
+      }
+
       loadTelegramStatus();
+
+      // Se l'utente torna da un checkout appena completato ma il tier è ancora free,
+      // il webhook potrebbe non aver ancora sparato: esegui polling finché non si aggiorna.
+      if (checkoutJustCompleted) {
+        checkoutJustCompleted = false;
+        if (tier !== 'free') {
+          showAlert('Abbonamento attivato con successo! Benvenuto.', 'success');
+        } else {
+          showAlert('Stiamo attivando il tuo abbonamento\u2026', 'success');
+          pollForSubscriptionUpgrade(user.id);
+        }
+      }
 
       // Show notification bell for authenticated users
       const notifBell = document.getElementById('notifBell');
@@ -203,45 +235,46 @@
       const subTier = document.getElementById('subTier');
       const subStatus = document.getElementById('subStatus');
 
-      // Setup upgrade buttons
-      upgradeProBtn.onclick = function () {
-        startCheckout('pro');
-      };
-      upgradeVipBtn.onclick = function () {
-        startCheckout('vip');
-      };
+      // Setup upgrade buttons (guard against missing elements)
+      if (upgradeProBtn) upgradeProBtn.onclick = function () { startCheckout('pro'); };
+      if (upgradeVipBtn) upgradeVipBtn.onclick = function () { startCheckout('vip'); };
 
       // Update tier badge
-      subTierBadge.textContent = tier.toUpperCase();
-      subTierBadge.className = 'profile-hero__badge';
-      if (tier === 'pro') subTierBadge.classList.add('profile-hero__badge--pro');
-      if (tier === 'vip') subTierBadge.classList.add('profile-hero__badge--vip');
+      if (subTierBadge) {
+        subTierBadge.textContent = tier.toUpperCase();
+        subTierBadge.className = 'profile-hero__badge';
+        if (tier === 'pro') subTierBadge.classList.add('profile-hero__badge--pro');
+        if (tier === 'vip') subTierBadge.classList.add('profile-hero__badge--vip');
+      }
 
       // Update avatar initials
       const initials = document.getElementById('userInitials');
-      const name = document.getElementById('userDisplayName').textContent || '';
-      if (name && name !== '\u2014') {
+      const nameEl = document.getElementById('userDisplayName');
+      const name = (nameEl && nameEl.textContent) || '';
+      if (initials && name && name !== '\u2014') {
         const parts = name.trim().split(/\s+/);
-        initials.textContent = parts.length > 1
-          ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-          : parts[0].substring(0, 2).toUpperCase();
+        initials.textContent =
+          parts.length > 1
+            ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+            : parts[0].substring(0, 2).toUpperCase();
       }
 
       if (tier === 'free') {
-        subTier.textContent = 'Free';
-        subStatus.textContent = 'Gratuito';
-        upgradeSection.style.display = '';
-        manageSubRow.style.display = 'none';
+        if (subTier) subTier.textContent = 'Free';
+        if (subStatus) subStatus.textContent = 'Gratuito';
+        if (upgradeSection) upgradeSection.style.display = '';
+        if (manageSubRow) manageSubRow.style.display = 'none';
 
-        // Show both plans for free users
-        document.querySelector('.upgrade-card--pro').style.display = '';
-        document.querySelector('.upgrade-card--vip').style.display = '';
+        const proCard = document.querySelector('.upgrade-card--pro');
+        const vipCard = document.querySelector('.upgrade-card--vip');
+        if (proCard) proCard.style.display = '';
+        if (vipCard) vipCard.style.display = '';
 
         handleAutoCheckout(tier);
         return;
       }
 
-      subTier.textContent = tier.toUpperCase() + ' \u2014 ' + TIER_PRICES[tier].display;
+      if (subTier) subTier.textContent = tier.toUpperCase() + ' \u2014 ' + TIER_PRICES[tier].display;
 
       const subResult = await SupabaseConfig.client
         .from('subscriptions')
@@ -257,26 +290,31 @@
       }
 
       if (subResult.data) {
-        subStatus.textContent = 'Attivo';
-        manageSubRow.style.display = '';
-        subStatusDisplay.textContent = tier.toUpperCase() + ' Attivo';
-        subRenewalDisplay.textContent = 'Rinnovo: ' + formatDate(subResult.data.current_period_end);
+        if (subStatus) subStatus.textContent = 'Attivo';
+        if (manageSubRow) manageSubRow.style.display = '';
+        if (subStatusDisplay) subStatusDisplay.textContent = tier.toUpperCase() + ' Attivo';
+        if (subRenewalDisplay) subRenewalDisplay.textContent = 'Rinnovo: ' + formatDate(subResult.data.current_period_end);
       } else {
-        subStatus.textContent = 'Non attivo';
+        if (subStatus) subStatus.textContent = 'Non attivo';
       }
 
       if (tier === 'pro') {
         // PRO user: show only VIP upgrade
-        upgradeSection.style.display = '';
-        upgradeSection.querySelector('.upgrade-section__title').textContent = 'Passa a VIP';
-        document.querySelector('.upgrade-card--pro').style.display = 'none';
-        document.querySelector('.upgrade-card--vip').style.display = '';
+        if (upgradeSection) {
+          upgradeSection.style.display = '';
+          const upgradeTitle = upgradeSection.querySelector('.upgrade-section__title');
+          if (upgradeTitle) upgradeTitle.textContent = 'Passa a VIP';
+        }
+        const proCard = document.querySelector('.upgrade-card--pro');
+        const vipCard = document.querySelector('.upgrade-card--vip');
+        if (proCard) proCard.style.display = 'none';
+        if (vipCard) vipCard.style.display = '';
       } else {
         // VIP user: hide upgrade section
-        upgradeSection.style.display = 'none';
+        if (upgradeSection) upgradeSection.style.display = 'none';
       }
 
-      if (profile && profile.stripe_customer_id) {
+      if (profile && profile.stripe_customer_id && manageSubBtn) {
         manageSubBtn.style.display = '';
         manageSubBtn.onclick = openCustomerPortal;
       }
@@ -284,7 +322,6 @@
       handleAutoCheckout(tier);
     } catch (err) {
       console.error('[updateSubscriptionUI]', err.message || err);
-      showAlert('Errore di connessione. Ricarica la pagina.', 'error');
     }
   }
 
@@ -301,8 +338,7 @@
     window.history.replaceState({}, '', '/dashboard.html');
 
     // Non avviare checkout se l'utente ha gia' quel tier o superiore
-    const hierarchy = { free: 0, pro: 1, vip: 2 };
-    if ((hierarchy[currentTier] || 0) >= (hierarchy[requestedTier] || 0)) return;
+    if ((TIER_LEVELS[currentTier] || 0) >= (TIER_LEVELS[requestedTier] || 0)) return;
 
     startCheckout(requestedTier);
   }
@@ -405,10 +441,16 @@
     const emptyState = document.getElementById('dashTipsEmpty');
 
     try {
+      buildSkeletonCards(grid, 3, 'card');
       const tipLimit = currentLeague === 'all' ? 50 : 20;
-      const tips = await authFetch(
-        '/api/tips?status=today&limit=' + tipLimit + '&league=' + encodeURIComponent(currentLeague),
-      );
+      const tips = await retryWithBackoff(function () {
+        return authFetch(
+          '/api/tips?status=today&limit=' +
+            tipLimit +
+            '&league=' +
+            encodeURIComponent(currentLeague),
+        );
+      });
 
       if (!Array.isArray(tips) || tips.length === 0) {
         grid.textContent = '';
@@ -432,268 +474,26 @@
       });
 
       renderTipsGrid(grid, tips);
+      setLastUpdated('dashTipsUpdated', loadTodayTips);
     } catch (err) {
       console.warn('[loadTodayTips]', err.message);
-      grid.textContent = '';
-      emptyState.style.display = '';
+      setErrorState(grid, 'Impossibile caricare i pronostici', loadTodayTips);
       startCountdown();
     }
   }
 
   /**
    * Renderizza la griglia di tips nel container.
-   * Include: Tip del Giorno, expandable cards, favorite highlight, follow button.
+   * Delega a dashRenderTipsGrid (dashboard-renderers.js) passando le dipendenze.
    */
   function renderTipsGrid(container, tips) {
-    container.textContent = '';
-
-    // Find tip of the day (highest confidence)
-    let tipOfDayId = null;
-    let maxConf = 0;
-    tips.forEach(function (tip) {
-      if (tip.confidence && tip.confidence > maxConf) {
-        maxConf = tip.confidence;
-        tipOfDayId = tip.id;
-      }
-    });
-
-    const favoriteTeams = (userPrefs && userPrefs.favorite_teams) || [];
-    const favSet = new Set(
-      favoriteTeams.map(function (t) {
-        return t.toLowerCase();
-      }),
-    );
-
-    const now = new Date();
-
-    tips.forEach(function (tip) {
-      const matchStarted = new Date(tip.match_date) < now;
-      const isSettled = tip.status === 'won' || tip.status === 'lost' || tip.status === 'void';
-      const isPast = matchStarted || isSettled;
-      const card = document.createElement('div');
-      card.className = 'tip-card tip-card--' + tip.tier;
-
-      // Grey out started/settled matches
-      if (isPast) {
-        card.classList.add('tip-card--started');
-      }
-      // Won/lost specific class
-      if (isSettled) {
-        card.classList.add('tip-card--' + tip.status);
-      }
-
-      // Tip of the Day highlight (only for future pending matches)
-      if (!isPast && tip.id === tipOfDayId && maxConf > 0) {
-        card.classList.add('tip-card--highlighted');
-        const todBadge = document.createElement('div');
-        todBadge.className = 'tip-of-day-badge';
-        todBadge.textContent = 'TIP DEL GIORNO';
-        card.appendChild(todBadge);
-      }
-
-      // Favorite team highlight
-      const homeLC = (tip.home_team || '').toLowerCase();
-      const awayLC = (tip.away_team || '').toLowerCase();
-      if (favSet.has(homeLC) || favSet.has(awayLC)) {
-        card.classList.add('tip-card--favorite');
-      }
-
-      const badge =
-        tip.tier === 'free'
-          ? 'tip-badge--free'
-          : tip.tier === 'pro'
-            ? 'tip-badge--pro'
-            : 'tip-badge--vip';
-
-      // Header
-      const header = document.createElement('div');
-      header.className = 'tip-card-header';
-
-      const badgeEl = document.createElement('span');
-      badgeEl.className = 'tip-badge ' + badge;
-      badgeEl.textContent = tip.tier.toUpperCase();
-      header.appendChild(badgeEl);
-
-      // League badge (visible in 'all' mode)
-      if (currentLeague === 'all' && tip.league) {
-        const leagueBadge = document.createElement('span');
-        leagueBadge.className = 'tip-league-badge';
-        const leagueInfo = LEAGUE_NAMES_MAP[tip.league];
-        leagueBadge.textContent = leagueInfo ? leagueInfo.short : tip.league;
-        header.appendChild(leagueBadge);
-      }
-
-      // Status label for started/settled matches
-      if (isSettled) {
-        const statusLabel = document.createElement('span');
-        statusLabel.className = 'tip-status-label tip-status-label--' + tip.status;
-        statusLabel.textContent =
-          tip.status === 'won' ? 'Vinto' : tip.status === 'lost' ? 'Perso' : 'Annullata';
-        header.appendChild(statusLabel);
-      } else if (matchStarted) {
-        const startedLabel = document.createElement('span');
-        startedLabel.className = 'tip-started-label';
-        startedLabel.textContent = 'In corso';
-        header.appendChild(startedLabel);
-      }
-
-      const dateEl = document.createElement('span');
-      dateEl.className = 'tip-date';
-      dateEl.textContent = formatMatchDate(tip.match_date);
-      header.appendChild(dateEl);
-
-      card.appendChild(header);
-
-      // Match + result
-      const match = document.createElement('div');
-      match.className = 'dash-tip-match';
-
-      const homeTeam = document.createElement('span');
-      homeTeam.className = 'dash-tip-team';
-      homeTeam.textContent = tip.home_team;
-      match.appendChild(homeTeam);
-
-      if (tip.result) {
-        const scoreEl = document.createElement('span');
-        scoreEl.className = 'dash-tip-score';
-        scoreEl.textContent = tip.result;
-        match.appendChild(scoreEl);
-      } else {
-        const vs = document.createElement('span');
-        vs.className = 'dash-tip-vs';
-        vs.textContent = 'vs';
-        match.appendChild(vs);
-      }
-
-      const awayTeam = document.createElement('span');
-      awayTeam.className = 'dash-tip-team';
-      awayTeam.textContent = tip.away_team;
-      match.appendChild(awayTeam);
-
-      card.appendChild(match);
-
-      // Prediction row
-      const predRow = document.createElement('div');
-      predRow.className = 'dash-tip-pred';
-
-      const pickGroup = document.createElement('div');
-      const pickLabel = document.createElement('span');
-      pickLabel.className = 'pick-label';
-      pickLabel.textContent = 'PRONOSTICO';
-      pickGroup.appendChild(pickLabel);
-      const pickValue = document.createElement('span');
-      pickValue.className = 'pick-value';
-      pickValue.textContent = tip.prediction || '\u2014';
-      pickGroup.appendChild(pickValue);
-      predRow.appendChild(pickGroup);
-
-      const oddsGroup = document.createElement('div');
-      oddsGroup.className = 'dash-tip-odds-group';
-      const oddsLabel = document.createElement('span');
-      oddsLabel.className = 'odds-label';
-      oddsLabel.textContent = 'QUOTA';
-      oddsGroup.appendChild(oddsLabel);
-      const oddsValue = document.createElement('span');
-      oddsValue.className = 'odds-value';
-      oddsValue.textContent = tip.odds ? parseFloat(tip.odds).toFixed(2) : '\u2014';
-      oddsGroup.appendChild(oddsValue);
-      predRow.appendChild(oddsGroup);
-
-      card.appendChild(predRow);
-
-      // Confidence bar
-      if (tip.confidence) {
-        const confBar = document.createElement('div');
-        confBar.className = 'tip-confidence';
-
-        const confLabel = document.createElement('span');
-        confLabel.className = 'confidence-label';
-        confLabel.textContent = 'Fiducia';
-        confBar.appendChild(confLabel);
-
-        const barOuter = document.createElement('div');
-        barOuter.className = 'confidence-bar';
-        const barFill = document.createElement('div');
-        barFill.className = 'confidence-fill';
-        barOuter.appendChild(barFill);
-        confBar.appendChild(barOuter);
-
-        const confValue = document.createElement('span');
-        confValue.className = 'confidence-value';
-        confValue.textContent = tip.confidence + '%';
-        confBar.appendChild(confValue);
-
-        card.appendChild(confBar);
-
-        requestAnimationFrame(function () {
-          barFill.style.width = tip.confidence + '%';
-        });
-      }
-
-      // Analysis (short preview)
-      if (tip.analysis) {
-        const analysis = document.createElement('div');
-        analysis.className = 'tip-analysis';
-        analysis.textContent = tip.analysis;
-        card.appendChild(analysis);
-      }
-
-      // Expandable details section
-      const details = document.createElement('div');
-      details.className = 'tip-card-details';
-      details.id = 'tipDetails-' + tip.id;
-
-      const detailsInner = document.createElement('div');
-      detailsInner.className = 'tip-card-details-inner';
-
-      // Form section placeholder
-      const formSection = document.createElement('div');
-      formSection.className = 'form-section';
-      formSection.id = 'tipForm-' + tip.id;
-      detailsInner.appendChild(formSection);
-
-      // H2H section placeholder
-      const h2hSection = document.createElement('div');
-      h2hSection.className = 'h2h-section';
-      h2hSection.id = 'tipH2H-' + tip.id;
-      detailsInner.appendChild(h2hSection);
-
-      // Follow/unfollow button
-      const isFollowed = !!userBetsMap[tip.id];
-      const followBtn = document.createElement('button');
-      followBtn.className = 'bet-follow-btn' + (isFollowed ? ' followed' : '');
-      followBtn.textContent = isFollowed ? '\u2605 Seguito' : '\u2606 Segui';
-      followBtn.setAttribute('data-tip-id', tip.id);
-      followBtn.addEventListener('click', function () {
-        toggleFollowTip(tip.id, followBtn);
-      });
-      detailsInner.appendChild(followBtn);
-
-      // Bet tracking (stake + notes)
-      buildBetTrackingUI(detailsInner, tip.id);
-
-      details.appendChild(detailsInner);
-      card.appendChild(details);
-
-      // Expand button
-      const expandBtn = document.createElement('button');
-      expandBtn.className = 'tip-card-expand-btn';
-      expandBtn.innerHTML = 'Dettagli <span class="chevron">\u25BC</span>';
-      expandBtn.addEventListener('click', function () {
-        const isOpen = details.classList.contains('open');
-        if (!isOpen) {
-          details.classList.add('open');
-          expandBtn.classList.add('expanded');
-          // Lazy load form + H2H
-          loadTipDetails(tip);
-        } else {
-          details.classList.remove('open');
-          expandBtn.classList.remove('expanded');
-        }
-      });
-      card.appendChild(expandBtn);
-
-      container.appendChild(card);
+    dashRenderTipsGrid(container, tips, {
+      currentLeague: currentLeague,
+      userPrefs: userPrefs,
+      userBetsMap: userBetsMap,
+      onExpand: loadTipDetails,
+      onToggleFollow: toggleFollowTip,
+      onSaveBet: saveBetTracking,
     });
   }
 
@@ -721,7 +521,7 @@
   async function loadTeamForm(container, homeTeam, awayTeam, league) {
     try {
       const data = await authFetch(
-        '/api/match-insights?type=form&teams=' +
+        '/api/fixtures?type=form&teams=' +
           encodeURIComponent(homeTeam + ',' + awayTeam) +
           '&league=' +
           encodeURIComponent(league),
@@ -766,7 +566,7 @@
   async function loadH2H(container, homeTeam, awayTeam, league) {
     try {
       const data = await authFetch(
-        '/api/match-insights?type=h2h&home=' +
+        '/api/fixtures?type=h2h&home=' +
           encodeURIComponent(homeTeam) +
           '&away=' +
           encodeURIComponent(awayTeam) +
@@ -862,6 +662,8 @@
    */
   async function loadHistory() {
     try {
+      const histList = document.getElementById('dashHistoryList');
+      if (histList) buildSkeletonCards(histList, 4, 'history');
       let results = [];
 
       const statuses = ['won', 'lost', 'void', 'pending'];
@@ -870,7 +672,9 @@
         return authFetch('/api/tips?status=' + s + '&limit=50' + leagueParam);
       });
 
-      const responses = await Promise.all(promises);
+      const responses = await retryWithBackoff(function () {
+        return Promise.all(promises);
+      });
       responses.forEach(function (data) {
         if (Array.isArray(data)) {
           results = results.concat(data);
@@ -892,101 +696,26 @@
 
       renderHistory('all');
       loadDashboardChart();
+      setLastUpdated('dashHistoryUpdated', loadHistory);
     } catch (err) {
       console.warn('[loadHistory]', err.message);
-      document.getElementById('dashHistoryEmpty').style.display = '';
+      const histList = document.getElementById('dashHistoryList');
+      if (histList) setErrorState(histList, 'Impossibile caricare lo storico', loadHistory);
     }
   }
 
   /**
    * Renderizza lo storico filtrato per status.
-   * "favorites" filter shows only tips matching favorite teams.
+   * Delega a dashRenderHistory (dashboard-renderers.js) passando le dipendenze.
    */
   function renderHistory(statusFilter) {
-    const list = document.getElementById('dashHistoryList');
-    const emptyState = document.getElementById('dashHistoryEmpty');
-
-    let filtered;
-    if (statusFilter === 'all') {
-      filtered = allHistory;
-    } else if (statusFilter === 'favorites') {
-      const favTeams = (userPrefs && userPrefs.favorite_teams) || [];
-      const favSet = new Set(
-        favTeams.map(function (t) {
-          return t.toLowerCase();
-        }),
-      );
-      filtered = allHistory.filter(function (t) {
-        return (
-          favSet.has((t.home_team || '').toLowerCase()) ||
-          favSet.has((t.away_team || '').toLowerCase())
-        );
-      });
-    } else {
-      filtered = allHistory.filter(function (t) {
-        return t.status === statusFilter;
-      });
-    }
-
-    if (filtered.length === 0) {
-      list.textContent = '';
-      emptyState.style.display = '';
-      return;
-    }
-
-    emptyState.style.display = 'none';
-    list.textContent = '';
-
-    filtered.forEach(function (tip) {
-      const item = document.createElement('div');
-      item.className = 'dash-history-item';
-
-      const statusEl = document.createElement('span');
-      statusEl.className = 'dash-history-status dash-history-status--' + tip.status;
-      if (tip.status === 'won') statusEl.textContent = '\u2713';
-      else if (tip.status === 'lost') statusEl.textContent = '\u2717';
-      else if (tip.status === 'void') statusEl.textContent = '\u2014';
-      else statusEl.textContent = '\u25CF';
-      item.appendChild(statusEl);
-
-      const matchInfo = document.createElement('div');
-      matchInfo.className = 'dash-history-match';
-
-      const teams = document.createElement('span');
-      teams.className = 'dash-history-teams';
-      teams.textContent = tip.home_team + ' vs ' + tip.away_team;
-      matchInfo.appendChild(teams);
-
-      const date = document.createElement('span');
-      date.className = 'dash-history-date';
-      date.textContent = formatDate(tip.match_date);
-      matchInfo.appendChild(date);
-
-      item.appendChild(matchInfo);
-
-      const pred = document.createElement('span');
-      pred.className = 'dash-history-pred';
-      pred.textContent = tip.prediction || '\u2014';
-      item.appendChild(pred);
-
-      const odds = document.createElement('span');
-      odds.className = 'dash-history-odds';
-      odds.textContent = tip.odds ? parseFloat(tip.odds).toFixed(2) : '\u2014';
-      item.appendChild(odds);
-
-      const badgeEl = document.createElement('span');
-      badgeEl.className = 'dash-history-badge dash-history-badge--' + tip.status;
-      const statusText = {
-        won: 'Vinto',
-        lost: 'Perso',
-        void: 'Annullata',
-        pending: 'In Corso',
-      };
-      badgeEl.textContent = statusText[tip.status] || tip.status;
-      item.appendChild(badgeEl);
-
-      list.appendChild(item);
-    });
+    dashRenderHistory(
+      document.getElementById('dashHistoryList'),
+      document.getElementById('dashHistoryEmpty'),
+      allHistory,
+      statusFilter,
+      { userPrefs: userPrefs, formatDate: formatDate },
+    );
   }
 
   /**
@@ -1066,31 +795,68 @@
 
   function setupTabs() {
     const tabs = document.querySelectorAll('.dash-tab');
+    const STORAGE_KEY = 'wb_dashboard_tab';
+
     tabs.forEach(function (tab) {
       tab.addEventListener('click', function () {
         tabs.forEach(function (t) {
           t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
         });
         tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
 
-        // Deactivate settings when switching to a tab
         const settingsBtn = document.getElementById('settingsBtn');
         if (settingsBtn) settingsBtn.classList.remove('active');
 
         const target = tab.getAttribute('data-tab');
+
+        try {
+          localStorage.setItem(STORAGE_KEY, target);
+        } catch (_e) {
+          /* storage unavailable */
+        }
+
         document.getElementById('panelTips').style.display = target === 'tips' ? '' : 'none';
         document.getElementById('panelSchedule').style.display =
           target === 'schedine' ? '' : 'none';
         document.getElementById('panelHistory').style.display = target === 'history' ? '' : 'none';
+        document.getElementById('panelFantacalcio').style.display =
+          target === 'fantacalcio' ? '' : 'none';
+        const panelCentroEl = document.getElementById('panelCentro');
+        if (panelCentroEl) panelCentroEl.style.display = target === 'centro' ? '' : 'none';
         document.getElementById('panelAccount').style.display = 'none';
 
-        // Show/hide league selector (not relevant for schedine)
+        // Lazy-load Fantacalcio on first open
+        if (target === 'fantacalcio') {
+          loadFantacalcio();
+        }
+
+        // Lazy-load Centro Hub on first open
+        if (target === 'centro') {
+          loadCentroHub();
+        }
+
         const leagueSelector = document.getElementById('dashLeagueSelector');
         if (leagueSelector) {
-          leagueSelector.style.display = target === 'schedine' ? 'none' : '';
+          // Hide league selector for tabs where it has no effect
+          leagueSelector.style.display =
+            target === 'account' || target === 'fantacalcio' ? 'none' : '';
         }
       });
     });
+
+    // Restore saved tab (after listeners are attached)
+    let savedTab = null;
+    try {
+      savedTab = localStorage.getItem(STORAGE_KEY);
+    } catch (_e) {
+      /* storage unavailable */
+    }
+    if (savedTab && savedTab !== 'tips') {
+      const target = document.querySelector('.dash-tab[data-tab="' + savedTab + '"]');
+      if (target) target.click();
+    }
   }
 
   /**
@@ -1105,7 +871,11 @@
       const panelTips = document.getElementById('panelTips');
       const panelSchedule = document.getElementById('panelSchedule');
       const panelHistory = document.getElementById('panelHistory');
+      const panelFantacalcio = document.getElementById('panelFantacalcio');
+      const panelCentroSettings = document.getElementById('panelCentro');
       const isAccountVisible = panelAccount.style.display !== 'none';
+
+      const leagueSelector = document.getElementById('dashLeagueSelector');
 
       if (isAccountVisible) {
         // Chiudi account, torna alla tab attiva
@@ -1117,13 +887,23 @@
         panelTips.style.display = activePanel === 'tips' ? '' : 'none';
         panelSchedule.style.display = activePanel === 'schedine' ? '' : 'none';
         panelHistory.style.display = activePanel === 'history' ? '' : 'none';
+        if (panelFantacalcio)
+          panelFantacalcio.style.display = activePanel === 'fantacalcio' ? '' : 'none';
+        if (panelCentroSettings)
+          panelCentroSettings.style.display = activePanel === 'centro' ? '' : 'none';
+        if (leagueSelector)
+          leagueSelector.style.display =
+            activePanel === 'fantacalcio' ? 'none' : '';
       } else {
-        // Apri account, nascondi gli altri pannelli
+        // Apri account, nascondi gli altri pannelli e il selettore campionato
         panelTips.style.display = 'none';
         panelSchedule.style.display = 'none';
         panelHistory.style.display = 'none';
+        if (panelFantacalcio) panelFantacalcio.style.display = 'none';
+        if (panelCentroSettings) panelCentroSettings.style.display = 'none';
         panelAccount.style.display = '';
         settingsBtn.classList.add('active');
+        if (leagueSelector) leagueSelector.style.display = 'none';
       }
     });
   }
@@ -1163,6 +943,11 @@
       const btn = e.target.closest('.league-btn');
       if (!btn) return;
 
+      // On the Schedine/Fantacalcio tabs, league filter has no effect — do nothing
+      const activeTab = document.querySelector('.dash-tab.active');
+      const activeTabName = activeTab ? activeTab.getAttribute('data-tab') : '';
+      if (activeTabName === 'schedine' || activeTabName === 'fantacalcio') return;
+
       const league = btn.getAttribute('data-league');
       if (league === currentLeague) return;
 
@@ -1172,10 +957,19 @@
       btn.classList.add('active');
 
       currentLeague = league;
-      try { localStorage.setItem('wb_dashboard_league', league); } catch (_e) { /* storage unavailable */ }
+      try {
+        localStorage.setItem('wb_dashboard_league', league);
+      } catch (_e) {
+        /* storage unavailable */
+      }
 
       loadTodayTips();
       loadHistory();
+
+      // Ricarica Centro Hub se la tab è attiva
+      if (activeTabName === 'centro') {
+        loadCentroHub();
+      }
     });
   }
 
@@ -1371,52 +1165,9 @@
   function renderNotificationList(notifications) {
     const list = document.getElementById('notifList');
     if (!list) return;
-
-    list.textContent = '';
-
-    if (notifications.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'notif-empty';
-      empty.textContent = 'Nessuna notifica';
-      list.appendChild(empty);
-      return;
-    }
-
-    notifications.forEach(function (notif) {
-      const item = document.createElement('div');
-      item.className = 'notif-item' + (notif.read ? '' : ' notif-item--unread');
-
-      const content = document.createElement('div');
-      content.className = 'notif-item-content';
-
-      const title = document.createElement('div');
-      title.className = 'notif-item-title';
-      title.textContent = notif.title;
-      content.appendChild(title);
-
-      if (notif.body) {
-        const body = document.createElement('div');
-        body.className = 'notif-item-body';
-        body.textContent = notif.body;
-        content.appendChild(body);
-      }
-
-      const time = document.createElement('div');
-      time.className = 'notif-item-time';
-      time.textContent = formatRelativeTime(notif.created_at);
-      content.appendChild(time);
-
-      item.appendChild(content);
-
-      // Mark as read on click
-      if (!notif.read) {
-        item.addEventListener('click', function () {
-          markNotificationRead(notif.id);
-          item.classList.remove('notif-item--unread');
-        });
-      }
-
-      list.appendChild(item);
+    dashRenderNotifications(list, notifications, {
+      onMarkRead: markNotificationRead,
+      formatRelativeTime: formatRelativeTime,
     });
   }
 
@@ -1744,19 +1495,6 @@
 
   // ─── SCHEDINE (BETTING SLIPS) ─────────────────────────
 
-  function showGridLoading(grid) {
-    grid.textContent = '';
-    const loader = document.createElement('div');
-    loader.className = 'tips-loading';
-    const spinner = document.createElement('span');
-    spinner.className = 'loading-spinner';
-    loader.appendChild(spinner);
-    const text = document.createElement('span');
-    text.textContent = 'Caricamento schedine...';
-    loader.appendChild(text);
-    grid.appendChild(loader);
-  }
-
   async function loadSchedule() {
     const grid = document.getElementById('schedineGrid');
     const empty = document.getElementById('schedineEmpty');
@@ -1781,12 +1519,14 @@
       return;
     }
 
-    showGridLoading(grid);
+    buildSkeletonCards(grid, 2, 'card');
     empty.style.display = 'none';
     upgrade.style.display = 'none';
 
     try {
-      const data = await authFetch('/api/betting-slips?date=' + encodeURIComponent(schedineDate));
+      const data = await retryWithBackoff(function () {
+        return authFetch('/api/betting-slips?date=' + encodeURIComponent(schedineDate));
+      });
 
       if (!data.schedine || data.schedine.length === 0) {
         grid.textContent = '';
@@ -1807,209 +1547,68 @@
       renderSchedule(grid, data.schedine);
     } catch (err) {
       console.warn('[loadSchedule]', err.message);
-      grid.textContent = '';
+      budgetBar.style.display = 'none';
 
       if (err.message === 'HTTP 403') {
+        grid.textContent = '';
         upgrade.style.display = '';
-        budgetBar.style.display = 'none';
       } else {
-        empty.style.display = '';
-        budgetBar.style.display = 'none';
+        setErrorState(grid, 'Impossibile caricare le schedine', loadSchedule);
       }
     }
   }
 
   function renderSchedule(container, schedine) {
-    container.textContent = '';
+    dashRenderSchedule(container, schedine);
+  }
 
-    const riskMap = { 1: 'sicura', 2: 'equilibrata', 3: 'azzardo' };
-    const riskLabels = { 1: 'Sicura', 2: 'Equilibrata', 3: 'Azzardo' };
-    const statusLabels = {
-      pending: 'In Corso',
-      won: 'Vinta',
-      lost: 'Persa',
-      void: 'Annullata',
-    };
+  // ─── FANTACALCIO HUB ──────────────────────────────────
 
-    schedine.forEach(function (s) {
-      const riskClass = riskMap[s.risk_level] || 'equilibrata';
-      const card = document.createElement('div');
-      card.className = 'schedina-card schedina-card--' + riskClass;
+  let fantacalcioLoaded = false;
 
-      // Header
-      const header = document.createElement('div');
-      header.className = 'schedina-header';
+  async function loadFantacalcio() {
+    if (fantacalcioLoaded) return; // Already loaded — no need to re-fetch
+    const grid = document.getElementById('fantacalcioGrid');
+    if (!grid) return;
 
-      const riskBadge = document.createElement('span');
-      riskBadge.className = 'schedina-risk-badge schedina-risk-badge--' + riskClass;
-      riskBadge.textContent = riskLabels[s.risk_level] || s.name;
-      header.appendChild(riskBadge);
-
-      if (s.status && s.status !== 'pending') {
-        const statusBadge = document.createElement('span');
-        statusBadge.className = 'schedina-status-badge schedina-status-badge--' + s.status;
-        statusBadge.textContent = statusLabels[s.status] || s.status;
-        header.appendChild(statusBadge);
-      }
-
-      card.appendChild(header);
-
-      // Name
-      const nameEl = document.createElement('div');
-      nameEl.className = 'schedina-name';
-      nameEl.textContent = s.name || 'Schedina ' + (riskLabels[s.risk_level] || '');
-      card.appendChild(nameEl);
-
-      // Stats row
-      const stats = document.createElement('div');
-      stats.className = 'schedina-stats';
-
-      const oddsEl = document.createElement('div');
-      oddsEl.className = 'schedina-stat';
-      const oddsLabel = document.createElement('span');
-      oddsLabel.className = 'schedina-stat-label';
-      oddsLabel.textContent = 'Quota';
-      oddsEl.appendChild(oddsLabel);
-      const oddsVal = document.createElement('span');
-      oddsVal.className = 'schedina-stat-value';
-      oddsVal.textContent = parseFloat(s.combined_odds || 0).toFixed(2);
-      oddsEl.appendChild(oddsVal);
-      stats.appendChild(oddsEl);
-
-      const stakeEl = document.createElement('div');
-      stakeEl.className = 'schedina-stat';
-      const stakeLabel = document.createElement('span');
-      stakeLabel.className = 'schedina-stat-label';
-      stakeLabel.textContent = 'Puntata';
-      stakeEl.appendChild(stakeLabel);
-      const stakeVal = document.createElement('span');
-      stakeVal.className = 'schedina-stat-value';
-      stakeVal.textContent = parseFloat(s.suggested_stake || 0).toFixed(2) + ' \u20AC';
-      stakeEl.appendChild(stakeVal);
-      stats.appendChild(stakeEl);
-
-      const returnEl = document.createElement('div');
-      returnEl.className = 'schedina-stat';
-      const returnLabel = document.createElement('span');
-      returnLabel.className = 'schedina-stat-label';
-      returnLabel.textContent = 'Potenziale';
-      returnEl.appendChild(returnLabel);
-      const returnVal = document.createElement('span');
-      returnVal.className = 'schedina-stat-value schedina-stat-value--highlight';
-      returnVal.textContent = parseFloat(s.expected_return || 0).toFixed(2) + ' \u20AC';
-      returnEl.appendChild(returnVal);
-      stats.appendChild(returnEl);
-
-      card.appendChild(stats);
-
-      // Confidence bar
-      if (s.confidence_avg) {
-        const confBar = document.createElement('div');
-        confBar.className = 'schedina-confidence';
-
-        const confLabel = document.createElement('span');
-        confLabel.className = 'schedina-confidence-label';
-        confLabel.textContent = 'Fiducia media';
-        confBar.appendChild(confLabel);
-
-        const barOuter = document.createElement('div');
-        barOuter.className = 'confidence-bar';
-        const barFill = document.createElement('div');
-        barFill.className = 'confidence-fill';
-        barOuter.appendChild(barFill);
-        confBar.appendChild(barOuter);
-
-        const confValue = document.createElement('span');
-        confValue.className = 'confidence-value';
-        confValue.textContent = Math.round(s.confidence_avg) + '%';
-        confBar.appendChild(confValue);
-
-        card.appendChild(confBar);
-
-        requestAnimationFrame(function () {
-          barFill.style.width = Math.round(s.confidence_avg) + '%';
-        });
-      }
-
-      // Strategy
-      if (s.strategy) {
-        const strategy = document.createElement('div');
-        strategy.className = 'schedina-strategy';
-        strategy.textContent = s.strategy;
-        card.appendChild(strategy);
-      }
-
-      // Expandable tips list
-      const details = document.createElement('div');
-      details.className = 'schedina-details';
-
-      if (s.tips && s.tips.length > 0) {
-        const tipsList = document.createElement('div');
-        tipsList.className = 'schedina-tips-list';
-
-        s.tips.forEach(function (tip, idx) {
-          const tipItem = document.createElement('div');
-          tipItem.className = 'schedina-tip-item';
-
-          const num = document.createElement('span');
-          num.className = 'schedina-tip-num';
-          num.textContent = tip.position || idx + 1;
-          tipItem.appendChild(num);
-
-          const tipInfo = document.createElement('div');
-          tipInfo.className = 'schedina-tip-info';
-
-          const tipMatch = document.createElement('div');
-          tipMatch.className = 'schedina-tip-match';
-          tipMatch.textContent = tip.home_team + ' vs ' + tip.away_team;
-          tipInfo.appendChild(tipMatch);
-
-          const tipMeta = document.createElement('div');
-          tipMeta.className = 'schedina-tip-meta';
-          tipMeta.textContent = tip.prediction + ' @ ' + parseFloat(tip.odds || 0).toFixed(2);
-          if (tip.league) {
-            const leagueTag = document.createElement('span');
-            leagueTag.className = 'schedina-tip-league';
-            leagueTag.textContent = tip.league;
-            tipMeta.appendChild(leagueTag);
-          }
-          tipInfo.appendChild(tipMeta);
-
-          tipItem.appendChild(tipInfo);
-
-          if (tip.confidence) {
-            const tipConf = document.createElement('span');
-            tipConf.className = 'schedina-tip-conf';
-            tipConf.textContent = tip.confidence + '%';
-            tipItem.appendChild(tipConf);
-          }
-
-          tipsList.appendChild(tipItem);
-        });
-
-        details.appendChild(tipsList);
-      }
-
-      card.appendChild(details);
-
-      // Expand button
-      const expandBtn = document.createElement('button');
-      expandBtn.className = 'schedina-expand-btn';
-      expandBtn.textContent = 'Vedi pronostici \u25BC';
-      expandBtn.addEventListener('click', function () {
-        const isOpen = details.classList.contains('open');
-        if (isOpen) {
-          details.classList.remove('open');
-          expandBtn.classList.remove('expanded');
-        } else {
-          details.classList.add('open');
-          expandBtn.classList.add('expanded');
-        }
+    try {
+      buildSkeletonCards(grid, 3, 'card');
+      const data = await retryWithBackoff(function () {
+        return authFetch('/api/fantacalcio?league=serie-a');
       });
-      card.appendChild(expandBtn);
+      fantacalcioLoaded = true;
+      dashRenderFantacalcio(grid, data, {
+        tier: (profile && profile.tier) || 'free',
+        onUpgrade: startCheckout,
+      });
+    } catch (err) {
+      console.warn('[loadFantacalcio]', err.message);
+      setErrorState(grid, 'Impossibile caricare i consigli Fantacalcio', function () {
+        fantacalcioLoaded = false;
+        loadFantacalcio();
+      });
+    }
+  }
 
-      container.appendChild(card);
-    });
+  // ─── CENTRO SCOMMESSE HUB (partner B2B) ────────────────
+
+  async function loadCentroHub() {
+    const grid = document.getElementById('centroHubGrid');
+    const emptyEl = document.getElementById('centroHubEmpty');
+    if (!grid || !emptyEl) return;
+
+    try {
+      buildSkeletonCards(grid, 3, 'card');
+      const data = await retryWithBackoff(function () {
+        return authFetch('/api/fixtures?type=odds-compare&league=' + encodeURIComponent(currentLeague));
+      });
+      dashRenderCentroHub(grid, emptyEl, data);
+    } catch (err) {
+      console.warn('[loadCentroHub]', err.message);
+      setErrorState(grid, 'Impossibile caricare le quote', function () {
+        loadCentroHub();
+      });
+    }
   }
 
   function setupSchedineDateNav() {
@@ -2113,40 +1712,6 @@
     }
   }
 
-  // ─── BET TRACKING ─────────────────────────────────────
-
-  function buildBetTrackingUI(container, tipId) {
-    const existingBet = userBetsMap[tipId];
-    const section = document.createElement('div');
-    section.className = 'bet-tracking-section';
-
-    const stakeInput = document.createElement('input');
-    stakeInput.type = 'number';
-    stakeInput.className = 'bet-stake-input';
-    stakeInput.placeholder = 'Puntata (\u20AC)';
-    stakeInput.min = '0';
-    stakeInput.step = '0.5';
-    if (existingBet && existingBet.stake) stakeInput.value = existingBet.stake;
-
-    const notesInput = document.createElement('textarea');
-    notesInput.className = 'bet-notes-input';
-    notesInput.placeholder = 'Note personali...';
-    notesInput.rows = 2;
-    if (existingBet && existingBet.notes) notesInput.value = existingBet.notes;
-
-    const saveBtn = document.createElement('button');
-    saveBtn.className = 'bet-save-btn';
-    saveBtn.textContent = 'Salva';
-    saveBtn.addEventListener('click', function () {
-      saveBetTracking(tipId, stakeInput.value, notesInput.value, saveBtn);
-    });
-
-    section.appendChild(stakeInput);
-    section.appendChild(notesInput);
-    section.appendChild(saveBtn);
-    container.appendChild(section);
-  }
-
   async function saveBetTracking(tipId, stake, notes, btn) {
     if (!session) return;
 
@@ -2203,13 +1768,69 @@
   function handleCheckoutFeedback() {
     const params = new URLSearchParams(window.location.search);
     const checkout = params.get('checkout');
+    const fromPortal = params.get('from') === 'portal';
 
     if (checkout === 'success') {
-      showAlert('Abbonamento attivato con successo! Benvenuto.', 'success');
+      // Imposta il flag — loadProfile mostrerà l'alert e avvierà il polling se necessario
+      checkoutJustCompleted = true;
       window.history.replaceState({}, '', '/dashboard.html');
     } else if (checkout === 'cancelled') {
       showAlert('Pagamento annullato. Puoi riprovare quando vuoi.', 'error');
       window.history.replaceState({}, '', '/dashboard.html');
+    } else if (fromPortal) {
+      // Ritorno dal Customer Portal: ripeti loadProfile dopo 3s per recepire
+      // eventuali aggiornamenti al tier arrivati via webhook (es. cancellazione).
+      window.history.replaceState({}, '', '/dashboard.html');
+      setTimeout(function () {
+        if (session) loadProfile();
+      }, 3000);
+    }
+  }
+
+  /**
+   * Polling su Supabase finché il tier non passa da free a pro/vip.
+   * Serve quando il webhook di Stripe è leggermente in ritardo rispetto al redirect.
+   * @param {string} userId
+   */
+  async function pollForSubscriptionUpgrade(userId) {
+    const MAX_ATTEMPTS = 8;
+    const INTERVAL_MS = 2000;
+
+    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+      await new Promise(function (resolve) { setTimeout(resolve, INTERVAL_MS); });
+
+      const result = await SupabaseConfig.client
+        .from('profiles')
+        .select('tier')
+        .eq('user_id', userId)
+        .single();
+
+      const freshTier = result.data && result.data.tier;
+      if (freshTier && freshTier !== 'free') {
+        profile.tier = freshTier;
+        const tierLabel = document.getElementById('tierLabel');
+        const tierBadge = document.getElementById('tierBadge');
+        if (tierLabel) tierLabel.textContent = freshTier.toUpperCase();
+        if (tierBadge) tierBadge.className = 'dash-tier-badge dash-tier-badge--' + freshTier;
+        await updateSubscriptionUI(freshTier);
+        showAlert('Abbonamento attivato con successo! Benvenuto.', 'success');
+        return;
+      }
+    }
+
+    // Polling esaurito senza aggiornamento tier — verifica se esiste una subscription attiva.
+    // Se sì: webhook lento, invita a ricaricare. Se no: pagamento fallito.
+    const subCheck = await SupabaseConfig.client
+      .from('subscriptions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .limit(1);
+
+    if (subCheck.data && subCheck.data.length > 0) {
+      showAlert('Abbonamento attivato! Se il badge non si aggiorna, ricarica la pagina.', 'success');
+    } else {
+      showAlert('Il pagamento non è andato a buon fine. Riprova o contatta il supporto.', 'error');
     }
   }
 
@@ -2330,6 +1951,128 @@
     }, 3000);
   }
 
+  // ─── BANKROLL CALCULATOR ──────────────────────────────
+
+  function setupBankrollCalculator() {
+    const calcBtn = document.getElementById('calcBankrollBtn');
+    if (!calcBtn) return;
+
+    calcBtn.addEventListener('click', calculateBankroll);
+  }
+
+  function calculateBankroll() {
+    const input = document.getElementById('bankrollInput');
+    const resultsEl = document.getElementById('bankrollResults');
+    const summaryEl = document.getElementById('bankrollSummary');
+    const tbodyEl = document.getElementById('bankrollTableBody');
+    if (!input || !resultsEl || !summaryEl || !tbodyEl) return;
+
+    const bankroll = parseFloat(input.value) || 100;
+    if (bankroll < 10) {
+      showToast('Il bankroll minimo \u00E8 10\u20AC', 'error');
+      return;
+    }
+    if (bankroll > 100000) {
+      showToast('Il bankroll massimo \u00E8 100.000\u20AC', 'error');
+      return;
+    }
+
+    // Collect today's pending tips from the already-loaded grid
+    const tipCards = document.querySelectorAll('#dashTipsGrid .tip-card:not(.tip-card--started)');
+    const tips = [];
+
+    tipCards.forEach(function (card) {
+      const predEl = card.querySelector('.pick-value');
+      const oddsEl = card.querySelector('.odds-value');
+      const confEl = card.querySelector('.confidence-value');
+      const teamsEls = card.querySelectorAll('.dash-tip-team');
+
+      if (!predEl || !oddsEl || teamsEls.length < 2) return;
+
+      const confidence = parseInt((confEl && confEl.textContent) || '70', 10);
+      const odds = parseFloat(oddsEl.textContent) || 0;
+      const prediction = predEl.textContent || '';
+      const matchName = teamsEls[0].textContent + ' vs ' + teamsEls[1].textContent;
+
+      if (prediction && odds > 0) {
+        tips.push({
+          matchName: matchName,
+          prediction: prediction,
+          odds: odds,
+          confidence: confidence,
+        });
+      }
+    });
+
+    if (tips.length === 0) {
+      showToast('Nessun pronostico disponibile per il calcolo', 'info');
+      return;
+    }
+
+    // Fixed-percentage staking: 2-5% scaled by confidence
+    // confidence 60% -> 2%, confidence 90% -> 5%
+    const MIN_PCT = 0.02;
+    const MAX_PCT = 0.05;
+    const MIN_CONF = 60;
+    const MAX_CONF = 90;
+
+    let totalStake = 0;
+    tbodyEl.textContent = '';
+
+    tips.forEach(function (tip) {
+      const clampedConf = Math.max(MIN_CONF, Math.min(MAX_CONF, tip.confidence));
+      const pct =
+        MIN_PCT + ((clampedConf - MIN_CONF) / (MAX_CONF - MIN_CONF)) * (MAX_PCT - MIN_PCT);
+      const stake = Math.round(bankroll * pct * 100) / 100;
+      totalStake += stake;
+
+      const tr = document.createElement('tr');
+
+      const tdMatch = document.createElement('td');
+      tdMatch.textContent = tip.matchName;
+      tr.appendChild(tdMatch);
+
+      const tdPred = document.createElement('td');
+      tdPred.textContent = tip.prediction;
+      tr.appendChild(tdPred);
+
+      const tdConf = document.createElement('td');
+      tdConf.textContent = tip.confidence + '%';
+      tr.appendChild(tdConf);
+
+      const tdStake = document.createElement('td');
+      tdStake.className = 'bankroll-stake-cell';
+      tdStake.textContent = stake.toFixed(2) + ' \u20AC';
+      tr.appendChild(tdStake);
+
+      tbodyEl.appendChild(tr);
+    });
+
+    // Summary (using safe DOM methods — no innerHTML)
+    const remainingBankroll = bankroll - totalStake;
+    summaryEl.textContent = '';
+
+    const rows = [
+      { label: 'Investimento totale:', value: totalStake.toFixed(2) + ' \u20AC' },
+      { label: 'Bankroll rimanente:', value: remainingBankroll.toFixed(2) + ' \u20AC' },
+      { label: '% investito:', value: ((totalStake / bankroll) * 100).toFixed(1) + '%' },
+    ];
+
+    rows.forEach(function (row) {
+      const div = document.createElement('div');
+      div.className = 'bankroll-summary-row';
+      const labelSpan = document.createElement('span');
+      labelSpan.textContent = row.label;
+      div.appendChild(labelSpan);
+      const valueStrong = document.createElement('strong');
+      valueStrong.textContent = row.value;
+      div.appendChild(valueStrong);
+      summaryEl.appendChild(div);
+    });
+
+    resultsEl.style.display = '';
+  }
+
   // ─── HELPERS ────────────────────────────────────────────
 
   function formatDate(iso) {
@@ -2348,12 +2091,8 @@
       if (!TIER_PRICES[tier]) return;
 
       const config = TIER_PRICES[tier];
-      const amountEl = priceEl.querySelector(
-        '.upgrade-card__amount, .price-amount',
-      );
-      const decimalEl = priceEl.querySelector(
-        '.upgrade-card__decimal, .price-decimal',
-      );
+      const amountEl = priceEl.querySelector('.upgrade-card__amount, .price-amount');
+      const decimalEl = priceEl.querySelector('.upgrade-card__decimal, .price-decimal');
 
       if (amountEl && decimalEl) {
         const parts = config.amount.toString().split('.');
