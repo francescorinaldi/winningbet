@@ -21,7 +21,7 @@ Premium multi-league betting predictions platform (Serie A, Champions League, La
 ## Project Structure
 
 ```
-api/                    → Vercel serverless functions (12 functions, Hobby plan limit)
+api/                    → Vercel serverless functions (11 functions, Hobby plan limit = 12)
 api/_lib/               → Shared backend utilities (11 modules)
 api/_lib/leagues.js     → Centralized league configuration (IDs, codes, seasons)
 api/_lib/prediction-utils.js → Shared prediction evaluation (evaluatePrediction, buildActualResult)
@@ -35,8 +35,7 @@ api/stats.js            → Standings + track record
 api/stripe-webhook.js   → Stripe webhook handler
 api/telegram.js         → Telegram webhook + account linking
 api/tips.js             → Tip listing (filtered by league)
-api/user-bets.js        → Follow/unfollow tips
-api/user-settings.js    → Activity + notifications + preferences + risk profile
+api/user-settings.js    → Activity + notifications + preferences + risk profile + bet tracking
 public/                 → Static frontend (HTML, JS, CSS)
 public/shared.js        → Shared frontend utilities (mobile menu, particles, lang toggle, league names)
 public/script.js        → Main landing page logic (IIFE pattern)
@@ -176,8 +175,7 @@ Valid slugs: `serie-a`, `champions-league`, `la-liga`, `premier-league`, `ligue-
 - `POST /api/stripe-webhook` — Stripe event handler (+ auto Telegram invite/kick)
 - `POST /api/telegram` — Telegram webhook (with secret header) or account linking (with JWT)
 - `GET /api/tips?league={slug}` — Tips filtered by league (15min cache)
-- `CRUD /api/user-bets` — Follow/unfollow tips (JWT auth)
-- `GET/POST/PUT /api/user-settings?resource=activity|notifications|preferences` — User settings (JWT auth)
+- `GET/POST/PUT/DELETE /api/user-settings?resource=activity|notifications|preferences|bets` — User settings + bet tracking (JWT auth)
 
 ## Environment Variables
 

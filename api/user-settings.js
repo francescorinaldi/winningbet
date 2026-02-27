@@ -1,11 +1,12 @@
 /**
- * /api/user-settings?resource=activity|notifications|preferences
+ * /api/user-settings?resource=activity|notifications|preferences|bets
  *
  * Endpoint unificato per le impostazioni e i dati utente.
  *
- * resource=activity    — GET/POST: statistiche attivita' e streak
+ * resource=activity      — GET/POST: statistiche attivita' e streak
  * resource=notifications — GET/PUT: lista notifiche e mark-as-read
- * resource=preferences — GET/PUT: preferenze utente (lega, squadre, toggle)
+ * resource=preferences   — GET/PUT: preferenze utente (lega, squadre, toggle)
+ * resource=bets          — GET/POST/PUT/DELETE: follow/unfollow tips, stake e note
  *
  * Richiede JWT authentication per tutte le risorse.
  */
@@ -30,10 +31,13 @@ module.exports = async function handler(req, res) {
   if (resource === 'preferences') {
     return handlePreferences(req, res, user);
   }
+  if (resource === 'bets') {
+    return handleBets(req, res, user);
+  }
 
   return res
     .status(400)
-    .json({ error: 'Parametro resource richiesto: activity, notifications o preferences' });
+    .json({ error: 'Parametro resource richiesto: activity, notifications, preferences o bets' });
 };
 
 // ─── Activity ───────────────────────────────────────────────────────────────
@@ -287,4 +291,103 @@ async function handlePreferences(req, res, user) {
 
   if (error) return res.status(500).json({ error: error.message });
   return res.status(200).json(data);
+}
+
+// ─── Bets ───────────────────────────────────────────────────────────────────
+
+async function handleBets(req, res, user) {
+  const allowed = ['GET', 'POST', 'PUT', 'DELETE'];
+  if (allowed.indexOf(req.method) === -1) {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // GET — list or single
+  if (req.method === 'GET') {
+    const tipId = req.query.tipId;
+
+    if (tipId) {
+      const { data, error } = await supabase
+        .from('user_bets')
+        .select('*, tips(*)')
+        .eq('user_id', user.id)
+        .eq('tip_id', tipId)
+        .single();
+
+      if (error && error.code === 'PGRST116') return res.status(404).json({ error: 'Not found' });
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json(data);
+    }
+
+    const { data, error } = await supabase
+      .from('user_bets')
+      .select('*, tips(*)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(200).json(data);
+  }
+
+  // POST — follow a tip
+  if (req.method === 'POST') {
+    const body = req.body || {};
+    if (!body.tip_id) return res.status(400).json({ error: 'tip_id richiesto' });
+
+    const { data, error } = await supabase
+      .from('user_bets')
+      .insert({
+        user_id: user.id,
+        tip_id: body.tip_id,
+        followed: body.followed !== false,
+        stake: body.stake || null,
+        notes: body.notes || null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === '23505') {
+        return res.status(409).json({ error: 'Tip già seguito' });
+      }
+      return res.status(500).json({ error: error.message });
+    }
+    return res.status(201).json(data);
+  }
+
+  // PUT — update a bet
+  if (req.method === 'PUT') {
+    const body = req.body || {};
+    if (!body.tip_id) return res.status(400).json({ error: 'tip_id richiesto' });
+
+    const updates = { updated_at: new Date().toISOString() };
+    if (body.stake !== undefined) updates.stake = body.stake;
+    if (body.notes !== undefined) updates.notes = body.notes;
+    if (body.followed !== undefined) updates.followed = body.followed;
+
+    const { data, error } = await supabase
+      .from('user_bets')
+      .update(updates)
+      .eq('user_id', user.id)
+      .eq('tip_id', body.tip_id)
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(200).json(data);
+  }
+
+  // DELETE — unfollow a tip
+  if (req.method === 'DELETE') {
+    const tipId = req.query.tipId;
+    if (!tipId) return res.status(400).json({ error: 'tipId query parameter richiesto' });
+
+    const { error } = await supabase
+      .from('user_bets')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('tip_id', tipId);
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(200).json({ ok: true });
+  }
 }

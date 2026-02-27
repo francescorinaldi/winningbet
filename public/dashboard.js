@@ -1450,7 +1450,7 @@
     if (!session) return;
 
     try {
-      const bets = await authFetch('/api/user-bets');
+      const bets = await authFetch('/api/user-settings?resource=bets');
       userBetsMap = {};
       if (Array.isArray(bets)) {
         bets.forEach(function (bet) {
@@ -1470,13 +1470,13 @@
     try {
       if (isFollowed) {
         // Unfollow
-        await authFetch('/api/user-bets?tipId=' + tipId, { method: 'DELETE' });
+        await authFetch('/api/user-settings?resource=bets&tipId=' + tipId, { method: 'DELETE' });
         delete userBetsMap[tipId];
         btn.classList.remove('followed');
         btn.textContent = '\u2606 Segui';
       } else {
         // Follow
-        const bet = await authFetch('/api/user-bets', {
+        const bet = await authFetch('/api/user-settings?resource=bets', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tip_id: tipId, followed: true }),
@@ -1720,7 +1720,7 @@
       if (stake) body.stake = parseFloat(stake);
       if (notes) body.notes = notes;
 
-      await authFetch('/api/user-bets', {
+      await authFetch('/api/user-settings?resource=bets', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

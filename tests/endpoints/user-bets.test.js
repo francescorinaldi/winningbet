@@ -1,4 +1,4 @@
-const handler = require('../../api/user-bets');
+const handler = require('../../api/user-settings');
 const { createMockReq, createMockRes } = require('../__helpers__/mock-req-res');
 
 jest.mock('../../api/_lib/supabase', () => ({
@@ -26,14 +26,14 @@ function mockChain(result) {
   return chain;
 }
 
-describe('CRUD /api/user-bets', () => {
+describe('CRUD /api/user-settings?resource=bets', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     authenticate.mockResolvedValue({ user: { id: 'u1' }, error: null });
   });
 
   it('should return 405 for unsupported methods (PATCH)', async () => {
-    const req = createMockReq({ method: 'PATCH' });
+    const req = createMockReq({ method: 'PATCH', query: { resource: 'bets' } });
     const res = createMockRes();
 
     await handler(req, res);
@@ -48,7 +48,7 @@ describe('CRUD /api/user-bets', () => {
       error: 'Unauthorized',
     });
 
-    const req = createMockReq({ method: 'GET' });
+    const req = createMockReq({ method: 'GET', query: { resource: 'bets' } });
     const res = createMockRes();
 
     await handler(req, res);
@@ -65,7 +65,7 @@ describe('CRUD /api/user-bets', () => {
 
     mockChain({ data: mockBets, error: null });
 
-    const req = createMockReq({ method: 'GET', query: {} });
+    const req = createMockReq({ method: 'GET', query: { resource: 'bets' } });
     const res = createMockRes();
 
     await handler(req, res);
@@ -80,7 +80,7 @@ describe('CRUD /api/user-bets', () => {
 
     const chain = mockChain({ data: mockBet, error: null });
 
-    const req = createMockReq({ method: 'GET', query: { tipId: 'tip_1' } });
+    const req = createMockReq({ method: 'GET', query: { resource: 'bets', tipId: 'tip_1' } });
     const res = createMockRes();
 
     await handler(req, res);
@@ -94,7 +94,7 @@ describe('CRUD /api/user-bets', () => {
   it('should return 404 when single bet not found (PGRST116)', async () => {
     mockChain({ data: null, error: { code: 'PGRST116' } });
 
-    const req = createMockReq({ method: 'GET', query: { tipId: 'tip_999' } });
+    const req = createMockReq({ method: 'GET', query: { resource: 'bets', tipId: 'tip_999' } });
     const res = createMockRes();
 
     await handler(req, res);
@@ -115,6 +115,7 @@ describe('CRUD /api/user-bets', () => {
 
     const req = createMockReq({
       method: 'POST',
+      query: { resource: 'bets' },
       body: { tip_id: 'tip_3', stake: 50, notes: 'Test bet' },
     });
     const res = createMockRes();
@@ -135,6 +136,7 @@ describe('CRUD /api/user-bets', () => {
   it('should return 400 for POST without tip_id', async () => {
     const req = createMockReq({
       method: 'POST',
+      query: { resource: 'bets' },
       body: { stake: 50 },
     });
     const res = createMockRes();
@@ -152,6 +154,7 @@ describe('CRUD /api/user-bets', () => {
 
     const req = createMockReq({
       method: 'POST',
+      query: { resource: 'bets' },
       body: { tip_id: 'tip_1', stake: 10 },
     });
     const res = createMockRes();
@@ -177,6 +180,7 @@ describe('CRUD /api/user-bets', () => {
 
     const req = createMockReq({
       method: 'PUT',
+      query: { resource: 'bets' },
       body: { tip_id: 'tip_1', stake: 100, notes: 'Updated' },
     });
     const res = createMockRes();
@@ -198,6 +202,7 @@ describe('CRUD /api/user-bets', () => {
   it('should return 400 for PUT without tip_id', async () => {
     const req = createMockReq({
       method: 'PUT',
+      query: { resource: 'bets' },
       body: { stake: 100 },
     });
     const res = createMockRes();
@@ -215,7 +220,7 @@ describe('CRUD /api/user-bets', () => {
 
     const req = createMockReq({
       method: 'DELETE',
-      query: { tipId: 'tip_1' },
+      query: { resource: 'bets', tipId: 'tip_1' },
     });
     const res = createMockRes();
 
@@ -230,7 +235,7 @@ describe('CRUD /api/user-bets', () => {
   it('should return 400 for DELETE without tipId', async () => {
     const req = createMockReq({
       method: 'DELETE',
-      query: {},
+      query: { resource: 'bets' },
     });
     const res = createMockRes();
 
@@ -245,7 +250,7 @@ describe('CRUD /api/user-bets', () => {
   it('should return 500 for database errors', async () => {
     mockChain({ data: null, error: { message: 'Database error' } });
 
-    const req = createMockReq({ method: 'GET', query: {} });
+    const req = createMockReq({ method: 'GET', query: { resource: 'bets' } });
     const res = createMockRes();
 
     await handler(req, res);
