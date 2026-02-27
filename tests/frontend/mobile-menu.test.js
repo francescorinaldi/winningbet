@@ -16,23 +16,35 @@
 const fs = require('fs');
 const path = require('path');
 
-// Load shared.js source — it uses `var` declarations that become globals
+// Load shared.js once — it uses `var` declarations that become globals.
+// Evaluating once avoids accumulating duplicate document.addEventListener handlers
+// (click, keydown) that shared.js registers at the top level.
 const sharedSource = fs.readFileSync(path.join(__dirname, '../../public/shared.js'), 'utf8');
 
+beforeAll(() => {
+  // Mock window.matchMedia (required by shared.js REDUCED_MOTION) before eval
+  window.matchMedia = jest.fn().mockReturnValue({ matches: false });
+  window.requestAnimationFrame = jest.fn();
+  window.scrollTo = jest.fn();
+
+  // Indirect eval runs in global scope — var declarations become true globals
+  (0, eval)(sharedSource);
+});
+
 beforeEach(() => {
-  // Reset DOM
-  document.body.innerHTML = `
-    <nav id="navbar">
-      <div class="nav-links" id="navLinks">
-        <a href="#tips">Tips</a>
-        <a href="#pricing">Pricing</a>
-        <a href="/auth.html" class="btn btn-outline btn-sm">Accedi</a>
-      </div>
-      <button class="hamburger" id="hamburger" aria-label="Menu">
-        <span></span><span></span><span></span>
-      </button>
-    </nav>
-  `;
+  // Reset DOM — hardcoded test fixture (safe, not untrusted content)
+  document.body.innerHTML = [
+    '<nav id="navbar">',
+    '  <div class="nav-links" id="navLinks">',
+    '    <a href="#tips">Tips</a>',
+    '    <a href="#pricing">Pricing</a>',
+    '    <a href="/auth.html" class="btn btn-outline btn-sm">Accedi</a>',
+    '  </div>',
+    '  <button class="hamburger" id="hamburger" aria-label="Menu">',
+    '    <span></span><span></span><span></span>',
+    '  </button>',
+    '</nav>',
+  ].join('\n');
 
   // Reset body styles
   document.body.style.position = '';
@@ -40,21 +52,9 @@ beforeEach(() => {
   document.body.style.width = '';
   document.body.style.overflow = '';
 
-  // Mock window.matchMedia (required by shared.js REDUCED_MOTION)
-  window.matchMedia = jest.fn().mockReturnValue({ matches: false });
-
-  // Mock window.scrollTo
+  // Reset mocks between tests
   window.scrollTo = jest.fn();
-
-  // Mock window.scrollY (default 0, overridable per test)
   Object.defineProperty(window, 'scrollY', { value: 0, writable: true, configurable: true });
-
-  // Mock window.requestAnimationFrame (used by particle system, not relevant here)
-  window.requestAnimationFrame = jest.fn();
-
-  // Load shared.js into jsdom global scope — indirect eval (0, eval)
-  // ensures `var` declarations become true globals
-  (0, eval)(sharedSource);
 });
 
 afterEach(() => {
