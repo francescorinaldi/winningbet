@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Programma Partner — WinningBet</title>
+    <meta
+      name="description"
+      content="Diventa Partner WinningBet. Comparatore quote multi-bookmaker, pronostici AI premium e pannello statistiche dedicato per il tuo centro scommesse."
+    />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Programma Partner — WinningBet" />
+    <meta
+      property="og:description"
+      content="Diventa Partner WinningBet. Comparatore quote multi-bookmaker, pronostici AI premium e pannello statistiche dedicato per il tuo centro scommesse."
+    />
+    <meta property="og:image" content="https://winningbet.it/og-image.png" />
+    <meta property="og:url" content="https://winningbet.it/business.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="it_IT" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Programma Partner — WinningBet" />
+    <meta
+      name="twitter:description"
+      content="Diventa Partner WinningBet. Comparatore quote multi-bookmaker, pronostici AI premium e pannello statistiche dedicato per il tuo centro scommesse."
+    />
+    <meta name="twitter:image" content="https://winningbet.it/og-image.png" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Particle background -->
+    <canvas id="particles"></canvas>
+
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+      <div class="container nav-content">
+        <a href="/" class="logo">
+          <span class="logo-icon">&#9824;</span>
+          <span class="logo-text">WinningBet</span>
+        </a>
+        <div class="nav-links" id="navLinks">
+          <a href="/#tips">Tips</a>
+          <a href="/#stats">Track Record</a>
+          <a href="/#pricing">Piani</a>
+          <a href="/#faq">FAQ</a>
+          <button class="lang-toggle" id="langToggle" title="Cambia lingua">
+            <span class="flag-emoji">&#127470;&#127481;</span>
+            <span class="lang-label" aria-hidden="true"></span>
+          </button>
+          <a href="/auth.html" class="btn btn-outline btn-sm" id="navAuthBtn">Accedi</a>
+        </div>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero partner-hero" id="hero">
+      <div class="hero-glow"></div>
+      <div class="hero-glow hero-glow--red"></div>
+      <div class="container hero-content">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          <span>PROGRAMMA PARTNER B2B</span>
+        </div>
+        <h1 class="hero-title">
+          <span>Diventa Partner</span><br />
+          <span class="text-gradient">WinningBet</span>
+        </h1>
+        <p class="hero-subtitle">
+          Strumenti professionali per il tuo centro scommesse. Comparatore quote multi-bookmaker,
+          pronostici AI e analisi avanzate.
+        </p>
+        <div class="hero-cta">
+          <a href="#partnerForm" class="btn btn-gold btn-lg" id="heroCta">
+            <span>Candidati Ora</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+      </div>
+      <div class="hero-scroll-indicator">
+        <div class="scroll-line"></div>
+      </div>
+    </section>
+
+    <!-- Benefits -->
+    <section class="partner-benefits-section" id="partner-benefits">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">VANTAGGI PARTNER</span>
+          <h2 class="section-title">
+            Tutto ci&ograve; che serve al tuo <span class="text-gradient">Centro Scommesse</span>
+          </h2>
+          <p class="section-desc">
+            Strumenti esclusivi pensati per i professionisti del settore. Aumenta il valore del tuo
+            punto vendita.
+          </p>
+        </div>
+
+        <div class="partner-benefits-grid">
+          <div class="partner-benefit-card">
+            <div class="partner-benefit-icon">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="22 12 18 8 14 12 10 4 2 16" />
+                <polyline points="22 12 22 8 18 8" />
+              </svg>
+            </div>
+            <h3 class="partner-benefit-title">Comparatore Quote</h3>
+            <p class="partner-benefit-desc">
+              Confronta le quote di tutti i bookmaker in tempo reale per ogni partita. Evidenzia
+              automaticamente le migliori opportunit&agrave;.
+            </p>
+          </div>
+
+          <div class="partner-benefit-card">
+            <div class="partner-benefit-icon">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z" />
+                <circle cx="12" cy="15" r="2" />
+              </svg>
+            </div>
+            <h3 class="partner-benefit-title">Pronostici AI Premium</h3>
+            <p class="partner-benefit-desc">
+              Accesso completo ai pronostici generati dall'intelligenza artificiale con analisi
+              dettagliate per ogni partita.
+            </p>
+          </div>
+
+          <div class="partner-benefit-card">
+            <div class="partner-benefit-icon">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <line x1="3" y1="9" x2="21" y2="9" />
+                <line x1="9" y1="21" x2="9" y2="9" />
+              </svg>
+            </div>
+            <h3 class="partner-benefit-title">Pannello Statistiche</h3>
+            <p class="partner-benefit-desc">
+              Dashboard dedicata con track record, classifiche e statistiche avanzate per i tuoi
+              clienti.
+            </p>
+          </div>
+
+          <div class="partner-benefit-card">
+            <div class="partner-benefit-icon">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
+            <h3 class="partner-benefit-title">Supporto B2B Dedicato</h3>
+            <p class="partner-benefit-desc">
+              Canale di supporto prioritario e materiali personalizzati per il tuo centro scommesse.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Application Form -->
+    <section class="partner-form-section" id="partnerForm">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">CANDIDATURA</span>
+          <h2 class="section-title">
+            Modulo di <span class="text-gradient">Candidatura</span>
+          </h2>
+        </div>
+
+        <!-- Auth prompt (shown when not logged in) -->
+        <div class="partner-auth-prompt" id="partnerAuthPrompt" style="display: none">
+          <div class="partner-auth-prompt-card">
+            <div class="partner-auth-prompt-icon">
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+              </svg>
+            </div>
+            <h3>Accedi per candidarti</h3>
+            <p>Accedi con il tuo account Google per inviare la tua candidatura al Programma Partner.</p>
+            <a href="/auth.html?return=/business.html" class="btn btn-gold btn-lg">
+              <svg width="18" height="18" viewBox="0 0 24 24">
+                <path
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+                  fill="#4285F4"
+                />
+                <path
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  fill="#34A853"
+                />
+                <path
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                  fill="#FBBC05"
+                />
+                <path
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  fill="#EA4335"
+                />
+              </svg>
+              <span>Accedi con Google</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Application form (shown when logged in, no existing application) -->
+        <div class="partner-form-wrapper" id="partnerFormWrapper" style="display: none">
+          <form class="partner-form" id="applicationForm" novalidate>
+            <div class="form-group">
+              <label for="businessName">Ragione Sociale <span class="form-required">*</span></label>
+              <input
+                type="text"
+                id="businessName"
+                name="business_name"
+                required
+                placeholder="Es. Centro Scommesse Roma Srl"
+                autocomplete="organization"
+              />
+            </div>
+            <div class="form-group">
+              <label for="vatNumber">P.IVA <span class="form-required">*</span></label>
+              <input
+                type="text"
+                id="vatNumber"
+                name="vat_number"
+                required
+                placeholder="IT12345678901"
+                pattern="IT\d{11}"
+                maxlength="13"
+                autocomplete="off"
+              />
+              <span class="form-hint">Formato: IT seguito da 11 cifre</span>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="city">Citt&agrave;</label>
+                <input
+                  type="text"
+                  id="city"
+                  name="city"
+                  placeholder="Es. Roma"
+                  autocomplete="address-level2"
+                />
+              </div>
+              <div class="form-group">
+                <label for="province">Provincia</label>
+                <input
+                  type="text"
+                  id="province"
+                  name="province"
+                  placeholder="Es. RM"
+                  maxlength="2"
+                  autocomplete="address-level1"
+                />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="website">Sito Web</label>
+              <input
+                type="url"
+                id="website"
+                name="website"
+                placeholder="https://www.example.com"
+                autocomplete="url"
+              />
+            </div>
+
+            <!-- Form error display -->
+            <div class="partner-form-error" id="formError" style="display: none"></div>
+
+            <button type="submit" class="btn btn-gold btn-block btn-lg" id="submitBtn">
+              Invia Candidatura
+            </button>
+          </form>
+        </div>
+
+        <!-- Application status (shown after applying) -->
+        <div class="partner-status-wrapper" id="partnerStatusWrapper" style="display: none">
+          <div class="partner-status" id="partnerStatus"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <a href="/" class="logo">
+              <span class="logo-icon">&#9824;</span>
+              <span class="logo-text">WinningBet</span>
+            </a>
+            <p class="footer-desc">
+              Pronostici calcio premium powered by AI. Algoritmi proprietari, analisi
+              tecnico-tattiche e dati in tempo reale per darti il vantaggio che fa la differenza.
+            </p>
+          </div>
+          <div class="footer-links">
+            <h4>Navigazione</h4>
+            <a href="/#tips">Tips del Giorno</a>
+            <a href="/#stats">Track Record</a>
+            <a href="/#pricing">Piani</a>
+            <a href="/#faq">FAQ</a>
+          </div>
+          <div class="footer-links">
+            <h4>Legale</h4>
+            <a href="/privacy.html">Privacy Policy</a>
+            <a href="/terms.html">Termini di Servizio</a>
+            <a href="/cookies.html">Cookie Policy</a>
+          </div>
+          <div class="footer-links">
+            <h4>Seguici</h4>
+            <a href="https://t.me/thewinningbettips" target="_blank" rel="noopener noreferrer"
+              >Telegram</a
+            >
+            <a href="#">Instagram</a>
+            <a href="#">TikTok</a>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <div class="footer-disclaimer">
+            <p>
+              <strong>Disclaimer:</strong> Il gioco d'azzardo puo' causare dipendenza. Gioca
+              responsabilmente. Questo sito fornisce solo pronostici e analisi a scopo informativo.
+              Non raccogliamo ne' gestiamo scommesse. Vietato ai minori di 18 anni. Se hai problemi
+              di gioco, chiama il numero verde 800-558822.
+            </p>
+            <p>
+              Raccomandiamo di scommettere esclusivamente su piattaforme con regolare licenza ADM
+              (ex AAMS).
+            </p>
+          </div>
+          <div class="footer-copy">
+            <span>&copy; 2026 WinningBet. Tutti i diritti riservati.</span>
+            <div class="footer-age">
+              <span class="age-badge">18+</span>
+              <span>ADM</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="i18n.js"></script>
+    <script src="shared.js"></script>
+    <script src="business.js"></script>
+  </body>
+</html>

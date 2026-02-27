@@ -5971,3 +5971,329 @@ img {
 .centro-odds-table tbody tr:last-child td {
   border-bottom: none;
 }
+
+/* ============================================
+   PARTNER LANDING PAGE (business.html)
+   ============================================ */
+
+/* --- Partner Hero --- */
+.partner-hero {
+  min-height: 80vh;
+}
+
+/* --- Partner Benefits Section --- */
+.partner-benefits-section {
+  position: relative;
+  z-index: 2;
+  padding: 100px 0;
+  background: var(--bg-secondary);
+}
+
+.partner-benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.partner-benefit-card {
+  padding: 32px 28px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: all 0.3s;
+}
+
+.partner-benefit-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-gold);
+  box-shadow: var(--shadow-gold);
+}
+
+.partner-benefit-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(212, 168, 83, 0.08);
+  border: 1px solid var(--border-gold);
+  color: var(--gold);
+  margin-bottom: 20px;
+}
+
+.partner-benefit-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.partner-benefit-desc {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* --- Partner Form Section --- */
+.partner-form-section {
+  position: relative;
+  z-index: 2;
+  padding: 100px 0;
+}
+
+.partner-form-wrapper {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.partner-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.partner-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.partner-form label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+.form-required {
+  color: var(--gold);
+}
+
+.partner-form input {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  transition: border-color 0.3s;
+  outline: none;
+  width: 100%;
+}
+
+.partner-form input::placeholder {
+  color: var(--text-muted);
+}
+
+.partner-form input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.1);
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Form error message */
+.partner-form-error {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  text-align: center;
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid rgba(231, 76, 60, 0.2);
+  color: var(--red);
+}
+
+/* --- Auth Prompt (non-logged-in users) --- */
+.partner-auth-prompt {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.partner-auth-prompt-card {
+  max-width: 440px;
+  margin: 0 auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 48px 36px;
+}
+
+.partner-auth-prompt-icon {
+  color: var(--gold);
+  margin-bottom: 20px;
+  filter: drop-shadow(0 0 12px var(--gold-glow));
+}
+
+.partner-auth-prompt-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.partner-auth-prompt-card p {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+/* --- Application Status Card --- */
+.partner-status-wrapper {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.partner-status {
+  text-align: center;
+  padding: 48px 36px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-xl);
+  transition: border-color 0.3s;
+}
+
+.partner-status--pending {
+  border-color: var(--gold);
+}
+
+.partner-status--approved {
+  border-color: var(--green);
+}
+
+.partner-status--rejected {
+  border-color: var(--red);
+}
+
+.partner-status-icon {
+  color: var(--gold);
+  margin-bottom: 20px;
+}
+
+.partner-status-icon--approved {
+  color: var(--green);
+}
+
+.partner-status-icon--rejected {
+  color: var(--red);
+}
+
+.partner-status-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.partner-status-desc {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.partner-status-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.partner-status-details:last-of-type {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.partner-status-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.partner-status-value {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* VIES validation badge */
+.partner-vies-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 100px;
+  margin-left: 8px;
+  vertical-align: middle;
+  letter-spacing: 0.3px;
+}
+
+.partner-vies-badge--valid {
+  background: rgba(46, 204, 113, 0.15);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  color: var(--green);
+}
+
+.partner-vies-badge--invalid {
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid rgba(231, 76, 60, 0.2);
+  color: var(--red);
+}
+
+/* --- Partner Landing Responsive --- */
+@media (max-width: 768px) {
+  .partner-benefits-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .partner-hero {
+    min-height: 70vh;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .partner-status {
+    padding: 36px 24px;
+  }
+
+  .partner-auth-prompt-card {
+    padding: 36px 24px;
+  }
+
+  .partner-status-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .partner-benefits-section,
+  .partner-form-section {
+    padding: 60px 0;
+  }
+
+  .partner-benefit-card {
+    padding: 24px 20px;
+  }
+}
