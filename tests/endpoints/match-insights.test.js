@@ -7,6 +7,7 @@ jest.mock('../../api/_lib/api-football', () => ({
   getUpcomingMatches: jest.fn(),
   getRecentResults: jest.fn(),
   getOdds: jest.fn(),
+  getMultipleBookmakerOdds: jest.fn(),
 }));
 jest.mock('../../api/_lib/football-data', () => ({
   getUpcomingMatches: jest.fn(),

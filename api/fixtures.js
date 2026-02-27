@@ -23,9 +23,6 @@ const { resolveLeagueSlug } = require('./_lib/leagues');
 const { supabase } = require('./_lib/supabase');
 const { evaluatePrediction, buildActualResult } = require('./_lib/prediction-utils');
 const { authenticate } = require('./_lib/auth-middleware');
-const { createClient } = require('@supabase/supabase-js');
-
-const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SECRET_KEY);
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -269,7 +266,7 @@ async function handleOddsCompare(req, res) {
     const matchIds = fixtures.map((f) => String(f.id));
     const tipsMap = {};
     if (matchIds.length > 0) {
-      const { data: tips } = await supabaseAdmin
+      const { data: tips } = await supabase
         .from('tips')
         .select('match_id, prediction, odds, confidence')
         .in('match_id', matchIds)
