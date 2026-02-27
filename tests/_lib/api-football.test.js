@@ -11,6 +11,8 @@ const {
   findOddsForPrediction,
   getStandings,
   getFullStandings,
+  getFixtureInjuries,
+  getTeamPlayerStats,
 } = require('../../api/_lib/api-football');
 
 // Mock leagues module
@@ -148,8 +150,8 @@ describe('api-football', () => {
               {
                 fixture: { id: 12345, date: '2025-01-15T20:00:00Z', status: { short: 'NS' } },
                 teams: {
-                  home: { name: 'Inter', logo: 'https://example.com/inter.png' },
-                  away: { name: 'Milan', logo: 'https://example.com/milan.png' },
+                  home: { id: 505, name: 'Inter', logo: 'https://example.com/inter.png' },
+                  away: { id: 489, name: 'Milan', logo: 'https://example.com/milan.png' },
                 },
                 goals: { home: null, away: null },
               },
@@ -166,8 +168,10 @@ describe('api-football', () => {
           date: '2025-01-15T20:00:00Z',
           status: 'NS',
           home: 'Inter',
+          homeId: 505,
           homeLogo: 'https://example.com/inter.png',
           away: 'Milan',
+          awayId: 489,
           awayLogo: 'https://example.com/milan.png',
           goalsHome: null,
           goalsAway: null,
@@ -424,6 +428,179 @@ describe('api-football', () => {
       expect(result.total).toHaveLength(1);
       expect(result.home).toHaveLength(1);
       expect(result.away).toHaveLength(1);
+    });
+
+    test('getFixtureInjuries returns structured injury list', async () => {
+      global.fetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            response: [
+              {
+                player: { id: 101, name: 'L. Martínez' },
+                team: { id: 505, name: 'Inter' },
+                type: 'Injury',
+                reason: 'Soleus',
+              },
+              {
+                player: { id: 102, name: 'H. Çalhanoglu' },
+                team: { id: 505, name: 'Inter' },
+                type: 'Suspension',
+                reason: null,
+              },
+            ],
+            errors: {},
+          }),
+      });
+
+      const result = await getFixtureInjuries(12345);
+
+      expect(result).toEqual([
+        {
+          playerId: 101,
+          playerName: 'L. Martínez',
+          teamId: 505,
+          teamName: 'Inter',
+          type: 'Injury',
+          reason: 'Soleus',
+        },
+        {
+          playerId: 102,
+          playerName: 'H. Çalhanoglu',
+          teamId: 505,
+          teamName: 'Inter',
+          type: 'Suspension',
+          reason: null,
+        },
+      ]);
+    });
+
+    test('getFixtureInjuries returns empty array when no injuries', async () => {
+      global.fetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ response: [], errors: {} }),
+      });
+
+      const result = await getFixtureInjuries(12345);
+      expect(result).toEqual([]);
+    });
+
+    test('getTeamPlayerStats returns normalized player stats', async () => {
+      global.fetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            response: [
+              {
+                player: { id: 201, name: 'L. Martínez' },
+                statistics: [
+                  {
+                    games: {
+                      position: 'Attacker',
+                      appearences: 25,
+                      minutes: 2100,
+                      rating: '7.42',
+                    },
+                    goals: { total: 15, assists: 5 },
+                  },
+                ],
+              },
+              {
+                player: { id: 202, name: 'M. Thuram' },
+                statistics: [
+                  {
+                    games: {
+                      position: 'Attacker',
+                      appearences: 20,
+                      minutes: 1500,
+                      rating: '6.95',
+                    },
+                    goals: { total: 8, assists: 3 },
+                  },
+                ],
+              },
+            ],
+            errors: {},
+          }),
+      });
+
+      const result = await getTeamPlayerStats(505, 2025, 20);
+
+      expect(result).toEqual([
+        {
+          id: 201,
+          name: 'L. Martínez',
+          position: 'Attacker',
+          appearances: 25,
+          minutes: 2100,
+          goals: 15,
+          assists: 5,
+          rating: 7.42,
+        },
+        {
+          id: 202,
+          name: 'M. Thuram',
+          position: 'Attacker',
+          appearances: 20,
+          minutes: 1500,
+          goals: 8,
+          assists: 3,
+          rating: 6.95,
+        },
+      ]);
+    });
+
+    test('getTeamPlayerStats handles missing statistics gracefully', async () => {
+      global.fetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            response: [
+              {
+                player: { id: 301, name: 'Young Player' },
+                statistics: [],
+              },
+            ],
+            errors: {},
+          }),
+      });
+
+      const result = await getTeamPlayerStats(505, 2025);
+
+      expect(result).toEqual([
+        {
+          id: 301,
+          name: 'Young Player',
+          position: 'Unknown',
+          appearances: 0,
+          minutes: 0,
+          goals: 0,
+          assists: 0,
+          rating: 0,
+        },
+      ]);
+    });
+
+    test('getTeamPlayerStats respects topN limit', async () => {
+      const players = Array.from({ length: 25 }, (_, i) => ({
+        player: { id: 400 + i, name: `Player ${i}` },
+        statistics: [
+          {
+            games: { position: 'Midfielder', appearences: 10, minutes: 900, rating: '6.50' },
+            goals: { total: 1, assists: 0 },
+          },
+        ],
+      }));
+
+      global.fetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ response: players, errors: {} }),
+      });
+
+      const result = await getTeamPlayerStats(505, 2025, 5);
+      expect(result).toHaveLength(5);
+      expect(result[0].id).toBe(400);
+      expect(result[4].id).toBe(404);
     });
 
     test('request error throws', async () => {
