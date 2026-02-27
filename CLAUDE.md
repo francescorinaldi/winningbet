@@ -21,11 +21,13 @@ Premium multi-league betting predictions platform (Serie A, Champions League, La
 ## Project Structure
 
 ```
-api/                    → Vercel serverless functions (11 functions, Hobby plan limit = 12)
+api/                    → Vercel serverless functions (12 functions, Hobby plan limit = 12)
 api/_lib/               → Shared backend utilities (11 modules)
 api/_lib/leagues.js     → Centralized league configuration (IDs, codes, seasons)
 api/_lib/prediction-utils.js → Shared prediction evaluation (evaluatePrediction, buildActualResult)
 api/_lib/telegram.js    → Telegram Bot API client (send tips, invite, kick, DM)
+api/_lib/email.js       → SMTP email client + templates (daily digest, partner notifications)
+api/admin.js            → Admin panel + partner applications (apply, approve, reject, users)
 api/billing.js          → Stripe billing (checkout + portal)
 api/cron-tasks.js       → Cron tasks (settle tips + schedine + send)
 api/fixtures.js         → Matches + results + odds + H2H + form + odds-compare (by league)
@@ -39,9 +41,11 @@ api/user-settings.js    → Activity + notifications + preferences + risk profil
 public/                 → Static frontend (HTML, JS, CSS)
 public/shared.js        → Shared frontend utilities (mobile menu, particles, lang toggle, league names)
 public/script.js        → Main landing page logic (IIFE pattern)
-public/auth.js          → Authentication logic (Supabase Auth)
+public/auth.js          → Authentication logic (Supabase Auth, ?return= redirect support)
 public/dashboard.js     → User dashboard logic + Telegram linking
-supabase/migrations/    → Database schema migrations (14 files)
+public/business.html/js → Partner program landing page + application form
+public/admin.html/js    → Admin panel (partner management + user management)
+supabase/migrations/    → Database schema migrations (15 files)
 .claude/skills/                        → Claude Code skills (project-specific)
 .claude/skills/fr3-generate-tips/      → /fr3-generate-tips (prediction engine)
 .claude/skills/fr3-generate-betting-slips/ → /fr3-generate-betting-slips (smart betting slips)
@@ -176,6 +180,9 @@ Valid slugs: `serie-a`, `champions-league`, `la-liga`, `premier-league`, `ligue-
 - `POST /api/telegram` — Telegram webhook (with secret header) or account linking (with JWT)
 - `GET /api/tips?league={slug}` — Tips filtered by league (15min cache)
 - `GET/POST/PUT/DELETE /api/user-settings?resource=activity|notifications|preferences|bets` — User settings + bet tracking (JWT auth)
+- `GET/POST /api/admin?resource=apply` — Partner application (submit POST, check status GET, JWT auth)
+- `GET/POST /api/admin?resource=applications&action=approve|reject|revoke` — Admin: list/manage partner applications (JWT + admin role)
+- `GET/PUT /api/admin?resource=users` — Admin: list users with stats, update tier/role (JWT + admin role)
 
 ## Environment Variables
 
@@ -200,6 +207,7 @@ Valid slugs: `serie-a`, `champions-league`, `la-liga`, `premier-league`, `ligue-
 - `SMTP_USER` — SMTP username
 - `SMTP_PASS` — SMTP password
 - `SMTP_FROM` — Sender email address
+- `ADMIN_EMAILS` — Comma-separated admin emails for partner application notifications
 
 ## Code Conventions
 

@@ -4,7 +4,13 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **feat(b2b): sistema self-service partner + admin panel** — Implementazione completa del flusso B2B per centri scommesse: (1) `supabase/migrations/017_partner_applications.sql` — tabella `partner_applications` con campi business_name, vat_number, VIES validation, status (pending/approved/rejected/revoked), reviewed_by, RLS policies (utenti vedono solo la propria, admin vedono tutte); (2) `api/admin.js` — nuovo endpoint multi-resource: `resource=apply` (candidatura partner con validazione VIES automatica via EC REST API), `resource=applications` (admin: lista, approva, rifiuta, revoca), `resource=users` (admin: lista utenti con stats, ricerca, modifica tier/ruolo); (3) `api/_lib/email.js` — 3 nuovi template email partner (notifica admin su candidatura, approvazione, rifiuto) con tema dark matching il brand; (4) `public/business.html` + `business.js` — landing page programma partner con hero, 4 benefit cards, form di candidatura (Ragione Sociale, P.IVA con validazione IT+11 cifre, città, provincia, sito web), visualizzazione stato candidatura; (5) `public/admin.html` + `admin.js` — pannello amministrazione protetto (role='admin') con 2 tab: "Candidature Partner" (filtro per stato, approvazione/rifiuto/revoca con modale motivo) e "Gestione Utenti" (statistiche per tier, ricerca, modifica tier/ruolo con dropdown); (6) `public/auth.js` + `supabase-config.js` — supporto parametro `?return=` per redirect post-OAuth (con protezione open redirect); (7) `public/styles.css` — ~1000 nuove regole CSS per admin panel e partner landing.
+
 ### Changed
+
+- **refactor(api): consolidate user-bets.js into user-settings.js** — Merged `user-bets.js` CRUD handlers (follow/unfollow tips) into `user-settings.js` as `resource=bets`. Frontend calls updated in `dashboard.js`. Frees one serverless function slot for `api/admin.js` (now 12/12 on Vercel Hobby plan).
 
 - **config(vercel): disable preview deployments on PRs** — Added `git.deploymentEnabled` to `vercel.json`: `preview: false`, `production: true`. Vercel now only deploys on merges to `main`, skipping PR preview builds.
 - **config(copilot): set Claude Opus 4.6 as default model for both agents** — Updated `coder.agent.md` from `claude-sonnet-4` to `claude-opus-4-6`, added `model: claude-opus-4-6` to `reviewer.agent.md`.
