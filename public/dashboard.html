@@ -210,6 +210,17 @@
           >
             ⚽ Fanta
           </button>
+          <button
+            class="dash-tab"
+            data-tab="centro"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panelCentro"
+            id="tabCentro"
+            style="display: none"
+          >
+            🏪 Centro
+          </button>
         </div>
 
         <!-- TAB: Today's Tips -->
@@ -403,6 +414,24 @@
             <div class="skeleton skeleton-card" aria-hidden="true"></div>
             <div class="skeleton skeleton-card" aria-hidden="true"></div>
             <div class="skeleton skeleton-card" aria-hidden="true"></div>
+          </div>
+        </section>
+
+        <!-- TAB: Centro Scommesse Hub (solo partner B2B) -->
+        <section
+          class="dash-panel"
+          id="panelCentro"
+          role="tabpanel"
+          aria-labelledby="tabCentro"
+          style="display: none"
+        >
+          <div class="centro-hub-header">
+            <h2 class="centro-hub-title">Comparatore Quote</h2>
+            <p class="centro-hub-subtitle">Quote in tempo reale da tutti i bookmaker per le prossime partite.</p>
+          </div>
+          <div id="centroHubGrid" aria-live="polite"></div>
+          <div class="centro-hub-empty" id="centroHubEmpty" style="display: none">
+            <p>Nessuna partita con quote disponibili nei prossimi 7 giorni.</p>
           </div>
         </section>
 

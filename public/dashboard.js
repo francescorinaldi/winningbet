@@ -12,7 +12,7 @@
  *   - Supabase CDN (@supabase/supabase-js)
  */
 
-/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState, dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, dashRenderFantacalcio, showToast, buildSkeletonCards, setLastUpdated, retryWithBackoff */
+/* global initMobileMenu, initLangToggle, initCookieBanner, initCopyrightYear, TIER_PRICES, TIER_LEVELS, getLocale, setErrorState, dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, dashRenderFantacalcio, dashRenderCentroHub, showToast, buildSkeletonCards, setLastUpdated, retryWithBackoff */
 
 (function () {
   'use strict';
@@ -120,7 +120,7 @@
 
       const result = await SupabaseConfig.client
         .from('profiles')
-        .select('display_name, tier, stripe_customer_id')
+        .select('display_name, tier, stripe_customer_id, role')
         .eq('user_id', user.id)
         .single();
 
@@ -177,6 +177,20 @@
       }
 
       updateSubscriptionUI(tier);
+
+      // Partner B2B: attiva tab Centro, nasconde billing/upgrade, cambia badge
+      const isPartner = profile && profile.role === 'partner';
+      const tabCentro = document.getElementById('tabCentro');
+      if (tabCentro) tabCentro.style.display = isPartner ? '' : 'none';
+      if (isPartner) {
+        tierLabel.textContent = 'PARTNER';
+        tierBadge.className = 'dash-tier-badge dash-tier-badge--partner';
+        const upgradeSection = document.getElementById('upgradeSection');
+        if (upgradeSection) upgradeSection.style.display = 'none';
+        const billingSection = document.getElementById('billingSection');
+        if (billingSection) billingSection.style.display = 'none';
+      }
+
       loadTelegramStatus();
 
       // Se l'utente torna da un checkout appena completato ma il tier è ancora free,
@@ -806,11 +820,18 @@
         document.getElementById('panelHistory').style.display = target === 'history' ? '' : 'none';
         document.getElementById('panelFantacalcio').style.display =
           target === 'fantacalcio' ? '' : 'none';
+        const panelCentroEl = document.getElementById('panelCentro');
+        if (panelCentroEl) panelCentroEl.style.display = target === 'centro' ? '' : 'none';
         document.getElementById('panelAccount').style.display = 'none';
 
         // Lazy-load Fantacalcio on first open
         if (target === 'fantacalcio') {
           loadFantacalcio();
+        }
+
+        // Lazy-load Centro Hub on first open
+        if (target === 'centro') {
+          loadCentroHub();
         }
 
         const leagueSelector = document.getElementById('dashLeagueSelector');
@@ -848,6 +869,7 @@
       const panelSchedule = document.getElementById('panelSchedule');
       const panelHistory = document.getElementById('panelHistory');
       const panelFantacalcio = document.getElementById('panelFantacalcio');
+      const panelCentroSettings = document.getElementById('panelCentro');
       const isAccountVisible = panelAccount.style.display !== 'none';
 
       const leagueSelector = document.getElementById('dashLeagueSelector');
@@ -864,6 +886,8 @@
         panelHistory.style.display = activePanel === 'history' ? '' : 'none';
         if (panelFantacalcio)
           panelFantacalcio.style.display = activePanel === 'fantacalcio' ? '' : 'none';
+        if (panelCentroSettings)
+          panelCentroSettings.style.display = activePanel === 'centro' ? '' : 'none';
         if (leagueSelector)
           leagueSelector.style.display =
             activePanel === 'fantacalcio' ? 'none' : '';
@@ -873,6 +897,7 @@
         panelSchedule.style.display = 'none';
         panelHistory.style.display = 'none';
         if (panelFantacalcio) panelFantacalcio.style.display = 'none';
+        if (panelCentroSettings) panelCentroSettings.style.display = 'none';
         panelAccount.style.display = '';
         settingsBtn.classList.add('active');
         if (leagueSelector) leagueSelector.style.display = 'none';
@@ -937,6 +962,11 @@
 
       loadTodayTips();
       loadHistory();
+
+      // Ricarica Centro Hub se la tab è attiva
+      if (activeTabName === 'centro') {
+        loadCentroHub();
+      }
     });
   }
 
@@ -1553,6 +1583,27 @@
       setErrorState(grid, 'Impossibile caricare i consigli Fantacalcio', function () {
         fantacalcioLoaded = false;
         loadFantacalcio();
+      });
+    }
+  }
+
+  // ─── CENTRO SCOMMESSE HUB (partner B2B) ────────────────
+
+  async function loadCentroHub() {
+    const grid = document.getElementById('centroHubGrid');
+    const emptyEl = document.getElementById('centroHubEmpty');
+    if (!grid || !emptyEl) return;
+
+    try {
+      buildSkeletonCards(grid, 3, 'card');
+      const data = await retryWithBackoff(function () {
+        return authFetch('/api/odds-compare?league=' + encodeURIComponent(currentLeague));
+      });
+      dashRenderCentroHub(grid, emptyEl, data);
+    } catch (err) {
+      console.warn('[loadCentroHub]', err.message);
+      setErrorState(grid, 'Impossibile caricare le quote', function () {
+        loadCentroHub();
       });
     }
   }

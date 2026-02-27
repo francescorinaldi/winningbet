@@ -1,4 +1,4 @@
-/* exported dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, dashBuildBetTrackingUI, dashRenderFantacalcio */
+/* exported dashRenderTipsGrid, dashRenderSchedule, dashRenderHistory, dashRenderNotifications, dashBuildBetTrackingUI, dashRenderFantacalcio, dashRenderCentroHub */
 /* global LEAGUE_NAMES_MAP, formatMatchDate, buildShareDropdown */
 /* eslint no-var: "off" */
 
@@ -945,4 +945,146 @@ var dashRenderFantacalcio = function (container, data, ctx) {
     marketSection.appendChild(marketGrid);
     container.appendChild(marketSection);
   }
+};
+
+/**
+ * dashRenderCentroHub — Renders the odds comparison table for B2B partners.
+ *
+ * @param {HTMLElement} container - The #centroHubGrid element.
+ * @param {HTMLElement} emptyEl - The #centroHubEmpty element.
+ * @param {Object} data - Response from GET /api/odds-compare
+ *   { league, fixtures: [{ fixtureId, date, home, away, tip, bookmakers, bestOdds }] }
+ */
+var dashRenderCentroHub = function (container, emptyEl, data) {
+  container.textContent = '';
+
+  var fixtures = (data && data.fixtures) || [];
+  var withOdds = fixtures.filter(function (f) { return f.bookmakers && f.bookmakers.length > 0; });
+
+  if (withOdds.length === 0) {
+    emptyEl.style.display = '';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  var COLS = [
+    { key: 'home',     label: '1' },
+    { key: 'draw',     label: 'X' },
+    { key: 'away',     label: '2' },
+    { key: 'over25',   label: 'Ov 2.5' },
+    { key: 'under25',  label: 'Un 2.5' },
+    { key: 'btts_yes', label: 'GG' },
+    { key: 'btts_no',  label: 'NG' },
+  ];
+
+  withOdds.forEach(function (fixture) {
+    var card = document.createElement('div');
+    card.className = 'centro-fixture-card';
+
+    // Header: teams + date
+    var header = document.createElement('div');
+    header.className = 'centro-fixture-header';
+
+    var teams = document.createElement('h3');
+    teams.className = 'centro-fixture-teams';
+    teams.textContent = fixture.home + ' vs ' + fixture.away;
+    header.appendChild(teams);
+
+    var dateEl = document.createElement('span');
+    dateEl.className = 'centro-fixture-date';
+    var d = new Date(fixture.date);
+    dateEl.textContent = d.toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    header.appendChild(dateEl);
+
+    card.appendChild(header);
+
+    // Tip badge (se presente)
+    if (fixture.tip) {
+      var tipBadge = document.createElement('div');
+      tipBadge.className = 'centro-fixture-tip';
+      var tipLabel = document.createElement('span');
+      tipLabel.className = 'centro-tip-label';
+      tipLabel.textContent = 'WinningBet:';
+      var tipValue = document.createElement('span');
+      tipValue.className = 'centro-tip-value';
+      tipValue.textContent = ' ' + fixture.tip.prediction + (fixture.tip.confidence ? ' (' + fixture.tip.confidence + '%)' : '');
+      tipBadge.appendChild(tipLabel);
+      tipBadge.appendChild(tipValue);
+      card.appendChild(tipBadge);
+    }
+
+    // Odds table
+    var wrapper = document.createElement('div');
+    wrapper.className = 'centro-odds-table-wrapper';
+
+    var table = document.createElement('table');
+    table.className = 'centro-odds-table';
+
+    // Thead
+    var thead = document.createElement('thead');
+    var headRow = document.createElement('tr');
+    var thBk = document.createElement('th');
+    thBk.textContent = 'Bookmaker';
+    thBk.className = 'centro-odds-th';
+    headRow.appendChild(thBk);
+    COLS.forEach(function (col) {
+      var th = document.createElement('th');
+      th.textContent = col.label;
+      th.className = 'centro-odds-th';
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    // Tbody
+    var tbody = document.createElement('tbody');
+    fixture.bookmakers.forEach(function (bk) {
+      var row = document.createElement('tr');
+      var tdName = document.createElement('td');
+      tdName.className = 'centro-odds-td centro-odds-td--name';
+      tdName.textContent = bk.name;
+      row.appendChild(tdName);
+
+      COLS.forEach(function (col) {
+        var td = document.createElement('td');
+        var val = bk.odds[col.key];
+        var best = fixture.bestOdds[col.key];
+        if (val === null || val === undefined) {
+          td.textContent = '\u2014';
+          td.className = 'centro-odds-td centro-odds-td--empty';
+        } else {
+          td.textContent = parseFloat(val).toFixed(2);
+          td.className = 'centro-odds-td' + (best !== null && parseFloat(val) >= parseFloat(best) ? ' centro-odds-best' : '');
+        }
+        row.appendChild(td);
+      });
+      tbody.appendChild(row);
+    });
+
+    // Best row
+    var bestRow = document.createElement('tr');
+    bestRow.className = 'centro-odds-best-row';
+    var tdBestLabel = document.createElement('td');
+    tdBestLabel.className = 'centro-odds-td centro-odds-td--name';
+    tdBestLabel.textContent = 'Best';
+    bestRow.appendChild(tdBestLabel);
+    COLS.forEach(function (col) {
+      var td = document.createElement('td');
+      var val = fixture.bestOdds[col.key];
+      if (val === null || val === undefined) {
+        td.textContent = '\u2014';
+        td.className = 'centro-odds-td centro-odds-td--empty';
+      } else {
+        td.textContent = parseFloat(val).toFixed(2);
+        td.className = 'centro-odds-td centro-odds-best';
+      }
+      bestRow.appendChild(td);
+    });
+    tbody.appendChild(bestRow);
+
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+    card.appendChild(wrapper);
+    container.appendChild(card);
+  });
 };

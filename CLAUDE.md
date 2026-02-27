@@ -32,6 +32,7 @@ api/fixtures.js         → Matches + results + odds (by league)
 api/generate-tips.js    → Cron orchestrator + single-league generation
 api/match-insights.js   → H2H + team form
 api/betting-slips.js    → Smart betting slips (schedine della settimana)
+api/odds-compare.js     → Multi-bookmaker odds comparator (JWT auth, partner role only)
 api/stats.js            → Standings + track record
 api/stripe-webhook.js   → Stripe webhook handler
 api/telegram.js         → Telegram webhook + account linking
@@ -174,6 +175,7 @@ Valid slugs: `serie-a`, `champions-league`, `la-liga`, `premier-league`, `ligue-
 - `GET/POST /api/generate-tips` — Cron orchestrator (GET) or single-league generation (POST)
 - `GET /api/match-insights?type=h2h|form` — Head-to-head (24h) or team form (6h)
 - `GET /api/betting-slips?date={YYYY-MM-DD}&status={status}` — Smart betting slips (JWT auth, PRO+VIP only)
+- `GET /api/odds-compare?league={slug}` — Multi-bookmaker odds comparator (JWT auth, role=partner only, 30min cache)
 - `GET /api/stats?type=standings|track-record&league={slug}` — League standings (6h) or track record (1h)
 - `POST /api/stripe-webhook` — Stripe event handler (+ auto Telegram invite/kick)
 - `POST /api/telegram` — Telegram webhook (with secret header) or account linking (with JWT)

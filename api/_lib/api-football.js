@@ -563,12 +563,62 @@ async function getTeamStatistics(teamId, leagueId, season) {
   };
 }
 
+/**
+ * Recupera le quote per una partita da tutti i bookmaker disponibili.
+ * Utile per il comparatore quote del Centro Scommesse B2B.
+ *
+ * @param {number|string} fixtureId - ID della partita
+ * @returns {Promise<{fixtureId: number, bookmakers: Array}|null>}
+ */
+async function getMultipleBookmakerOdds(fixtureId) {
+  const data = await request('/odds', { fixture: fixtureId });
+  // omettere bookmaker= restituisce tutti i bookmaker disponibili
+  if (!data || data.length === 0) return null;
+  if (!data[0].bookmakers || data[0].bookmakers.length === 0) return null;
+
+  const FIELDS = [
+    { key: 'home', betId: 1, outcome: 'Home' },
+    { key: 'draw', betId: 1, outcome: 'Draw' },
+    { key: 'away', betId: 1, outcome: 'Away' },
+    { key: 'over25', betId: 5, outcome: 'Over 2.5' },
+    { key: 'under25', betId: 5, outcome: 'Under 2.5' },
+    { key: 'btts_yes', betId: 8, outcome: 'Yes' },
+    { key: 'btts_no', betId: 8, outcome: 'No' },
+  ];
+
+  const bookmakers = data[0].bookmakers
+    .slice(0, 8)
+    .map((bk) => {
+      const betsById = {};
+      bk.bets.forEach((b) => {
+        betsById[b.id] = b;
+      });
+      const odds = {};
+      FIELDS.forEach(({ key, betId, outcome }) => {
+        const market = betsById[betId];
+        if (!market) {
+          odds[key] = null;
+          return;
+        }
+        const v = market.values.find((x) => x.value === outcome);
+        odds[key] = v ? v.odd : null;
+      });
+      return { id: bk.id, name: bk.name, odds };
+    })
+    .filter(
+      (bk) => bk.odds.home !== null || bk.odds.draw !== null || bk.odds.over25 !== null,
+    );
+
+  return bookmakers.length === 0 ? null : { fixtureId: Number(fixtureId), bookmakers };
+}
+
 module.exports = {
   getUpcomingMatches,
   getRecentResults,
   getOdds,
   getAllOdds,
   findOddsForPrediction,
+  getMultipleBookmakerOdds,
   getStandings,
   getFullStandings,
   getHeadToHead,

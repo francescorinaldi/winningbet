@@ -5798,3 +5798,176 @@ img {
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================
+   CENTRO SCOMMESSE HUB (Partner B2B)
+   ============================================ */
+
+/* Badge partner */
+.dash-tier-badge--partner {
+  background: linear-gradient(135deg, #1a6b3a, #27ae60);
+  color: #fff;
+}
+
+/* Header sezione */
+.centro-hub-header {
+  margin-bottom: 1.5rem;
+}
+
+.centro-hub-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem;
+}
+
+.centro-hub-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Stato vuoto */
+.centro-hub-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Card singola partita */
+.centro-fixture-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.centro-fixture-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.centro-fixture-teams {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.centro-fixture-date {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Badge tip WinningBet */
+.centro-fixture-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(212, 168, 83, 0.08);
+  border: 1px solid var(--border-gold);
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.825rem;
+}
+
+.centro-tip-label {
+  color: var(--gold);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.centro-tip-value {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Wrapper scrollabile per la tabella */
+.centro-odds-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* Tabella quote */
+.centro-odds-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 480px;
+  font-size: 0.85rem;
+}
+
+.centro-odds-th {
+  padding: 0.5rem 0.6rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.centro-odds-th:first-child {
+  text-align: left;
+  min-width: 120px;
+}
+
+.centro-odds-td {
+  padding: 0.45rem 0.6rem;
+  text-align: center;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.centro-odds-td--name {
+  text-align: left;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.centro-odds-td--empty {
+  color: var(--text-muted, rgba(255, 255, 255, 0.25));
+}
+
+/* Cella con la quota migliore */
+.centro-odds-best {
+  color: var(--green);
+  font-weight: 700;
+  background: var(--green-glow);
+}
+
+/* Riga "Best" riepilogativa */
+.centro-odds-best-row td {
+  background: rgba(46, 204, 113, 0.05);
+  border-top: 1px solid rgba(46, 204, 113, 0.2);
+  font-weight: 600;
+}
+
+.centro-odds-best-row .centro-odds-td--name {
+  color: var(--green);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Ultima riga senza bordo in fondo */
+.centro-odds-table tbody tr:last-child td {
+  border-bottom: none;
+}

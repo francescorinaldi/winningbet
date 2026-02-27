@@ -40,7 +40,7 @@ async function authenticate(req) {
   // Recupera il profilo con il tier
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, display_name, tier, stripe_customer_id')
+    .select('id, display_name, tier, stripe_customer_id, role')
     .eq('user_id', user.id)
     .single();
 
