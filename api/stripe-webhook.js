@@ -287,16 +287,32 @@ async function manageTelegramAccess(userId, action) {
 
   try {
     if (action === 'grant') {
+      // 1. Canale privato (tips PRO/VIP)
       const inviteLink = await telegram.createPrivateInviteLink('Sub ' + userId.slice(0, 8));
-      const msg =
-        "Il tuo abbonamento WinningBet e' attivo! Unisciti al canale privato: " + inviteLink;
+
+      // 2. Gruppo community (discussione) — opzionale, silente se non configurato
+      const communityLink = await telegram.createCommunityInviteLink('Community ' + userId.slice(0, 8));
+
+      let msg =
+        '\uD83C\uDFC6 Il tuo abbonamento WinningBet \u00e8 attivo\\!\n\n' +
+        '\uD83D\uDD10 *Canale privato \\(tips PRO/VIP\\):*\n' + inviteLink;
+
+      if (communityLink) {
+        msg +=
+          '\n\n\uD83D\uDCAC *Gruppo community \\(discussione con altri subscriber\\):*\n' +
+          communityLink +
+          '\n\n_Presentati e inizia a discutere di value bet\\. Benvenuto nel gruppo\\!_';
+      }
+
       await telegram.sendDirectMessage(profile.telegram_user_id, msg);
-      console.log('Telegram invite sent to user:', userId);
+      console.log('Telegram invite sent to user:', userId, communityLink ? '(+ community)' : '');
     } else if (action === 'revoke') {
+      // Rimuovi da canale privato e gruppo community
       await telegram.removeFromPrivateChannel(profile.telegram_user_id);
+      await telegram.removeFromCommunity(profile.telegram_user_id);
       await telegram.sendDirectMessage(
         profile.telegram_user_id,
-        "Il tuo abbonamento WinningBet e' scaduto. Rinnova per riottenere l'accesso al canale privato.",
+        "Il tuo abbonamento WinningBet e' scaduto. Rinnova per riottenere l'accesso al canale privato e al gruppo community.",
       );
       console.log('Telegram access revoked for user:', userId);
     }

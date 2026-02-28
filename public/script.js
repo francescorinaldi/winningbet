@@ -885,6 +885,18 @@
         animateCounter(roiEl);
       }
 
+      // Bankroll simulation: €100 iniziali → valore attuale
+      const bankrollEl = document.getElementById('statBankroll');
+      if (bankrollEl && data.bankroll && data.bankroll.final !== undefined) {
+        bankrollEl.textContent = data.bankroll.final.toFixed(0);
+      }
+
+      // Max drawdown — esposto con trasparenza, non nascosto come fanno i competitor
+      const drawdownEl = document.getElementById('statMaxDrawdown');
+      if (drawdownEl && data.bankroll && data.bankroll.max_drawdown !== undefined) {
+        drawdownEl.textContent = data.bankroll.max_drawdown.toFixed(1);
+      }
+
       // Track record since date
       const sinceEl = document.getElementById('trackRecordSince');
       if (sinceEl && data.track_record_since) {

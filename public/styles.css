@@ -1031,6 +1031,37 @@ img {
   flex-shrink: 0;
 }
 
+.tip-value-edge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #4caf50;
+  background: rgba(76, 175, 80, 0.08);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  border-radius: 6px;
+  padding: 5px 10px;
+  margin-top: 10px;
+}
+
+.tip-value-edge--strong {
+  color: #2e7d32;
+  background: rgba(76, 175, 80, 0.15);
+  border-color: rgba(76, 175, 80, 0.35);
+}
+
+.tip-value-edge-icon {
+  font-size: 0.9rem;
+}
+
+.tip-value-edge-detail {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-left: 2px;
+}
+
 .tip-analysis {
   font-size: 0.85rem;
   color: var(--text-secondary);
@@ -1220,6 +1251,11 @@ img {
   font-size: 2rem;
   font-weight: 700;
   color: var(--gold);
+}
+
+/* Prefisso (€) che precede il valore numerico invece di seguirlo */
+.stat-suffix--pre {
+  margin-right: 2px;
 }
 
 .stat-label {

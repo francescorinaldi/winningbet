@@ -85,7 +85,7 @@ async function handleTrackRecord(req, res) {
     let settledQuery = supabase
       .from('tips')
       .select(
-        'id, match_id, prediction, odds, confidence, status, tier, match_date, home_team, away_team, result, created_at',
+        'id, match_id, league, prediction, odds, confidence, status, tier, match_date, home_team, away_team, result, created_at',
       )
       .in('status', ['won', 'lost', 'void'])
       .order('match_date', { ascending: false });
@@ -347,6 +347,90 @@ function buildOddsRangeBreakdown(tips) {
   }).filter(function (r) { return (r.won + r.lost) > 0; });
 }
 
+/**
+ * Simulazione bankroll: partendo da €100, +odds-1 per ogni win, -1 per ogni loss.
+ * Restituisce il valore finale, il max drawdown e la serie per un grafico.
+ *
+ * Il max drawdown misura il peggior calo percentuale peak-to-trough.
+ * È il dato che i competitor nascondono e che noi invece esponiamo
+ * per dimostrare trasparenza reale.
+ */
+function buildBankrollSimulation(tips) {
+  const chronological = tips
+    .filter(function (t) { return t.status === 'won' || t.status === 'lost'; })
+    .sort(function (a, b) { return new Date(a.match_date) - new Date(b.match_date); });
+
+  let bankroll = 100;
+  let peak = 100;
+  let maxDrawdown = 0;
+  const series = [100];
+
+  chronological.forEach(function (tip) {
+    if (tip.status === 'won') {
+      bankroll += parseFloat(tip.odds) - 1;
+    } else {
+      bankroll -= 1;
+    }
+
+    if (bankroll > peak) peak = bankroll;
+    const drawdown = peak > 0 ? ((peak - bankroll) / peak) * 100 : 0;
+    if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+
+    series.push(parseFloat(bankroll.toFixed(2)));
+  });
+
+  return {
+    start: 100,
+    final: parseFloat(bankroll.toFixed(2)),
+    max_drawdown: parseFloat(maxDrawdown.toFixed(1)),
+    series: series,
+  };
+}
+
+/**
+ * Streak corrente e massimi storici (win streak e losing streak).
+ * La streak corrente è l'elemento più utile per l'anti-churn:
+ * mostrare che anche la max losing streak storica è X consola chi è a -5.
+ */
+function buildStreakData(tips) {
+  const chronological = tips
+    .filter(function (t) { return t.status === 'won' || t.status === 'lost'; })
+    .sort(function (a, b) { return new Date(a.match_date) - new Date(b.match_date); });
+
+  if (chronological.length === 0) {
+    return { current: 0, current_type: null, max_win: 0, max_loss: 0 };
+  }
+
+  let maxWin = 0;
+  let maxLoss = 0;
+  let currentWin = 0;
+  let currentLoss = 0;
+
+  chronological.forEach(function (tip) {
+    if (tip.status === 'won') {
+      currentWin++;
+      currentLoss = 0;
+      if (currentWin > maxWin) maxWin = currentWin;
+    } else {
+      currentLoss++;
+      currentWin = 0;
+      if (currentLoss > maxLoss) maxLoss = currentLoss;
+    }
+  });
+
+  const lastStatus = chronological[chronological.length - 1].status;
+  const current = lastStatus === 'won' ? currentWin : currentLoss;
+
+  return {
+    current: current,
+    current_type: lastStatus,
+    max_win: maxWin,
+    max_loss: maxLoss,
+  };
+}
+
 module.exports.buildMonthlyBreakdown = buildMonthlyBreakdown;
 module.exports.buildLeagueBreakdown = buildLeagueBreakdown;
 module.exports.buildOddsRangeBreakdown = buildOddsRangeBreakdown;
+module.exports.buildBankrollSimulation = buildBankrollSimulation;
+module.exports.buildStreakData = buildStreakData;
