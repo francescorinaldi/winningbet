@@ -110,7 +110,13 @@ async function handleTrackRecord(req, res) {
       pendingQuery = pendingQuery.eq('league', leagueSlug);
     }
 
-    const { count: pendingCount } = await pendingQuery;
+    const [{ count: pendingCount }, { count: activeSubscribers }] = await Promise.all([
+      pendingQuery,
+      supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .in('tier', ['pro', 'vip']),
+    ]);
 
     const allTips = tips || [];
     const won = allTips.filter(function (t) {
@@ -166,6 +172,8 @@ async function handleTrackRecord(req, res) {
     const monthly = buildMonthlyBreakdown(allTips);
     const byLeague = buildLeagueBreakdown(allTips);
     const byOddsRange = buildOddsRangeBreakdown(allTips);
+    const bankroll = buildBankrollSimulation(allTips);
+    const streak = buildStreakData(allTips);
 
     // Distinct matches analyzed
     const matchIds = new Set();
@@ -179,6 +187,7 @@ async function handleTrackRecord(req, res) {
     const trackRecordSince = oldestTip ? oldestTip.created_at.split('T')[0] : null;
 
     const result = {
+      active_subscribers: activeSubscribers || 0,
       total_tips: allTips.length + (pendingCount || 0),
       won: won,
       lost: lost,
@@ -193,6 +202,8 @@ async function handleTrackRecord(req, res) {
       monthly: monthly,
       by_league: byLeague,
       by_odds_range: byOddsRange,
+      bankroll: bankroll,
+      streak: streak,
       track_record_since: trackRecordSince,
     };
 

@@ -825,6 +825,12 @@
         animateCounter(heroTips);
       }
 
+      const heroMembers = document.getElementById('heroActiveMembers');
+      if (heroMembers && data.active_subscribers > 0) {
+        heroMembers.setAttribute('data-count', data.active_subscribers);
+        animateCounter(heroMembers);
+      }
+
       // Track record stat cards
       const statCards = document.querySelectorAll('.stat-card');
       statCards.forEach(function (card) {
