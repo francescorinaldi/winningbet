@@ -717,6 +717,7 @@ var PREDICTION_LABELS = {
   'Corners Over 10.5': 'Corner Spettacolo',
   'Corners Under 8.5': 'Gara Tattica',
   'Corners Under 9.5': 'Gara Tattica',
+  'Corners Under 10.5': 'Gara Tattica',
   'Cards Over 3.5': 'Partita Nervosa',
   'Cards Over 4.5': 'Gara Bollente',
   'Cards Under 3.5': 'Partita Pulita',

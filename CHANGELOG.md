@@ -4,6 +4,18 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **fix(corners/cards): forward corner/card odds to match.odds in fetch-league-data.js** — Step 4 of the data pipeline extracted matchWinner, overUnder, bothTeamsScore, doubleChance odds into `match.odds` but omitted corners and cards. This meant the analyst agent never saw corner/card odds despite the data being fetched by `getAllOdds()`. Added `allOdds.corners` and `allOdds.cards` extraction blocks.
+- **fix(labels): add missing `Corners Under 10.5` to PREDICTION_LABELS** — The marketing label map in `dashboard-renderers.js` had 22 entries but was missing `Corners Under 10.5` → `Gara Tattica`. Added it.
+- **fix(cron): track skipped corner/card tips in settlement response** — `cron-tasks.js` `handleSettle()` silently skipped tips where `evaluatePrediction` returned `null` (corner/card tips without extras). Added `skippedManual` counter and included it in the JSON response for observability.
+- **fix(prediction-utils): add console.warn for unrecognized prediction formats** — The `void` fallback in `evaluatePrediction()` had no logging, making it hard to detect malformed predictions. Added `console.warn` with the unrecognized prediction string.
+
+### Added
+
+- **test(prediction-utils): comprehensive test suite for evaluatePrediction + buildActualResult** — 20 tests covering standard markets (1/X/2, double chance, over/under, goal/no goal, combos), corner markets (over/under with extras, null without extras), card markets (over/under with extras, null without extras), unrecognized prediction void fallback, and `buildActualResult` formatting.
+- **test(fantacalcio): endpoint test suite for GET /api/fantacalcio** — 10 tests covering auth (401 without JWT), method validation (405 for POST), tier-gated responses (free/pro/vip), league validation (default serie-a, invalid fallback, premier-league accepted), DB error handling (500), response shape (league + week fields), and cache headers.
+
 ### Changed
 
 - **config(vercel): disable preview deployments on PRs** — Added `git.deploymentEnabled` to `vercel.json`: `preview: false`, `production: true`. Vercel now only deploys on merges to `main`, skipping PR preview builds.

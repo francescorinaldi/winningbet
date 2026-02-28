@@ -143,6 +143,22 @@ async function main() {
             match.odds.doubleChance[v.outcome] = v.odd;
           });
         }
+
+        // Corners Over/Under
+        if (allOdds.corners) {
+          match.odds.corners = {};
+          allOdds.corners.forEach((v) => {
+            match.odds.corners[v.outcome] = v.odd;
+          });
+        }
+
+        // Cards/Bookings Over/Under
+        if (allOdds.cards) {
+          match.odds.cards = {};
+          allOdds.cards.forEach((v) => {
+            match.odds.cards[v.outcome] = v.odd;
+          });
+        }
       }
     });
   }

@@ -60,7 +60,9 @@ async function handleSettle(_req, res) {
     }
 
     if (!pendingTips || pendingTips.length === 0) {
-      return res.status(200).json({ settled: 0, message: 'Nessun pronostico da chiudere' });
+      return res
+        .status(200)
+        .json({ settled: 0, skipped_manual: 0, message: 'Nessun pronostico da chiudere' });
     }
 
     // 2. Raggruppa tips per lega
@@ -73,6 +75,7 @@ async function handleSettle(_req, res) {
 
     // 3. Per ogni lega, recupera risultati e chiudi i tips
     const settledResults = [];
+    let skippedManual = 0;
 
     for (const [leagueSlug, tips] of Object.entries(tipsByLeague)) {
       let results;
@@ -110,7 +113,10 @@ async function handleSettle(_req, res) {
         // null = prediction requires extras (corners/cards) not available via cron
         // These tips must be settled manually via /fr3-settle-tips skill
         const status = evaluatePrediction(tip.prediction, result, totalGoals);
-        if (status === null) continue;
+        if (status === null) {
+          skippedManual++;
+          continue;
+        }
 
         tipUpdates.push({ id: tip.id, status: status, result: score });
         outcomeUpserts.push({ tip_id: tip.id, actual_result: actualResult });
@@ -166,6 +172,7 @@ async function handleSettle(_req, res) {
 
     return res.status(200).json({
       settled: settledResults.length,
+      skipped_manual: skippedManual,
       results: settledResults,
       schedine_settled: schedineSettled,
     });
