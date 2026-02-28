@@ -16,6 +16,7 @@
 
 const { authenticate } = require('./_lib/auth-middleware');
 const { supabase } = require('./_lib/supabase');
+const cache = require('./_lib/cache');
 const {
   sendEmail,
   buildPartnerApplicationNotification,
@@ -729,31 +730,38 @@ async function handleUsers(req, res, adminUser) {
   // and add an email_match flag for UI highlighting if needed.
   // NOTE: We do NOT filter out rows here — pagination totals must match the DB count.
 
-  // Stats: always use dedicated global count queries (independent of search filter)
-  const tierCounts = await Promise.allSettled([
-    supabase.from('profiles').select('id', { count: 'exact', head: true }),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'free'),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'pro'),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'vip'),
-    supabase
-      .from('profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('role', 'partner'),
-  ]);
+  // Stats: use dedicated global count queries, cached for 60s to avoid 5 COUNT queries per page
+  const STATS_CACHE_TTL = 60;
+  const STATS_CACHE_KEY = 'admin_user_stats';
+  let stats = cache.get(STATS_CACHE_KEY);
 
-  function statCount(result) {
-    if (result.status !== 'fulfilled') return 0;
-    if (result.value.error) return 0;
-    return result.value.count || 0;
+  if (!stats) {
+    const tierCounts = await Promise.allSettled([
+      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'free'),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'pro'),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'vip'),
+      supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('role', 'partner'),
+    ]);
+
+    function statCount(result) {
+      if (result.status !== 'fulfilled') return 0;
+      if (result.value.error) return 0;
+      return result.value.count || 0;
+    }
+
+    stats = {
+      total: statCount(tierCounts[0]),
+      free: statCount(tierCounts[1]),
+      pro: statCount(tierCounts[2]),
+      vip: statCount(tierCounts[3]),
+      partners: statCount(tierCounts[4]),
+    };
+    cache.set(STATS_CACHE_KEY, stats, STATS_CACHE_TTL);
   }
-
-  const stats = {
-    total: statCount(tierCounts[0]),
-    free: statCount(tierCounts[1]),
-    pro: statCount(tierCounts[2]),
-    vip: statCount(tierCounts[3]),
-    partners: statCount(tierCounts[4]),
-  };
 
   return res.status(200).json({
     users: enriched,

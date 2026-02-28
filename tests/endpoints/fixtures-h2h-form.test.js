@@ -34,8 +34,9 @@ jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn(() => ({ from: jest.fn().mockReturnThis(), select: jest.fn().mockReturnThis() })),
 }));
 
-const { getHeadToHead, getStandings } = require('../../api/_lib/api-football');
+const { getHeadToHead, getStandings, getUpcomingMatches, getMultipleBookmakerOdds } = require('../../api/_lib/api-football');
 const cache = require('../../api/_lib/cache');
+const { authenticate } = require('../../api/_lib/auth-middleware');
 
 describe('GET /api/fixtures (h2h + form types)', () => {
   beforeEach(() => {
@@ -211,5 +212,117 @@ describe('GET /api/fixtures (h2h + form types)', () => {
     expect(res.status).toHaveBeenCalledWith(200);
     const result = res.json.mock.calls[0][0];
     expect(result).toHaveProperty('Juventus');
+  });
+});
+
+describe('GET /api/fixtures (odds-compare type)', () => {
+  const { supabase: mockSupabase } = require('../../api/_lib/supabase');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // .in().eq().eq() chain — make `in` return a thenable chain so `await` resolves
+    const thenableChain = {
+      eq: jest.fn(),
+      then: (resolve) => resolve({ data: [] }),
+      catch: (reject) => Promise.resolve({ data: [] }).catch(reject),
+    };
+    thenableChain.eq.mockReturnValue(thenableChain);
+    mockSupabase.in.mockReturnValue(thenableChain);
+  });
+
+  it('should return 401 when not authenticated', async () => {
+    authenticate.mockResolvedValue({ user: null, profile: null, error: 'Unauthorized' });
+
+    const req = createMockReq({ method: 'GET', query: { type: 'odds-compare' } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Autenticazione richiesta' });
+  });
+
+  it('should return 403 when authenticated but not a partner', async () => {
+    authenticate.mockResolvedValue({
+      user: { id: 'user-1' },
+      profile: { role: 'user' },
+      error: null,
+    });
+
+    const req = createMockReq({ method: 'GET', query: { type: 'odds-compare' } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Accesso riservato — solo partner Centro Scommesse',
+    });
+  });
+
+  it('should return cached odds-compare data when available', async () => {
+    authenticate.mockResolvedValue({
+      user: { id: 'user-1' },
+      profile: { role: 'partner' },
+      error: null,
+    });
+    const cachedData = { league: 'serie-a', fixtures: [] };
+    cache.get.mockReturnValueOnce(cachedData);
+
+    const req = createMockReq({ method: 'GET', query: { type: 'odds-compare', league: 'serie-a' } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(cache.get).toHaveBeenCalledWith('odds_compare_serie-a');
+    expect(getUpcomingMatches).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(cachedData);
+  });
+
+  it('should return odds-compare data for a partner', async () => {
+    authenticate.mockResolvedValue({
+      user: { id: 'user-1' },
+      profile: { role: 'partner' },
+      error: null,
+    });
+    const upcoming = [
+      { id: 101, date: new Date(Date.now() + 86400_000).toISOString(), home: 'Inter', away: 'Milan' },
+    ];
+    getUpcomingMatches.mockResolvedValue(upcoming);
+    getMultipleBookmakerOdds.mockResolvedValue({
+      bookmakers: [{ name: 'Bet365', odds: { home: 1.8, draw: 3.5, away: 4.0, over25: 1.9, under25: 2.0, btts_yes: 1.7, btts_no: 2.1 } }],
+    });
+
+    const req = createMockReq({ method: 'GET', query: { type: 'odds-compare', league: 'serie-a' } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(getUpcomingMatches).toHaveBeenCalledWith('serie-a', 15);
+    expect(res.status).toHaveBeenCalledWith(200);
+    const result = res.json.mock.calls[0][0];
+    expect(result).toHaveProperty('league', 'serie-a');
+    expect(result.fixtures).toHaveLength(1);
+    expect(result.fixtures[0]).toMatchObject({ fixtureId: 101, home: 'Inter', away: 'Milan' });
+    expect(result.fixtures[0].bookmakers).toHaveLength(1);
+    expect(result.fixtures[0].bestOdds).toMatchObject({ home: 1.8, draw: 3.5, away: 4.0 });
+  });
+
+  it('should return 502 when upstream API fails', async () => {
+    authenticate.mockResolvedValue({
+      user: { id: 'user-1' },
+      profile: { role: 'partner' },
+      error: null,
+    });
+    getUpcomingMatches.mockRejectedValue(new Error('API timeout'));
+
+    const req = createMockReq({ method: 'GET', query: { type: 'odds-compare' } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Impossibile recuperare le quote' });
   });
 });

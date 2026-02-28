@@ -17,6 +17,7 @@
  *   - "tips_{league}_{tier}_{status}_{limit}"   → /api/tips          (TTL: 15min)
  *   - "track_record"                            → /api/track-record  (TTL: 1h)
  *   - "schedine_{date}_{tier}_{status}"          → /api/betting-slips (TTL: 15min)
+ *   - "admin_user_stats"                          → /api/admin?resource=users (TTL: 60s)
  */
 const store = new Map();
 
