@@ -98,6 +98,7 @@ function evaluatePrediction(prediction, result, totalGoals, extras) {
                     : extras.cards < threshold ? 'won' : 'lost';
       }
 
+      console.warn('evaluatePrediction: unrecognized prediction format, marking void:', prediction);
       return 'void';
     }
   }
