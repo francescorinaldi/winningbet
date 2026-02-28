@@ -23,19 +23,19 @@ const {
   buildPartnerRejectionEmail,
 } = require('./_lib/email');
 
-var ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').filter(Boolean);
-var VAT_REGEX = /^IT\d{11}$/;
-var VALID_TIERS = ['free', 'pro', 'vip'];
-var VALID_ROLES = [null, 'partner', 'admin'];
-var VALID_APP_STATUSES = ['pending', 'approved', 'rejected', 'revoked'];
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').filter(Boolean);
+const VAT_REGEX = /^IT\d{11}$/;
+const VALID_TIERS = ['free', 'pro', 'vip'];
+const VALID_ROLES = [null, 'partner', 'admin'];
+const VALID_APP_STATUSES = ['pending', 'approved', 'rejected', 'revoked'];
 
 module.exports = async function handler(req, res) {
-  var auth = await authenticate(req);
+  const auth = await authenticate(req);
   if (auth.error) return res.status(401).json({ error: auth.error });
 
-  var user = auth.user;
-  var profile = auth.profile;
-  var resource = req.query.resource;
+  const user = auth.user;
+  const profile = auth.profile;
+  const resource = req.query.resource;
 
   if (resource === 'apply') {
     return handleApply(req, res, user);
@@ -67,15 +67,15 @@ module.exports = async function handler(req, res) {
  * @returns {Promise<{valid: boolean|null, name: string|null, address: string|null}>}
  */
 async function validateVies(vatNumber) {
-  var country = vatNumber.slice(0, 2).toUpperCase();
-  var number = vatNumber.slice(2);
-  var url =
+  const country = vatNumber.slice(0, 2).toUpperCase();
+  const number = vatNumber.slice(2);
+  const url =
     'https://ec.europa.eu/taxation_customs/vies/rest-api/ms/' + country + '/vat/' + number;
 
   try {
-    var resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!resp.ok) return { valid: null, name: null, address: null };
-    var data = await resp.json();
+    const data = await resp.json();
     return {
       valid: data.isValid === true,
       name: data.name && data.name !== '---' ? data.name : null,
@@ -87,6 +87,45 @@ async function validateVies(vatNumber) {
   }
 }
 
+// ─── Batch User Email Lookup ────────────────────────────────────────────────
+
+/**
+ * Retrieves emails for a set of user IDs using batch listUsers() instead of
+ * per-row getUserById(). Paginates through all auth users matching the given IDs.
+ *
+ * @param {string[]} userIds - Array of user UUIDs
+ * @returns {Promise<Object<string, string>>} Map of userId → email
+ */
+async function batchGetUserEmails(userIds) {
+  const emailMap = {};
+  if (!userIds || userIds.length === 0) return emailMap;
+
+  const remaining = new Set(userIds);
+  let page = 1;
+  const perPage = 1000;
+
+  while (remaining.size > 0) {
+    const result = await supabase.auth.admin.listUsers({ page, perPage });
+
+    if (!result || result.error || !result.data || !result.data.users || result.data.users.length === 0) {
+      break;
+    }
+
+    for (const user of result.data.users) {
+      if (remaining.has(user.id)) {
+        emailMap[user.id] = user.email;
+        remaining.delete(user.id);
+      }
+    }
+
+    // If we got fewer users than requested, we've reached the end
+    if (result.data.users.length < perPage) break;
+    page++;
+  }
+
+  return emailMap;
+}
+
 // ─── Apply ──────────────────────────────────────────────────────────────────
 
 async function handleApply(req, res, user) {
@@ -96,7 +135,7 @@ async function handleApply(req, res, user) {
 
   // GET — stato della propria candidatura
   if (req.method === 'GET') {
-    var { data, error } = await supabase
+    const { data, error } = await supabase
       .from('partner_applications')
       .select('*')
       .eq('user_id', user.id)
@@ -110,13 +149,13 @@ async function handleApply(req, res, user) {
   }
 
   // POST — invia candidatura
-  var body = req.body || {};
+  const body = req.body || {};
 
   // Validazione business_name
   if (!body.business_name || typeof body.business_name !== 'string') {
     return res.status(400).json({ error: 'Ragione sociale obbligatoria' });
   }
-  var businessName = body.business_name.trim();
+  const businessName = body.business_name.trim();
   if (businessName.length === 0 || businessName.length > 200) {
     return res.status(400).json({ error: 'Ragione sociale: massimo 200 caratteri' });
   }
@@ -125,13 +164,13 @@ async function handleApply(req, res, user) {
   if (!body.vat_number || typeof body.vat_number !== 'string') {
     return res.status(400).json({ error: 'Partita IVA obbligatoria' });
   }
-  var vatNumber = body.vat_number.trim().toUpperCase();
+  const vatNumber = body.vat_number.trim().toUpperCase();
   if (!VAT_REGEX.test(vatNumber)) {
     return res.status(400).json({ error: 'Partita IVA non valida. Formato: IT + 11 cifre' });
   }
 
   // Validazione province (opzionale, max 2 caratteri)
-  var province = null;
+  let province = null;
   if (body.province) {
     province = String(body.province).trim().toUpperCase();
     if (province.length > 2) {
@@ -140,7 +179,7 @@ async function handleApply(req, res, user) {
   }
 
   // Validazione website (opzionale, deve iniziare con http:// o https://)
-  var website = null;
+  let website = null;
   if (body.website) {
     website = String(body.website).trim();
     if (website && !website.startsWith('http://') && !website.startsWith('https://')) {
@@ -148,17 +187,17 @@ async function handleApply(req, res, user) {
     }
   }
 
-  var city = body.city ? String(body.city).trim() : null;
+  const city = body.city ? String(body.city).trim() : null;
 
   // Check candidatura esistente
-  var { data: existing, error: existingError } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from('partner_applications')
     .select('id, status')
     .eq('user_id', user.id)
     .single();
 
   if (existing && existing.status !== 'rejected') {
-    var statusLabels = {
+    const statusLabels = {
       pending: 'in attesa di revisione',
       approved: 'gia\u0027 approvata',
       revoked: 'revocata',
@@ -173,12 +212,15 @@ async function handleApply(req, res, user) {
   }
 
   // Validazione VIES
-  var vies = await validateVies(vatNumber);
+  const vies = await validateVies(vatNumber);
+
+  // Store applicant email denormalized to avoid cross-service lookups later
+  const applicantEmail = user.email || null;
 
   // Se esiste una candidatura rifiutata, aggiorna quella (il UNIQUE constraint lo richiede)
-  var result;
+  let result;
   if (existing && existing.status === 'rejected') {
-    var { data: updated, error: updateError } = await supabase
+    const { data: updated, error: updateError } = await supabase
       .from('partner_applications')
       .update({
         business_name: businessName,
@@ -189,6 +231,7 @@ async function handleApply(req, res, user) {
         city: city,
         province: province,
         website: website,
+        applicant_email: applicantEmail,
         status: 'pending',
         rejection_reason: null,
         reviewed_by: null,
@@ -201,7 +244,7 @@ async function handleApply(req, res, user) {
     if (updateError) return res.status(500).json({ error: updateError.message });
     result = updated;
   } else {
-    var { data: created, error: insertError } = await supabase
+    const { data: created, error: insertError } = await supabase
       .from('partner_applications')
       .insert({
         user_id: user.id,
@@ -213,6 +256,7 @@ async function handleApply(req, res, user) {
         city: city,
         province: province,
         website: website,
+        applicant_email: applicantEmail,
       })
       .select()
       .single();
@@ -223,8 +267,8 @@ async function handleApply(req, res, user) {
 
   // Notifica email agli admin
   if (ADMIN_EMAILS.length > 0) {
-    var emailData = buildPartnerApplicationNotification(result, user.email);
-    for (var i = 0; i < ADMIN_EMAILS.length; i++) {
+    const emailData = buildPartnerApplicationNotification(result, user.email);
+    for (let i = 0; i < ADMIN_EMAILS.length; i++) {
       sendEmail({
         to: ADMIN_EMAILS[i].trim(),
         subject: emailData.subject,
@@ -248,14 +292,14 @@ async function handleApplications(req, res, adminUser) {
 
   // GET — lista candidature
   if (req.method === 'GET') {
-    var statusFilter = req.query.status;
+    const statusFilter = req.query.status;
     if (statusFilter && VALID_APP_STATUSES.indexOf(statusFilter) === -1) {
       return res.status(400).json({
         error: 'Stato non valido. Valori: ' + VALID_APP_STATUSES.join(', '),
       });
     }
 
-    var query = supabase
+    let query = supabase
       .from('partner_applications')
       .select('*')
       .order('created_at', { ascending: false });
@@ -264,47 +308,43 @@ async function handleApplications(req, res, adminUser) {
       query = query.eq('status', statusFilter);
     }
 
-    var { data: apps, error: appsError } = await query;
+    const { data: apps, error: appsError } = await query;
     if (appsError) return res.status(500).json({ error: appsError.message });
 
-    // Recupera email utenti in parallelo
-    var emails = {};
-    if (apps.length > 0) {
-      var emailPromises = apps.map(function (app) {
-        return supabase.auth.admin
-          .getUserById(app.user_id)
-          .then(function (result) {
-            if (result.data && result.data.user) {
-              emails[app.user_id] = result.data.user.email;
-            }
-          })
-          .catch(function () {
-            /* ignore */
-          });
-      });
-      await Promise.all(emailPromises);
+    // Use denormalized applicant_email when available; fall back to batch lookup
+    // for legacy rows that don't have it stored.
+    const missingEmailIds = [];
+    for (const app of apps) {
+      if (!app.applicant_email) missingEmailIds.push(app.user_id);
     }
 
-    var enriched = apps.map(function (app) {
-      return Object.assign({}, app, { email: emails[app.user_id] || null });
+    let legacyEmails = {};
+    if (missingEmailIds.length > 0) {
+      legacyEmails = await batchGetUserEmails(missingEmailIds);
+    }
+
+    const enriched = apps.map(function (app) {
+      return Object.assign({}, app, {
+        email: app.applicant_email || legacyEmails[app.user_id] || null,
+      });
     });
 
     return res.status(200).json({ applications: enriched });
   }
 
   // POST — gestione candidature (approve/reject/revoke)
-  var action = req.query.action;
+  const action = req.query.action;
   if (!action || ['approve', 'reject', 'revoke'].indexOf(action) === -1) {
     return res.status(400).json({ error: 'Azione non valida. Valori: approve, reject, revoke' });
   }
 
-  var body = req.body || {};
+  const body = req.body || {};
   if (!body.application_id) {
     return res.status(400).json({ error: 'application_id obbligatorio' });
   }
 
   // Recupera candidatura
-  var { data: application, error: fetchError } = await supabase
+  const { data: application, error: fetchError } = await supabase
     .from('partner_applications')
     .select('*')
     .eq('id', body.application_id)
@@ -333,8 +373,20 @@ async function handleApprove(res, application, adminUser) {
     });
   }
 
+  // Read current profile role to prevent demoting admins
+  const { data: currentProfile, error: profileFetchError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('user_id', application.user_id)
+    .single();
+
+  if (profileFetchError) {
+    console.error('[Admin] Profile fetch error:', profileFetchError.message);
+    return res.status(500).json({ error: 'Impossibile leggere il profilo utente' });
+  }
+
   // Aggiorna candidatura
-  var { error: updateError } = await supabase
+  const { error: updateError } = await supabase
     .from('partner_applications')
     .update({
       status: 'approved',
@@ -345,22 +397,31 @@ async function handleApprove(res, application, adminUser) {
 
   if (updateError) return res.status(500).json({ error: updateError.message });
 
-  // Aggiorna profilo: role='partner'
-  var { error: profileError } = await supabase
-    .from('profiles')
-    .update({ role: 'partner' })
-    .eq('user_id', application.user_id);
+  // Aggiorna profilo: role='partner' — solo se il ruolo attuale non è admin
+  // (un admin che viene approvato come partner mantiene il ruolo admin)
+  if (!currentProfile.role || currentProfile.role === 'partner') {
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ role: 'partner' })
+      .eq('user_id', application.user_id);
 
-  if (profileError) {
-    console.error('[Admin] Profile update error:', profileError.message);
+    if (profileError) {
+      console.error('[Admin] Profile update error:', profileError.message);
+      // Abort: roll back application status to prevent inconsistent state
+      await supabase
+        .from('partner_applications')
+        .update({ status: 'pending', reviewed_by: null, reviewed_at: null })
+        .eq('id', application.id);
+      return res.status(500).json({ error: 'Errore aggiornamento profilo: ' + profileError.message });
+    }
   }
 
-  // Invia email di approvazione
-  var { data: userData } = await supabase.auth.admin.getUserById(application.user_id);
-  if (userData && userData.user && userData.user.email) {
-    var emailData = buildPartnerApprovalEmail(application);
+  // Invia email di approvazione — use denormalized email or fetch
+  const recipientEmail = application.applicant_email || await getEmailByUserId(application.user_id);
+  if (recipientEmail) {
+    const emailData = buildPartnerApprovalEmail(application);
     sendEmail({
-      to: userData.user.email,
+      to: recipientEmail,
       subject: emailData.subject,
       html: emailData.html,
       text: emailData.text,
@@ -383,10 +444,10 @@ async function handleReject(res, application, adminUser, reason) {
     return res.status(400).json({ error: 'Motivo del rifiuto obbligatorio' });
   }
 
-  var trimmedReason = reason.trim();
+  const trimmedReason = reason.trim();
 
   // Aggiorna candidatura
-  var { error: updateError } = await supabase
+  const { error: updateError } = await supabase
     .from('partner_applications')
     .update({
       status: 'rejected',
@@ -398,12 +459,12 @@ async function handleReject(res, application, adminUser, reason) {
 
   if (updateError) return res.status(500).json({ error: updateError.message });
 
-  // Invia email di rifiuto
-  var { data: userData } = await supabase.auth.admin.getUserById(application.user_id);
-  if (userData && userData.user && userData.user.email) {
-    var emailData = buildPartnerRejectionEmail(application, trimmedReason);
+  // Invia email di rifiuto — use denormalized email or fetch
+  const recipientEmail = application.applicant_email || await getEmailByUserId(application.user_id);
+  if (recipientEmail) {
+    const emailData = buildPartnerRejectionEmail(application, trimmedReason);
     sendEmail({
-      to: userData.user.email,
+      to: recipientEmail,
       subject: emailData.subject,
       html: emailData.html,
       text: emailData.text,
@@ -423,7 +484,7 @@ async function handleRevoke(res, application, adminUser) {
   }
 
   // Aggiorna candidatura
-  var { error: updateError } = await supabase
+  const { error: updateError } = await supabase
     .from('partner_applications')
     .update({
       status: 'revoked',
@@ -434,17 +495,30 @@ async function handleRevoke(res, application, adminUser) {
 
   if (updateError) return res.status(500).json({ error: updateError.message });
 
-  // Revoca ruolo partner dal profilo
-  var { error: profileError } = await supabase
+  // Revoca ruolo partner dal profilo — only if current role is exactly 'partner'.
+  // This prevents accidentally removing admin privileges from admin users.
+  const { error: profileError } = await supabase
     .from('profiles')
     .update({ role: null })
-    .eq('user_id', application.user_id);
+    .eq('user_id', application.user_id)
+    .eq('role', 'partner');
 
   if (profileError) {
     console.error('[Admin] Profile revoke error:', profileError.message);
   }
 
   return res.status(200).json({ ok: true, status: 'revoked' });
+}
+
+// ─── Helper: Get Single User Email ─────────────────────────────────────────
+
+/**
+ * Fallback for single-user email lookup (used in approve/reject/revoke
+ * when applicant_email is not stored on legacy rows).
+ */
+async function getEmailByUserId(userId) {
+  const { data } = await supabase.auth.admin.getUserById(userId);
+  return data && data.user && data.user.email ? data.user.email : null;
 }
 
 // ─── Users (Admin) ──────────────────────────────────────────────────────────
@@ -456,12 +530,12 @@ async function handleUsers(req, res) {
 
   // PUT — aggiorna tier/ruolo utente
   if (req.method === 'PUT') {
-    var body = req.body || {};
+    const body = req.body || {};
     if (!body.user_id) {
       return res.status(400).json({ error: 'user_id obbligatorio' });
     }
 
-    var updates = {};
+    const updates = {};
 
     if (body.tier !== undefined) {
       if (VALID_TIERS.indexOf(body.tier) === -1) {
@@ -485,7 +559,7 @@ async function handleUsers(req, res) {
       return res.status(400).json({ error: 'Specificare almeno tier o role da aggiornare' });
     }
 
-    var { data: updatedProfile, error: updateError } = await supabase
+    const { data: updatedProfile, error: updateError } = await supabase
       .from('profiles')
       .update(updates)
       .eq('user_id', body.user_id)
@@ -501,12 +575,12 @@ async function handleUsers(req, res) {
   }
 
   // GET — lista utenti con paginazione e ricerca
-  var page = Math.max(1, parseInt(req.query.page) || 1);
-  var perPage = 50;
-  var offset = (page - 1) * perPage;
-  var search = req.query.search ? req.query.search.trim() : null;
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const perPage = 50;
+  const offset = (page - 1) * perPage;
+  const search = req.query.search ? req.query.search.trim() : null;
 
-  var query = supabase
+  let query = supabase
     .from('profiles')
     .select('user_id, display_name, tier, role, created_at, last_visit_date, total_visits', {
       count: 'exact',
@@ -520,39 +594,35 @@ async function handleUsers(req, res) {
     );
   }
 
-  var { data: profiles, error: profilesError, count: totalCount } = await query;
+  const { data: profiles, error: profilesError, count: totalCount } = await query;
   if (profilesError) return res.status(500).json({ error: profilesError.message });
 
-  // Recupera email utenti in parallelo
-  var emails = {};
-  if (profiles.length > 0) {
-    var emailPromises = profiles.map(function (p) {
-      return supabase.auth.admin
-        .getUserById(p.user_id)
-        .then(function (result) {
-          if (result.data && result.data.user) {
-            emails[p.user_id] = result.data.user.email;
-          }
-        })
-        .catch(function () {
-          /* ignore */
-        });
-    });
-    await Promise.all(emailPromises);
-  }
+  // Batch email lookup — replaces N+1 getUserById() calls
+  const userIds = profiles.map(function (p) { return p.user_id; });
+  const emails = await batchGetUserEmails(userIds);
 
-  // Se abbiamo una ricerca, cerca anche per email (non disponibile via .ilike su profiles)
-  // Filtro post-fetch: se search non matcha display_name, controlliamo email
-  var enriched = profiles.map(function (p) {
+  // Enrich profiles with email
+  let enriched = profiles.map(function (p) {
     return Object.assign({}, p, { email: emails[p.user_id] || null });
   });
 
+  // Post-fetch email search: if search query was provided, also match against email
+  // (email is not in the profiles table, so we can't filter DB-side)
+  if (search) {
+    const lowerSearch = search.toLowerCase();
+    enriched = enriched.filter(function (p) {
+      const nameMatch = p.display_name && p.display_name.toLowerCase().indexOf(lowerSearch) !== -1;
+      const emailMatch = p.email && p.email.toLowerCase().indexOf(lowerSearch) !== -1;
+      return nameMatch || emailMatch;
+    });
+  }
+
   // Calcola statistiche (sulla pagina corrente se c'e' search, altrimenti globali)
-  var statsQuery;
+  let stats;
   if (search) {
     // Per la ricerca, le stats sono relative ai risultati filtrati
-    statsQuery = {
-      total: totalCount || 0,
+    stats = {
+      total: enriched.length,
       free: enriched.filter(function (p) { return p.tier === 'free'; }).length,
       pro: enriched.filter(function (p) { return p.tier === 'pro'; }).length,
       vip: enriched.filter(function (p) { return p.tier === 'vip'; }).length,
@@ -560,7 +630,7 @@ async function handleUsers(req, res) {
     };
   } else {
     // Stats globali: query dedicate per conteggi precisi
-    var tierCounts = await Promise.all([
+    const tierCounts = await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'free'),
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'pro'),
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'vip'),
@@ -570,7 +640,7 @@ async function handleUsers(req, res) {
         .eq('role', 'partner'),
     ]);
 
-    statsQuery = {
+    stats = {
       total: totalCount || 0,
       free: tierCounts[0].count || 0,
       pro: tierCounts[1].count || 0,
@@ -581,12 +651,12 @@ async function handleUsers(req, res) {
 
   return res.status(200).json({
     users: enriched,
-    stats: statsQuery,
+    stats: stats,
     pagination: {
       page: page,
       per_page: perPage,
-      total: totalCount || 0,
-      total_pages: Math.ceil((totalCount || 0) / perPage),
+      total: search ? enriched.length : (totalCount || 0),
+      total_pages: Math.ceil((search ? enriched.length : (totalCount || 0)) / perPage),
     },
   });
 }

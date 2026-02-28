@@ -6395,21 +6395,21 @@ img {
 }
 
 .admin-status-badge--approved {
-  background: rgba(76, 175, 80, 0.15);
-  border: 1px solid rgba(76, 175, 80, 0.3);
-  color: #4caf50;
+  background: rgba(46, 204, 113, 0.15);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  color: var(--green);
 }
 
 .admin-status-badge--rejected {
-  background: rgba(239, 83, 80, 0.15);
-  border: 1px solid rgba(239, 83, 80, 0.3);
-  color: #ef5350;
+  background: rgba(231, 76, 60, 0.15);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  color: var(--red);
 }
 
 .admin-status-badge--revoked {
-  background: rgba(102, 102, 102, 0.15);
-  border: 1px solid rgba(102, 102, 102, 0.3);
-  color: #666;
+  background: rgba(85, 85, 106, 0.15);
+  border: 1px solid rgba(85, 85, 106, 0.3);
+  color: var(--text-muted);
 }
 
 /* --- Admin Detail Rows --- */
@@ -6449,7 +6449,7 @@ img {
 }
 
 .admin-detail-row--reason .admin-detail-value {
-  color: #ef5350;
+  color: var(--red);
   font-size: 0.85rem;
   font-weight: 400;
   font-family: var(--font-body);
@@ -6468,15 +6468,15 @@ img {
 }
 
 .admin-vies-badge--valid {
-  background: rgba(76, 175, 80, 0.15);
-  border: 1px solid rgba(76, 175, 80, 0.3);
-  color: #4caf50;
+  background: rgba(46, 204, 113, 0.15);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  color: var(--green);
 }
 
 .admin-vies-badge--invalid {
-  background: rgba(239, 83, 80, 0.1);
-  border: 1px solid rgba(239, 83, 80, 0.2);
-  color: #ef5350;
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid rgba(231, 76, 60, 0.2);
+  color: var(--red);
 }
 
 /* --- Admin Link --- */
@@ -6512,23 +6512,23 @@ img {
 }
 
 .admin-btn--approve {
-  background: rgba(76, 175, 80, 0.15);
-  color: #4caf50;
-  border: 1px solid rgba(76, 175, 80, 0.3);
+  background: rgba(46, 204, 113, 0.15);
+  color: var(--green);
+  border: 1px solid rgba(46, 204, 113, 0.3);
 }
 
 .admin-btn--approve:hover {
-  background: rgba(76, 175, 80, 0.25);
+  background: rgba(46, 204, 113, 0.25);
 }
 
 .admin-btn--danger {
-  background: rgba(239, 83, 80, 0.15);
-  color: #ef5350;
-  border: 1px solid rgba(239, 83, 80, 0.3);
+  background: rgba(231, 76, 60, 0.15);
+  color: var(--red);
+  border: 1px solid rgba(231, 76, 60, 0.3);
 }
 
 .admin-btn--danger:hover {
-  background: rgba(239, 83, 80, 0.25);
+  background: rgba(231, 76, 60, 0.25);
 }
 
 .admin-btn--secondary {

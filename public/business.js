@@ -24,24 +24,24 @@
   // DOM REFERENCES
   // ==========================================
 
-  var heroCta = document.getElementById('heroCta');
-  var authPrompt = document.getElementById('partnerAuthPrompt');
-  var formWrapper = document.getElementById('partnerFormWrapper');
-  var statusWrapper = document.getElementById('partnerStatusWrapper');
-  var statusEl = document.getElementById('partnerStatus');
-  var applicationForm = document.getElementById('applicationForm');
-  var formError = document.getElementById('formError');
-  var submitBtn = document.getElementById('submitBtn');
-  var navAuthBtn = document.getElementById('navAuthBtn');
+  const heroCta = document.getElementById('heroCta');
+  const authPrompt = document.getElementById('partnerAuthPrompt');
+  const formWrapper = document.getElementById('partnerFormWrapper');
+  const statusWrapper = document.getElementById('partnerStatusWrapper');
+  const statusEl = document.getElementById('partnerStatus');
+  const applicationForm = document.getElementById('applicationForm');
+  const formError = document.getElementById('formError');
+  const submitBtn = document.getElementById('submitBtn');
+  const navAuthBtn = document.getElementById('navAuthBtn');
 
-  var session = null;
+  let session = null;
 
   // ==========================================
   // DOM HELPERS
   // ==========================================
 
   function el(tag, className, textContent) {
-    var node = document.createElement(tag);
+    const node = document.createElement(tag);
     if (className) node.className = className;
     if (textContent) node.textContent = textContent;
     return node;
@@ -49,7 +49,7 @@
 
   function svgIcon(paths, opts) {
     opts = opts || {};
-    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('width', opts.size || '40');
     svg.setAttribute('height', opts.size || '40');
     svg.setAttribute('viewBox', '0 0 24 24');
@@ -60,7 +60,7 @@
     svg.setAttribute('stroke-linejoin', 'round');
     svg.setAttribute('aria-hidden', 'true');
     paths.forEach(function (d) {
-      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', d);
       svg.appendChild(path);
     });
@@ -73,7 +73,7 @@
 
   async function checkSession() {
     try {
-      var result = await SupabaseConfig.getSession();
+      const result = await SupabaseConfig.getSession();
       if (result && result.data && result.data.session) {
         session = result.data.session;
         updateNavForLoggedIn();
@@ -132,12 +132,12 @@
 
   async function checkExistingApplication() {
     try {
-      var resp = await fetch('/api/admin?resource=apply', {
+      const resp = await fetch('/api/admin?resource=apply', {
         headers: { Authorization: 'Bearer ' + session.access_token },
       });
 
       if (resp.ok) {
-        var app = await resp.json();
+        const app = await resp.json();
         showApplicationStatus(app);
       } else if (resp.status === 404) {
         // No existing application — show form
@@ -164,7 +164,7 @@
     // Clear previous content
     statusEl.textContent = '';
 
-    var status = app.status || 'pending';
+    const status = app.status || 'pending';
 
     if (status === 'pending') {
       statusEl.className = 'partner-status partner-status--pending';
@@ -183,7 +183,7 @@
 
   function buildPendingStatus(app) {
     // Icon
-    var iconWrap = el('div', 'partner-status-icon');
+    const iconWrap = el('div', 'partner-status-icon');
     iconWrap.appendChild(
       svgIcon([
         'M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z',
@@ -203,20 +203,20 @@
     );
 
     // Business name detail
-    var detailName = el('div', 'partner-status-details');
+    const detailName = el('div', 'partner-status-details');
     detailName.appendChild(el('span', 'partner-status-label', 'Ragione Sociale'));
     detailName.appendChild(el('span', 'partner-status-value', app.business_name || ''));
     statusEl.appendChild(detailName);
 
     // P.IVA detail
-    var detailVat = el('div', 'partner-status-details');
+    const detailVat = el('div', 'partner-status-details');
     detailVat.appendChild(el('span', 'partner-status-label', 'P.IVA'));
-    var vatValue = el('span', 'partner-status-value', app.vat_number || '');
+    const vatValue = el('span', 'partner-status-value', app.vat_number || '');
     if (app.vies_valid === true) {
-      var badgeValid = el('span', 'partner-vies-badge partner-vies-badge--valid', ' VIES Verificata');
+      const badgeValid = el('span', 'partner-vies-badge partner-vies-badge--valid', ' VIES Verificata');
       vatValue.appendChild(badgeValid);
     } else if (app.vies_valid === false) {
-      var badgeInvalid = el('span', 'partner-vies-badge partner-vies-badge--invalid', ' VIES Non Valida');
+      const badgeInvalid = el('span', 'partner-vies-badge partner-vies-badge--invalid', ' VIES Non Valida');
       vatValue.appendChild(badgeInvalid);
     }
     detailVat.appendChild(vatValue);
@@ -224,7 +224,7 @@
   }
 
   function buildApprovedStatus() {
-    var iconWrap = el('div', 'partner-status-icon partner-status-icon--approved');
+    const iconWrap = el('div', 'partner-status-icon partner-status-icon--approved');
     iconWrap.appendChild(
       svgIcon(['M22 11.08V12a10 10 0 1 1-5.93-9.14', 'M22 4L12 14.01l-3-3']),
     );
@@ -239,7 +239,7 @@
       ),
     );
 
-    var ctaLink = document.createElement('a');
+    const ctaLink = document.createElement('a');
     ctaLink.href = '/dashboard.html';
     ctaLink.className = 'btn btn-gold btn-lg';
     ctaLink.textContent = 'Vai alla Dashboard';
@@ -247,7 +247,7 @@
   }
 
   function buildRejectedStatus(app) {
-    var iconWrap = el('div', 'partner-status-icon partner-status-icon--rejected');
+    const iconWrap = el('div', 'partner-status-icon partner-status-icon--rejected');
     iconWrap.appendChild(
       svgIcon([
         'M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z',
@@ -259,7 +259,7 @@
 
     statusEl.appendChild(el('h3', 'partner-status-title', 'Candidatura non approvata'));
 
-    var reasonText = app.rejection_reason
+    const reasonText = app.rejection_reason
       ? 'Motivo: ' + app.rejection_reason
       : 'La tua candidatura non e\u0300 stata approvata in questo momento.';
     statusEl.appendChild(el('p', 'partner-status-desc', reasonText));
@@ -267,7 +267,7 @@
       el('p', 'partner-status-desc', 'Puoi inviare una nuova candidatura con dati aggiornati.'),
     );
 
-    var reapplyBtn = document.createElement('button');
+    const reapplyBtn = document.createElement('button');
     reapplyBtn.type = 'button';
     reapplyBtn.className = 'btn btn-outline btn-lg';
     reapplyBtn.textContent = 'Invia Nuova Candidatura';
@@ -278,7 +278,7 @@
   }
 
   function buildRevokedStatus() {
-    var iconWrap = el('div', 'partner-status-icon partner-status-icon--rejected');
+    const iconWrap = el('div', 'partner-status-icon partner-status-icon--rejected');
     iconWrap.appendChild(
       svgIcon([
         'M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z',
@@ -313,30 +313,30 @@
       }
 
       // Client-side P.IVA validation
-      var vatNumber = document.getElementById('vatNumber').value.trim().toUpperCase();
+      const vatNumber = document.getElementById('vatNumber').value.trim().toUpperCase();
       if (!/^IT\d{11}$/.test(vatNumber)) {
         showFormError('Formato P.IVA non valido. Usa il formato IT seguito da 11 cifre.');
         return;
       }
 
-      var businessName = document.getElementById('businessName').value.trim();
+      const businessName = document.getElementById('businessName').value.trim();
       if (!businessName) {
         showFormError('Ragione Sociale obbligatoria.');
         return;
       }
 
-      var body = {
+      const body = {
         business_name: businessName,
         vat_number: vatNumber,
       };
 
-      var cityVal = document.getElementById('city').value.trim();
+      const cityVal = document.getElementById('city').value.trim();
       if (cityVal) body.city = cityVal;
 
-      var provinceVal = document.getElementById('province').value.trim().toUpperCase();
+      const provinceVal = document.getElementById('province').value.trim().toUpperCase();
       if (provinceVal) body.province = provinceVal;
 
-      var websiteVal = document.getElementById('website').value.trim();
+      const websiteVal = document.getElementById('website').value.trim();
       if (websiteVal) body.website = websiteVal;
 
       // Loading state
@@ -344,7 +344,7 @@
       submitBtn.textContent = 'Invio in corso...';
 
       try {
-        var resp = await fetch('/api/admin?resource=apply', {
+        const resp = await fetch('/api/admin?resource=apply', {
           method: 'POST',
           headers: {
             Authorization: 'Bearer ' + session.access_token,
@@ -353,7 +353,7 @@
           body: JSON.stringify(body),
         });
 
-        var data = await resp.json();
+        const data = await resp.json();
 
         if (!resp.ok) {
           showFormError(data.error || "Errore durante l'invio. Riprova.");
@@ -395,9 +395,9 @@
   if (heroCta) {
     heroCta.addEventListener('click', function (e) {
       // Only smooth-scroll if the href points to an anchor on this page
-      var href = heroCta.getAttribute('href');
+      const href = heroCta.getAttribute('href');
       if (href && href.charAt(0) === '#') {
-        var target = document.getElementById(href.slice(1));
+        const target = document.getElementById(href.slice(1));
         if (target) {
           e.preventDefault();
           target.scrollIntoView({ behavior: 'smooth', block: 'start' });

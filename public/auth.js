@@ -39,23 +39,35 @@
   const pendingPlan = params.get('plan');
 
   // Return URL support — e.g. /auth.html?return=/business.html redirects there after login.
-  // Validated to prevent open redirects: must start with '/', must NOT contain '://' or start with '//'.
+  // Validated to prevent open redirects:
+  //   - Must start with '/'
+  //   - Must NOT start with '//' (protocol-relative URL)
+  //   - Must NOT contain '://' (absolute URL with scheme)
+  //   - Must NOT contain '\' (backslash — URL parsers normalize to '/', enabling bypass)
+  //   - Must NOT contain encoded bypass variants (%5C, %2F%2F)
   const rawReturn = params.get('return');
-  const returnUrl =
-    rawReturn &&
-    rawReturn.charAt(0) === '/' &&
-    rawReturn.indexOf('//') !== 0 &&
-    rawReturn.indexOf('://') === -1
-      ? rawReturn
-      : null;
+
+  function isValidReturnUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    if (url.charAt(0) !== '/') return false;
+    if (url.indexOf('//') === 0) return false;
+    if (url.indexOf('://') !== -1) return false;
+    if (url.indexOf('\\') !== -1) return false;
+    const lower = url.toLowerCase();
+    if (lower.indexOf('%5c') !== -1) return false;
+    if (lower.indexOf('%2f%2f') !== -1) return false;
+    return true;
+  }
+
+  const returnUrl = isValidReturnUrl(rawReturn) ? rawReturn : null;
 
   // Build the OAuth redirect target:
   // - If a valid return URL exists, use it as the full page path.
   //   Append ?upgrade=<plan> if a plan param is also present.
   // - Otherwise fall back to the legacy behavior (query string appended to /dashboard.html).
-  var oauthRedirectPath;
+  let oauthRedirectPath;
   if (returnUrl) {
-    var separator = returnUrl.indexOf('?') === -1 ? '?' : '&';
+    const separator = returnUrl.indexOf('?') === -1 ? '?' : '&';
     oauthRedirectPath = pendingPlan
       ? returnUrl + separator + 'upgrade=' + encodeURIComponent(pendingPlan)
       : returnUrl;
