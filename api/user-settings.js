@@ -30,10 +30,13 @@ module.exports = async function handler(req, res) {
   if (resource === 'preferences') {
     return handlePreferences(req, res, user);
   }
+  if (resource === 'referral') {
+    return handleReferral(req, res, user);
+  }
 
   return res
     .status(400)
-    .json({ error: 'Parametro resource richiesto: activity, notifications o preferences' });
+    .json({ error: 'Parametro resource richiesto: activity, notifications, preferences o referral' });
 };
 
 // ─── Activity ───────────────────────────────────────────────────────────────
@@ -287,4 +290,49 @@ async function handlePreferences(req, res, user) {
 
   if (error) return res.status(500).json({ error: error.message });
   return res.status(200).json(data);
+}
+
+// ─── Referral ────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/user-settings?resource=referral
+ * Body: { ref_code: string }
+ *
+ * Salva il referral code del partner che ha portato questo utente.
+ * Opera in modo idempotente: se referred_by è già impostato, non sovrascrive
+ * (un utente non può cambiare il suo partner di provenienza dopo la registrazione).
+ */
+async function handleReferral(req, res, user) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const refCode = (req.body && req.body.ref_code) ? String(req.body.ref_code).toUpperCase().trim() : null;
+
+  if (!refCode || refCode.length === 0 || refCode.length > 50) {
+    return res.status(400).json({ error: 'ref_code non valido' });
+  }
+
+  // Verifica se il profilo ha già un referred_by (non sovrascrivere)
+  const { data: profile, error: fetchError } = await supabase
+    .from('profiles')
+    .select('referred_by')
+    .eq('user_id', user.id)
+    .single();
+
+  if (fetchError) return res.status(500).json({ error: fetchError.message });
+
+  if (profile && profile.referred_by) {
+    // Already attributed — idempotent, no error
+    return res.status(200).json({ ok: true, already_set: true });
+  }
+
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ referred_by: refCode })
+    .eq('user_id', user.id);
+
+  if (updateError) return res.status(500).json({ error: updateError.message });
+
+  return res.status(200).json({ ok: true, referred_by: refCode });
 }

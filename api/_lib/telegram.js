@@ -112,25 +112,53 @@ function formatItalianDate() {
 }
 
 /**
- * Formatta un singolo tip come blocco nel digest.
+ * Formatta la data di una partita in italiano (giorno/mese, ora).
+ * @param {string} matchDate - ISO date string
+ * @returns {string} Es. "Sab 01 Mar · 20:45"
+ */
+function formatMatchDate(matchDate) {
+  if (!matchDate) return '';
+  const d = new Date(matchDate);
+  const days = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+  const months = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+  const day = days[d.getDay()];
+  const date = String(d.getDate()).padStart(2, '0');
+  const month = months[d.getMonth()];
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  return day + ' ' + date + ' ' + month + ' \u00B7 ' + h + ':' + m;
+}
+
+/**
+ * Formatta un singolo tip come card visiva shareabile.
  *
- * Mostra la probabilità implicita della quota (stima del bookmaker) e la stima
- * di WinningBet (dal campo confidence), evidenziando l'edge value bet quando presente.
- * Questo rende visibile il ragionamento quantitativo dietro ogni tip.
+ * La card è progettata per essere condivisa come screenshot: include campionato,
+ * data/ora, squadre, pronostico, quota con edge value bet, reasoning e firma WinningBet.
  *
  * @param {Object} tip - Oggetto tip dal database
+ * @param {string} [leagueFlag] - Flag emoji del campionato (opzionale)
+ * @param {string} [leagueName] - Nome del campionato (opzionale)
  * @returns {string} Blocco MarkdownV2 per il tip
  */
-function formatTipBlock(tip) {
+function formatTipBlock(tip, leagueFlag, leagueName) {
   const home = escapeMarkdown(tip.home_team);
   const away = escapeMarkdown(tip.away_team);
   const prediction = escapeMarkdown(tip.prediction);
   const oddsNum = parseFloat(tip.odds);
   const odds = escapeMarkdown(oddsNum.toFixed(2));
 
+  // Riga campionato + data (per shareability come screenshot standalone)
+  const flag = leagueFlag || '\u26BD';
+  const name = leagueName ? escapeMarkdown(leagueName) : '';
+  const dateStr = tip.match_date ? escapeMarkdown(formatMatchDate(tip.match_date)) : '';
+  const headerParts = [flag];
+  if (name) headerParts.push('_' + name + '_');
+  if (dateStr) headerParts.push('\uD83D\uDD52 _' + dateStr + '_');
+
   const lines = [
-    '\u26BD *' + home + ' vs ' + away + '*',
-    '\u251C \uD83C\uDFAF ' + prediction,
+    headerParts.join(' '),
+    '*' + home + ' vs ' + away + '*',
+    '\u251C \uD83C\uDFAF *' + prediction + '*',
   ];
 
   // Quota + probabilità implicita del bookmaker (1/quota × 100)
@@ -140,21 +168,20 @@ function formatTipBlock(tip) {
     const edgeStr = edge > 0 ? '+' + edge + '%' : edge + '%';
     const edgeLabel = edge > 0 ? '\u2B06\uFE0F' : '\u27A1\uFE0F'; // ⬆️ o ➡️
 
-    lines.push('\u251C \uD83D\uDCCA Quota: ' + odds + ' \u2502 Bookie: ' + escapeMarkdown(impliedProb + '%'));
+    lines.push('\u251C \uD83D\uDCCA Quota: *' + odds + '* \u2502 Bookie: ' + escapeMarkdown(impliedProb + '%'));
     lines.push(
-      '\u251C ' + edgeLabel + ' WinningBet: ' +
+      '\u251C ' + edgeLabel + ' WB: *' +
         escapeMarkdown(tip.confidence + '%') +
-        ' \u2502 Edge: ' +
-        escapeMarkdown(edgeStr),
+        '* \u2502 Edge: *' +
+        escapeMarkdown(edgeStr) + '*',
     );
   } else {
-    lines.push('\u251C \uD83D\uDCCA Quota: ' + odds);
+    lines.push('\u251C \uD83D\uDCCA Quota: *' + odds + '*');
   }
 
   if (tip.analysis) {
-    lines.push('\u2514 \uD83D\uDCDD _' + escapeMarkdown(tip.analysis) + '_');
+    lines.push('\u2514 _' + escapeMarkdown(tip.analysis) + '_');
   } else {
-    // Replace last ├ with └
     lines[lines.length - 1] = lines[lines.length - 1].replace('\u251C', '\u2514');
   }
 
@@ -211,7 +238,7 @@ function formatDigest(tips) {
     lines.push('');
 
     for (const tip of leagueTips) {
-      lines.push(formatTipBlock(tip));
+      lines.push(formatTipBlock(tip, flag, name));
       lines.push('');
       comboOdds *= parseFloat(tip.odds) || 1;
       tipCount++;

@@ -106,9 +106,32 @@
       loadPreferences();
       loadUserBets();
       loadSchedule();
+      saveReferralIfPresent();
     } catch (err) {
       console.error('[checkAuth]', err.message || err);
       showAlert('Errore di connessione. Ricarica la pagina.', 'error');
+    }
+  }
+
+  // ─── REFERRAL ───────────────────────────────────────────
+
+  /**
+   * Se presente in localStorage un codice referral (salvato da /partner o /auth),
+   * lo invia all'API una sola volta dopo il login.
+   * L'API è idempotente: se referred_by è già impostato, non sovrascrive.
+   */
+  async function saveReferralIfPresent() {
+    const refCode = localStorage.getItem('wb_ref_code');
+    if (!refCode) return;
+    try {
+      await authFetch('/api/user-settings?resource=referral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref_code: refCode }),
+      });
+      localStorage.removeItem('wb_ref_code');
+    } catch (_err) {
+      // Referral save is best-effort — non critico
     }
   }
 

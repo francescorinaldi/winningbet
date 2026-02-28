@@ -164,6 +164,8 @@ async function handleTrackRecord(req, res) {
       });
 
     const monthly = buildMonthlyBreakdown(allTips);
+    const byLeague = buildLeagueBreakdown(allTips);
+    const byOddsRange = buildOddsRangeBreakdown(allTips);
 
     // Distinct matches analyzed
     const matchIds = new Set();
@@ -189,6 +191,8 @@ async function handleTrackRecord(req, res) {
       data_points: dataPoints,
       recent: recent,
       monthly: monthly,
+      by_league: byLeague,
+      by_odds_range: byOddsRange,
       track_record_since: trackRecordSince,
     };
 
@@ -257,4 +261,81 @@ function buildMonthlyBreakdown(tips) {
     });
 }
 
+/**
+ * Breakdown dei tip settati per campionato.
+ * Restituisce win rate e ROI per ogni lega presente nei dati.
+ */
+function buildLeagueBreakdown(tips) {
+  const leagues = {};
+
+  tips.forEach(function (tip) {
+    if (tip.status !== 'won' && tip.status !== 'lost') return;
+    const league = tip.league || 'serie-a';
+    if (!leagues[league]) {
+      leagues[league] = { league: league, won: 0, lost: 0, profit: 0 };
+    }
+    if (tip.status === 'won') {
+      leagues[league].won++;
+      leagues[league].profit += tip.odds ? parseFloat(tip.odds) - 1 : 0;
+    } else {
+      leagues[league].lost++;
+      leagues[league].profit -= 1;
+    }
+  });
+
+  return Object.values(leagues)
+    .map(function (l) {
+      const settled = l.won + l.lost;
+      return {
+        league: l.league,
+        won: l.won,
+        lost: l.lost,
+        win_rate: settled > 0 ? parseFloat(((l.won / settled) * 100).toFixed(1)) : 0,
+        roi: settled > 0 ? parseFloat(((l.profit / settled) * 100).toFixed(1)) : 0,
+      };
+    })
+    .sort(function (a, b) { return (b.won + b.lost) - (a.won + a.lost); });
+}
+
+/**
+ * Breakdown dei tip settati per fascia di quota.
+ * Fasce: 1.20-1.50, 1.50-2.00, 2.00-3.00, 3.00+
+ */
+function buildOddsRangeBreakdown(tips) {
+  const ranges = [
+    { label: '1.20 – 1.50', min: 1.2, max: 1.5, won: 0, lost: 0, profit: 0 },
+    { label: '1.50 – 2.00', min: 1.5, max: 2.0, won: 0, lost: 0, profit: 0 },
+    { label: '2.00 – 3.00', min: 2.0, max: 3.0, won: 0, lost: 0, profit: 0 },
+    { label: '3.00+',       min: 3.0, max: Infinity, won: 0, lost: 0, profit: 0 },
+  ];
+
+  tips.forEach(function (tip) {
+    if (tip.status !== 'won' && tip.status !== 'lost') return;
+    const odds = tip.odds ? parseFloat(tip.odds) : 0;
+    if (!odds) return;
+    const range = ranges.find(function (r) { return odds >= r.min && odds < r.max; });
+    if (!range) return;
+    if (tip.status === 'won') {
+      range.won++;
+      range.profit += odds - 1;
+    } else {
+      range.lost++;
+      range.profit -= 1;
+    }
+  });
+
+  return ranges.map(function (r) {
+    const settled = r.won + r.lost;
+    return {
+      label: r.label,
+      won: r.won,
+      lost: r.lost,
+      win_rate: settled > 0 ? parseFloat(((r.won / settled) * 100).toFixed(1)) : 0,
+      roi: settled > 0 ? parseFloat(((r.profit / settled) * 100).toFixed(1)) : 0,
+    };
+  }).filter(function (r) { return (r.won + r.lost) > 0; });
+}
+
 module.exports.buildMonthlyBreakdown = buildMonthlyBreakdown;
+module.exports.buildLeagueBreakdown = buildLeagueBreakdown;
+module.exports.buildOddsRangeBreakdown = buildOddsRangeBreakdown;

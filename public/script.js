@@ -848,15 +848,12 @@
         }
       });
 
-      // Populate recent results with settled tips (won + close losses only)
+      // Populate recent results — mostra won E lost per trasparenza (track record verificabile)
       if (data.recent && data.recent.length > 0) {
         const container = document.getElementById('resultsList');
         if (container) {
           container.textContent = '';
-          const filtered = data.recent.filter(function (tip) {
-            return tip.status === 'won';
-          });
-          filtered.forEach(function (tip) {
+          data.recent.forEach(function (tip) {
             container.appendChild(buildTipResultItem(tip));
           });
         }
