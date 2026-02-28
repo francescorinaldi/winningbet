@@ -719,7 +719,7 @@ async function handleUsers(req, res, adminUser) {
   // NOTE: We do NOT filter out rows here — pagination totals must match the DB count.
 
   // Stats: always use dedicated global count queries (independent of search filter)
-  const tierCounts = await Promise.all([
+  const tierCounts = await Promise.allSettled([
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'free'),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'pro'),
@@ -730,12 +730,18 @@ async function handleUsers(req, res, adminUser) {
       .eq('role', 'partner'),
   ]);
 
+  function statCount(result) {
+    if (result.status !== 'fulfilled') return 0;
+    if (result.value.error) return 0;
+    return result.value.count || 0;
+  }
+
   const stats = {
-    total: tierCounts[0].count || 0,
-    free: tierCounts[1].count || 0,
-    pro: tierCounts[2].count || 0,
-    vip: tierCounts[3].count || 0,
-    partners: tierCounts[4].count || 0,
+    total: statCount(tierCounts[0]),
+    free: statCount(tierCounts[1]),
+    pro: statCount(tierCounts[2]),
+    vip: statCount(tierCounts[3]),
+    partners: statCount(tierCounts[4]),
   };
 
   return res.status(200).json({

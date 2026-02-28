@@ -601,7 +601,7 @@
 
     renderUserStats(data.stats);
     renderUsers(data.users);
-    renderPagination(data.pagination, search);
+    renderPagination(data.pagination);
   }
 
   /**
@@ -740,8 +740,9 @@
         tierSelect.appendChild(opt);
       });
 
+      tierSelect.dataset.prevValue = user.tier || 'free';
       tierSelect.addEventListener('change', function () {
-        updateUser(user.user_id, { tier: tierSelect.value });
+        updateUser(user.user_id, { tier: tierSelect.value }, tierSelect);
       });
 
       tierGroup.appendChild(tierLabel);
@@ -770,9 +771,10 @@
         roleSelect.appendChild(opt);
       });
 
+      roleSelect.dataset.prevValue = user.role || '';
       roleSelect.addEventListener('change', function () {
         const val = roleSelect.value || null;
-        updateUser(user.user_id, { role: val });
+        updateUser(user.user_id, { role: val }, roleSelect);
       });
 
       roleGroup.appendChild(roleLabel);
@@ -850,7 +852,9 @@
 
   // ─── User Update (tier/role) ────────────────────────────
 
-  async function updateUser(userId, updates) {
+  async function updateUser(userId, updates, selectEl) {
+    const previousValue = selectEl ? selectEl.dataset.prevValue : null;
+
     const data = await authFetch('/api/admin?resource=users', {
       method: 'PUT',
       body: JSON.stringify(Object.assign({ user_id: userId }, updates)),
@@ -858,7 +862,16 @@
 
     if (data.error) {
       alert('Errore: ' + data.error);
+      // Revert the select to its previous value on failure
+      if (selectEl && previousValue !== null) {
+        selectEl.value = previousValue;
+      }
       return;
+    }
+
+    // Update stored previous value to the new successful value
+    if (selectEl) {
+      selectEl.dataset.prevValue = selectEl.value;
     }
 
     // Brief visual feedback — flash the card border green to confirm save

@@ -506,4 +506,248 @@ describe('/api/admin', () => {
 
     expect(res.status).toHaveBeenCalledWith(409);
   });
+
+  // ─── Happy paths: approve, reject, revoke, POST apply ──────
+
+  it('should approve a pending application and set role=partner', async () => {
+    mockAuth({
+      user: { id: 'admin-1', email: 'admin@test.com' },
+      profile: { role: 'admin', tier: 'vip' },
+    });
+
+    // Build a chain that handles sequential from() calls:
+    // 1st from('partner_applications') → select → eq → single (fetch app)
+    // 2nd from('profiles') → select → eq → single (fetch profile role)
+    // 3rd from('partner_applications') → update → eq → eq → select → maybeSingle (approve)
+    // 4th from('profiles') → update → eq (set role=partner)
+    let fromCallCount = 0;
+    supabase.from.mockImplementation(() => {
+      fromCallCount++;
+      const chain = {
+        select: jest.fn().mockReturnThis(),
+        insert: jest.fn().mockReturnThis(),
+        update: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn(),
+        maybeSingle: jest.fn(),
+      };
+      if (fromCallCount === 1) {
+        // Fetch application
+        chain.single.mockResolvedValue({
+          data: { id: 'app-1', user_id: 'u-2', status: 'pending', applicant_email: 'u2@test.com' },
+          error: null,
+        });
+      } else if (fromCallCount === 2) {
+        // Fetch profile role
+        chain.single.mockResolvedValue({
+          data: { role: null },
+          error: null,
+        });
+      } else if (fromCallCount === 3) {
+        // Approve application (update + maybeSingle)
+        chain.maybeSingle.mockResolvedValue({
+          data: { id: 'app-1', status: 'approved' },
+          error: null,
+        });
+      } else if (fromCallCount === 4) {
+        // Update profile role
+        chain.update.mockReturnValue(chain);
+        chain.eq.mockResolvedValue({ error: null });
+      }
+      return chain;
+    });
+
+    const req = createMockReq({
+      method: 'POST',
+      query: { resource: 'applications', action: 'approve' },
+      body: { application_id: 'app-1' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const response = res.json.mock.calls[0][0];
+    expect(response.ok).toBe(true);
+    expect(response.status).toBe('approved');
+  });
+
+  it('should reject a pending application with reason', async () => {
+    mockAuth({
+      user: { id: 'admin-1', email: 'admin@test.com' },
+      profile: { role: 'admin', tier: 'vip' },
+    });
+
+    let fromCallCount = 0;
+    supabase.from.mockImplementation(() => {
+      fromCallCount++;
+      const chain = {
+        select: jest.fn().mockReturnThis(),
+        update: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn(),
+        maybeSingle: jest.fn(),
+      };
+      if (fromCallCount === 1) {
+        // Fetch application
+        chain.single.mockResolvedValue({
+          data: { id: 'app-1', user_id: 'u-2', status: 'pending', applicant_email: 'u2@test.com' },
+          error: null,
+        });
+      } else if (fromCallCount === 2) {
+        // Reject application
+        chain.maybeSingle.mockResolvedValue({
+          data: { id: 'app-1', status: 'rejected' },
+          error: null,
+        });
+      }
+      return chain;
+    });
+
+    const req = createMockReq({
+      method: 'POST',
+      query: { resource: 'applications', action: 'reject' },
+      body: { application_id: 'app-1', reason: 'Dati incompleti' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const response = res.json.mock.calls[0][0];
+    expect(response.ok).toBe(true);
+    expect(response.status).toBe('rejected');
+  });
+
+  it('should revoke an approved application and remove partner role', async () => {
+    mockAuth({
+      user: { id: 'admin-1', email: 'admin@test.com' },
+      profile: { role: 'admin', tier: 'vip' },
+    });
+
+    let fromCallCount = 0;
+    supabase.from.mockImplementation(() => {
+      fromCallCount++;
+      const chain = {
+        select: jest.fn().mockReturnThis(),
+        update: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn(),
+        maybeSingle: jest.fn(),
+      };
+      if (fromCallCount === 1) {
+        // Fetch application
+        chain.single.mockResolvedValue({
+          data: { id: 'app-1', user_id: 'u-2', status: 'approved', applicant_email: 'u2@test.com' },
+          error: null,
+        });
+      } else if (fromCallCount === 2) {
+        // Revoke application
+        chain.maybeSingle.mockResolvedValue({
+          data: { id: 'app-1', status: 'revoked' },
+          error: null,
+        });
+      } else if (fromCallCount === 3) {
+        // Remove partner role: update().eq('user_id', ...).eq('role', 'partner')
+        // Last .eq() in the chain resolves the promise
+        let eqCount = 0;
+        chain.eq.mockImplementation(() => {
+          eqCount++;
+          if (eqCount >= 2) return Promise.resolve({ error: null });
+          return chain;
+        });
+      }
+      return chain;
+    });
+
+    const req = createMockReq({
+      method: 'POST',
+      query: { resource: 'applications', action: 'revoke' },
+      body: { application_id: 'app-1' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const response = res.json.mock.calls[0][0];
+    expect(response.ok).toBe(true);
+    expect(response.status).toBe('revoked');
+  });
+
+  it('should submit a new partner application with VIES validation', async () => {
+    mockAuth();
+
+    // Mock VIES fetch
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          isValid: true,
+          name: 'RAI RADIOTELEVISIONE ITALIANA SPA',
+          address: 'VIALE GIUSEPPE MAZZINI 14',
+        }),
+    });
+
+    let fromCallCount = 0;
+    supabase.from.mockImplementation(() => {
+      fromCallCount++;
+      const chain = {
+        select: jest.fn().mockReturnThis(),
+        insert: jest.fn().mockReturnThis(),
+        update: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn(),
+      };
+      if (fromCallCount === 1) {
+        // Check existing application — none found
+        chain.single.mockResolvedValue({
+          data: null,
+          error: { code: 'PGRST116' },
+        });
+      } else if (fromCallCount === 2) {
+        // Insert new application
+        chain.single.mockResolvedValue({
+          data: {
+            id: 'app-new',
+            user_id: 'user-1',
+            business_name: 'RAI SPA',
+            vat_number: 'IT00743110157',
+            vies_valid: true,
+            vies_company_name: 'RAI RADIOTELEVISIONE ITALIANA SPA',
+            vies_address: 'VIALE GIUSEPPE MAZZINI 14',
+            city: 'Roma',
+            province: 'RM',
+            website: null,
+            status: 'pending',
+            rejection_reason: null,
+            created_at: '2026-02-28T00:00:00Z',
+            updated_at: '2026-02-28T00:00:00Z',
+          },
+          error: null,
+        });
+      }
+      return chain;
+    });
+
+    const req = createMockReq({
+      method: 'POST',
+      query: { resource: 'apply' },
+      body: {
+        business_name: 'RAI SPA',
+        vat_number: 'IT00743110157',
+        city: 'Roma',
+        province: 'RM',
+      },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    const response = res.json.mock.calls[0][0];
+    expect(response.business_name).toBe('RAI SPA');
+    expect(response.vies_valid).toBe(true);
+    expect(response.status).toBe('pending');
+    // Should NOT include admin-only fields
+    expect(response.notes).toBeUndefined();
+    expect(response.reviewed_by).toBeUndefined();
+    expect(response.applicant_email).toBeUndefined();
+  });
 });

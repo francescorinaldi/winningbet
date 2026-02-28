@@ -372,7 +372,12 @@ async function handleBets(req, res, user) {
       .select()
       .single();
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Scommessa non trovata' });
+      }
+      return res.status(500).json({ error: error.message });
+    }
     return res.status(200).json(data);
   }
 

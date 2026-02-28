@@ -187,13 +187,13 @@ function buildDailyDigest(tips) {
  * @returns {Object} { subject: string, html: string, text: string }
  */
 function buildPartnerApplicationNotification(application, userEmail) {
-  var businessName = escapeHtml(application.business_name || '\u2014');
-  var vatNumber = escapeHtml(application.vat_number || '\u2014');
-  var city = escapeHtml(application.city || '\u2014');
-  var province = escapeHtml(application.province || '\u2014');
-  var website = escapeHtml(application.website || '\u2014');
-  var email = escapeHtml(userEmail || '\u2014');
-  var createdAt = application.created_at
+  const businessName = escapeHtml(application.business_name || '\u2014');
+  const vatNumber = escapeHtml(application.vat_number || '\u2014');
+  const city = escapeHtml(application.city || '\u2014');
+  const province = escapeHtml(application.province || '\u2014');
+  const website = escapeHtml(application.website || '\u2014');
+  const email = escapeHtml(userEmail || '\u2014');
+  const createdAt = application.created_at
     ? new Date(application.created_at).toLocaleDateString(EMAIL_LOCALE, {
         day: 'numeric',
         month: 'long',
@@ -203,7 +203,7 @@ function buildPartnerApplicationNotification(application, userEmail) {
       })
     : '\u2014';
 
-  var viesLabel = '\u2014';
+  let viesLabel = '\u2014';
   if (application.vies_valid === true) {
     viesLabel = '\u2705 Validata';
     if (application.vies_company_name) {
@@ -213,11 +213,11 @@ function buildPartnerApplicationNotification(application, userEmail) {
     viesLabel = '\u274C Non valida';
   }
 
-  var subject =
+  const subject =
     '\uD83C\uDFE2 Nuova Candidatura Partner \u2014 ' +
     (application.business_name || 'N/D');
 
-  var html = [
+  const html = [
     '<!DOCTYPE html>',
     '<html><head><meta charset="utf-8"></head>',
     '<body style="margin:0;padding:0;background:#0a0a0f;color:#f0f0f5;font-family:Arial,sans-serif;">',
@@ -275,7 +275,7 @@ function buildPartnerApplicationNotification(application, userEmail) {
     '</body></html>',
   ].join('\n');
 
-  var text =
+  const text =
     'Nuova Candidatura Partner \u2014 WinningBet\n\n' +
     'Ragione Sociale: ' +
     (application.business_name || '\u2014') +
@@ -314,11 +314,11 @@ function buildPartnerApplicationNotification(application, userEmail) {
  * @returns {Object} { subject: string, html: string, text: string }
  */
 function buildPartnerApprovalEmail(application) {
-  var businessName = escapeHtml(application.business_name || '');
+  const businessName = escapeHtml(application.business_name || '');
 
-  var subject = 'Candidatura Approvata \u2014 Benvenuto Partner WinningBet';
+  const subject = 'Candidatura Approvata \u2014 Benvenuto Partner WinningBet';
 
-  var html = [
+  const html = [
     '<!DOCTYPE html>',
     '<html><head><meta charset="utf-8"></head>',
     '<body style="margin:0;padding:0;background:#0a0a0f;color:#f0f0f5;font-family:Arial,sans-serif;">',
@@ -376,7 +376,7 @@ function buildPartnerApprovalEmail(application) {
     '</body></html>',
   ].join('\n');
 
-  var text =
+  const text =
     'Candidatura Approvata \u2014 Benvenuto Partner WinningBet\n\n' +
     'Ciao ' +
     (application.business_name || '') +
@@ -401,12 +401,12 @@ function buildPartnerApprovalEmail(application) {
  * @returns {Object} { subject: string, html: string, text: string }
  */
 function buildPartnerRejectionEmail(application, reason) {
-  var businessName = escapeHtml(application.business_name || '');
-  var safeReason = escapeHtml(reason || 'Requisiti non soddisfatti');
+  const businessName = escapeHtml(application.business_name || '');
+  const safeReason = escapeHtml(reason || 'Requisiti non soddisfatti');
 
-  var subject = 'Aggiornamento Candidatura \u2014 WinningBet';
+  const subject = 'Aggiornamento Candidatura \u2014 WinningBet';
 
-  var html = [
+  const html = [
     '<!DOCTYPE html>',
     '<html><head><meta charset="utf-8"></head>',
     '<body style="margin:0;padding:0;background:#0a0a0f;color:#f0f0f5;font-family:Arial,sans-serif;">',
@@ -441,7 +441,7 @@ function buildPartnerRejectionEmail(application, reason) {
     '</body></html>',
   ].join('\n');
 
-  var text =
+  const text =
     'Aggiornamento Candidatura \u2014 WinningBet\n\n' +
     'Gentile ' +
     (application.business_name || '') +
