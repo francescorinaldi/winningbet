@@ -6178,6 +6178,10 @@ img {
   border-color: var(--red);
 }
 
+.partner-status--revoked {
+  border-color: var(--text-muted);
+}
+
 .partner-status-icon {
   color: var(--gold);
   margin-bottom: 20px;

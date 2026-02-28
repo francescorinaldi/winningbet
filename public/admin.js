@@ -706,7 +706,7 @@
         meta.appendChild(visitEl);
       }
 
-      if (user.total_visits) {
+      if (user.total_visits !== null && user.total_visits !== undefined) {
         const visitsEl = document.createElement('span');
         visitsEl.textContent = user.total_visits + ' visite';
         meta.appendChild(visitsEl);

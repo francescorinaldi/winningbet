@@ -176,7 +176,7 @@
       statusEl.className = 'partner-status partner-status--rejected';
       buildRejectedStatus(app);
     } else if (status === 'revoked') {
-      statusEl.className = 'partner-status partner-status--rejected';
+      statusEl.className = 'partner-status partner-status--revoked';
       buildRevokedStatus();
     }
   }
