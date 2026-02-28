@@ -210,6 +210,30 @@ jobs:
               return;
             }
 
+            // Check that NO reviewer still has CHANGES_REQUESTED before declaring success
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              per_page: 100,
+            });
+
+            const latestByUser = {};
+            for (const review of reviews) {
+              if (review.user?.login) {
+                latestByUser[review.user.login] = review.state;
+              }
+            }
+
+            const pendingChanges = Object.entries(latestByUser)
+              .filter(([, state]) => state === 'CHANGES_REQUESTED')
+              .map(([login]) => login);
+
+            if (pendingChanges.length > 0) {
+              console.log(`Approved by one reviewer, but ${pendingChanges.join(', ')} still have changes requested. Skipping cleanup.`);
+              return;
+            }
+
             let allComments = [];
             let page = 1;
             while (true) {
