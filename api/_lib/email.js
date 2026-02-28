@@ -57,7 +57,7 @@ function getTransporter() {
 async function sendEmail(params) {
   const transporter = getTransporter();
   if (!transporter) {
-    console.warn('SMTP not configured, skipping email');
+    console.error('SMTP not configured, skipping email');
     return false;
   }
 

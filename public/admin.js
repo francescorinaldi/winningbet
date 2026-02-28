@@ -58,8 +58,11 @@
       // Verify admin role — try to load applications (returns 403 if not admin)
       const test = await authFetch('/api/admin?resource=applications');
       if (test.error) {
-        // Distinguish 403 (not admin) from other errors (500, network)
-        if (test.status === 403) {
+        if (test.status === 401) {
+          // Expired session — redirect to login
+          session = null;
+          window.location.href = '/auth.html?return=/admin.html';
+        } else if (test.status === 403) {
           show403();
         } else {
           showError('Errore di connessione al server (HTTP ' + (test.status || '?') + '). Riprova più tardi.');
@@ -170,10 +173,27 @@
     if (opts.body && typeof opts.body === 'string') {
       opts.headers['Content-Type'] = 'application/json';
     }
-    const resp = await fetch(url, opts);
-    const data = await resp.json();
-    if (!resp.ok) return { error: data.error || 'Errore ' + resp.status, status: resp.status };
-    return data;
+    try {
+      const resp = await fetch(url, opts);
+      const contentType = (resp.headers && resp.headers.get)
+        ? (resp.headers.get('content-type') || '')
+        : '';
+      let data = null;
+      if (contentType.indexOf('application/json') !== -1) {
+        try {
+          data = await resp.json();
+        } catch (_parseErr) {
+          return { error: 'Risposta non valida dal server', status: resp.status };
+        }
+      }
+      if (!resp.ok) {
+        const message = (data && data.error) ? data.error : 'Errore ' + resp.status;
+        return { error: message, status: resp.status };
+      }
+      return data || {};
+    } catch (_networkErr) {
+      return { error: 'Errore di rete. Riprova più tardi.', status: 0 };
+    }
   }
 
   // ==========================================
@@ -818,7 +838,15 @@
       return;
     }
 
-    // Brief visual feedback — no full reload needed for single changes
+    // Brief visual feedback — flash the card border green to confirm save
+    const card = document.querySelector('[data-user-id="' + userId + '"]');
+    if (card) {
+      card.style.transition = 'box-shadow 0.3s ease';
+      card.style.boxShadow = '0 0 0 2px #27ae60';
+      setTimeout(function () {
+        card.style.boxShadow = '';
+      }, 1500);
+    }
   }
 
   // ==========================================

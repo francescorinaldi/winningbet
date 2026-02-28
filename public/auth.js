@@ -53,9 +53,14 @@
     if (url.indexOf('//') === 0) return false;
     if (url.indexOf('://') !== -1) return false;
     if (url.indexOf('\\') !== -1) return false;
+    if (url.indexOf('@') !== -1) return false;
     const lower = url.toLowerCase();
     if (lower.indexOf('%5c') !== -1) return false;
     if (lower.indexOf('%2f%2f') !== -1) return false;
+    if (lower.indexOf('%0d') !== -1) return false;
+    if (lower.indexOf('%0a') !== -1) return false;
+    // Only allow safe URL characters
+    if (!/^\/[a-zA-Z0-9/_\-.?=&%]+$/.test(url)) return false;
     return true;
   }
 

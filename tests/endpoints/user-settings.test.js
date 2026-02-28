@@ -60,7 +60,7 @@ describe('GET /api/user-settings', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Parametro resource richiesto: activity, notifications o preferences',
+      error: 'Parametro resource richiesto: activity, notifications, preferences o bets',
     });
   });
 });

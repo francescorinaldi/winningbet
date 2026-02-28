@@ -23,7 +23,10 @@ const {
   buildPartnerRejectionEmail,
 } = require('./_lib/email');
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').filter(Boolean);
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
+  .split(',')
+  .map((email) => email.trim())
+  .filter(Boolean);
 const VAT_REGEX = /^IT\d{11}$/;
 const VALID_TIERS = ['free', 'pro', 'vip'];
 const VALID_ROLES = [null, 'partner', 'admin'];
@@ -50,7 +53,7 @@ module.exports = async function handler(req, res) {
     if (!profile || profile.role !== 'admin') {
       return res.status(403).json({ error: 'Accesso riservato agli amministratori' });
     }
-    return handleUsers(req, res);
+    return handleUsers(req, res, user);
   }
 
   return res
@@ -74,16 +77,20 @@ async function validateVies(vatNumber) {
 
   try {
     const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
-    if (!resp.ok) return { valid: null, name: null, address: null };
+    if (!resp.ok) {
+      console.error('[VIES] HTTP error:', resp.status, resp.statusText);
+      return { valid: null, name: null, address: null, error: 'vies_http_' + resp.status };
+    }
     const data = await resp.json();
     return {
       valid: data.isValid === true,
       name: data.name && data.name !== '---' ? data.name : null,
       address: data.address && data.address !== '---' ? data.address : null,
+      error: null,
     };
   } catch (err) {
     console.error('[VIES] Error:', err.message);
-    return { valid: null, name: null, address: null };
+    return { valid: null, name: null, address: null, error: 'vies_unavailable' };
   }
 }
 
@@ -113,7 +120,7 @@ async function batchGetUserEmails(userIds) {
           emailMap[id] = data.user.email;
         }
       } catch (_err) {
-        // Silently skip — email will be null in the response
+        console.error('[Admin] batchGetUserEmails error for', id, ':', _err.message);
       }
     }
   }
@@ -282,7 +289,12 @@ async function handleApply(req, res, user) {
     }
   }
 
-  return res.status(201).json(result);
+  const response = Object.assign({}, result);
+  if (vies.error) {
+    response._warning = 'Validazione VIES non disponibile. Verrà verificata dall\'amministratore.';
+  }
+
+  return res.status(201).json(response);
 }
 
 // ─── Applications (Admin) ───────────────────────────────────────────────────
@@ -387,17 +399,25 @@ async function handleApprove(res, application, adminUser) {
     return res.status(500).json({ error: 'Impossibile leggere il profilo utente' });
   }
 
-  // Aggiorna candidatura
-  const { error: updateError } = await supabase
+  // Aggiorna candidatura (optimistic lock: only if still pending)
+  const { data: approvedApp, error: updateError } = await supabase
     .from('partner_applications')
     .update({
       status: 'approved',
       reviewed_by: adminUser.id,
       reviewed_at: new Date().toISOString(),
     })
-    .eq('id', application.id);
+    .eq('id', application.id)
+    .eq('status', 'pending')
+    .select()
+    .maybeSingle();
 
   if (updateError) return res.status(500).json({ error: updateError.message });
+  if (!approvedApp) {
+    return res
+      .status(409)
+      .json({ error: 'La candidatura è stata già gestita da un altro amministratore.' });
+  }
 
   // Aggiorna profilo: role='partner' — solo se il ruolo attuale non è admin
   // (un admin che viene approvato come partner mantiene il ruolo admin)
@@ -419,20 +439,28 @@ async function handleApprove(res, application, adminUser) {
   }
 
   // Invia email di approvazione — use denormalized email or fetch
-  const recipientEmail = application.applicant_email || await getEmailByUserId(application.user_id);
+  const recipientEmail =
+    application.applicant_email || (await getEmailByUserId(application.user_id));
+  let emailSent = false;
   if (recipientEmail) {
     const emailData = buildPartnerApprovalEmail(application);
-    sendEmail({
-      to: recipientEmail,
-      subject: emailData.subject,
-      html: emailData.html,
-      text: emailData.text,
-    }).catch(function (err) {
+    try {
+      emailSent = await sendEmail({
+        to: recipientEmail,
+        subject: emailData.subject,
+        html: emailData.html,
+        text: emailData.text,
+      });
+    } catch (err) {
       console.error('[Admin] Approval email error:', err.message);
-    });
+    }
   }
 
-  return res.status(200).json({ ok: true, status: 'approved' });
+  return res.status(200).json({
+    ok: true,
+    status: 'approved',
+    email_sent: emailSent,
+  });
 }
 
 async function handleReject(res, application, adminUser, reason) {
@@ -448,8 +476,8 @@ async function handleReject(res, application, adminUser, reason) {
 
   const trimmedReason = reason.trim();
 
-  // Aggiorna candidatura
-  const { error: updateError } = await supabase
+  // Aggiorna candidatura (optimistic lock: only if still pending)
+  const { data: rejectedApp, error: updateError } = await supabase
     .from('partner_applications')
     .update({
       status: 'rejected',
@@ -457,25 +485,41 @@ async function handleReject(res, application, adminUser, reason) {
       reviewed_by: adminUser.id,
       reviewed_at: new Date().toISOString(),
     })
-    .eq('id', application.id);
+    .eq('id', application.id)
+    .eq('status', 'pending')
+    .select()
+    .maybeSingle();
 
   if (updateError) return res.status(500).json({ error: updateError.message });
-
-  // Invia email di rifiuto — use denormalized email or fetch
-  const recipientEmail = application.applicant_email || await getEmailByUserId(application.user_id);
-  if (recipientEmail) {
-    const emailData = buildPartnerRejectionEmail(application, trimmedReason);
-    sendEmail({
-      to: recipientEmail,
-      subject: emailData.subject,
-      html: emailData.html,
-      text: emailData.text,
-    }).catch(function (err) {
-      console.error('[Admin] Rejection email error:', err.message);
-    });
+  if (!rejectedApp) {
+    return res
+      .status(409)
+      .json({ error: 'La candidatura è stata già gestita da un altro amministratore.' });
   }
 
-  return res.status(200).json({ ok: true, status: 'rejected' });
+  // Invia email di rifiuto — use denormalized email or fetch
+  const recipientEmail =
+    application.applicant_email || (await getEmailByUserId(application.user_id));
+  let emailSent = false;
+  if (recipientEmail) {
+    const emailData = buildPartnerRejectionEmail(application, trimmedReason);
+    try {
+      emailSent = await sendEmail({
+        to: recipientEmail,
+        subject: emailData.subject,
+        html: emailData.html,
+        text: emailData.text,
+      });
+    } catch (err) {
+      console.error('[Admin] Rejection email error:', err.message);
+    }
+  }
+
+  return res.status(200).json({
+    ok: true,
+    status: 'rejected',
+    email_sent: emailSent,
+  });
 }
 
 async function handleRevoke(res, application, adminUser) {
@@ -485,17 +529,25 @@ async function handleRevoke(res, application, adminUser) {
     });
   }
 
-  // Aggiorna candidatura
-  const { error: updateError } = await supabase
+  // Aggiorna candidatura (optimistic lock: only if still approved)
+  const { data: revokedApp, error: updateError } = await supabase
     .from('partner_applications')
     .update({
       status: 'revoked',
       reviewed_by: adminUser.id,
       reviewed_at: new Date().toISOString(),
     })
-    .eq('id', application.id);
+    .eq('id', application.id)
+    .eq('status', 'approved')
+    .select()
+    .maybeSingle();
 
   if (updateError) return res.status(500).json({ error: updateError.message });
+  if (!revokedApp) {
+    return res
+      .status(409)
+      .json({ error: 'La candidatura è stata già gestita da un altro amministratore.' });
+  }
 
   // Revoca ruolo partner dal profilo — only if current role is exactly 'partner'.
   // This prevents accidentally removing admin privileges from admin users.
@@ -507,6 +559,14 @@ async function handleRevoke(res, application, adminUser) {
 
   if (profileError) {
     console.error('[Admin] Profile revoke error:', profileError.message);
+    // Abort: roll back application status to prevent inconsistent state
+    await supabase
+      .from('partner_applications')
+      .update({ status: 'approved', reviewed_by: null, reviewed_at: null })
+      .eq('id', application.id);
+    return res
+      .status(500)
+      .json({ error: 'Errore revoca ruolo partner: ' + profileError.message });
   }
 
   return res.status(200).json({ ok: true, status: 'revoked' });
@@ -519,13 +579,22 @@ async function handleRevoke(res, application, adminUser) {
  * when applicant_email is not stored on legacy rows).
  */
 async function getEmailByUserId(userId) {
-  const { data } = await supabase.auth.admin.getUserById(userId);
-  return data && data.user && data.user.email ? data.user.email : null;
+  try {
+    const { data, error } = await supabase.auth.admin.getUserById(userId);
+    if (error) {
+      console.error('[Admin] getUserById error:', error.message);
+      return null;
+    }
+    return data && data.user && data.user.email ? data.user.email : null;
+  } catch (err) {
+    console.error('[Admin] getUserById exception:', err.message);
+    return null;
+  }
 }
 
 // ─── Users (Admin) ──────────────────────────────────────────────────────────
 
-async function handleUsers(req, res) {
+async function handleUsers(req, res, adminUser) {
   if (req.method !== 'GET' && req.method !== 'PUT') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -555,6 +624,11 @@ async function handleUsers(req, res) {
         });
       }
       updates.role = body.role;
+    }
+
+    // Prevent admin from removing their own admin role
+    if (updates.role !== undefined && updates.role !== 'admin' && body.user_id === adminUser.id) {
+      return res.status(400).json({ error: 'Non puoi rimuovere il tuo ruolo admin' });
     }
 
     if (Object.keys(updates).length === 0) {
@@ -591,9 +665,11 @@ async function handleUsers(req, res) {
     .range(offset, offset + perPage - 1);
 
   if (search) {
-    query = query.or(
-      'display_name.ilike.%' + search + '%'
-    );
+    // Sanitize PostgREST special characters to prevent filter injection
+    const safeSearch = search.replace(/[.,()]/g, '');
+    if (safeSearch.length > 0) {
+      query = query.ilike('display_name', '%' + safeSearch + '%');
+    }
   }
 
   const { data: profiles, error: profilesError, count: totalCount } = await query;
@@ -604,7 +680,7 @@ async function handleUsers(req, res) {
   const emails = await batchGetUserEmails(userIds);
 
   // Enrich profiles with email
-  let enriched = profiles.map(function (p) {
+  const enriched = profiles.map(function (p) {
     return Object.assign({}, p, { email: emails[p.user_id] || null });
   });
 
@@ -613,8 +689,9 @@ async function handleUsers(req, res) {
   // and add an email_match flag for UI highlighting if needed.
   // NOTE: We do NOT filter out rows here — pagination totals must match the DB count.
 
-  // Stats: always use dedicated count queries for accurate global stats
+  // Stats: always use dedicated global count queries (independent of search filter)
   const tierCounts = await Promise.all([
+    supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'free'),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'pro'),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'vip'),
@@ -625,11 +702,11 @@ async function handleUsers(req, res) {
   ]);
 
   const stats = {
-    total: totalCount || 0,
-    free: tierCounts[0].count || 0,
-    pro: tierCounts[1].count || 0,
-    vip: tierCounts[2].count || 0,
-    partners: tierCounts[3].count || 0,
+    total: tierCounts[0].count || 0,
+    free: tierCounts[1].count || 0,
+    pro: tierCounts[2].count || 0,
+    vip: tierCounts[3].count || 0,
+    partners: tierCounts[4].count || 0,
   };
 
   return res.status(200).json({
