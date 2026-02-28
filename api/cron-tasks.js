@@ -60,7 +60,9 @@ async function handleSettle(_req, res) {
     }
 
     if (!pendingTips || pendingTips.length === 0) {
-      return res.status(200).json({ settled: 0, message: 'Nessun pronostico da chiudere' });
+      return res
+        .status(200)
+        .json({ settled: 0, skipped_manual: 0, message: 'Nessun pronostico da chiudere' });
     }
 
     // 2. Raggruppa tips per lega
