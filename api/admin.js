@@ -67,7 +67,7 @@ module.exports = async function handler(req, res) {
  * Valida una Partita IVA tramite il servizio VIES della Commissione Europea.
  *
  * @param {string} vatNumber - P.IVA con prefisso paese (es. IT01234567890)
- * @returns {Promise<{valid: boolean|null, name: string|null, address: string|null}>}
+ * @returns {Promise<{valid: boolean|null, name: string|null, address: string|null, error: string|null}>}
  */
 async function validateVies(vatNumber) {
   const country = vatNumber.slice(0, 2).toUpperCase();
