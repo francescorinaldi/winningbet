@@ -55,8 +55,8 @@
         return;
       }
 
-      // Verify admin role — try to load applications (returns 403 if not admin)
-      const test = await authFetch('/api/admin?resource=applications');
+      // Verify admin role — minimal preflight (per_page=1) to check auth without loading data
+      const test = await authFetch('/api/admin?resource=applications&per_page=1');
       if (test.error) {
         if (test.status === 401) {
           // Expired session — redirect to login
