@@ -76,6 +76,8 @@ async function handleSettle(_req, res) {
     // 3. Per ogni lega, recupera risultati e chiudi i tips
     const settledResults = [];
     let skippedManual = 0;
+    // Raccoglie gli ID dei tip appena chiusi come 'lost' (cross-league) per l'anti-churn
+    const allSettledLostIds = new Set();
 
     for (const [leagueSlug, tips] of Object.entries(tipsByLeague)) {
       let results;
@@ -120,6 +122,7 @@ async function handleSettle(_req, res) {
 
         tipUpdates.push({ id: tip.id, status: status, result: score });
         outcomeUpserts.push({ tip_id: tip.id, actual_result: actualResult });
+        if (status === 'lost') allSettledLostIds.add(tip.id);
 
         settledResults.push({
           match: tip.home_team + ' vs ' + tip.away_team,
@@ -170,16 +173,141 @@ async function handleSettle(_req, res) {
       console.error('settle-schedine error:', schedErr.message);
     }
 
+    // Anti-churn: invia DM proattivo agli utenti PRO/VIP con 5 tip negative consecutive.
+    // Si attiva solo quando il tip appena chiuso è quello che causa la 5a perdita di fila,
+    // evitando di rispedire il DM nei giorni successivi di una stessa streak.
+    let antiChurnDmsSent = 0;
+    try {
+      antiChurnDmsSent = await triggerAntiChurnDMs(allSettledLostIds);
+    } catch (antiChurnErr) {
+      console.error('anti-churn error:', antiChurnErr.message);
+    }
+
     return res.status(200).json({
       settled: settledResults.length,
       skipped_manual: skippedManual,
       results: settledResults,
       schedine_settled: schedineSettled,
+      anti_churn_dms_sent: antiChurnDmsSent,
     });
   } catch (err) {
     console.error('settle-tips error:', err);
     return res.status(500).json({ error: 'Errore nella chiusura dei pronostici' });
   }
+}
+
+// ─── Anti-churn ─────────────────────────────────────────────────────────────
+
+/**
+ * Escape dei caratteri speciali per MarkdownV2 (locale a questo modulo).
+ * @param {string|number} s
+ * @returns {string}
+ */
+function escapeMd(s) {
+  return String(s).replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
+}
+
+/**
+ * Costruisce il messaggio DM di contestualizzazione per l'anti-churn.
+ *
+ * @param {number} winRate - Win rate storico aggregato (0-100)
+ * @param {number} totalSettled - Numero totale di tip chiusi storicamente
+ * @returns {string} Messaggio formattato in MarkdownV2
+ */
+function buildAntiChurnMessage(winRate, totalSettled) {
+  return [
+    '\uD83D\uDCCA *Una nota sul lungo periodo*',
+    '',
+    'Hai attraversato un momento negativo\\. Nel betting professionale, anche i migliori sistemi attraversano drawdown\\.',
+    '',
+    'Ci\u00F2 che conta \u00e8 il *ROI su 100\\+ tip*, non la settimana corrente\\.',
+    '',
+    '\uD83D\uDCC8 *I nostri dati storici aggregati:*',
+    '\u251C Win Rate: *' + escapeMd(winRate) + '%*',
+    '\u2514 Tip analizzati: *' + escapeMd(totalSettled) + '*',
+    '',
+    '_Il momento difficile fa parte della strategia\\. I trader disciplinati lo attraversano senza cambiare rotta\\._',
+    '',
+    'Vuoi mettere in pausa l\'abbonamento per 2 settimane invece di cancellare\\? Scrivici \\-\\- nessun problema\\. \uD83D\uDE4F',
+  ].join('\n');
+}
+
+/**
+ * Invia un DM di contestualizzazione agli utenti PRO/VIP che hanno subito
+ * 5 tip negative consecutive, ma SOLO quando l'ultimo tip perso è stato
+ * appena chiuso in questo cron run (evita di rispedire DM identici il giorno dopo).
+ *
+ * Logica: per ogni utente PRO/VIP con telegram_user_id, recupera gli ultimi 6
+ * tip chiusi accessibili al suo tier, ordinati per match_date DESC.
+ * Se i primi 5 sono tutti 'lost' E il più recente è in justSettledLostIds
+ * (appena chiuso), il trigger è scattato → invia DM.
+ * Se anche il 6° è 'lost', la streak è già > 5 e il DM fu già inviato ieri.
+ *
+ * @param {Set<string>} justSettledLostIds - ID dei tip appena chiusi come 'lost'
+ * @returns {Promise<number>} Numero di DM inviati
+ */
+async function triggerAntiChurnDMs(justSettledLostIds) {
+  if (!justSettledLostIds || justSettledLostIds.size === 0) return 0;
+
+  // Utenti PRO/VIP con telegram_user_id configurato
+  const { data: premiumUsers, error: usersError } = await supabase
+    .from('profiles')
+    .select('user_id, tier, telegram_user_id')
+    .in('tier', ['pro', 'vip'])
+    .not('telegram_user_id', 'is', null);
+
+  if (usersError || !premiumUsers || premiumUsers.length === 0) return 0;
+
+  // Recupera i dati aggregati globali per il messaggio (unica query per tutti gli utenti)
+  const { data: allSettled } = await supabase
+    .from('tips')
+    .select('status, odds')
+    .in('status', ['won', 'lost']);
+
+  const globalWon = (allSettled || []).filter(function (t) { return t.status === 'won'; }).length;
+  const globalTotal = (allSettled || []).length;
+  const globalWinRate = globalTotal > 0 ? Math.round((globalWon / globalTotal) * 100) : 0;
+
+  let dmsSent = 0;
+
+  for (const profile of premiumUsers) {
+    try {
+      // Tier VIP vede tutti i tier; PRO vede free + pro
+      const tierFilter = profile.tier === 'vip' ? ['free', 'pro', 'vip'] : ['free', 'pro'];
+
+      // Ultimi 6 tip chiusi per questo tier, più recenti prima
+      const { data: recentTips } = await supabase
+        .from('tips')
+        .select('id, status, match_date')
+        .in('status', ['won', 'lost', 'void'])
+        .in('tier', tierFilter)
+        .order('match_date', { ascending: false })
+        .limit(6);
+
+      if (!recentTips || recentTips.length < 5) continue;
+
+      const last5 = recentTips.slice(0, 5);
+      const allLost = last5.every(function (t) { return t.status === 'lost'; });
+
+      // Il tip più recente deve essere appena stato chiuso in questo cron run
+      const latestIsNew = justSettledLostIds.has(last5[0].id);
+
+      // Se il 6° esiste ed è anch'esso 'lost', la streak era già >= 5 ieri → non rinviare
+      const sixthIsLost = recentTips.length >= 6 && recentTips[5].status === 'lost';
+
+      if (!allLost || !latestIsNew || sixthIsLost) continue;
+
+      const message = buildAntiChurnMessage(globalWinRate, globalTotal);
+      await telegram.sendDirectMessage(profile.telegram_user_id, message);
+      dmsSent++;
+
+      console.log('[anti-churn] DM inviato a utente', profile.user_id, '(5 tip perse consecutive)');
+    } catch (userErr) {
+      console.error('[anti-churn] errore per utente', profile.user_id, ':', userErr.message);
+    }
+  }
+
+  return dmsSent;
 }
 
 /**

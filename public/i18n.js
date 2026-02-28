@@ -35,6 +35,7 @@
       'hero.tips_sent': 'Tips Inviati',
       'hero.cta': 'INIZIA A VINCERE',
       'hero.cta2': 'Vedi i Tips Gratis',
+      'hero.track_record_link': '→ Verifica il track record completo',
 
       // League selector
       'league.all': 'Tutte',
@@ -211,6 +212,7 @@
       'hero.tips_sent': 'Tips Sent',
       'hero.cta': 'START WINNING',
       'hero.cta2': 'See Free Tips',
+      'hero.track_record_link': '→ Verify the full track record',
 
       // League selector
       'league.all': 'All',

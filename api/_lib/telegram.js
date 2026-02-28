@@ -113,6 +113,11 @@ function formatItalianDate() {
 
 /**
  * Formatta un singolo tip come blocco nel digest.
+ *
+ * Mostra la probabilità implicita della quota (stima del bookmaker) e la stima
+ * di WinningBet (dal campo confidence), evidenziando l'edge value bet quando presente.
+ * Questo rende visibile il ragionamento quantitativo dietro ogni tip.
+ *
  * @param {Object} tip - Oggetto tip dal database
  * @returns {string} Blocco MarkdownV2 per il tip
  */
@@ -120,17 +125,31 @@ function formatTipBlock(tip) {
   const home = escapeMarkdown(tip.home_team);
   const away = escapeMarkdown(tip.away_team);
   const prediction = escapeMarkdown(tip.prediction);
-  const odds = escapeMarkdown(parseFloat(tip.odds).toFixed(2));
-  const confidence = escapeMarkdown(
-    tip.confidence !== null && tip.confidence !== undefined ? tip.confidence + '%' : '—',
-  );
+  const oddsNum = parseFloat(tip.odds);
+  const odds = escapeMarkdown(oddsNum.toFixed(2));
 
   const lines = [
     '\u26BD *' + home + ' vs ' + away + '*',
     '\u251C \uD83C\uDFAF ' + prediction,
-    '\u251C \uD83D\uDCCA Quota: ' + odds,
-    '\u251C \uD83D\uDD25 Fiducia: ' + confidence,
   ];
+
+  // Quota + probabilità implicita del bookmaker (1/quota × 100)
+  if (tip.confidence !== null && tip.confidence !== undefined && oddsNum > 0) {
+    const impliedProb = Math.round((1 / oddsNum) * 100);
+    const edge = tip.confidence - impliedProb;
+    const edgeStr = edge > 0 ? '+' + edge + '%' : edge + '%';
+    const edgeLabel = edge > 0 ? '\u2B06\uFE0F' : '\u27A1\uFE0F'; // ⬆️ o ➡️
+
+    lines.push('\u251C \uD83D\uDCCA Quota: ' + odds + ' \u2502 Bookie: ' + escapeMarkdown(impliedProb + '%'));
+    lines.push(
+      '\u251C ' + edgeLabel + ' WinningBet: ' +
+        escapeMarkdown(tip.confidence + '%') +
+        ' \u2502 Edge: ' +
+        escapeMarkdown(edgeStr),
+    );
+  } else {
+    lines.push('\u251C \uD83D\uDCCA Quota: ' + odds);
+  }
 
   if (tip.analysis) {
     lines.push('\u2514 \uD83D\uDCDD _' + escapeMarkdown(tip.analysis) + '_');

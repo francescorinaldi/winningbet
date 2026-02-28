@@ -4,6 +4,13 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **feat(growth): anti-churn DM automatico dopo 5 tip negative consecutive** — `cron-tasks.js`: alla fine di `handleSettle`, raccoglie gli ID dei tip appena chiusi come `lost` (`allSettledLostIds`). Nuova funzione `triggerAntiChurnDMs(justSettledLostIds)`: per ogni utente PRO/VIP con `telegram_user_id`, recupera gli ultimi 6 tip chiusi del loro tier. Se i 5 più recenti sono tutti `lost` E il più recente è stato appena chiuso in questo cron run E il 6° non è anch'esso `lost` (streak già > 5 → DM inviato ieri), invia un DM Telegram contestualizzante con win rate storico e numero di tip analizzati. Il response JSON del settle include ora `anti_churn_dms_sent`. Una query aggregata unica recupera i dati globali per tutti gli utenti (evita N+1).
+- **feat(growth): formato card Telegram arricchito con probabilità implicita ed edge value bet** — `api/_lib/telegram.js`: `formatTipBlock` mostra ora, per ogni tip con confidence impostata, la probabilità implicita della quota del bookmaker (`1/odds × 100`) e la stima di WinningBet (`confidence%`), evidenziando l'edge (`+X%` o `X%`). Rende visibile il ragionamento quantitativo dietro ogni pronostico, distaccando WinningBet dall'immagine dei tipster classici.
+- **feat(growth): link "Verifica il track record completo" nell'hero della landing** — `public/index.html`: link `href="#stats"` con classe `hero-track-record-link` sotto i CTA dell'hero. `public/styles.css`: stile discreto (oro, opacity 0.7, hover → 1). `public/i18n.js`: chiave `hero.track_record_link` per IT e EN. Il track record era già pubblico senza login — il link rende esplicita la verificabilità per i visitatori scettici.
+- **docs(growth): piano strategico acquisizione e crescita** — `docs/plans/2026-02-28-growth-acquisition-strategy.md`: documento strategico completo (6 debolezze → 6 piani di trasformazione) redatto a seguito della review del business plan Dogy-Gody (Luigi Perrone, Feb 2026).
+
 ### Fixed
 
 - **fix(corners/cards): forward corner/card odds to match.odds in fetch-league-data.js** — Step 4 of the data pipeline extracted matchWinner, overUnder, bothTeamsScore, doubleChance odds into `match.odds` but omitted corners and cards. This meant the analyst agent never saw corner/card odds despite the data being fetched by `getAllOdds()`. Added `allOdds.corners` and `allOdds.cards` extraction blocks.
