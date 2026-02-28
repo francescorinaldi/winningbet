@@ -874,9 +874,38 @@
       selectEl.dataset.prevValue = selectEl.value;
     }
 
-    // Brief visual feedback — flash the card border green to confirm save
+    // Update badges to reflect the new state from API response
     const card = document.querySelector('[data-user-id="' + userId + '"]');
     if (card) {
+      const badgesContainer = card.querySelector('.admin-user-badges');
+      if (badgesContainer) {
+        // Update tier badge
+        const tierBadge = badgesContainer.querySelector('.admin-tier-badge');
+        const newTier = data.tier || 'free';
+        if (tierBadge) {
+          tierBadge.className = 'admin-tier-badge admin-tier-badge--' + newTier;
+          tierBadge.textContent = TIER_LABELS[newTier] || 'FREE';
+        }
+
+        // Update role badge
+        const existingRoleBadge = badgesContainer.querySelector('.admin-role-badge');
+        const newRole = data.role || null;
+        if (newRole) {
+          if (existingRoleBadge) {
+            existingRoleBadge.className = 'admin-role-badge admin-role-badge--' + newRole;
+            existingRoleBadge.textContent = newRole.toUpperCase();
+          } else {
+            const roleBadge = document.createElement('span');
+            roleBadge.className = 'admin-role-badge admin-role-badge--' + newRole;
+            roleBadge.textContent = newRole.toUpperCase();
+            badgesContainer.appendChild(roleBadge);
+          }
+        } else if (existingRoleBadge) {
+          existingRoleBadge.remove();
+        }
+      }
+
+      // Brief visual feedback — flash the card border green to confirm save
       card.style.transition = 'box-shadow 0.3s ease';
       card.style.boxShadow = '0 0 0 2px var(--green)';
       setTimeout(function () {

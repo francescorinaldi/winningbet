@@ -181,22 +181,32 @@ async function handleApply(req, res, user) {
   // Validazione province (opzionale, max 2 caratteri)
   let province = null;
   if (body.province) {
-    province = String(body.province).trim().toUpperCase();
-    if (province.length > 2) {
-      return res.status(400).json({ error: 'Provincia: massimo 2 caratteri (es. MI, RM)' });
+    const trimmedProvince = String(body.province).trim().toUpperCase();
+    if (trimmedProvince.length === 0) {
+      province = null;
+    } else {
+      if (trimmedProvince.length > 2) {
+        return res.status(400).json({ error: 'Provincia: massimo 2 caratteri (es. MI, RM)' });
+      }
+      province = trimmedProvince;
     }
   }
 
   // Validazione website (opzionale, deve iniziare con http:// o https://)
   let website = null;
   if (body.website) {
-    website = String(body.website).trim();
-    if (website && !website.startsWith('http://') && !website.startsWith('https://')) {
+    const trimmedWebsite = String(body.website).trim();
+    if (trimmedWebsite.length === 0) {
+      website = null;
+    } else if (!trimmedWebsite.startsWith('http://') && !trimmedWebsite.startsWith('https://')) {
       return res.status(400).json({ error: 'Sito web deve iniziare con http:// o https://' });
+    } else {
+      website = trimmedWebsite;
     }
   }
 
-  const city = body.city ? String(body.city).trim() : null;
+  const trimmedCity = body.city ? String(body.city).trim() : '';
+  const city = trimmedCity.length > 0 ? trimmedCity : null;
 
   // Check candidatura esistente
   const { data: existing, error: existingError } = await supabase
@@ -683,7 +693,8 @@ async function handleUsers(req, res, adminUser) {
   const page = Math.max(1, parseInt(req.query.page) || 1);
   const perPage = 50;
   const offset = (page - 1) * perPage;
-  const search = req.query.search ? req.query.search.trim() : null;
+  const rawSearch = Array.isArray(req.query.search) ? req.query.search[0] : req.query.search;
+  const search = typeof rawSearch === 'string' ? rawSearch.trim() || null : null;
 
   let query = supabase
     .from('profiles')

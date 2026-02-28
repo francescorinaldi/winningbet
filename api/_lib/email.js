@@ -213,9 +213,10 @@ function buildPartnerApplicationNotification(application, userEmail) {
     viesLabel = '\u274C Non valida';
   }
 
-  const subject =
+  const subject = sanitizeSubject(
     '\uD83C\uDFE2 Nuova Candidatura Partner \u2014 ' +
-    (application.business_name || 'N/D');
+    (application.business_name || 'N/D'),
+  );
 
   const html = [
     '<!DOCTYPE html>',
@@ -470,6 +471,15 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+/**
+ * Strip CR/LF and control characters from email subject to prevent header injection.
+ * @param {string} str
+ * @returns {string}
+ */
+function sanitizeSubject(str) {
+  return String(str).replace(/[\r\n\x00-\x1f]/g, ' ').trim();
 }
 
 module.exports = {
