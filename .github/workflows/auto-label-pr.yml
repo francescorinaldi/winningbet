@@ -1,0 +1,93 @@
+name: Auto-Label PRs
+
+# Automatically adds the 'auto-review-fix' label to every new PR,
+# creating the label first if it doesn't exist.
+#
+# Also converts bot-authored draft PRs to ready-for-review automatically,
+# so the Copilot coding agent's PRs are immediately reviewable.
+#
+# Triggers on:
+#   opened          — new PR (including drafts)
+#   ready_for_review — draft manually converted to ready (label catch-up)
+#   reopened        — re-opened PR (label catch-up)
+
+on:
+  pull_request_target:
+    types: [opened, ready_for_review, reopened]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  add-label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure label exists and add to PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const LABEL_NAME = 'auto-review-fix';
+            const LABEL_COLOR = '7C3AED';
+            const LABEL_DESCRIPTION = 'Enable automated Copilot review-fix loop';
+
+            // ── Ensure the label exists (create if missing) ──
+            try {
+              await github.rest.issues.getLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: LABEL_NAME,
+              });
+            } catch (e) {
+              if (e.status === 404) {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: LABEL_NAME,
+                  color: LABEL_COLOR,
+                  description: LABEL_DESCRIPTION,
+                });
+                console.log(`Created label "${LABEL_NAME}".`);
+              } else {
+                throw e;
+              }
+            }
+
+            // ── Add the label to the PR ──
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: [LABEL_NAME],
+            });
+
+            console.log(`Added "${LABEL_NAME}" label to PR #${context.payload.pull_request.number}.`);
+
+      # ── Convert bot-authored draft PRs to ready for review ──
+      - name: Convert draft PR to ready for review (bot PRs only)
+        if: github.event.action == 'opened' && github.event.pull_request.draft == true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const actor = context.payload.pull_request.user?.login || '';
+
+            const isBot =
+              actor.includes('[bot]') ||
+              actor.toLowerCase().includes('copilot');
+
+            if (!isBot) {
+              console.log(`PR author "${actor}" is not a bot — keeping draft state.`);
+              return;
+            }
+
+            console.log(`PR #${context.payload.pull_request.number} by "${actor}" is a draft. Converting to ready for review.`);
+
+            await github.graphql(`
+              mutation($nodeId: ID!) {
+                markPullRequestReadyForReview(input: { pullRequestId: $nodeId }) {
+                  pullRequest { number isDraft }
+                }
+              }
+            `, { nodeId: context.payload.pull_request.node_id });
+
+            console.log('PR is now ready for review.');

@@ -1,0 +1,96 @@
+name: Auto-Approve Bot Workflow Runs
+
+# When a bot (Copilot coding agent) opens or updates a PR, other workflow
+# runs for that PR may enter "waiting" status if the repository requires
+# approval for first-time contributors or similar settings.
+#
+# This workflow runs on pull_request_target (base-branch context, never
+# needs approval itself) and approves any waiting runs for the PR's head SHA
+# when the PR author is a known bot.
+#
+# Includes a retry loop with delay to handle the race condition where
+# workflow runs haven't appeared yet when this workflow fires.
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  actions: write
+
+concurrency:
+  group: auto-approve-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  approve-waiting-runs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approve waiting workflow runs for bot-authored PRs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const actor   = context.payload.pull_request.user?.login || '';
+
+            // ── Only act on PRs opened by the Copilot coding agent / bots ──
+            const isBot =
+              actor.includes('[bot]') ||
+              actor.toLowerCase().includes('copilot');
+
+            if (!isBot) {
+              console.log(`PR #${prNumber} author "${actor}" is not a bot — skipping.`);
+              return;
+            }
+
+            console.log(`PR #${prNumber} by "${actor}". Checking for workflow runs awaiting approval...`);
+
+            const headSha = context.payload.pull_request.head.sha;
+
+            // ── Retry loop: workflow runs may not appear immediately ──
+            const MAX_RETRIES = 3;
+            const DELAY_MS = 10000;
+            let totalApproved = 0;
+
+            for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+              if (attempt > 1) {
+                console.log(`Retry ${attempt}/${MAX_RETRIES} — waiting ${DELAY_MS / 1000}s...`);
+                await new Promise(r => setTimeout(r, DELAY_MS));
+              }
+
+              const { data } = await github.rest.actions.listWorkflowRunsForRepo({
+                owner:    context.repo.owner,
+                repo:     context.repo.repo,
+                head_sha: headSha,
+                per_page: 100,
+              });
+
+              const waitingRuns = data.workflow_runs.filter(r => r.status === 'waiting');
+
+              if (waitingRuns.length === 0) {
+                if (attempt === 1) {
+                  console.log('No workflow runs are waiting for approval yet.');
+                  continue;
+                }
+                console.log('No more waiting runs found.');
+                break;
+              }
+
+              console.log(`Found ${waitingRuns.length} waiting run(s). Approving...`);
+
+              for (const run of waitingRuns) {
+                try {
+                  await github.rest.actions.approveWorkflowRun({
+                    owner:  context.repo.owner,
+                    repo:   context.repo.repo,
+                    run_id: run.id,
+                  });
+                  console.log(`  ✓ Approved run ${run.id}: "${run.name}"`);
+                  totalApproved++;
+                } catch (e) {
+                  console.log(`  ✗ Could not approve run ${run.id} (${run.name}): ${e.message}`);
+                }
+              }
+            }
+
+            console.log(`Done. Approved ${totalApproved} workflow run(s) total.`);
