@@ -236,4 +236,160 @@ describe('/api/admin', () => {
     expect(res.status).toHaveBeenCalledWith(405);
     expect(res.json).toHaveBeenCalledWith({ error: 'Method not allowed' });
   });
+
+  // ─── resource=users (admin actions) ─────────────────────────
+
+  it('should return 405 for unsupported method on users', async () => {
+    mockAuth({ profile: { role: 'admin', tier: 'vip' } });
+
+    const req = createMockReq({
+      method: 'DELETE',
+      query: { resource: 'users' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(405);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Method not allowed' });
+  });
+
+  it('should return 400 for PUT users without user_id', async () => {
+    mockAuth({ profile: { role: 'admin', tier: 'vip' } });
+
+    const req = createMockReq({
+      method: 'PUT',
+      query: { resource: 'users' },
+      body: { tier: 'pro' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'user_id obbligatorio' });
+  });
+
+  it('should return 400 for invalid tier value', async () => {
+    mockAuth({ profile: { role: 'admin', tier: 'vip' } });
+
+    const req = createMockReq({
+      method: 'PUT',
+      query: { resource: 'users' },
+      body: { user_id: 'u-2', tier: 'diamond' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Tier non valido. Valori: free, pro, vip',
+    });
+  });
+
+  it('should return 400 for invalid role value', async () => {
+    mockAuth({ profile: { role: 'admin', tier: 'vip' } });
+
+    const req = createMockReq({
+      method: 'PUT',
+      query: { resource: 'users' },
+      body: { user_id: 'u-2', role: 'superadmin' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Ruolo non valido. Valori: null, partner, admin',
+    });
+  });
+
+  it('should return 400 when no tier or role specified in PUT users', async () => {
+    mockAuth({ profile: { role: 'admin', tier: 'vip' } });
+
+    const req = createMockReq({
+      method: 'PUT',
+      query: { resource: 'users' },
+      body: { user_id: 'u-2' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Specificare almeno tier o role da aggiornare',
+    });
+  });
+
+  it('should prevent admin from removing own admin role', async () => {
+    mockAuth({
+      user: { id: 'admin-1', email: 'admin@test.com' },
+      profile: { role: 'admin', tier: 'vip' },
+    });
+
+    const req = createMockReq({
+      method: 'PUT',
+      query: { resource: 'users' },
+      body: { user_id: 'admin-1', role: null },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Non puoi rimuovere il tuo ruolo admin',
+    });
+  });
+
+  // ─── resource=applications (admin actions) ──────────────────
+
+  it('should return 405 for unsupported method on applications', async () => {
+    mockAuth({ profile: { role: 'admin', tier: 'vip' } });
+
+    const req = createMockReq({
+      method: 'DELETE',
+      query: { resource: 'applications' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(405);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Method not allowed' });
+  });
+
+  it('should return 400 for POST applications without application_id', async () => {
+    mockAuth({ profile: { role: 'admin', tier: 'vip' } });
+
+    const req = createMockReq({
+      method: 'POST',
+      query: { resource: 'applications', action: 'reject' },
+      body: { reason: 'Bad data' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'application_id obbligatorio',
+    });
+  });
+
+  it('should return 400 for reject without reason', async () => {
+    mockAuth({ profile: { role: 'admin', tier: 'vip' } });
+    mockChain({
+      data: { id: 'app-1', user_id: 'u-2', status: 'pending' },
+      error: null,
+    });
+
+    const req = createMockReq({
+      method: 'POST',
+      query: { resource: 'applications', action: 'reject' },
+      body: { application_id: 'app-1', reason: '' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Motivo del rifiuto obbligatorio',
+    });
+  });
 });

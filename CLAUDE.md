@@ -45,7 +45,7 @@ public/auth.js          → Authentication logic (Supabase Auth, ?return= redire
 public/dashboard.js     → User dashboard logic + Telegram linking
 public/business.html/js → Partner program landing page + application form
 public/admin.html/js    → Admin panel (partner management + user management)
-supabase/migrations/    → Database schema migrations (15 files)
+supabase/migrations/    → Database schema migrations
 .claude/skills/                        → Claude Code skills (project-specific)
 .claude/skills/fr3-generate-tips/      → /fr3-generate-tips (prediction engine)
 .claude/skills/fr3-generate-betting-slips/ → /fr3-generate-betting-slips (smart betting slips)

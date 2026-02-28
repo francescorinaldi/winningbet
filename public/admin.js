@@ -865,7 +865,7 @@
     const card = document.querySelector('[data-user-id="' + userId + '"]');
     if (card) {
       card.style.transition = 'box-shadow 0.3s ease';
-      card.style.boxShadow = '0 0 0 2px #27ae60';
+      card.style.boxShadow = '0 0 0 2px var(--green)';
       setTimeout(function () {
         card.style.boxShadow = '';
       }, 1500);
