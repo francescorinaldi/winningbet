@@ -51,8 +51,14 @@ function mockChain(result) {
 // ─── Tests ───────────────────────────────────────────────────
 
 describe('/api/admin', () => {
+  const originalFetch = global.fetch;
+
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
   // ─── Auth ─────────────────────────────────────────────────
@@ -198,8 +204,6 @@ describe('/api/admin', () => {
     expect(res.json).toHaveBeenCalledWith({
       error: 'Provincia: massimo 2 caratteri (es. MI, RM)',
     });
-
-    delete global.fetch;
   });
 
   it('should return 404 for GET apply with no existing application', async () => {

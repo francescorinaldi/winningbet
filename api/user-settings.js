@@ -308,7 +308,7 @@ async function handleBets(req, res, user) {
     if (tipId) {
       const { data, error } = await supabase
         .from('user_bets')
-        .select('*, tips(*)')
+        .select('*')
         .eq('user_id', user.id)
         .eq('tip_id', tipId)
         .single();
@@ -320,7 +320,7 @@ async function handleBets(req, res, user) {
 
     const { data, error } = await supabase
       .from('user_bets')
-      .select('*, tips(*)')
+      .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 

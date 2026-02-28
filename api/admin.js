@@ -146,7 +146,7 @@ async function handleApply(req, res, user) {
   if (req.method === 'GET') {
     const { data, error } = await supabase
       .from('partner_applications')
-      .select('*')
+      .select('id, user_id, business_name, vat_number, vies_valid, vies_company_name, vies_address, city, province, website, status, rejection_reason, created_at, updated_at')
       .eq('user_id', user.id)
       .single();
 

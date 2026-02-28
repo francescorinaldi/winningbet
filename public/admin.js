@@ -635,6 +635,7 @@
     users.forEach(function (user) {
       const card = document.createElement('div');
       card.className = 'admin-user-card';
+      card.dataset.userId = user.user_id;
 
       // Header: name + badges
       const header = document.createElement('div');
