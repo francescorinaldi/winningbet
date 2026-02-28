@@ -400,7 +400,10 @@
         const target = document.getElementById(href.slice(1));
         if (target) {
           e.preventDefault();
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          target.scrollIntoView({
+            behavior: REDUCED_MOTION ? 'auto' : 'smooth',
+            block: 'start',
+          });
         }
       }
     });

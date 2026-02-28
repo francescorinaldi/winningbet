@@ -289,7 +289,23 @@ async function handleApply(req, res, user) {
     }
   }
 
-  const response = Object.assign({}, result);
+  // Return only safe fields (exclude admin-only: notes, reviewed_by, reviewed_at, applicant_email)
+  const response = {
+    id: result.id,
+    user_id: result.user_id,
+    business_name: result.business_name,
+    vat_number: result.vat_number,
+    vies_valid: result.vies_valid,
+    vies_company_name: result.vies_company_name,
+    vies_address: result.vies_address,
+    city: result.city,
+    province: result.province,
+    website: result.website,
+    status: result.status,
+    rejection_reason: result.rejection_reason,
+    created_at: result.created_at,
+    updated_at: result.updated_at,
+  };
   if (vies.error) {
     response._warning = 'Validazione VIES non disponibile. Verrà verificata dall\'amministratore.';
   }

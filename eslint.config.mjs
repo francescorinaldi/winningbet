@@ -74,6 +74,7 @@ export default [
         AbortController: 'readonly',
         alert: 'readonly',
         confirm: 'readonly',
+        REDUCED_MOTION: 'readonly',
       },
     },
   },

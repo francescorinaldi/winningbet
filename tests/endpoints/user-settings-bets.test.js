@@ -100,7 +100,7 @@ describe('CRUD /api/user-settings?resource=bets', () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Not found' });
+    expect(res.json).toHaveBeenCalledWith({ error: 'Scommessa non trovata' });
   });
 
   it('should create bet with tip_id for POST', async () => {
