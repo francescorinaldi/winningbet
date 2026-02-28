@@ -4,6 +4,10 @@ All notable changes to WinningBet will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **fix(ux): gap mancante tra `.dash-account-grid` e `.bankroll-card` nella sezione Profilo** — Aggiunto `margin-bottom: 28px` a `.dash-account-grid` in `styles.css` (riga 3330). La griglia con le card Telegram + Preferenze si toccava direttamente con la Bankroll card sottostante, che è posizionata fuori dalla grid. Il valore 28px è coerente con il pattern di spaziatura verticale usato da `.profile-hero`, `.upgrade-section` e `.manage-sub-row`.
+
 ### Changed
 
 - **config(vercel): disable preview deployments on PRs** — Added `git.deploymentEnabled` to `vercel.json`: `preview: false`, `production: true`. Vercel now only deploys on merges to `main`, skipping PR preview builds.
