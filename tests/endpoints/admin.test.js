@@ -392,4 +392,118 @@ describe('/api/admin', () => {
       error: 'Motivo del rifiuto obbligatorio',
     });
   });
+
+  // ─── Happy paths ────────────────────────────────────────────
+
+  it('should return paginated applications for admin GET', async () => {
+    mockAuth({ profile: { role: 'admin', tier: 'vip' } });
+    const apps = [
+      { id: 'a1', user_id: 'u1', business_name: 'SRL1', applicant_email: 'u1@test.com', status: 'pending' },
+      { id: 'a2', user_id: 'u2', business_name: 'SRL2', applicant_email: 'u2@test.com', status: 'approved' },
+    ];
+    const chain = mockChain({ data: apps, error: null, count: 2 });
+    // The chain resolves via then() for non-single queries
+    chain.then.mockImplementation((r) => r({ data: apps, error: null, count: 2 }));
+
+    const req = createMockReq({
+      method: 'GET',
+      query: { resource: 'applications' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const response = res.json.mock.calls[0][0];
+    expect(response.applications).toHaveLength(2);
+    expect(response.pagination).toBeDefined();
+    expect(response.pagination.total).toBe(2);
+  });
+
+  it('should return paginated users for admin GET', async () => {
+    mockAuth({
+      user: { id: 'admin-1', email: 'admin@test.com' },
+      profile: { role: 'admin', tier: 'vip' },
+    });
+    const profiles = [
+      { user_id: 'u1', display_name: 'User1', tier: 'free', role: null },
+      { user_id: 'u2', display_name: 'User2', tier: 'pro', role: null },
+    ];
+    const chain = mockChain({ data: profiles, error: null, count: 2 });
+    chain.then.mockImplementation((r) => r({ data: profiles, error: null, count: 2 }));
+
+    // Mock getUserById for email enrichment
+    supabase.auth.admin.getUserById.mockResolvedValue({
+      data: { user: { email: 'test@test.com' } },
+      error: null,
+    });
+
+    const req = createMockReq({
+      method: 'GET',
+      query: { resource: 'users' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const response = res.json.mock.calls[0][0];
+    expect(response.users).toBeDefined();
+    expect(response.stats).toBeDefined();
+    expect(response.pagination).toBeDefined();
+  });
+
+  it('should update user tier for admin PUT users', async () => {
+    mockAuth({
+      user: { id: 'admin-1', email: 'admin@test.com' },
+      profile: { role: 'admin', tier: 'vip' },
+    });
+    const chain = mockChain({ data: { user_id: 'u2', tier: 'pro' }, error: null });
+    chain.single.mockResolvedValue({ data: { user_id: 'u2', tier: 'pro' }, error: null });
+
+    const req = createMockReq({
+      method: 'PUT',
+      query: { resource: 'users' },
+      body: { user_id: 'u2', tier: 'pro' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ user_id: 'u2', tier: 'pro' });
+  });
+
+  it('should return 409 for approve on non-pending application', async () => {
+    mockAuth({ profile: { role: 'admin', tier: 'vip' } });
+    mockChain({
+      data: { id: 'app-1', user_id: 'u-2', status: 'approved' },
+      error: null,
+    });
+
+    const req = createMockReq({
+      method: 'POST',
+      query: { resource: 'applications', action: 'approve' },
+      body: { application_id: 'app-1' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+  });
+
+  it('should return 409 for revoke on non-approved application', async () => {
+    mockAuth({ profile: { role: 'admin', tier: 'vip' } });
+    mockChain({
+      data: { id: 'app-1', user_id: 'u-2', status: 'pending' },
+      error: null,
+    });
+
+    const req = createMockReq({
+      method: 'POST',
+      query: { resource: 'applications', action: 'revoke' },
+      body: { application_id: 'app-1' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+  });
 });

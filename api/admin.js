@@ -304,7 +304,7 @@ async function handleApplications(req, res, adminUser) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // GET — lista candidature
+  // GET — lista candidature (paginata)
   if (req.method === 'GET') {
     const statusFilter = req.query.status;
     if (statusFilter && VALID_APP_STATUSES.indexOf(statusFilter) === -1) {
@@ -313,16 +313,21 @@ async function handleApplications(req, res, adminUser) {
       });
     }
 
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const perPage = Math.min(100, Math.max(1, parseInt(req.query.per_page, 10) || 20));
+    const offset = (page - 1) * perPage;
+
     let query = supabase
       .from('partner_applications')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + perPage - 1);
 
     if (statusFilter) {
       query = query.eq('status', statusFilter);
     }
 
-    const { data: apps, error: appsError } = await query;
+    const { data: apps, error: appsError, count: totalCount } = await query;
     if (appsError) return res.status(500).json({ error: appsError.message });
 
     // Use denormalized applicant_email when available; fall back to batch lookup
@@ -343,7 +348,15 @@ async function handleApplications(req, res, adminUser) {
       });
     });
 
-    return res.status(200).json({ applications: enriched });
+    return res.status(200).json({
+      applications: enriched,
+      pagination: {
+        page: page,
+        per_page: perPage,
+        total: totalCount || 0,
+        total_pages: Math.ceil((totalCount || 0) / perPage),
+      },
+    });
   }
 
   // POST — gestione candidature (approve/reject/revoke)
