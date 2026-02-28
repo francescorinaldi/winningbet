@@ -1,0 +1,272 @@
+name: Auto-Review-Fix Loop
+
+# Automates the feedback loop between Copilot reviewer and Copilot coding agent.
+# When a reviewer requests changes on a PR with the 'auto-review-fix' label,
+# this workflow collects the feedback and asks @copilot to fix it.
+# After the coding agent pushes fixes, review is re-requested automatically.
+# The loop continues until the reviewer approves — no iteration limit.
+#
+# Uses pull_request_target (not pull_request) so that bot-created PRs
+# run without requiring manual approval from a maintainer.
+# This is safe because this workflow never checks out PR code —
+# it only uses the GitHub API via actions/github-script.
+
+on:
+  pull_request_review:
+    types: [submitted]
+  pull_request_target:
+    types: [synchronize]
+
+permissions:
+  pull-requests: write
+  contents: read
+  issues: write
+
+concurrency:
+  group: auto-review-fix-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  auto-review-fix:
+    if: contains(github.event.pull_request.labels.*.name, 'auto-review-fix')
+    runs-on: ubuntu-latest
+    steps:
+      # ── Step 1: Review requested changes → collect feedback → ask @copilot ──
+      - name: Collect feedback and post fix request
+        if: >
+          github.event_name == 'pull_request_review' &&
+          github.event.review.state == 'changes_requested'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const reviewId = context.payload.review.id;
+
+            if (context.payload.pull_request.head.repo.full_name !== context.payload.pull_request.base.repo.full_name) {
+              console.log('Skipping auto-review-fix for fork-based PR.');
+              return;
+            }
+
+            // Count past iterations (informational only — no limit)
+            let allComments = [];
+            let page = 1;
+            while (true) {
+              const { data: pageComments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                per_page: 100,
+                page,
+              });
+              allComments = allComments.concat(pageComments);
+              if (pageComments.length < 100) break;
+              page += 1;
+            }
+
+            const pastIterations = allComments.filter(c =>
+              c.body && c.body.includes('<!-- auto-review-fix-iteration -->')
+            ).length;
+
+            // Collect inline review comments for this review
+            let allReviewComments = [];
+            let rcPage = 1;
+            while (true) {
+              const { data: pageComments } = await github.rest.pulls.listReviewComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                per_page: 100,
+                page: rcPage,
+              });
+              allReviewComments = allReviewComments.concat(pageComments);
+              if (pageComments.length < 100) break;
+              rcPage += 1;
+            }
+
+            const thisReviewComments = allReviewComments.filter(
+              c => c.pull_request_review_id === reviewId
+            );
+
+            let feedback = '';
+            if (context.payload.review.body) {
+              feedback += `### Review Summary\n\n${context.payload.review.body}\n\n`;
+            }
+            if (thisReviewComments.length > 0) {
+              feedback += `### Inline Comments\n\n`;
+              for (const comment of thisReviewComments) {
+                const line = comment.line || comment.original_line || 'N/A';
+                feedback += `- **\`${comment.path}\` (line ${line})**: ${comment.body}\n`;
+              }
+              feedback += '\n';
+            }
+            if (!feedback.trim()) {
+              feedback = '_No specific comments found in this review._\n';
+            }
+
+            const iteration = pastIterations + 1;
+            const body = [
+              `<!-- auto-review-fix-iteration -->`,
+              `**Auto-Review-Fix — Iteration ${iteration}**`,
+              '',
+              `@copilot Fix the following review feedback. Follow the conventions in \`.github/copilot-instructions.md\`. Fix root causes, not symptoms — if a pattern is broken in one place, check for it elsewhere too.`,
+              '',
+              feedback,
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: body,
+            });
+            console.log(`Posted fix request (iteration ${iteration})`);
+
+      # ── Step 2: New commits pushed → re-request review from the reviewer ──
+      - name: Re-request review after bot push
+        if: >
+          github.event_name == 'pull_request_target' &&
+          github.event.action == 'synchronize'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+
+            if (context.payload.pull_request.head.repo.full_name !== context.payload.pull_request.base.repo.full_name) {
+              console.log('Skipping re-request for fork-based PR.');
+              return;
+            }
+
+            const headSha = context.payload.pull_request.head.sha;
+            const { data: headCommit } = await github.rest.repos.getCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: headSha,
+            });
+
+            const authorLogin = headCommit?.author?.login || '';
+            const authorName = headCommit?.commit?.author?.name || '';
+            const isBot = authorLogin.includes('[bot]')
+              || authorLogin.includes('copilot')
+              || authorName.toLowerCase().includes('copilot')
+              || authorName.includes('[bot]');
+
+            if (!isBot) {
+              console.log(`Last commit by "${authorLogin || authorName}" — not a bot, skipping.`);
+              return;
+            }
+
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              per_page: 100,
+            });
+
+            const latestByUser = {};
+            for (const review of reviews) {
+              if (review.user?.login) {
+                latestByUser[review.user.login] = review.state;
+              }
+            }
+
+            const changeRequesters = Object.entries(latestByUser)
+              .filter(([, state]) => state === 'CHANGES_REQUESTED')
+              .map(([login]) => login);
+
+            if (changeRequesters.length === 0) {
+              console.log('No reviewers with pending change requests found.');
+              return;
+            }
+
+            console.log(`Re-requesting review from: ${changeRequesters.join(', ')}`);
+            try {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                reviewers: changeRequesters,
+              });
+            } catch (e) {
+              console.log(`Could not re-request review: ${e.message}`);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: prNumber,
+                body: `ℹ️ **Auto-Review-Fix**: Copilot pushed fixes but I couldn't re-request review from ${changeRequesters.join(', ')}. Please re-request manually.`,
+              });
+            }
+
+      # ── Step 3: Review approved → clean up ──
+      - name: Post success and remove label
+        if: >
+          github.event_name == 'pull_request_review' &&
+          github.event.review.state == 'approved'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+
+            if (context.payload.pull_request.head.repo.full_name !== context.payload.pull_request.base.repo.full_name) {
+              console.log('Skipping for fork-based PR.');
+              return;
+            }
+
+            // Check that NO reviewer still has CHANGES_REQUESTED before declaring success
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              per_page: 100,
+            });
+
+            const latestByUser = {};
+            for (const review of reviews) {
+              if (review.user?.login) {
+                latestByUser[review.user.login] = review.state;
+              }
+            }
+
+            const pendingChanges = Object.entries(latestByUser)
+              .filter(([, state]) => state === 'CHANGES_REQUESTED')
+              .map(([login]) => login);
+
+            if (pendingChanges.length > 0) {
+              console.log(`Approved by one reviewer, but ${pendingChanges.join(', ')} still have changes requested. Skipping cleanup.`);
+              return;
+            }
+
+            let allComments = [];
+            let page = 1;
+            while (true) {
+              const { data: pageComments } = await github.rest.issues.listComments({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: prNumber, per_page: 100, page,
+              });
+              allComments = allComments.concat(pageComments);
+              if (pageComments.length < 100) break;
+              page += 1;
+            }
+
+            const iterations = allComments.filter(c =>
+              c.body && c.body.includes('<!-- auto-review-fix-iteration -->')
+            ).length;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: prNumber,
+              body: [
+                `✅ **Auto-Review-Fix: approved!**`,
+                '',
+                iterations > 0
+                  ? `All review feedback was resolved in ${iterations} iteration(s).`
+                  : 'The PR was approved without needing automated fixes.',
+                '',
+                'The `auto-review-fix` label has been removed. This PR is ready to merge.',
+              ].join('\n'),
+            });
+
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: prNumber, name: 'auto-review-fix',
+              });
+            } catch (e) { console.log('Could not remove label:', e.message); }
