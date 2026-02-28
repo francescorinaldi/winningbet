@@ -29,4 +29,5 @@ CREATE POLICY partner_app_insert_own ON partner_applications
         AND vies_company_name IS NULL
         AND vies_address IS NULL
         AND notes IS NULL
+        AND rejection_reason IS NULL
     );

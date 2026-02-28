@@ -338,22 +338,44 @@
       }
 
       // City + Province
-      const location = [app.city, app.province].filter(Boolean).join(' (') + (app.province ? ')' : '');
-      if (location) {
-        details.appendChild(createDetailRow('Sede', location));
+      let locationStr = '';
+      if (app.city && app.province) {
+        locationStr = app.city + ' (' + app.province + ')';
+      } else if (app.city) {
+        locationStr = app.city;
+      } else if (app.province) {
+        locationStr = app.province;
+      }
+      if (locationStr) {
+        details.appendChild(createDetailRow('Sede', locationStr));
       }
 
-      // Website
+      // Website — only render as link if http(s), otherwise plain text
       if (app.website) {
         const webRow = createDetailRow('Sito', null);
         const webValue = webRow.querySelector('.admin-detail-value');
-        const webLink = document.createElement('a');
-        webLink.href = app.website;
-        webLink.target = '_blank';
-        webLink.rel = 'noopener noreferrer';
-        webLink.textContent = app.website.replace(/^https?:\/\//, '');
-        webLink.className = 'admin-link';
-        webValue.appendChild(webLink);
+
+        let safeHref = null;
+        try {
+          const parsedUrl = new URL(app.website, window.location.origin);
+          if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+            safeHref = parsedUrl.href;
+          }
+        } catch (_e) {
+          // Invalid URL — render as plain text below
+        }
+
+        if (safeHref) {
+          const webLink = document.createElement('a');
+          webLink.href = safeHref;
+          webLink.target = '_blank';
+          webLink.rel = 'noopener noreferrer';
+          webLink.textContent = app.website.replace(/^https?:\/\//, '');
+          webLink.className = 'admin-link';
+          webValue.appendChild(webLink);
+        } else {
+          webValue.textContent = app.website;
+        }
         details.appendChild(webRow);
       }
 

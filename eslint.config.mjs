@@ -68,6 +68,7 @@ export default [
         supabase: 'readonly',
         SupabaseConfig: 'readonly',
         Stripe: 'readonly',
+        URL: 'readonly',
         URLSearchParams: 'readonly',
         Promise: 'readonly',
         AbortController: 'readonly',
