@@ -339,8 +339,8 @@ async function handleBets(req, res, user) {
         user_id: user.id,
         tip_id: body.tip_id,
         followed: body.followed !== false,
-        stake: body.stake || null,
-        notes: body.notes || null,
+        stake: body.stake ?? null,
+        notes: body.notes ?? null,
       })
       .select()
       .single();

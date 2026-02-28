@@ -67,7 +67,7 @@ describe('GET /api/fixtures', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Parametro type richiesto: matches, results o odds',
+      error: 'Parametro type richiesto: matches, results, odds, h2h, form o odds-compare',
     });
   });
 

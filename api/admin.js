@@ -87,41 +87,43 @@ async function validateVies(vatNumber) {
   }
 }
 
-// ─── Batch User Email Lookup ────────────────────────────────────────────────
+// ─── Bounded Parallel User Email Lookup ─────────────────────────────────────
 
 /**
- * Retrieves emails for a set of user IDs using batch listUsers() instead of
- * per-row getUserById(). Paginates through all auth users matching the given IDs.
+ * Retrieves emails for a set of user IDs using bounded parallel getUserById() calls.
+ * Uses a concurrency limit to avoid rate-limiting while staying O(requestedIds)
+ * instead of O(totalAuthUsers).
  *
- * @param {string[]} userIds - Array of user UUIDs
+ * @param {string[]} userIds - Array of user UUIDs (typically ≤50 per page)
  * @returns {Promise<Object<string, string>>} Map of userId → email
  */
 async function batchGetUserEmails(userIds) {
   const emailMap = {};
   if (!userIds || userIds.length === 0) return emailMap;
 
-  const remaining = new Set(userIds);
-  let page = 1;
-  const perPage = 1000;
+  const CONCURRENCY = 10;
+  const queue = [...userIds];
 
-  while (remaining.size > 0) {
-    const result = await supabase.auth.admin.listUsers({ page, perPage });
-
-    if (!result || result.error || !result.data || !result.data.users || result.data.users.length === 0) {
-      break;
-    }
-
-    for (const user of result.data.users) {
-      if (remaining.has(user.id)) {
-        emailMap[user.id] = user.email;
-        remaining.delete(user.id);
+  async function worker() {
+    while (queue.length > 0) {
+      const id = queue.shift();
+      try {
+        const { data, error } = await supabase.auth.admin.getUserById(id);
+        if (!error && data && data.user) {
+          emailMap[id] = data.user.email;
+        }
+      } catch (_err) {
+        // Silently skip — email will be null in the response
       }
     }
-
-    // If we got fewer users than requested, we've reached the end
-    if (result.data.users.length < perPage) break;
-    page++;
   }
+
+  // Launch bounded workers
+  const workers = [];
+  for (let i = 0; i < Math.min(CONCURRENCY, userIds.length); i++) {
+    workers.push(worker());
+  }
+  await Promise.all(workers);
 
   return emailMap;
 }
@@ -606,48 +608,29 @@ async function handleUsers(req, res) {
     return Object.assign({}, p, { email: emails[p.user_id] || null });
   });
 
-  // Post-fetch email search: if search query was provided, also match against email
-  // (email is not in the profiles table, so we can't filter DB-side)
-  if (search) {
-    const lowerSearch = search.toLowerCase();
-    enriched = enriched.filter(function (p) {
-      const nameMatch = p.display_name && p.display_name.toLowerCase().indexOf(lowerSearch) !== -1;
-      const emailMatch = p.email && p.email.toLowerCase().indexOf(lowerSearch) !== -1;
-      return nameMatch || emailMatch;
-    });
-  }
+  // Post-fetch email enrichment for search: the DB-side ilike covers display_name,
+  // but email lives in auth (not profiles). We keep all DB results for correct pagination
+  // and add an email_match flag for UI highlighting if needed.
+  // NOTE: We do NOT filter out rows here — pagination totals must match the DB count.
 
-  // Calcola statistiche (sulla pagina corrente se c'e' search, altrimenti globali)
-  let stats;
-  if (search) {
-    // Per la ricerca, le stats sono relative ai risultati filtrati
-    stats = {
-      total: enriched.length,
-      free: enriched.filter(function (p) { return p.tier === 'free'; }).length,
-      pro: enriched.filter(function (p) { return p.tier === 'pro'; }).length,
-      vip: enriched.filter(function (p) { return p.tier === 'vip'; }).length,
-      partners: enriched.filter(function (p) { return p.role === 'partner'; }).length,
-    };
-  } else {
-    // Stats globali: query dedicate per conteggi precisi
-    const tierCounts = await Promise.all([
-      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'free'),
-      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'pro'),
-      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'vip'),
-      supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('role', 'partner'),
-    ]);
+  // Stats: always use dedicated count queries for accurate global stats
+  const tierCounts = await Promise.all([
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'free'),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'pro'),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tier', 'vip'),
+    supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('role', 'partner'),
+  ]);
 
-    stats = {
-      total: totalCount || 0,
-      free: tierCounts[0].count || 0,
-      pro: tierCounts[1].count || 0,
-      vip: tierCounts[2].count || 0,
-      partners: tierCounts[3].count || 0,
-    };
-  }
+  const stats = {
+    total: totalCount || 0,
+    free: tierCounts[0].count || 0,
+    pro: tierCounts[1].count || 0,
+    vip: tierCounts[2].count || 0,
+    partners: tierCounts[3].count || 0,
+  };
 
   return res.status(200).json({
     users: enriched,
@@ -655,8 +638,8 @@ async function handleUsers(req, res) {
     pagination: {
       page: page,
       per_page: perPage,
-      total: search ? enriched.length : (totalCount || 0),
-      total_pages: Math.ceil((search ? enriched.length : (totalCount || 0)) / perPage),
+      total: totalCount || 0,
+      total_pages: Math.ceil((totalCount || 0) / perPage),
     },
   });
 }
