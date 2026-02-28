@@ -34,8 +34,17 @@
 
   // If user came from a pricing button (e.g. /auth.html?plan=pro), preserve the
   // checkout intent through the OAuth redirect so dashboard auto-starts checkout.
-  const pendingPlan = new URLSearchParams(window.location.search).get('plan');
+  const searchParams = new URLSearchParams(window.location.search);
+  const pendingPlan = searchParams.get('plan');
   const oauthRedirectPath = pendingPlan ? '?upgrade=' + encodeURIComponent(pendingPlan) : '';
+
+  // Cattura ?ref=CODE per il programma referral Centro Partner.
+  // Se l'utente arriva da /partner.html?ref=CODE o /auth.html?ref=CODE,
+  // salva il codice in localStorage per poi applicarlo dopo il login.
+  const refCode = searchParams.get('ref');
+  if (refCode) {
+    localStorage.setItem('wb_ref_code', refCode.toUpperCase());
+  }
 
   document.getElementById('googleAuth').addEventListener('click', async function () {
     const { error } = await SupabaseConfig.signInWithOAuth('google', oauthRedirectPath);

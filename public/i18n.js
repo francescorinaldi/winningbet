@@ -35,6 +35,7 @@
       'hero.tips_sent': 'Tips Inviati',
       'hero.cta': 'INIZIA A VINCERE',
       'hero.cta2': 'Vedi i Tips Gratis',
+      'hero.track_record_link': '→ Verifica il track record completo',
 
       // League selector
       'league.all': 'Tutte',
@@ -95,6 +96,10 @@
       'stats.datapoints': 'Dati Elaborati',
       'stats.roi': 'ROI',
       'stats.roi.explain': "Ritorno sull'investimento calcolato su tutti i tips settati",
+      'stats.bankroll': '\u20AC100 \u2192 Oggi',
+      'stats.bankroll.explain': '\u20AC100 iniziali seguendo tutti i tip a stake unitario',
+      'stats.drawdown': 'Max Drawdown',
+      'stats.drawdown.explain': 'Peggior calo dal picco \u2014 la statistica che i competitor nascondono',
       'stats.results.title': 'I Nostri Risultati',
       'stats.results.loading': 'Caricamento risultati...',
       'stats.results.empty': 'Nessun risultato disponibile',
@@ -211,6 +216,7 @@
       'hero.tips_sent': 'Tips Sent',
       'hero.cta': 'START WINNING',
       'hero.cta2': 'See Free Tips',
+      'hero.track_record_link': '→ Verify the full track record',
 
       // League selector
       'league.all': 'All',
@@ -270,6 +276,10 @@
       'stats.datapoints': 'Data Points',
       'stats.roi': 'ROI',
       'stats.roi.explain': 'Return on investment across all settled tips',
+      'stats.bankroll': '\u20AC100 \u2192 Today',
+      'stats.bankroll.explain': '\u20AC100 starting bankroll following all tips at unit stake',
+      'stats.drawdown': 'Max Drawdown',
+      'stats.drawdown.explain': 'Worst peak-to-trough decline \u2014 the stat competitors hide, we expose',
       'stats.results.title': 'Our Results',
       'stats.results.loading': 'Loading results...',
       'stats.results.empty': 'No results available',

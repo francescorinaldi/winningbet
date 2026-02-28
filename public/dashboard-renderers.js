@@ -206,6 +206,32 @@ var dashRenderTipsGrid = function (container, tips, ctx) {
       });
     }
 
+    // Value bet edge indicator: mostra il vantaggio probabilistico rispetto al bookmaker.
+    // Visibile solo quando l'edge è positivo (WinningBet stima più del bookmaker).
+    if (tip.confidence !== null && tip.confidence !== undefined && tip.odds) {
+      var oddsNum = parseFloat(tip.odds);
+      if (oddsNum > 0) {
+        var impliedProb = Math.round((1 / oddsNum) * 100);
+        var edge = tip.confidence - impliedProb;
+        if (edge > 0) {
+          var edgeRow = document.createElement('div');
+          edgeRow.className = 'tip-value-edge' + (edge >= 10 ? ' tip-value-edge--strong' : '');
+          var edgeIcon = document.createElement('span');
+          edgeIcon.className = 'tip-value-edge-icon';
+          edgeIcon.textContent = '\u2B06';
+          edgeRow.appendChild(edgeIcon);
+          var edgeText = document.createElement('span');
+          edgeText.textContent = 'Edge +' + edge + '%';
+          edgeRow.appendChild(edgeText);
+          var edgeDetail = document.createElement('span');
+          edgeDetail.className = 'tip-value-edge-detail';
+          edgeDetail.textContent = '(' + impliedProb + '% bookie \u2192 ' + tip.confidence + '% WB)';
+          edgeRow.appendChild(edgeDetail);
+          card.appendChild(edgeRow);
+        }
+      }
+    }
+
     // Analysis (short preview)
     if (tip.analysis) {
       var analysis = document.createElement('div');

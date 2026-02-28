@@ -106,9 +106,32 @@
       loadPreferences();
       loadUserBets();
       loadSchedule();
+      saveReferralIfPresent();
     } catch (err) {
       console.error('[checkAuth]', err.message || err);
       showAlert('Errore di connessione. Ricarica la pagina.', 'error');
+    }
+  }
+
+  // ─── REFERRAL ───────────────────────────────────────────
+
+  /**
+   * Se presente in localStorage un codice referral (salvato da /partner o /auth),
+   * lo invia all'API una sola volta dopo il login.
+   * L'API è idempotente: se referred_by è già impostato, non sovrascrive.
+   */
+  async function saveReferralIfPresent() {
+    const refCode = localStorage.getItem('wb_ref_code');
+    if (!refCode) return;
+    try {
+      await authFetch('/api/user-settings?resource=referral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref_code: refCode }),
+      });
+      localStorage.removeItem('wb_ref_code');
+    } catch (_err) {
+      // Referral save is best-effort — non critico
     }
   }
 
@@ -202,10 +225,15 @@
         checkoutJustCompleted = false;
         if (tier !== 'free') {
           showAlert('Abbonamento attivato con successo! Benvenuto.', 'success');
+          // Mostra onboarding alla prima attivazione (checkout appena completato)
+          setTimeout(function () { showOnboardingModal(user.id); }, 800);
         } else {
           showAlert('Stiamo attivando il tuo abbonamento\u2026', 'success');
           pollForSubscriptionUpgrade(user.id);
         }
+      } else if (tier !== 'free') {
+        // Login normale con abbonamento attivo: mostra onboarding se mai visto
+        showOnboardingModal(user.id);
       }
 
       // Show notification bell for authenticated users
@@ -1832,6 +1860,100 @@
     } else {
       showAlert('Il pagamento non è andato a buon fine. Riprova o contatta il supporto.', 'error');
     }
+  }
+
+  // ─── ONBOARDING MODAL ────────────────────────────────────
+
+  /**
+   * Mostra il modale di onboarding la prima volta che un abbonato PRO/VIP accede.
+   * Usa localStorage per ricordare se già mostrato (per-utente, per-dispositivo).
+   * Il modale spiega: varianza, come leggere le card, track record.
+   */
+  function showOnboardingModal(userId) {
+    const storageKey = 'wb_onboarding_done_' + userId;
+    if (localStorage.getItem(storageKey)) return;
+
+    const steps = [
+      {
+        icon: '📊',
+        title: 'Il betting professionale richiede pazienza',
+        text: 'Anche i migliori sistemi attraversano periodi negativi. Quello che conta è il ROI su 100+ tip, non la singola settimana.',
+        highlight: '<strong>Regola fondamentale:</strong> non aumentare la puntata dopo una perdita e non diminuirla dopo una vittoria. La disciplina è il vero vantaggio.',
+      },
+      {
+        icon: '🎯',
+        title: 'Come leggere le nostre card tip',
+        text: 'Ogni tip mostra la <strong style="color:var(--gold)">quota bookmaker</strong>, la <strong style="color:var(--gold)">probabilità implicita</strong> (quanto stima il bookie) e la nostra <strong style="color:var(--gold)">stima WinningBet</strong>.',
+        highlight: '<strong>L\'edge è la chiave:</strong> se WinningBet stima 65% e il bookie prezza 47%, c\'è un vantaggio reale. Giochiamo solo quando l\'edge è positivo e significativo.',
+      },
+      {
+        icon: '📈',
+        title: 'Track record pubblico e verificabile',
+        text: 'Tutti i nostri pronostici vengono pubblicati <em>prima</em> della partita, con timestamp. Nessuna modifica post-risultato.',
+        highlight: '<strong>Trasparenza totale:</strong> nella sezione Track Record vedi win rate, ROI, distribuzione per campionato e fascia di quota — compresi i pronostici persi.',
+      },
+    ];
+
+    let currentStep = 0;
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'onboarding-backdrop';
+    backdrop.setAttribute('role', 'dialog');
+    backdrop.setAttribute('aria-modal', 'true');
+    backdrop.setAttribute('aria-label', 'Benvenuto in WinningBet');
+
+    function renderStep() {
+      const s = steps[currentStep];
+      const isLast = currentStep === steps.length - 1;
+
+      backdrop.innerHTML = [
+        '<div class="onboarding-modal">',
+        '  <div class="onboarding-header">',
+        '    <div class="onboarding-logo">♠ WinningBet</div>',
+        '    <div class="onboarding-step-dots">',
+        steps.map(function (_, i) {
+          return '<div class="onboarding-dot' + (i === currentStep ? ' active' : '') + '"></div>';
+        }).join(''),
+        '    </div>',
+        '  </div>',
+        '  <div class="onboarding-body">',
+        '    <div class="onboarding-step visible">',
+        '      <div class="onboarding-icon">' + s.icon + '</div>',
+        '      <div class="onboarding-title">' + s.title + '</div>',
+        '      <div class="onboarding-text">' + s.text + '</div>',
+        s.highlight ? '<div class="onboarding-highlight">' + s.highlight + '</div>' : '',
+        '    </div>',
+        '  </div>',
+        '  <div class="onboarding-footer">',
+        '    <button class="onboarding-skip" id="onboardingSkip">Salta</button>',
+        '    <button class="onboarding-next" id="onboardingNext">' + (isLast ? 'Ho capito ✓' : 'Avanti →') + '</button>',
+        '  </div>',
+        '</div>',
+      ].join('');
+
+      backdrop.querySelector('#onboardingNext').addEventListener('click', function () {
+        if (isLast) {
+          dismiss();
+        } else {
+          currentStep++;
+          renderStep();
+        }
+      });
+
+      backdrop.querySelector('#onboardingSkip').addEventListener('click', dismiss);
+    }
+
+    function dismiss() {
+      localStorage.setItem(storageKey, '1');
+      backdrop.style.opacity = '0';
+      backdrop.style.transition = 'opacity 0.2s ease';
+      setTimeout(function () {
+        if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+      }, 220);
+    }
+
+    renderStep();
+    document.body.appendChild(backdrop);
   }
 
   function showAlert(message, type) {

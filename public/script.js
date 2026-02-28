@@ -825,6 +825,12 @@
         animateCounter(heroTips);
       }
 
+      const heroMembers = document.getElementById('heroActiveMembers');
+      if (heroMembers && data.active_subscribers > 0) {
+        heroMembers.setAttribute('data-count', data.active_subscribers);
+        animateCounter(heroMembers);
+      }
+
       // Track record stat cards
       const statCards = document.querySelectorAll('.stat-card');
       statCards.forEach(function (card) {
@@ -848,15 +854,12 @@
         }
       });
 
-      // Populate recent results with settled tips (won + close losses only)
+      // Populate recent results — mostra won E lost per trasparenza (track record verificabile)
       if (data.recent && data.recent.length > 0) {
         const container = document.getElementById('resultsList');
         if (container) {
           container.textContent = '';
-          const filtered = data.recent.filter(function (tip) {
-            return tip.status === 'won';
-          });
-          filtered.forEach(function (tip) {
+          data.recent.forEach(function (tip) {
             container.appendChild(buildTipResultItem(tip));
           });
         }
@@ -880,6 +883,18 @@
         const roiVal = Math.round(data.roi || 0);
         roiEl.setAttribute('data-count', roiVal);
         animateCounter(roiEl);
+      }
+
+      // Bankroll simulation: €100 iniziali → valore attuale
+      const bankrollEl = document.getElementById('statBankroll');
+      if (bankrollEl && data.bankroll && data.bankroll.final !== undefined) {
+        bankrollEl.textContent = data.bankroll.final.toFixed(0);
+      }
+
+      // Max drawdown — esposto con trasparenza, non nascosto come fanno i competitor
+      const drawdownEl = document.getElementById('statMaxDrawdown');
+      if (drawdownEl && data.bankroll && data.bankroll.max_drawdown !== undefined) {
+        drawdownEl.textContent = data.bankroll.max_drawdown.toFixed(1);
       }
 
       // Track record since date

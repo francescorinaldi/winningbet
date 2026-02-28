@@ -8,6 +8,8 @@
  *   TELEGRAM_BOT_TOKEN — Token del bot (@BotFather)
  *   TELEGRAM_PUBLIC_CHANNEL_ID — Chat ID canale pubblico (tips free)
  *   TELEGRAM_PRIVATE_CHANNEL_ID — Chat ID canale privato (tips pro/vip)
+ *   TELEGRAM_COMMUNITY_GROUP_ID — Chat ID gruppo community (discussione PRO/VIP)
+ *                                  Opzionale: se non configurato, la gestione community è silente.
  */
 
 const { LEAGUES } = require('./leagues');
@@ -15,6 +17,7 @@ const { LEAGUES } = require('./leagues');
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const PUBLIC_CHANNEL = process.env.TELEGRAM_PUBLIC_CHANNEL_ID;
 const PRIVATE_CHANNEL = process.env.TELEGRAM_PRIVATE_CHANNEL_ID;
+const COMMUNITY_GROUP = process.env.TELEGRAM_COMMUNITY_GROUP_ID;
 
 const BASE_URL = 'https://api.telegram.org/bot' + BOT_TOKEN;
 
@@ -112,30 +115,76 @@ function formatItalianDate() {
 }
 
 /**
- * Formatta un singolo tip come blocco nel digest.
+ * Formatta la data di una partita in italiano (giorno/mese, ora).
+ * @param {string} matchDate - ISO date string
+ * @returns {string} Es. "Sab 01 Mar · 20:45"
+ */
+function formatMatchDate(matchDate) {
+  if (!matchDate) return '';
+  const d = new Date(matchDate);
+  const days = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+  const months = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+  const day = days[d.getDay()];
+  const date = String(d.getDate()).padStart(2, '0');
+  const month = months[d.getMonth()];
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  return day + ' ' + date + ' ' + month + ' \u00B7 ' + h + ':' + m;
+}
+
+/**
+ * Formatta un singolo tip come card visiva shareabile.
+ *
+ * La card è progettata per essere condivisa come screenshot: include campionato,
+ * data/ora, squadre, pronostico, quota con edge value bet, reasoning e firma WinningBet.
+ *
  * @param {Object} tip - Oggetto tip dal database
+ * @param {string} [leagueFlag] - Flag emoji del campionato (opzionale)
+ * @param {string} [leagueName] - Nome del campionato (opzionale)
  * @returns {string} Blocco MarkdownV2 per il tip
  */
-function formatTipBlock(tip) {
+function formatTipBlock(tip, leagueFlag, leagueName) {
   const home = escapeMarkdown(tip.home_team);
   const away = escapeMarkdown(tip.away_team);
   const prediction = escapeMarkdown(tip.prediction);
-  const odds = escapeMarkdown(parseFloat(tip.odds).toFixed(2));
-  const confidence = escapeMarkdown(
-    tip.confidence !== null && tip.confidence !== undefined ? tip.confidence + '%' : '—',
-  );
+  const oddsNum = parseFloat(tip.odds);
+  const odds = escapeMarkdown(oddsNum.toFixed(2));
+
+  // Riga campionato + data (per shareability come screenshot standalone)
+  const flag = leagueFlag || '\u26BD';
+  const name = leagueName ? escapeMarkdown(leagueName) : '';
+  const dateStr = tip.match_date ? escapeMarkdown(formatMatchDate(tip.match_date)) : '';
+  const headerParts = [flag];
+  if (name) headerParts.push('_' + name + '_');
+  if (dateStr) headerParts.push('\uD83D\uDD52 _' + dateStr + '_');
 
   const lines = [
-    '\u26BD *' + home + ' vs ' + away + '*',
-    '\u251C \uD83C\uDFAF ' + prediction,
-    '\u251C \uD83D\uDCCA Quota: ' + odds,
-    '\u251C \uD83D\uDD25 Fiducia: ' + confidence,
+    headerParts.join(' '),
+    '*' + home + ' vs ' + away + '*',
+    '\u251C \uD83C\uDFAF *' + prediction + '*',
   ];
 
-  if (tip.analysis) {
-    lines.push('\u2514 \uD83D\uDCDD _' + escapeMarkdown(tip.analysis) + '_');
+  // Quota + probabilità implicita del bookmaker (1/quota × 100)
+  if (tip.confidence !== null && tip.confidence !== undefined && oddsNum > 0) {
+    const impliedProb = Math.round((1 / oddsNum) * 100);
+    const edge = tip.confidence - impliedProb;
+    const edgeStr = edge > 0 ? '+' + edge + '%' : edge + '%';
+    const edgeLabel = edge > 0 ? '\u2B06\uFE0F' : '\u27A1\uFE0F'; // ⬆️ o ➡️
+
+    lines.push('\u251C \uD83D\uDCCA Quota: *' + odds + '* \u2502 Bookie: ' + escapeMarkdown(impliedProb + '%'));
+    lines.push(
+      '\u251C ' + edgeLabel + ' WB: *' +
+        escapeMarkdown(tip.confidence + '%') +
+        '* \u2502 Edge: *' +
+        escapeMarkdown(edgeStr) + '*',
+    );
   } else {
-    // Replace last ├ with └
+    lines.push('\u251C \uD83D\uDCCA Quota: *' + odds + '*');
+  }
+
+  if (tip.analysis) {
+    lines.push('\u2514 _' + escapeMarkdown(tip.analysis) + '_');
+  } else {
     lines[lines.length - 1] = lines[lines.length - 1].replace('\u251C', '\u2514');
   }
 
@@ -192,7 +241,7 @@ function formatDigest(tips) {
     lines.push('');
 
     for (const tip of leagueTips) {
-      lines.push(formatTipBlock(tip));
+      lines.push(formatTipBlock(tip, flag, name));
       lines.push('');
       comboOdds *= parseFloat(tip.odds) || 1;
       tipCount++;
@@ -376,10 +425,91 @@ async function removeFromPrivateChannel(userId) {
   }
 }
 
+/**
+ * Crea un link di invito monouso per il gruppo community PRO/VIP.
+ *
+ * Il gruppo community è distinto dal canale privato: è una chat bidirezionale
+ * dove i subscriber possono commentare, condividere analisi e interagire tra loro.
+ * L'accesso è riservato a PRO e VIP (gestito automaticamente via Stripe webhook).
+ *
+ * @param {string} name - Nome descrittivo del link
+ * @returns {Promise<string|null>} URL del link, o null se COMMUNITY_GROUP non è configurato
+ */
+async function createCommunityInviteLink(name) {
+  if (!BOT_TOKEN || !COMMUNITY_GROUP) {
+    return null; // Community non configurata — silente, non bloccante
+  }
+
+  const response = await fetch(BASE_URL + '/createChatInviteLink', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: COMMUNITY_GROUP,
+      name: name,
+      member_limit: 1,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!data.ok) {
+    console.error('Telegram API error (community invite):', data.description);
+    throw new Error('Telegram: ' + data.description);
+  }
+
+  return data.result.invite_link;
+}
+
+/**
+ * Rimuove un utente dal gruppo community.
+ * Esegue ban + unban (rimozione senza ban permanente).
+ *
+ * @param {number|string} userId - ID Telegram dell'utente
+ * @returns {Promise<void>}
+ */
+async function removeFromCommunity(userId) {
+  if (!BOT_TOKEN || !COMMUNITY_GROUP) {
+    return; // Community non configurata — silente, non bloccante
+  }
+
+  const banResponse = await fetch(BASE_URL + '/banChatMember', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: COMMUNITY_GROUP,
+      user_id: Number(userId),
+    }),
+  });
+
+  const banData = await banResponse.json();
+
+  if (!banData.ok) {
+    // Non fatale per il gruppo community — log ma non throw
+    console.error('[community] ban failed:', banData.description);
+    return;
+  }
+
+  try {
+    await fetch(BASE_URL + '/unbanChatMember', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: COMMUNITY_GROUP,
+        user_id: Number(userId),
+        only_if_banned: true,
+      }),
+    });
+  } catch (err) {
+    console.error('[community] unban failed for user', userId, ':', err.message);
+  }
+}
+
 module.exports = {
   sendPublicTips,
   sendPrivateTips,
   sendDirectMessage,
   createPrivateInviteLink,
   removeFromPrivateChannel,
+  createCommunityInviteLink,
+  removeFromCommunity,
 };

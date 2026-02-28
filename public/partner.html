@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WinningBet — Programma Centro Partner</title>
+    <meta
+      name="description"
+      content="Porta i pronostici premium WinningBet nel tuo centro scommesse. Guadagna il 25% su ogni abbonamento referral con esclusiva geografica garantita."
+    />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="WinningBet — Programma Centro Partner" />
+    <meta
+      property="og:description"
+      content="Porta i pronostici premium WinningBet nel tuo centro scommesse. Guadagna il 25% su ogni abbonamento referral."
+    />
+    <meta property="og:url" content="https://winningbet.it/partner" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="it_IT" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="styles.css" />
+
+    <style>
+      /* ── Partner page overrides ─────────────────────────── */
+
+      .partner-hero {
+        padding: 120px 0 80px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .partner-hero::before {
+        content: '';
+        position: absolute;
+        top: -200px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
+        pointer-events: none;
+      }
+
+      .partner-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(212, 168, 83, 0.12);
+        border: 1px solid var(--border-gold);
+        color: var(--gold);
+        font-family: var(--font-display);
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 6px 16px;
+        border-radius: var(--radius-sm);
+        margin-bottom: 24px;
+      }
+
+      .partner-hero-title {
+        font-family: var(--font-display);
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.15;
+        margin-bottom: 20px;
+      }
+
+      .partner-hero-subtitle {
+        font-family: var(--font-body);
+        font-size: 1.125rem;
+        color: var(--text-secondary);
+        max-width: 580px;
+        margin: 0 auto 40px;
+        line-height: 1.7;
+      }
+
+      .partner-hero-stats {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        flex-wrap: wrap;
+        margin-top: 48px;
+        padding-top: 40px;
+        border-top: 1px solid var(--border);
+      }
+
+      .partner-hero-stat {
+        text-align: center;
+      }
+
+      .partner-hero-stat .stat-num {
+        font-family: var(--font-display);
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: var(--gold);
+        line-height: 1;
+      }
+
+      .partner-hero-stat .stat-lbl {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-top: 6px;
+      }
+
+      /* ── Layers section ──────────────────────────────────── */
+      .partner-section {
+        padding: 80px 0;
+      }
+
+      .partner-section + .partner-section {
+        border-top: 1px solid var(--border);
+      }
+
+      .partner-layers {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        margin-top: 48px;
+      }
+
+      .layer-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 32px 28px;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.2s, transform 0.2s;
+      }
+
+      .layer-card:hover {
+        border-color: var(--border-gold);
+        transform: translateY(-2px);
+      }
+
+      .layer-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--gold), transparent);
+      }
+
+      .layer-num {
+        font-family: var(--font-display);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--gold);
+        margin-bottom: 12px;
+      }
+
+      .layer-title {
+        font-family: var(--font-display);
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 10px;
+      }
+
+      .layer-desc {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+
+      .layer-value {
+        display: inline-block;
+        margin-top: 16px;
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--gold);
+      }
+
+      /* ── How it works steps ─────────────────────────────── */
+      .partner-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin-top: 48px;
+        max-width: 720px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .partner-step {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+        padding: 28px 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .partner-step:last-child {
+        border-bottom: none;
+      }
+
+      .step-circle {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-display);
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0a0a0f;
+      }
+
+      .step-body h4 {
+        font-family: var(--font-display);
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+      }
+
+      .step-body p {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+
+      /* ── Benefits grid ──────────────────────────────────── */
+      .benefits-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-top: 48px;
+      }
+
+      .benefit-item {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 20px;
+      }
+
+      .benefit-icon {
+        font-size: 1.4rem;
+        line-height: 1;
+        margin-top: 2px;
+      }
+
+      .benefit-text h4 {
+        font-family: var(--font-display);
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+      }
+
+      .benefit-text p {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
+
+      /* ── Pricing table ──────────────────────────────────── */
+      .partner-pricing {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-top: 48px;
+      }
+
+      .partner-plan {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 32px 24px;
+        text-align: center;
+        transition: border-color 0.2s;
+      }
+
+      .partner-plan.featured {
+        border-color: var(--border-gold);
+        background: var(--bg-elevated);
+        position: relative;
+      }
+
+      .partner-plan.featured::before {
+        content: '⭐ PIÙ SCELTO';
+        position: absolute;
+        top: -13px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--gold);
+        color: #0a0a0f;
+        font-family: var(--font-display);
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        padding: 4px 14px;
+        border-radius: 20px;
+        white-space: nowrap;
+      }
+
+      .plan-tier {
+        font-family: var(--font-display);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+      }
+
+      .plan-clients {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+      }
+
+      .plan-price {
+        font-family: var(--font-display);
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--gold);
+        line-height: 1;
+      }
+
+      .plan-price span {
+        font-size: 1rem;
+        color: var(--text-muted);
+        font-weight: 400;
+      }
+
+      .plan-note {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-top: 12px;
+        line-height: 1.5;
+      }
+
+      /* ── Earnings simulator ─────────────────────────────── */
+      .earnings-section {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-xl);
+        padding: 56px;
+        margin-top: 48px;
+        border: 1px solid var(--border);
+      }
+
+      .earnings-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-top: 36px;
+      }
+
+      .earnings-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 28px 20px;
+        text-align: center;
+      }
+
+      .earnings-card.positive {
+        border-color: rgba(46, 204, 113, 0.3);
+      }
+
+      .earnings-card .e-sub {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .earnings-card .e-num {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--gold);
+        line-height: 1;
+      }
+
+      .earnings-card.positive .e-num {
+        color: var(--green);
+      }
+
+      .earnings-card .e-lbl {
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+        margin-top: 8px;
+        line-height: 1.4;
+      }
+
+      .earnings-note {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-align: center;
+        margin-top: 20px;
+        line-height: 1.6;
+      }
+
+      /* ── CTA form section ───────────────────────────────── */
+      .partner-cta-section {
+        text-align: center;
+        padding: 80px 0;
+      }
+
+      .partner-cta-box {
+        background: var(--bg-card);
+        border: 1px solid var(--border-gold);
+        border-radius: var(--radius-xl);
+        padding: 64px 48px;
+        max-width: 600px;
+        margin: 0 auto;
+        box-shadow: var(--shadow-gold);
+      }
+
+      .partner-cta-box h2 {
+        font-family: var(--font-display);
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 16px;
+      }
+
+      .partner-cta-box p {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 32px;
+      }
+
+      .partner-cta-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .partner-cta-actions .btn {
+        width: 100%;
+        max-width: 320px;
+        justify-content: center;
+      }
+
+      .cta-or {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .partner-pdf-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        transition: color 0.2s;
+        margin-top: 20px;
+      }
+
+      .partner-pdf-link:hover {
+        color: var(--gold);
+      }
+
+      /* ── Disclaimer ─────────────────────────────────────── */
+      .partner-disclaimer {
+        background: rgba(212, 168, 83, 0.06);
+        border-left: 3px solid var(--border-gold);
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        padding: 16px 20px;
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        line-height: 1.6;
+        margin-top: 48px;
+      }
+
+      /* ── Responsive ─────────────────────────────────────── */
+      @media (max-width: 768px) {
+        .partner-layers,
+        .partner-pricing,
+        .earnings-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .benefits-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .earnings-section {
+          padding: 36px 24px;
+        }
+
+        .partner-cta-box {
+          padding: 40px 24px;
+        }
+
+        .partner-hero-stats {
+          gap: 24px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .partner-hero {
+          padding: 100px 0 60px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="particles"></canvas>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+      <div class="container nav-content">
+        <a href="/" class="logo">
+          <span class="logo-icon">♠</span>
+          <span class="logo-text">WinningBet</span>
+        </a>
+        <div class="nav-links" id="navLinks">
+          <a href="/#stats">Track Record</a>
+          <a href="/#pricing">Piani</a>
+          <a href="/partner.html" style="color: var(--gold);">Diventa Partner</a>
+          <a href="/auth.html" class="btn btn-outline btn-sm">Accedi</a>
+          <a href="/#pricing" class="btn btn-gold btn-sm">Abbonati Ora</a>
+        </div>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="partner-hero">
+      <div class="container">
+        <div class="partner-badge">🤝 Programma Centro Partner</div>
+        <h1 class="partner-hero-title">
+          Dai ai tuoi clienti un<br />
+          <span class="text-gradient">vantaggio reale</span>.<br />
+          Tu guadagni ogni volta.
+        </h1>
+        <p class="partner-hero-subtitle">
+          WinningBet analizza ogni giorno 7 campionati con AI e dati statistici reali.
+          Come centro partner, lo offri come benefit esclusivo — e guadagni una percentuale
+          ricorrente su ogni abbonamento generato dal tuo sportello.
+        </p>
+        <div>
+          <a href="#contattaci" class="btn btn-gold btn-lg">
+            Richiedi la Partnership
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+        <div class="partner-hero-stats">
+          <div class="partner-hero-stat">
+            <div class="stat-num">7</div>
+            <div class="stat-lbl">Campionati<br>coperti</div>
+          </div>
+          <div class="partner-hero-stat">
+            <div class="stat-num">24/7</div>
+            <div class="stat-lbl">Aggiornato<br>in tempo reale</div>
+          </div>
+          <div class="partner-hero-stat">
+            <div class="stat-num">25%</div>
+            <div class="stat-lbl">Commissione<br>ricorrente</div>
+          </div>
+          <div class="partner-hero-stat">
+            <div class="stat-num">1,5 km</div>
+            <div class="stat-lbl">Esclusiva<br>geografica</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 LAYER MODEL -->
+    <section class="partner-section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">IL MODELLO</span>
+          <h2 class="section-title">
+            Tre fonti di<br /><span class="text-gradient">guadagno</span>
+          </h2>
+          <p class="section-desc">
+            Il programma Centro Partner si basa su tre layer complementari che si sommano.
+          </p>
+        </div>
+        <div class="partner-layers">
+          <div class="layer-card">
+            <div class="layer-num">Layer 1</div>
+            <div class="layer-title">Licenza B2B Mensile</div>
+            <div class="layer-desc">
+              Accesso completo al feed VIP da mostrare in-store, kit marketing stampabile,
+              report mensile sui referral e supporto dedicato.
+            </div>
+            <div class="layer-value">€79–199/mese</div>
+          </div>
+          <div class="layer-card">
+            <div class="layer-num">Layer 2</div>
+            <div class="layer-title">Revenue Share 25%</div>
+            <div class="layer-desc">
+              Per ogni abbonato Pro o VIP che si registra tramite il tuo link referral,
+              guadagni il 25% ogni mese finché rimane abbonato. Ricorrente.
+            </div>
+            <div class="layer-value">€5–10/abbonato/mese</div>
+          </div>
+          <div class="layer-card">
+            <div class="layer-num">Layer 3</div>
+            <div class="layer-title">Esclusiva Geografica</div>
+            <div class="layer-desc">
+              Nessun altro centro nel raggio di 1,5 km riceve la stessa proposta.
+              L'esclusiva crea urgenza: chi non la prende la offriamo al centro accanto.
+            </div>
+            <div class="layer-value">Garantita per contratto</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COME FUNZIONA -->
+    <section class="partner-section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">OPERATIVO</span>
+          <h2 class="section-title">
+            Come funziona<br /><span class="text-gradient">in negozio</span>
+          </h2>
+        </div>
+        <div class="partner-steps">
+          <div class="partner-step">
+            <div class="step-circle">1</div>
+            <div class="step-body">
+              <h4>Schermo in negozio — feed live</h4>
+              <p>
+                I pronostici del giorno scorrono in loop su un monitor. I tuoi clienti li vedono
+                mentre aspettano. Differenziazione immediata rispetto ai centri vicini.
+              </p>
+            </div>
+          </div>
+          <div class="partner-step">
+            <div class="step-circle">2</div>
+            <div class="step-body">
+              <h4>QR code alla cassa</h4>
+              <p>
+                "Vuoi riceverli sul telefono? Scansiona." 7 giorni gratuiti per ogni cliente
+                che si iscrive dal tuo centro tramite il tuo link personalizzato.
+              </p>
+            </div>
+          </div>
+          <div class="partner-step">
+            <div class="step-circle">3</div>
+            <div class="step-body">
+              <h4>Commissioni automatiche il 1° del mese</h4>
+              <p>
+                Ogni abbonamento generato dal tuo link ti porta il 25% ricorrente.
+                Report mensile con dettaglio clienti, guadagni e performance dei tip.
+              </p>
+            </div>
+          </div>
+          <div class="partner-step">
+            <div class="step-circle">4</div>
+            <div class="step-body">
+              <h4>Fidelizzazione automatica</h4>
+              <p>
+                Chi si abbona torna più spesso da te. Chi ha analisi di qualità scommette
+                di più. Il ticket medio cresce senza sforzo.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COSA OTTIENI -->
+    <section class="partner-section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">BENEFICI</span>
+          <h2 class="section-title">
+            Cosa ottieni<br /><span class="text-gradient">come partner</span>
+          </h2>
+        </div>
+        <div class="benefits-grid">
+          <div class="benefit-item">
+            <div class="benefit-icon">📺</div>
+            <div class="benefit-text">
+              <h4>Feed VIP in-store</h4>
+              <p>Tutti i pronostici premium aggiornati in tempo reale da mostrare sul monitor del centro.</p>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-icon">🔗</div>
+            <div class="benefit-text">
+              <h4>Link referral personalizzato</h4>
+              <p>URL dedicato con il nome del tuo centro. Ogni iscrizione tracciata automaticamente.</p>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-icon">🖨️</div>
+            <div class="benefit-text">
+              <h4>Kit marketing stampabile</h4>
+              <p>Locandine A4, flyer, QR code premium pronti per la stampa. Niente da progettare.</p>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-icon">📊</div>
+            <div class="benefit-text">
+              <h4>Report mensile</h4>
+              <p>Clienti iscritti, guadagni totali, performance dei tip. Tutto trasparente.</p>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-icon">🏙️</div>
+            <div class="benefit-text">
+              <h4>Esclusiva geografica 1,5 km</h4>
+              <p>Nessun altro centro nella tua zona. Prima che scada, nessun concorrente può aderire.</p>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-icon">🎁</div>
+            <div class="benefit-text">
+              <h4>Promo 7 giorni gratis</h4>
+              <p>I tuoi clienti ottengono una settimana gratuita. Abbassa la barriera all'iscrizione.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING -->
+    <section class="partner-section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">INVESTIMENTO</span>
+          <h2 class="section-title">
+            Scegli il piano<br /><span class="text-gradient">per il tuo centro</span>
+          </h2>
+          <p class="section-desc">
+            La licenza mensile copre i costi fissi. Le commissioni referral sono guadagno netto aggiuntivo.
+          </p>
+        </div>
+        <div class="partner-pricing">
+          <div class="partner-plan">
+            <div class="plan-tier">Small</div>
+            <div class="plan-clients">Meno di 100 clienti/giorno</div>
+            <div class="plan-price">€79 <span>/mese</span></div>
+            <div class="plan-note">Include feed VIP, kit marketing base, report mensile</div>
+          </div>
+          <div class="partner-plan featured">
+            <div class="plan-tier">Standard</div>
+            <div class="plan-clients">100–300 clienti/giorno</div>
+            <div class="plan-price">€129 <span>/mese</span></div>
+            <div class="plan-note">Include tutto + kit premium, QR code personalizzato, esclusiva garantita</div>
+          </div>
+          <div class="partner-plan">
+            <div class="plan-tier">Premium</div>
+            <div class="plan-clients">Più di 300 clienti/giorno</div>
+            <div class="plan-price">€199 <span>/mese</span></div>
+            <div class="plan-note">Include tutto + account manager dedicato, reporting avanzato</div>
+          </div>
+        </div>
+        <p style="text-align: center; margin-top: 20px; font-size: 0.85rem; color: var(--text-muted);">
+          ✦ Primo mese gratuito per i primi 5 centri partner ·
+          ✦ Commissione 25% ricorrente su ogni abbonamento Pro (€19,99) e VIP (€39,99)/mese
+        </p>
+      </div>
+    </section>
+
+    <!-- SIMULAZIONE GUADAGNI -->
+    <section class="partner-section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">SIMULAZIONE</span>
+          <h2 class="section-title">
+            Quanto puoi<br /><span class="text-gradient">guadagnare</span>
+          </h2>
+          <p class="section-desc">
+            Calcolo basato su piano Standard (€129/mese) + commissione 25% su abbonamento Pro (€19,99/mese).
+            I guadagni da commissioni sono ricorrenti — si accumulano ogni mese.
+          </p>
+        </div>
+        <div class="earnings-section">
+          <div class="earnings-grid">
+            <div class="earnings-card">
+              <div class="e-sub">Scenario base</div>
+              <div class="e-num">€ 0</div>
+              <div class="e-lbl">Nessun referral — costo netto licenza €129/mese</div>
+            </div>
+            <div class="earnings-card">
+              <div class="e-sub">10 abbonati Pro</div>
+              <div class="e-num">€ 150</div>
+              <div class="e-lbl">Commissioni: €150/mese<br>
+                <strong style="color: var(--green)">Netto: +€21/mese</strong>
+              </div>
+            </div>
+            <div class="earnings-card positive">
+              <div class="e-sub">25 abbonati Pro</div>
+              <div class="e-num">€ 375</div>
+              <div class="e-lbl">Commissioni: €375/mese<br>
+                <strong style="color: var(--green)">Netto: +€246/mese</strong>
+              </div>
+            </div>
+          </div>
+          <p class="earnings-note">
+            Con 50 abbonati Pro generati → €750 commissioni → netto +€621/mese di guadagno puro.<br />
+            Le commissioni sono ricorrenti ogni mese finché il cliente rimane abbonato.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADM DISCLAIMER -->
+    <div class="container">
+      <div class="partner-disclaimer">
+        <strong>⚖️ Conformità ADM:</strong> WinningBet è un servizio informativo e non una piattaforma di scommesse.
+        Non richiede licenza ADM. Il servizio è compatibile con i contratti di affiliazione dei principali bookmaker
+        (Planetwin365, Snai, Sisal, ecc.) — si tratta di un servizio di analisi terzo indipendente.
+        Tutti i materiali includono il disclaimer obbligatorio sul gioco responsabile.
+      </div>
+    </div>
+
+    <!-- CTA CONTATTACI -->
+    <section class="partner-cta-section" id="contattaci">
+      <div class="container">
+        <div class="partner-cta-box">
+          <h2>Attiva il tuo centro partner</h2>
+          <p>
+            Scrivi ora per ricevere la proposta dettagliata per il tuo centro,
+            la one-pager PDF da stampare e verificare la disponibilità dell'esclusiva
+            nella tua zona.
+          </p>
+          <div class="partner-cta-actions">
+            <a href="mailto:info@winningbet.it?subject=Richiesta%20Partnership%20Centro%20Scommesse&body=Salve%2C%0D%0ASono%20interessato%20al%20programma%20Centro%20Partner%20WinningBet.%0D%0A%0D%0ANome%20centro%3A%20%0D%0ACitt%C3%A0%2FZona%3A%20%0D%0AClienti%20giorno%20(circa)%3A%20%0D%0A%0D%0AIn%20attesa%20di%20sentirci."
+              class="btn btn-gold btn-lg">
+              Scrivici su Email
+            </a>
+            <div class="cta-or">oppure</div>
+            <a href="https://t.me/thewinningbettips" target="_blank" rel="noopener noreferrer"
+              class="btn btn-outline btn-lg">
+              Contattaci su Telegram
+            </a>
+          </div>
+          <a href="/docs/centro-scommesse-partner-pitch.html" target="_blank" class="partner-pdf-link">
+            📄 Scarica la One-Pager PDF (apri in Chrome → Stampa → Salva come PDF)
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <a href="/" class="logo">
+              <span class="logo-icon">♠</span>
+              <span class="logo-text">WinningBet</span>
+            </a>
+            <p class="footer-desc">
+              Pronostici calcio premium powered by AI. Algoritmi proprietari, analisi
+              tecnico-tattiche e dati in tempo reale per darti il vantaggio che fa la differenza.
+            </p>
+          </div>
+          <div class="footer-links">
+            <h4>Navigazione</h4>
+            <a href="/">Home</a>
+            <a href="/#stats">Track Record</a>
+            <a href="/#pricing">Piani</a>
+            <a href="/#faq">FAQ</a>
+          </div>
+          <div class="footer-links">
+            <h4>Legale</h4>
+            <a href="/privacy.html">Privacy Policy</a>
+            <a href="/terms.html">Termini di Servizio</a>
+            <a href="/cookies.html">Cookie Policy</a>
+          </div>
+          <div class="footer-links">
+            <h4>Seguici</h4>
+            <a href="https://t.me/thewinningbettips" target="_blank" rel="noopener noreferrer">Telegram</a>
+            <a href="#">Instagram</a>
+            <a href="#">TikTok</a>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <div class="footer-disclaimer">
+            <p>
+              <strong>Disclaimer:</strong> Il gioco d'azzardo può causare dipendenza. Gioca
+              responsabilmente. Questo sito fornisce solo pronostici e analisi a scopo informativo.
+              Non raccogliamo né gestiamo scommesse. Vietato ai minori di 18 anni. Se hai problemi
+              di gioco, chiama il numero verde 800-558822.
+            </p>
+            <p>
+              Raccomandiamo di scommettere esclusivamente su piattaforme con regolare licenza ADM (ex AAMS).
+            </p>
+          </div>
+          <div class="footer-copy">
+            <span>&copy; 2026 WinningBet. Tutti i diritti riservati.</span>
+            <div class="footer-age">
+              <span class="age-badge">18+</span>
+              <span>ADM</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="shared.js"></script>
+    <script>
+      (function () {
+        initMobileMenu();
+        initParticles({ maxParticles: 30, densityDivisor: 30, connections: false });
+
+        // Cattura ?ref=CODE nell'URL e salva in localStorage per il tracking referral
+        const refCode = new URLSearchParams(window.location.search).get('ref');
+        if (refCode) {
+          localStorage.setItem('wb_ref_code', refCode.toUpperCase());
+        }
+      })();
+    </script>
+  </body>
+</html>
